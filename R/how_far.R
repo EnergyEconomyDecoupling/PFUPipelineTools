@@ -16,7 +16,7 @@ trim_pipeline <- function(.pipeline, last_target_to_keep = "all_targets") {
   if (last_target_to_keep == "all_targets") {
     return(.pipeline)
   }
-  last_index_to_keep <- which(names(.pipeline) == last_target_to_keep)
+  last_index_to_keep <- which(targets::tar_names(.pipeline) == last_target_to_keep)
   assertthat::assert_that(length(last_index_to_keep) == 1)
   .pipeline[1:last_index_to_keep]
 }
