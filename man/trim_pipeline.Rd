@@ -4,12 +4,14 @@
 \alias{trim_pipeline}
 \title{Trim a pipeline to desired length}
 \usage{
-trim_pipeline(.pipeline, last_target_to_keep)
+trim_pipeline(.pipeline, last_target_to_keep = "all_targets")
 }
 \arguments{
 \item{.pipeline}{The pipeline to trim. A list.}
 
-\item{last_target_to_keep}{The last target to keep in the pipeline.}
+\item{last_target_to_keep}{The last target to keep in the pipeline.
+If "all_targets" (the default),
+everything is returned.}
 }
 \value{
 \code{.pipeline} with targets \emph{after} \code{last_target_to_keep} removed.

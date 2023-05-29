@@ -6,11 +6,16 @@
 #'
 #' @param .pipeline The pipeline to trim. A list.
 #' @param last_target_to_keep The last target to keep in the pipeline.
+#'                            If "all_targets" (the default),
+#'                            everything is returned.
 #'
 #' @return `.pipeline` with targets _after_ `last_target_to_keep` removed.
 #'
 #' @export
-trim_pipeline <- function(.pipeline, last_target_to_keep) {
+trim_pipeline <- function(.pipeline, last_target_to_keep = "all_targets") {
+  if (last_target_to_keep == "all_targets") {
+    return(.pipeline)
+  }
   last_index_to_keep <- which(names(.pipeline) == last_target_to_keep)
   assertthat::assert_that(length(last_index_to_keep) == 1)
   .pipeline[1:last_index_to_keep]
