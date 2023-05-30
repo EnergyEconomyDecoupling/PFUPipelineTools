@@ -3,4 +3,3 @@
 export(filter_countries_years)
 export(release_target)
 export(stash_cache)
-export(trim_pipeline)
