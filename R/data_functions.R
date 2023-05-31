@@ -43,3 +43,29 @@ filter_countries_years <- function(.df,
   .df %>%
     dplyr::filter(.data[[country]] %in% countries, .data[[year]] %in% years)
 }
+
+
+#' Ungroups and removes tar_group column from a data frame
+#'
+#' The [tarchetypes::tar_group_by()] function
+#' adds a column named "tar_group".
+#' This function ungroups and removes the special column.
+#'
+#' @param .df The data frame to be ungrouped.
+#' @param tar_group_colname The name of the grouping column. Default is "tar_group".
+#' @param ungroup A boolean that tells whether to ungroup `.df`. Default is `TRUE`.
+#'
+#' @return A modified version of `.df`.
+#'
+#' @export
+tar_ungroup <- function(.df, tar_group_colname = "tar_group", ungroup = TRUE) {
+  out <- .df |>
+    dplyr::mutate(
+      "{tar_group_colname}" := NULL
+    )
+  if (ungroup) {
+    out <- out |>
+      dplyr::ungroup()
+  }
+  return(out)
+}
