@@ -12,8 +12,13 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Imports:
-    assertthat, 
-    targets
+    dplyr,
+    IEATools, 
+    lubridate,
+    magrittr,
+    parsedate,
+    pins,
+    rlang
 Depends: 
     R (>= 2.10)
 LazyData: true

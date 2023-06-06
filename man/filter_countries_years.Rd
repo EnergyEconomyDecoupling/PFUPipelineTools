@@ -31,7 +31,7 @@ in a way that is amenable to drake subtargets.
 \code{dplyr::filter()} does the subsetting.
 }
 \examples{
-IEATools::sample_iea_data_path() \%>\%
-  IEATools::load_tidy_iea_df() \%>\%
+IEATools::sample_iea_data_path() |>
+  IEATools::load_tidy_iea_df() |>
   filter_countries_years(countries = c("ZAF"), years = 1960:1999)
 }

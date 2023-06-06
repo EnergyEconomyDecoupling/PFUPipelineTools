@@ -15,8 +15,8 @@
 #' @export
 #'
 #' @examples
-#' IEATools::sample_iea_data_path() %>%
-#'   IEATools::load_tidy_iea_df() %>%
+#' IEATools::sample_iea_data_path() |>
+#'   IEATools::load_tidy_iea_df() |>
 #'   filter_countries_years(countries = c("ZAF"), years = 1960:1999)
 filter_countries_years <- function(.df,
                                    countries,
@@ -32,15 +32,15 @@ filter_countries_years <- function(.df,
   }
   if (countries1) {
     if (countries == "all") {
-      return(.df %>% dplyr::filter(.data[[year]] %in% years))
+      return(.df |> dplyr::filter(.data[[year]] %in% years))
     }
   }
   if (years1) {
     if (years == "all") {
-      return(.df %>% dplyr::filter(.data[[country]] %in% countries))
+      return(.df |> dplyr::filter(.data[[country]] %in% countries))
     }
   }
-  .df %>%
+  .df |>
     dplyr::filter(.data[[country]] %in% countries, .data[[year]] %in% years)
 }
 

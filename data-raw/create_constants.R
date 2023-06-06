@@ -2,7 +2,6 @@
 # If there are any changes to these constants,
 # source this script before building the package.
 
-library(magrittr)
 library(IEATools)
 
 #
