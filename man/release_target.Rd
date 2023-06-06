@@ -44,15 +44,15 @@ as shown in examples.
 # Establish the pinboard
 pinboard <- pins::board_folder("~/Dropbox/Fellowship 1960-2015 PFU database/OutputData/PipelineReleases/")
 # Get information about the `PSUT` target in the pinboard
-pinboard \%>\%
+pinboard |>
   pins::pin_meta(name = "psut")
 # Find versions of the `PSUT` target
-pinboard \%>\%
+pinboard |>
   pins::pin_versions(name = "psut")
 # Get the latest copy of the `PSUT` target.
-my_psut <- pinboard \%>\%
+my_psut <- pinboard |>
   pins::pin_read(name = "psut")
 # Retrieve a previous version of the `PSUT` target.
-my_old_psut <- pinboard \%>\%
+my_old_psut <- pinboard |>
   pins::pin_read(name = "psut", version = "20220218T023112Z-1d9e1")}
 }

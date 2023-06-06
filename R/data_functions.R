@@ -15,8 +15,8 @@
 #' @export
 #'
 #' @examples
-#' IEATools::sample_iea_data_path() %>%
-#'   IEATools::load_tidy_iea_df() %>%
+#' IEATools::sample_iea_data_path() |>
+#'   IEATools::load_tidy_iea_df() |>
 #'   filter_countries_years(countries = c("ZAF"), years = 1960:1999)
 filter_countries_years <- function(.df,
                                    countries,
@@ -32,14 +32,40 @@ filter_countries_years <- function(.df,
   }
   if (countries1) {
     if (countries == "all") {
-      return(.df %>% dplyr::filter(.data[[year]] %in% years))
+      return(.df |> dplyr::filter(.data[[year]] %in% years))
     }
   }
   if (years1) {
     if (years == "all") {
-      return(.df %>% dplyr::filter(.data[[country]] %in% countries))
+      return(.df |> dplyr::filter(.data[[country]] %in% countries))
     }
   }
-  .df %>%
+  .df |>
     dplyr::filter(.data[[country]] %in% countries, .data[[year]] %in% years)
+}
+
+
+#' Ungroups and removes tar_group column from a data frame
+#'
+#' The [tarchetypes::tar_group_by()] function
+#' adds a column named "tar_group".
+#' This function ungroups and removes the special column.
+#'
+#' @param .df The data frame to be ungrouped.
+#' @param tar_group_colname The name of the grouping column. Default is "tar_group".
+#' @param ungroup A boolean that tells whether to ungroup `.df`. Default is `TRUE`.
+#'
+#' @return A modified version of `.df`.
+#'
+#' @export
+tar_ungroup <- function(.df, tar_group_colname = "tar_group", ungroup = TRUE) {
+  out <- .df |>
+    dplyr::mutate(
+      "{tar_group_colname}" := NULL
+    )
+  if (ungroup) {
+    out <- out |>
+      dplyr::ungroup()
+  }
+  return(out)
 }

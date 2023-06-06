@@ -26,21 +26,21 @@
 #' # Establish the pinboard
 #' pinboard <- pins::board_folder("~/Dropbox/Fellowship 1960-2015 PFU database/OutputData/PipelineReleases/")
 #' # Get information about the `PSUT` target in the pinboard
-#' pinboard %>%
+#' pinboard |>
 #'   pins::pin_meta(name = "psut")
 #' # Find versions of the `PSUT` target
-#' pinboard %>%
+#' pinboard |>
 #'   pins::pin_versions(name = "psut")
 #' # Get the latest copy of the `PSUT` target.
-#' my_psut <- pinboard %>%
+#' my_psut <- pinboard |>
 #'   pins::pin_read(name = "psut")
 #' # Retrieve a previous version of the `PSUT` target.
-#' my_old_psut <- pinboard %>%
+#' my_old_psut <- pinboard |>
 #'   pins::pin_read(name = "psut", version = "20220218T023112Z-1d9e1")}
 release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds", release = FALSE) {
   if (release) {
     # Establish the pinboard
-    out <- pins::board_folder(pipeline_releases_folder, versioned = TRUE) %>%
+    out <- pins::board_folder(pipeline_releases_folder, versioned = TRUE) |>
       # Returns the fully-qualified name of the file written to the pinboard.
       pins::pin_write(targ, name = pin_name, type = type, versioned = TRUE)
   } else {
@@ -76,12 +76,12 @@ stash_cache <- function(pipeline_caches_folder, cache_folder, file_prefix, depen
     return("Release not requested.")
   }
   # Zip the drake cache
-  zipped_cache_filename <- paste0(file_prefix, parsedate::format_iso_8601(Sys.time()), ".zip") %>%
+  zipped_cache_filename <- paste0(file_prefix, parsedate::format_iso_8601(Sys.time()), ".zip") |>
     # Change file name format to be equivalent to the pins file format.
     # Eliminate "-" characters
-    gsub(pattern = "-", replacement = "") %>%
+    gsub(pattern = "-", replacement = "") |>
     # Eliminate ":" characters, because they cause problems on some OSes.
-    gsub(pattern = ":", replacement = "") %>%
+    gsub(pattern = ":", replacement = "") |>
     # Change "+0000" to "Z", where "Z" means Zulu time (GMT offset of 00:00)
     gsub(pattern = "\\+0000", replacement = "Z")
   invisible(utils::zip(zipfile = zipped_cache_filename, files = cache_folder, extras = "-q"))
