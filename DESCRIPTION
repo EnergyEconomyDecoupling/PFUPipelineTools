@@ -1,12 +1,13 @@
 Package: PFUPipelineTools
 Title: Tools for PFU Pipelines
-Version: 0.0.1
+Version: 0.1.1
+Date: 2023-06-06
 Authors@R: 
     person("Matthew", "Heun", , "matthew.heun@me.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+           comment = c(ORCID = "0000-0002-7438-214X"))
 Description: There are several repositories that provide PFU pipelines for the PFU databases.
-             Several functions can be used for all pipelines.
-             This package hosts all common functions and constants.
+             Several functions can be used in common across all pipelines.
+             This package hosts common functions and constants.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
