@@ -46,4 +46,4 @@ devtools::install_github("EnergyEconomyDecoupling/PFUPipelineTools")
 ## More Information
 
 Find more information, including vignettes and function documentation, at 
-<https://MatthewHeun.github.io/PFUPipelineTools/>.
+<https://EnergyEconomyDecoupling.github.io/PFUPipelineTools/>.
