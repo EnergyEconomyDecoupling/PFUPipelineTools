@@ -1,3 +1,12 @@
+---
+title: "Release notes for `PFUPipelineTools`"
+output: html_document
+---
+
+
+* Added several new tests.
+
+
 # PFUPipelineTools 0.1.1 (2023-06-06)
 
 * Initial release
