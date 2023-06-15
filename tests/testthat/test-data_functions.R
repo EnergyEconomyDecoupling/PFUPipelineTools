@@ -26,3 +26,17 @@ test_that("filter_countries_years() works as expected", {
 })
 
 
+test_that("tar_ungroup() works as expected", {
+  df <- data.frame(A = c("Smith", "Smith", "Jones"),
+                   B = c(1, 2, 3),
+                   C = c(4, 5, 6)) |>
+    dplyr::group_by(A)
+  expect_equal(dplyr::group_vars(df), "A")
+  grouped <- targets::tar_group(df)
+  expect_equal(dplyr::group_vars(grouped), character())
+  expect_equal(grouped$tar_group, c(2, 2, 1))
+  res <- df |>
+    tar_ungroup()
+  expect_equal(dplyr::groups(res), list())
+})
+
