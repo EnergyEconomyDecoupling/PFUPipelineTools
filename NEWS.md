@@ -4,7 +4,8 @@ output: html_document
 ---
 
 
-* Added several new tests.
+* Added several new tests
+  to get to 100% coverage.
 
 
 # PFUPipelineTools 0.1.1 (2023-06-06)
