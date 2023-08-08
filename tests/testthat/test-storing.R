@@ -54,9 +54,9 @@ test_that("stash_cache() works as expected", {
 
   # Try again after deleting the temporary files.
   stash_cache(pipeline_caches_folder = pipeline_caches_folder,
-                           cache_folder = cache_folder,
-                           file_prefix = "prefix",
-                           release = TRUE) |>
+              cache_folder = cache_folder,
+              file_prefix = "prefix",
+              release = TRUE) |>
     expect_error(regexp = "cannot open the connection") |>
     expect_error(regexp = "copying of pipeline cache unsuccessful")
 })
