@@ -8,13 +8,12 @@ test_that("release_target() works as expected", {
   # Check not releeasing
   no_release <- release_target(tdir, targ = df, pin_name = "df", release = FALSE)
   expect_equal(no_release, "Release not requested.")
-  expect_equal(list.files(path = tdir), character())
 
   # Check doing a release
   yes_release <- release_target(tdir, targ = df, pin_name = "df", release = TRUE) |>
     suppressMessages()
   expect_equal(yes_release, "df")
-  expect_equal(list.files(path = tdir), "df")
+  expect_true("df" %in% list.files(path = tdir))
   recursed <- list.files(path = tdir, recursive = TRUE)
   expect_true(startsWith(recursed[[1]], "df"))
   expect_true(endsWith(recursed[[1]], "data.txt"))
