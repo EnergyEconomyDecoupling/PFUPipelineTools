@@ -1,3 +1,16 @@
+---
+title: "Release notes for `PFUPipelineTools`"
+output: html_document
+---
+
+
+# PFUPipelineTools 0.1.2 (2023-08-08)
+
+* First release to be assigned a Zenodo DOI.
+* Added several new tests
+  to get to 100% coverage.
+
+
 # PFUPipelineTools 0.1.1 (2023-06-06)
 
 * Initial release

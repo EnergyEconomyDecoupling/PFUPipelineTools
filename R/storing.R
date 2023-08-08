@@ -24,7 +24,11 @@
 #' @examples
 #' \dontrun{
 #' # Establish the pinboard
-#' pinboard <- pins::board_folder("~/Dropbox/Fellowship 1960-2015 PFU database/OutputData/PipelineReleases/")
+#' pinboard <- file.path("~",
+#'                       "Dropbox",
+#'                       "Fellowship 1960-2015 PFU database",
+#'                       "OutputData", "PipelineReleases") |>
+#'   pins::board_folder()
 #' # Get information about the `PSUT` target in the pinboard
 #' pinboard |>
 #'   pins::pin_meta(name = "psut")
