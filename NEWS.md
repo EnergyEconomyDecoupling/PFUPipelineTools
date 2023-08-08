@@ -4,7 +4,12 @@ output: html_document
 ---
 
 
-# PFUPipelineTools 0.1.2 (2023-08-08)
+Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zenodo.8226419), 
+which always resolves to the latest release.
+
+
+
+# PFUPipelineTools 0.1.2 (2023-08-08) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8226420.svg)](https://doi.org/10.5281/zenodo.8226420)
 
 * First release to be assigned a Zenodo DOI.
 * Added several new tests
