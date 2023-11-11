@@ -17,6 +17,7 @@ Imports:
     IEATools, 
     lubridate,
     magrittr,
+    PFUSetup,
     parsedate,
     pins,
     rlang
