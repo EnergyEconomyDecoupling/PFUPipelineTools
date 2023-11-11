@@ -51,3 +51,11 @@ test_that("read_pin_version() works as expected", {
   phi_vecs_string <- read_pin_version(pin_name = "phi_vecs", database_version = "v1.2")
   expect_equal(names(phi_vecs), c("Country", "Year", "phi"))
 })
+
+
+test_that("read_pin_version() fails when a non-existent pin is supplied", {
+  testthat::skip_on_ci()
+
+  expect_error(read_pin_version(pin_name = "bogus_pin", database_version = 1.2),
+               "CL-PFU database product bogus_pin does not exist")
+})
