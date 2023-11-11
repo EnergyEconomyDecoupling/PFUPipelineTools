@@ -59,3 +59,4 @@ test_that("stash_cache() works as expected", {
     expect_error(regexp = "cannot open the connection") |>
     expect_error(regexp = "copying of pipeline cache unsuccessful")
 })
+
