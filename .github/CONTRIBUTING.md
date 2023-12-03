@@ -7,15 +7,11 @@ output:
 <!-- Do not edit CONTRIBUTING.md.  -->
 <!-- Be sure to edit CONTRIBUTING.Rmd, which is used to create CONTRIBUTING.md -->
 
-```{r, include=FALSE}
-# Set the name of the package here.
-# It will be used in several places below.
-pkg_name <- "PFUPipelineTools"
-```
 
-# Contributing to ``r pkg_name``
 
-This document outlines how to propose a change to the ``r pkg_name`` package.
+# Contributing to `PFUPipelineTools`
+
+This document outlines how to propose a change to the `PFUPipelineTools` package.
 
 ## Fixing typos
 
@@ -49,7 +45,7 @@ If you’ve found a bug, please file an issue that illustrates the bug with a mi
 
 ### Code style
 
-* New code should be written in a style that matches the rest of the code in ``r pkg_name``. 
+* New code should be written in a style that matches the rest of the code in `PFUPipelineTools`. 
 * We use [roxygen2](https://cran.r-project.org/package=roxygen2), 
   with [Markdown syntax](https://cran.r-project.org/web/packages/roxygen2/vignettes/rd-formatting.html), 
   for documentation.
