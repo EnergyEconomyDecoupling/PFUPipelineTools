@@ -8,7 +8,8 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
-# PFUPipelineTools 0.1.3 (2023-12-03)
+# PFUPipelineTools 0.1.3 (2023-12-03) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10253202.svg)](https://doi.org/10.5281/zenodo.10253202)
+
 
 * New function `read_pin_version()`
 * Added GitHub actions for generating website.
