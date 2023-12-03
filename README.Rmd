@@ -26,6 +26,7 @@ knitr::opts_chunk$set(
 [![R-CMD-check](https://github.com/EnergyEconomyDecoupling/PFUPipelineTools/workflows/R-CMD-check/badge.svg)](https://github.com/EnergyEconomyDecoupling/PFUPipelineTools/actions)
 [![Codecov test coverage](https://codecov.io/gh/EnergyEconomyDecoupling/PFUPipelineTools/branch/master/graph/badge.svg)](https://app.codecov.io/gh/EnergyEconomyDecoupling/PFUPipelineTools?branch=main)
 <!-- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5226085.svg)](https://doi.org/10.5281/zenodo.5226085) -->
+[![R-CMD-check](https://github.com/EnergyEconomyDecoupling/PFUPipelineTools/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/EnergyEconomyDecoupling/PFUPipelineTools/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 
