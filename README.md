@@ -18,7 +18,8 @@ developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.re
 [![R-CMD-check](https://github.com/EnergyEconomyDecoupling/PFUPipelineTools/workflows/R-CMD-check/badge.svg)](https://github.com/EnergyEconomyDecoupling/PFUPipelineTools/actions)
 [![Codecov test
 coverage](https://codecov.io/gh/EnergyEconomyDecoupling/PFUPipelineTools/branch/master/graph/badge.svg)](https://app.codecov.io/gh/EnergyEconomyDecoupling/PFUPipelineTools?branch=main)
-<!-- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5226085.svg)](https://doi.org/10.5281/zenodo.5226085) -->
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8226419.svg)](https://doi.org/10.5281/zenodo.8226419)
+[![R-CMD-check](https://github.com/EnergyEconomyDecoupling/PFUPipelineTools/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/EnergyEconomyDecoupling/PFUPipelineTools/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 PFUPipelineTools provides a single package for several functions that

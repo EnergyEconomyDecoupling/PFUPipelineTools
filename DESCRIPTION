@@ -1,7 +1,7 @@
 Package: PFUPipelineTools
 Title: Tools for PFU Pipelines
-Version: 0.1.2
-Date: 2023-08-08
+Version: 0.1.3
+Date: 2023-12-03
 Authors@R: 
     person("Matthew", "Heun", , "matthew.heun@me.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-7438-214X"))
@@ -17,6 +17,7 @@ Imports:
     IEATools, 
     lubridate,
     magrittr,
+    PFUSetup,
     parsedate,
     pins,
     rlang
@@ -24,6 +25,9 @@ Depends:
     R (>= 2.10)
 LazyData: true
 Suggests:
+    spelling,
     targets,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+URL: https://energyeconomydecoupling.github.io/PFUPipelineTools/
+Language: en-US

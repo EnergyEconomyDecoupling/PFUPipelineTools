@@ -4,12 +4,12 @@ citEntry(entry = "Manual",
   title        = "PFUPipelineTools: Tools for PFU Pipelines",
   author       = personList(as.person("Matthew Kuperus Heun")),
   year         = "2023",
-  note         = "R package version 0.1.2",
-  url          = "https://github.com/EnergyEconomyDecoupling/PFUAggDatabase",
+  note         = "R package version 0.1.3",
+  url          = "https://doi.org/10.5281/zenodo.8226419",
 
   textVersion  =
   paste("Matthew Kuperus Heun (2023).",
         "PFUPipelineTools: Tools for PFU Pipelines",
-        "R package version 0.1.2.",
-        "https://github.com/EnergyEconomyDecoupling/PFUAggDatabase")
+        "R package version 0.1.3.",
+        "https://doi.org/10.5281/zenodo.8226419")
 )

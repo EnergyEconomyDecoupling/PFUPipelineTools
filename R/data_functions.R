@@ -69,3 +69,40 @@ tar_ungroup <- function(.df, tar_group_colname = "tar_group", ungroup = TRUE) {
   }
   return(out)
 }
+
+
+
+#' Read a version of a pinned CL-PFU database product
+#'
+#' @param pin_name The string name of the pin to be read.
+#' @param database_version A string, prefixed with "v" for the version of interest.
+#'                         Any number will be prefixed by "v" and converted to a string internally.
+#' @param pin_version_string The version string for pin `pin_name` associated with `database_version`.
+#'                           Default is `pin_versions(database_version)[[pin_name]]`.
+#' @param pipeline_releases_folder The path to the pipeline releases folder.
+#'                                 Default is `get_abs_paths()[["pipeline_releases_folder"]]`.
+#'
+#' @return The pinned object represented by the name and the version string.
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' read_pin_version(pin_name = "phi_vecs", database_version = 1.2) |>
+#'   head()
+#'}
+read_pin_version <- function(pin_name,
+                             database_version,
+                             pin_version_string = PFUSetup::pin_versions(database_version)[[pin_name]],
+                             pipeline_releases_folder = PFUSetup::get_abs_paths()[["pipeline_releases_folder"]]) {
+
+  pinboard <- pipeline_releases_folder |>
+    pins::board_folder(versioned = TRUE)
+  # Check if the pin exists
+  if (! pins::pin_exists(pinboard, name = pin_name)) {
+    stop(paste("CL-PFU database product", pin_name, "does not exist."))
+  }
+
+  pinboard |>
+    pins::pin_read(name = pin_name, version = pin_version_string)
+}

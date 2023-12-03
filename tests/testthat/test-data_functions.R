@@ -40,3 +40,22 @@ test_that("tar_ungroup() works as expected", {
   expect_equal(dplyr::groups(res), list())
 })
 
+
+test_that("read_pin_version() works as expected", {
+
+  testthat::skip_on_ci()
+
+  phi_vecs <- read_pin_version(pin_name = "phi_vecs", database_version = 1.2)
+  expect_equal(names(phi_vecs), c("Country", "Year", "phi"))
+
+  phi_vecs_string <- read_pin_version(pin_name = "phi_vecs", database_version = "v1.2")
+  expect_equal(names(phi_vecs), c("Country", "Year", "phi"))
+})
+
+
+test_that("read_pin_version() fails when a non-existent pin is supplied", {
+  testthat::skip_on_ci()
+
+  expect_error(read_pin_version(pin_name = "bogus_pin", database_version = 1.2),
+               "CL-PFU database product bogus_pin does not exist")
+})
