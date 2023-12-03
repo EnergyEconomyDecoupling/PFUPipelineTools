@@ -9,6 +9,10 @@ which always resolves to the latest release.
 
 
 * New function `read_pin_version()`
+* Added GitHub actions for generating website.
+* No new tests
+    - Still at 24 tests, all passing.
+    - Test coverage remains at 100%.
 
 
 # PFUPipelineTools 0.1.2 (2023-08-08) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8226420.svg)](https://doi.org/10.5281/zenodo.8226420)
