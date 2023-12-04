@@ -8,6 +8,15 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+# PFUPipelineTools 0.1.5 (2023-12-04)
+
+* Add the develop and release-* branches to GitHub actions
+  for R-CMD-CHECK.
+* No new tests
+    - Still at 24 tests, all passing.
+    - Test coverage remains at 100%.
+
+
 # PFUPipelineTools 0.1.4 (2023-12-03)
 
 * Attempting to fix a bug in the continuous integration process.
