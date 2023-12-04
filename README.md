@@ -15,11 +15,10 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 [![Project Status: Active – The project has reached a stable, usable
 state and is being actively
 developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
-[![R-CMD-check](https://github.com/EnergyEconomyDecoupling/PFUPipelineTools/workflows/R-CMD-check/badge.svg)](https://github.com/EnergyEconomyDecoupling/PFUPipelineTools/actions)
-[![Codecov test
-coverage](https://codecov.io/gh/EnergyEconomyDecoupling/PFUPipelineTools/branch/master/graph/badge.svg)](https://app.codecov.io/gh/EnergyEconomyDecoupling/PFUPipelineTools?branch=main)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8226419.svg)](https://doi.org/10.5281/zenodo.8226419)
 [![R-CMD-check](https://github.com/EnergyEconomyDecoupling/PFUPipelineTools/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/EnergyEconomyDecoupling/PFUPipelineTools/actions/workflows/R-CMD-check.yaml)
+[![Codecov test
+coverage](https://codecov.io/gh/EnergyEconomyDecoupling/PFUPipelineTools/branch/main/graph/badge.svg)](https://app.codecov.io/gh/EnergyEconomyDecoupling/PFUPipelineTools?branch=main)
 <!-- badges: end -->
 
 PFUPipelineTools provides a single package for several functions that
