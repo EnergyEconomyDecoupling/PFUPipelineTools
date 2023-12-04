@@ -8,7 +8,7 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
-# PFUPipelineTools 0.1.6 (2023-12-04) 
+# PFUPipelineTools 0.1.6 (2023-12-04) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10256768.svg)](https://doi.org/10.5281/zenodo.10256768)
 
 * Add the package dependencies to the code coverage GitHub action.
 * No new tests
