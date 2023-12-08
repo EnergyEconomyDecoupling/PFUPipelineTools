@@ -8,6 +8,12 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+* Added package dependencies for test coverage workflow.
+* No new tests
+    - Still at 24 tests, all passing.
+    - Test coverage remains at 100%.
+
+
 # PFUPipelineTools 0.1.6 (2023-12-04) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10256768.svg)](https://doi.org/10.5281/zenodo.10256768)
 
 * Add the package dependencies to the code coverage GitHub action.
