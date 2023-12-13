@@ -22,12 +22,12 @@ coverage](https://codecov.io/gh/EnergyEconomyDecoupling/PFUPipelineTools/branch/
 
 ## Statement of need
 
-Several packages are involved in creating the CL-PFU database, and
-several of those packages provide computational pipelines for the
-database. Those pipelines need access to common functions, say for
-releasing (saving) computational targets to their respective pins, for
-reading targets from their pins, for filtering by countries and years,
-or removing target groupings.
+Several packages are involved in creating the CL-PFU database, and many
+of those packages provide computational pipelines for the database.
+Those pipelines need access to common functions, say for releasing
+(saving) computational targets to their respective pins, for reading
+targets from their pins, for filtering by countries and years, or
+removing target groupings.
 
 This package (`PFUPipelineTools`) addresses that need, providing a
 single package for several functions that are used across various CL-PFU

@@ -34,7 +34,7 @@ knitr::opts_chunk$set(
 ## Statement of need
 
 Several packages are involved in creating the CL-PFU database, and
-several of those packages provide computational pipelines
+many of those packages provide computational pipelines
 for the database. 
 Those pipelines need access to common functions, say
 for releasing (saving) computational targets to their respective pins, 
