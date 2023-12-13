@@ -3,13 +3,10 @@
 <!-- Note: README.md is generated from README.Rmd.   -->
 <!-- Be sure to edit README.Rmd and generate the README.md file by Cmd/Ctl-shift-K -->
 <!-- *********** -->
-
-# PFUPipelineTools
-
 <!-- badges: start -->
 
 [![CRAN
-status](https://www.r-pkg.org/badges/version/Recca)](https://cran.r-project.org/package=Recca)
+status](https://www.r-pkg.org/badges/version/PFUPipelineTools)](https://cran.r-project.org/package=PFUPipelineTools)
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 [![Project Status: Active – The project has reached a stable, usable
@@ -21,12 +18,24 @@ developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.re
 coverage](https://codecov.io/gh/EnergyEconomyDecoupling/PFUPipelineTools/branch/main/graph/badge.svg)](https://app.codecov.io/gh/EnergyEconomyDecoupling/PFUPipelineTools?branch=main)
 <!-- badges: end -->
 
-PFUPipelineTools provides a single package for several functions that
-are used across various PFU pipelines.
+# PFUPipelineTools
+
+## Statement of need
+
+Several packages are involved in creating the CL-PFU database, and
+several of those packages provide computational pipelines for the
+database. Those pipelines need access to common functions, say for
+releasing (saving) computational targets to their respective pins, for
+reading targets from their pins, for filtering by countries and years,
+or removing target groupings.
+
+This package (`PFUPipelineTools`) addresses that need, providing a
+single package for several functions that are used across various CL-PFU
+database pipelines.
 
 ## Installation
 
-You can install the development version of PFUPipelineTools from
+You can install the development version of `PFUPipelineTools` from
 [GitHub](https://github.com/) with:
 
 ``` r
