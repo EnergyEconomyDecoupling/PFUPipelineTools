@@ -9,6 +9,8 @@ which always resolves to the latest release.
 
 
 
+# PFUPipelineTools 0.1.8 (2023-12-21)
+
 * Added a statement of need to `README.Rmd`.
 * No new tests
     - Still at 24 tests, all passing.
