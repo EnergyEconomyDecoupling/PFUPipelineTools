@@ -9,7 +9,7 @@ which always resolves to the latest release.
 
 
 
-# PFUPipelineTools 0.1.8 (2023-12-21)
+# PFUPipelineTools 0.1.8 (2023-12-21) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10420449.svg)](https://doi.org/10.5281/zenodo.10420449)
 
 * Added a statement of need to `README.Rmd`.
 * No new tests
