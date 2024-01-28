@@ -88,7 +88,7 @@ stash_cache <- function(pipeline_caches_folder, cache_folder, file_prefix, depen
     gsub(pattern = ":", replacement = "") |>
     # Change "+0000" to "Z", where "Z" means Zulu time (GMT offset of 00:00)
     gsub(pattern = "\\+0000", replacement = "Z")
-  invisible(utils::zip(zipfile = zipped_cache_filename, files = cache_folder, extras = "-q"))
+  invisible(utils::zip(zipfile = zipped_cache_filename, files = cache_folder, flags = "--quiet"))
   # Calculate the folder structure for the output
   year <- lubridate::year(Sys.Date())
   month <- lubridate::month(Sys.Date())
