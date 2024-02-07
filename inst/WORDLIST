@@ -6,8 +6,11 @@ Lifecycle
 PFU
 Ungroups
 Zenodo
+coldatatype
+colname
 csv
 doi
+fk
 pinboard
 rds
 subtargets

@@ -24,7 +24,9 @@ Imports:
     PFUSetup,
     parsedate,
     pins,
-    rlang
+    readxl,
+    rlang, 
+    tibble
 Depends: 
     R (>= 2.10)
 LazyData: true

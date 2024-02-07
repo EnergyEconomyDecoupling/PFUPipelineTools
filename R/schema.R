@@ -4,7 +4,7 @@
 #' The file is designed to enable easy changes to the CL-PFU database schema
 #' for successive versions of the database.
 #'
-#' @param db_version The database version for input information.
+#' @param version The database version for input information.
 #' @param schema_path The path to the schema file.
 #'                    Default is `PFUSetup::get_abs_paths()[["schema_path"]]`
 #' @param schema_sheet The name of the sheet in the schema file at `schema_path` that contains
@@ -56,10 +56,10 @@ schema_dm <- function(schema_table, pk_suffix = "_ID") {
   dm_table_names <- schema_table[["Table"]] |>
     unique()
   dm_tables <- dm_table_names |>
-    setNames(dm_table_names) |>
+    stats::setNames(dm_table_names) |>
     lapply(FUN = function(this_table_name) {
       colnames <- schema_table |>
-        dplyr::filter(Table == this_table_name) |>
+        dplyr::filter(.data[["Table"]] == this_table_name) |>
         magrittr::extract2("colname")
       # Convert to a data frame
       this_mat <- matrix(nrow = 0, ncol = length(colnames), dimnames = list(NULL, colnames))
@@ -68,7 +68,7 @@ schema_dm <- function(schema_table, pk_suffix = "_ID") {
         tibble::as_tibble()
       # Set data types
       coldatatypes <- schema_table |>
-        dplyr::filter(Table == this_table_name) |>
+        dplyr::filter(.data[["Table"]] == this_table_name) |>
         magrittr::extract2("coldatatype")
       for (icol in 1:length(coldatatypes)) {
         this_data_type <- coldatatypes[[icol]]
@@ -107,7 +107,7 @@ schema_dm <- function(schema_table, pk_suffix = "_ID") {
 
   # Set foreign keys according to the schema_table
   fk_info <- schema_table |>
-    dplyr::filter(fk.colname != "NA")
+    dplyr::filter(.data[["fk.colname"]] != "NA")
 
   for (irow in 1:nrow(fk_info)) {
     this_table_name <- fk_info[["Table"]][[irow]]

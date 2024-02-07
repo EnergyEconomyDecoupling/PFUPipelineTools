@@ -11,14 +11,14 @@ load_schema_table(
 )
 }
 \arguments{
+\item{version}{The database version for input information.}
+
 \item{schema_path}{The path to the schema file.
 Default is \code{PFUSetup::get_abs_paths()[["schema_path"]]}}
 
 \item{schema_sheet}{The name of the sheet in the schema file at \code{schema_path} that contains
 information about tables, columns, and primary and foreign keys.
 Default is "Schema".}
-
-\item{db_version}{The database version for input information.}
 }
 \value{
 A \code{dm} object containing schema information for the CL-PFU database.
