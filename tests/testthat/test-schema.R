@@ -15,4 +15,21 @@ test_that("schema_dm() works as expected", {
   skip_on_ci()
   clpfu_dm <- load_schema_table(version = "v1.4") |>
     schema_dm()
+  clpfu_dm |>
+    dm::dm_get_all_fks() |>
+    nrow() |>
+    expect_gt(10)
+  clpfu_dm |>
+    dm::dm_get_all_pks() |>
+    nrow() |>
+    expect_gt(10)
+})
+
+
+test_that("schema_dm() fails with unknown data type", {
+  st <- load_schema_table(version = "v1.4")
+  st[[1, "coldatatype"]] <- "bogus"
+  st |>
+    schema_dm() |>
+    expect_error(regexp = "Unknown data type")
 })
