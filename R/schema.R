@@ -109,22 +109,20 @@ schema_dm <- function(schema_table, pk_suffix = "_ID") {
   fk_info <- schema_table |>
     dplyr::filter(.data[["fk.colname"]] != "NA")
 
-  for (irow in 1:nrow(fk_info)) {
-    this_table_name <- fk_info[["Table"]][[irow]]
-    colname <- fk_info[["colname"]][[irow]]
-    fk_table <- fk_info[["fk.table"]][[irow]]
-    fk_colname <- fk_info[["fk.colname"]][[irow]]
-    dm_tables <- dm_tables |>
-      dm::dm_add_fk(table = {{this_table_name}},
-                    columns = {{colname}},
-                    ref_table = {{fk_table}},
-                    ref_columns = {{fk_colname}})
+  if (nrow(fk_info) > 0) {
+    for (irow in 1:nrow(fk_info)) {
+      this_table_name <- fk_info[["Table"]][[irow]]
+      colname <- fk_info[["colname"]][[irow]]
+      fk_table <- fk_info[["fk.table"]][[irow]]
+      fk_colname <- fk_info[["fk.colname"]][[irow]]
+      dm_tables <- dm_tables |>
+        dm::dm_add_fk(table = {{this_table_name}},
+                      columns = {{colname}},
+                      ref_table = {{fk_table}},
+                      ref_columns = {{fk_colname}})
+    }
   }
   return(dm_tables)
 }
 
 
-load_basic_tables <- function(version,
-                              schema_path = PFUSetup::get_abs_paths(version = version)[["schema_path"]]) {
-
-}

@@ -8,7 +8,6 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
-* Add new function `pl_destroy()`.
 * Add new function `load_schema_table()`.
 * Add new function `schema_dm()`.
 
