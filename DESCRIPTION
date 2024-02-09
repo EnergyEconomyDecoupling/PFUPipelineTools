@@ -16,6 +16,7 @@ Config/testthat/edition: 3
 Config/testthat/parallel: true
 Config/testthat/start-first: data_functions
 Imports:
+    DBI,
     dm,
     dplyr,
     IEATools, 
@@ -24,6 +25,7 @@ Imports:
     PFUSetup,
     parsedate,
     pins,
+    purrr,
     readxl,
     rlang, 
     tibble
@@ -31,6 +33,7 @@ Depends:
     R (>= 2.10)
 LazyData: true
 Suggests:
+    RSQLite,
     spelling,
     targets,
     testthat (>= 3.0.0)
