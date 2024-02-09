@@ -40,7 +40,7 @@ Be sure you know what you're doing!
 Because this is a very destructive function,
 the caller must opt into behaviors.
 
-If \code{drop_tables} is \code{TRUE},  \code{destroy_cache} is implied to be \code{TRUE},
+When \code{drop_tables} is \code{TRUE},  \code{destroy_cache} is implied to be \code{TRUE},
 and the targets cache is destroyed.
 
 At present

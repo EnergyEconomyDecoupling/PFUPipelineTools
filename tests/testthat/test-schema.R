@@ -27,9 +27,11 @@ test_that("schema_dm() works as expected", {
 
 
 test_that("schema_dm() fails with unknown data type", {
-  st <- load_schema_table(version = "v1.4")
-  st[[1, "coldatatype"]] <- "bogus"
+  st <- tibble::tribble(~Table, ~colname, ~coldatatype, ~fk.table, ~fk.colname,
+                        "Country", "Country_ID", "bogus", "NA", "NA",
+                        "Country", "Country", "text", "NA", "NA",
+                        "Country", "Description", "text", "NA", "NA")
   st |>
     schema_dm() |>
-    expect_error(regexp = "Unknown data type")
+    expect_error(regexp = "Unknown data type: 'bogus' in schema_dm")
 })
