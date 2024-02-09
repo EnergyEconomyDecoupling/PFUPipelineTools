@@ -29,5 +29,7 @@ The file is designed to enable easy changes to the CL-PFU database schema
 for successive versions of the database.
 }
 \examples{
+\dontrun{
 load_schema_table(version = "v1.4")
+}
 }

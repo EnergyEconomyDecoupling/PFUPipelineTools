@@ -16,7 +16,9 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' load_schema_table(version = "v1.4")
+#' }
 load_schema_table <- function(version,
                               schema_path = PFUSetup::get_abs_paths(version = version)[["schema_path"]],
                               schema_sheet = "Schema") {
