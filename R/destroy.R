@@ -54,8 +54,6 @@ pl_destroy <- function(conn,
         })
     }
   }
-
-
   return(invisible(TRUE))
 }
 
