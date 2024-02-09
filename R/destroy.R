@@ -33,9 +33,9 @@ pl_destroy <- function(conn,
                        destroy_cache = FALSE,
                        drop_tables = FALSE) {
 
-  if (destroy_cache | drop_tables) {
-    # Destroy the local targets cache
-    targets::tar_destroy(verbose = FALSE, ask = FALSE, store = store)
+  if (destroy_cache) {
+    # Delete the local targets cache
+    unlink(store, recursive = TRUE)
   }
 
   if (drop_tables) {
