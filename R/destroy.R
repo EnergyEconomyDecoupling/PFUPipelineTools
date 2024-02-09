@@ -10,8 +10,10 @@
 #' Because this is a very destructive function,
 #' the caller must opt into behaviors.
 #'
-#' If `drop_tables` is `TRUE`,  `destroy_cache` is implied to be `TRUE`,
+#' When `drop_tables` is `TRUE`,  `destroy_cache` is implied to be `TRUE`,
 #' and the targets cache is destroyed.
+#'
+#' At present
 #'
 #' @param conn A `DBI` connection to a database.
 #' @param store The path to the `targets` store.
@@ -44,8 +46,8 @@ pl_destroy <- function(conn,
         purrr::map(function(this_table_name) {
           DBI::dbExecute(conn, paste0('DROP TABLE "', this_table_name, '" CASCADE;'))
         })
-    } else if (inherits(conn, "SQLiteConnection")) {
-      # Remove all tables in SQLite database
+    } else {
+      # Remove all tables in a different type of database
       table_names |>
         purrr::map(function(this_table_name) {
           DBI::dbRemoveTable(conn, name = this_table_name)
