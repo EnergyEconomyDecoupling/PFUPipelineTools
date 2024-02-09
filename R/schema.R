@@ -1,8 +1,10 @@
 #' Read a CL-PFU database schema file
 #'
-#' The schema file is an Excel file that represents the schema for the CL-PFU database.
-#' The file is designed to enable easy changes to the CL-PFU database schema
+#' The SchemaAndSimpleTables.xlsx file contains a sheet that
+#' represents the schema for the CL-PFU database.
+#' The sheet is designed to enable easy changes to the CL-PFU database schema
 #' for successive versions of the database.
+#' This function reads the schema table from the SchemaAndSimpleTables.xlsx file.
 #'
 #' @param version The database version for input information.
 #' @param schema_path The path to the schema file.
@@ -24,6 +26,48 @@ load_schema_table <- function(version,
                               schema_sheet = "Schema") {
   schema_path |>
     readxl::read_excel(sheet = schema_sheet)
+}
+
+
+#' Load simple tables for the CL-PFU database from a spreadsheet
+#'
+#' The SchemaAndSimpleTables.xlsx file contains a sheet that
+#' represents the schema for the CL-PFU database.
+#' The sheet is designed to enable easy changes to the CL-PFU database schema
+#' for successive versions of the database.
+#' This function reads all simple tables from the SchemaAndSimpleTables.xlsx file
+#' and returns a named list of those tables in data frame format.
+#'
+#' `readme_sheet` and `schema_sheet` are ignored.
+#' All other sheets in the file at `schema_path` are assumed to be
+#' simple tables that are meant to be loaded into the database.
+#'
+#' @param version The database version for input information.
+#' @param schema_path The path to the schema file.
+#'                    Default is `PFUSetup::get_abs_paths()[["schema_path"]]`
+#' @param readme_sheet The name of the sheet in the file at `simple_tables_path`
+#'                     that contains readme information.
+#'                     Default is "README".
+#' @param schema_sheet The name of the sheet in the in the file at `simple_tables_path`
+#'                     that contains schema information.`
+#'                     Default is "Schema".
+#'
+#' @return A named list of data frames, each containing a simple table
+#'         of information for the CL-PFU datbase.
+#'
+#' @export
+load_simple_tables <- function(version,
+                               simple_tables_path = PFUSetup::get_abs_paths(version = version)[["schema_path"]],
+                               readme_sheet = "README",
+                               schema_sheet = "Schema") {
+  simple_table_sheet_names <- simple_tables_path |>
+    readxl::excel_sheets() |>
+    setdiff(c(readme_sheet, schema_sheet))
+  simple_table_sheet_names |>
+    setNames(simple_table_sheet_names) |>
+    lapply(FUN = function(this_sheet_name) {
+      readxl::read_excel(simple_tables_path, sheet = this_sheet_name)
+    })
 }
 
 
@@ -129,5 +173,51 @@ schema_dm <- function(schema_table, pk_suffix = "_ID") {
   }
   return(dm_tables)
 }
+
+
+#' Upload a schema and simple tables for the CL-PFU database
+#'
+#' When you need to start over again,
+#' you need to delete database tables, re-define the schema, and upload simple tables.
+#' This function makes it easy.
+#'
+#' Optionally, deletes existing tables in the database before uploading.
+#'
+#' `conn`'s user must have superuser privileges.
+#'
+#' `drop_db_tables` is `FALSE` by default.
+#' But it is unlikely that this function will succeed unless
+#' `drop_db_tables` is set `TRUE`, because
+#' uploading the data model `.dm` to `conn` will fail
+#' if the tables already exist in the database at `conn`.
+#'
+#' @param .dm A data model (a `dm` object).
+#' @param conn A `DBI` connection to a database.
+#' @param drop_db_tables A boolean that tells whether to delete
+#'                       existing tables before uploading the new schema.
+#'
+#' @return The remote data model
+#'
+#' @export
+upload_schema_and_simple_tables <- function(.dm, simple_tables, conn, drop_db_tables = FALSE) {
+  pl_destroy(conn, destroy_cache = FALSE, drop_tables = drop_db_tables)
+  dm::copy_dm_to(conn, .dm, temporary = FALSE)
+  # # Get the remote data model
+  # remote_dm <- dm::dm_from_con(conn, table_names = names(.dm), learn_keys = TRUE)
+  # # Add tables
+  # dm::dm_rows_append(remote_dm,
+  #                    dm::as_dm(simple_tables),
+  #                    in_place = TRUE)
+
+  names(simple_tables) |>
+    purrr::map(function(this_table_name) {
+      DBI::dbAppendTable(conn, this_table_name, simple_tables[[this_table_name]])
+    })
+
+}
+
+
+
+
 
 

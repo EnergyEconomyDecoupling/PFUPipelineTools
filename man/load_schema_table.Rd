@@ -24,9 +24,11 @@ Default is "Schema".}
 A \code{dm} object containing schema information for the CL-PFU database.
 }
 \description{
-The schema file is an Excel file that represents the schema for the CL-PFU database.
-The file is designed to enable easy changes to the CL-PFU database schema
+The SchemaAndSimpleTables.xlsx file contains a sheet that
+represents the schema for the CL-PFU database.
+The sheet is designed to enable easy changes to the CL-PFU database schema
 for successive versions of the database.
+This function reads the schema table from the SchemaAndSimpleTables.xlsx file.
 }
 \examples{
 \dontrun{
