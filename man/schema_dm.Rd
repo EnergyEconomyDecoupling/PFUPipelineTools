@@ -32,6 +32,9 @@ one of "int", "boolean", "text", or "double precision"
 }
 }
 \examples{
-load_schema_table(version = "v1.4") |>
-  schema_dm()
+st <- tibble::tribble(~Table, ~colname, ~coldatatype, ~fk.table, ~fk.colname,
+                      "Country", "Country_ID", "int", "NA", "NA",
+                      "Country", "Country", "text", "NA", "NA",
+                      "Country", "Description", "text", "NA", "NA")
+schema_dm(st)
 }

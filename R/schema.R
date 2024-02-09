@@ -49,8 +49,11 @@ load_schema_table <- function(version,
 #' @export
 #'
 #' @examples
-#' load_schema_table(version = "v1.4") |>
-#'   schema_dm()
+#' st <- tibble::tribble(~Table, ~colname, ~coldatatype, ~fk.table, ~fk.colname,
+#'                       "Country", "Country_ID", "int", "NA", "NA",
+#'                       "Country", "Country", "text", "NA", "NA",
+#'                       "Country", "Description", "text", "NA", "NA")
+#' schema_dm(st)
 schema_dm <- function(schema_table, pk_suffix = "_ID") {
 
   dm_table_names <- schema_table[["Table"]] |>
