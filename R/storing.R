@@ -40,7 +40,8 @@
 #'   pins::pin_read(name = "psut")
 #' # Retrieve a previous version of the `PSUT` target.
 #' my_old_psut <- pinboard |>
-#'   pins::pin_read(name = "psut", version = "20220218T023112Z-1d9e1")}
+#'   pins::pin_read(name = "psut", version = "20220218T023112Z-1d9e1")
+#' }
 release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds", release = FALSE) {
   if (release) {
     # Establish the pinboard
