@@ -4,6 +4,8 @@ DOI
 IEA
 Lifecycle
 PFU
+README
+SchemaAndSimpleTables
 Ungroups
 Zenodo
 coldatatype
@@ -13,8 +15,10 @@ doi
 fk
 pinboard
 rds
+readme
 subtargets
 ungroup
 ungrouped
 ungroups
+xlsx
 zenodo

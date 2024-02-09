@@ -43,8 +43,8 @@ load_schema_table <- function(version,
 #' simple tables that are meant to be loaded into the database.
 #'
 #' @param version The database version for input information.
-#' @param schema_path The path to the schema file.
-#'                    Default is `PFUSetup::get_abs_paths()[["schema_path"]]`
+#' @param simple_tables_path The path to the file containing simple tables.
+#'                           Default is `PFUSetup::get_abs_paths()[["schema_path"]]`
 #' @param readme_sheet The name of the sheet in the file at `simple_tables_path`
 #'                     that contains readme information.
 #'                     Default is "README".
@@ -53,7 +53,7 @@ load_schema_table <- function(version,
 #'                     Default is "Schema".
 #'
 #' @return A named list of data frames, each containing a simple table
-#'         of information for the CL-PFU datbase.
+#'         of information for the CL-PFU database.
 #'
 #' @export
 load_simple_tables <- function(version,
@@ -64,7 +64,7 @@ load_simple_tables <- function(version,
     readxl::excel_sheets() |>
     setdiff(c(readme_sheet, schema_sheet))
   simple_table_sheet_names |>
-    setNames(simple_table_sheet_names) |>
+    stats::setNames(simple_table_sheet_names) |>
     lapply(FUN = function(this_sheet_name) {
       readxl::read_excel(simple_tables_path, sheet = this_sheet_name)
     })

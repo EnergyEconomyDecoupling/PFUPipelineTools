@@ -14,6 +14,9 @@ load_simple_tables(
 \arguments{
 \item{version}{The database version for input information.}
 
+\item{simple_tables_path}{The path to the file containing simple tables.
+Default is \code{PFUSetup::get_abs_paths()[["schema_path"]]}}
+
 \item{readme_sheet}{The name of the sheet in the file at \code{simple_tables_path}
 that contains readme information.
 Default is "README".}
@@ -21,13 +24,10 @@ Default is "README".}
 \item{schema_sheet}{The name of the sheet in the in the file at \code{simple_tables_path}
 that contains schema information.`
 Default is "Schema".}
-
-\item{schema_path}{The path to the schema file.
-Default is \code{PFUSetup::get_abs_paths()[["schema_path"]]}}
 }
 \value{
 A named list of data frames, each containing a simple table
-of information for the CL-PFU datbase.
+of information for the CL-PFU database.
 }
 \description{
 The SchemaAndSimpleTables.xlsx file contains a sheet that
