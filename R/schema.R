@@ -181,17 +181,25 @@ schema_dm <- function(schema_table, pk_suffix = "_ID") {
 #' you need to delete database tables, re-define the schema, and upload simple tables.
 #' This function makes it easy.
 #'
-#' Optionally, deletes existing tables in the database before uploading.
-#'
-#' `conn`'s user must have superuser privileges.
-#'
+#' Optionally (by setting `drop_db_tables = TRUE`),
+#' deletes existing tables in the database before uploading
+#' the schema (`.dm`) and simple tables (`simple_tables`).
 #' `drop_db_tables` is `FALSE` by default.
-#' But it is unlikely that this function will succeed unless
+#' However, it is unlikely that this function will succeed unless
 #' `drop_db_tables` is set `TRUE`, because
 #' uploading the data model `.dm` to `conn` will fail
 #' if the tables already exist in the database at `conn`.
 #'
+#' `simple_tables` should not include any foreign keys,
+#' because the order for uploading `simple_tables` is not guaranteed
+#' to avoid uploading a table with a foreign key before
+#' the table containing the foreign key is available.
+#'
+#' `conn`'s user must have superuser privileges.
+#'
 #' @param .dm A data model (a `dm` object).
+#' @param simple_tables A named list of data frames with the content of
+#'                      tables in `conn`.
 #' @param conn A `DBI` connection to a database.
 #' @param drop_db_tables A boolean that tells whether to delete
 #'                       existing tables before uploading the new schema.

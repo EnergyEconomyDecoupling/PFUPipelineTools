@@ -14,6 +14,9 @@ upload_schema_and_simple_tables(
 \arguments{
 \item{.dm}{A data model (a \code{dm} object).}
 
+\item{simple_tables}{A named list of data frames with the content of
+tables in \code{conn}.}
+
 \item{conn}{A \code{DBI} connection to a database.}
 
 \item{drop_db_tables}{A boolean that tells whether to delete
@@ -28,13 +31,19 @@ you need to delete database tables, re-define the schema, and upload simple tabl
 This function makes it easy.
 }
 \details{
-Optionally, deletes existing tables in the database before uploading.
-
-\code{conn}'s user must have superuser privileges.
-
+Optionally (by setting \code{drop_db_tables = TRUE}),
+deletes existing tables in the database before uploading
+the schema (\code{.dm}) and simple tables (\code{simple_tables}).
 \code{drop_db_tables} is \code{FALSE} by default.
-But it is unlikely that this function will succeed unless
+However, it is unlikely that this function will succeed unless
 \code{drop_db_tables} is set \code{TRUE}, because
 uploading the data model \code{.dm} to \code{conn} will fail
 if the tables already exist in the database at \code{conn}.
+
+\code{simple_tables} should not include any foreign keys,
+because the order for uploading \code{simple_tables} is not guaranteed
+to avoid uploading a table with a foreign key before
+the table containing the foreign key is available.
+
+\code{conn}'s user must have superuser privileges.
 }
