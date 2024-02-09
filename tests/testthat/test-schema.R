@@ -46,6 +46,7 @@ test_that("load_simple_tables() works as expected", {
 
 
 test_that("upload_schema_and_simple_tables() works as expected", {
+  skip_on_ci()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
                          dbname = "playground",
                          host = "eviz.cs.calvin.edu",
@@ -96,6 +97,4 @@ test_that("upload_schema_and_simple_tables() works as expected", {
                                   conn = conn,
                                   drop_db_tables = TRUE) |>
     expect_error(regexp = "In index: 2.")
-
-
 })
