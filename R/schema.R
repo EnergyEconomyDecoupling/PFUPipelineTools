@@ -272,8 +272,8 @@ upload_schema_and_simple_tables <- function(schema,
 #' The user in `conn` must have write access to the database.
 #'
 #' @param .df The data frame to be upserted.
-#' @param remote_table A string identifying the destination for `.df`,
-#'                     the name of a remote database table in `conn`.
+#' @param remote_table_name A string identifying the destination for `.df`,
+#'                          the name of a remote database table in `conn`.
 #' @param conn A connection to the CL-PFU database.
 #'
 #' @return A special hash of `.df`. See details.
@@ -282,8 +282,6 @@ upload_schema_and_simple_tables <- function(schema,
 #'          `upload_schema_and_simple_tables()` for a way to establish the database schema.
 #'
 #' @export
-#'
-#' @examples
 pl_upsert <- function(.df, remote_table_name, conn) {
   DM <- dm::dm_from_con(conn, table_names = remote_table_name, learn_keys = TRUE)
   fk_table <- dm::dm_get_all_fks(DM)

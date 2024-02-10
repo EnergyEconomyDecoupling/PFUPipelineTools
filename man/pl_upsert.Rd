@@ -9,10 +9,10 @@ pl_upsert(.df, remote_table_name, conn)
 \arguments{
 \item{.df}{The data frame to be upserted.}
 
-\item{conn}{A connection to the CL-PFU database.}
-
-\item{remote_table}{A string identifying the destination for \code{.df},
+\item{remote_table_name}{A string identifying the destination for \code{.df},
 the name of a remote database table in \code{conn}.}
+
+\item{conn}{A connection to the CL-PFU database.}
 }
 \value{
 A special hash of \code{.df}. See details.
