@@ -68,6 +68,22 @@ test_that("upload_schema_and_simple_tables() works as expected", {
                       Role = c("Lead singer", "Bassist", "Guitarist", "Drummer"))
   expect_equal(DBI::dbReadTable(conn, "Members"), members)
   expect_equal(DBI::dbReadTable(conn, "Roles"), roles)
+})
+
+
+
+test_that("pl_upsert() works as expected", {
+  skip_on_ci()
+  conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
+                         dbname = "unit_testing",
+                         host = "eviz.cs.calvin.edu",
+                         port = 5432,
+                         user = "postgres")
+  on.exit(DBI::dbDisconnect(conn))
+
+  # Build the data model remotely
+  PFUPipelineTools:::upload_beatles(conn)
+
 
   # Try to upload more data for the fifth Beatle.
   george_martin_member <- data.frame(Member_ID = as.integer(5),
@@ -76,26 +92,21 @@ test_that("upload_schema_and_simple_tables() works as expected", {
                                    Role = "Producer")
   # This should fail due to a bad primary key.
   # There is no Name_ID = 5 in the Members table.
-  dplyr::tbl(conn, "Roles") |>
-    dplyr::rows_upsert(george_martin_role,
-                       by = "Member_ID",
-                       copy = TRUE,
-                       in_place = TRUE) |>
-    expect_error("Can't modify database table")
+  pl_upsert(george_martin_role, "Roles", conn) |>
+    expect_error('insert or update on table "Roles" violates foreign key constraint')
+  # Instead, add George Martin to the Members table so that his primary key will be available.
+  pl_upsert(george_martin_member, "Members", conn)
+  # Then Now add to the Roles table
+  pl_upsert(george_martin_role, "Roles", conn)
+  roles_tbl <- dplyr::tbl(conn, "Roles") |>
+    dplyr::collect()
+  expect_equal(nrow(roles_tbl), 5)
+  expect_equal(roles_tbl$Role, c("Lead singer", "Bassist", "Guitarist", "Drummer", "Producer"))
 
-  # First add George Martin to the Members table.
-  dplyr::tbl(conn, "Members") |>
-    dplyr::rows_upsert(george_martin_member,
-                       by = "Member_ID",
-                       copy = TRUE,
-                       in_place = TRUE)
+  # Try to upsert with "George Martin" in the Member column.
+  # This should decode "George Martin" into the Member_ID of 5 during the upsert.
+  george_martin_role_name <- data.frame(Member_ID = "George Martin",
+                                        Role = "Producer Extraordinaire")
+  pl_upsert(george_martin_role_name, "Roles", "conn")
 
-  # Now add to the Roles table
-  dplyr::tbl(conn, "Roles") |>
-    dplyr::rows_upsert(george_martin_role,
-                       by = "Member_ID",
-                       copy = TRUE,
-                       in_place = TRUE)
 })
-
-

@@ -291,7 +291,7 @@ pl_upsert <- function(.df, remote_table_name, conn) {
   # If so, don't touch it.
   # If not, try to re-code as an integer key.
 
-  pk_table <- dm::dm_get_all_pks(.dm, table = {{this_table_name}})
+  pk_table <- dm::dm_get_all_pks(DM, table = {{remote_table_name}})
   # Make sure we have one and only one primary key column
   assertthat::assert_that(nrow(pk_table) == 1,
                           msg = paste0("Table '",
