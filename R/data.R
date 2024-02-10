@@ -35,3 +35,14 @@
 #' @examples
 #' canonical_countries
 "canonical_countries"
+
+
+#' Key column info
+#'
+#' A string list containing information about database table keys.
+#'
+#' @format A string list with `r length(key_col_info)` entries.
+#'
+#' @examples
+#' key_col_info
+"key_col_info"

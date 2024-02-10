@@ -100,7 +100,7 @@ load_simple_tables <- function(version,
 #'                       "Country", "Country", "text", "NA", "NA",
 #'                       "Country", "Description", "text", "NA", "NA")
 #' schema_dm(st)
-schema_dm <- function(schema_table, pk_suffix = "_ID") {
+schema_dm <- function(schema_table, pk_suffix = PFUPipelineTools::key_col_info$pk_suffix) {
 
   dm_table_names <- schema_table[["Table"]] |>
     unique()
@@ -207,25 +207,37 @@ schema_dm <- function(schema_table, pk_suffix = "_ID") {
 #' @return The remote data model
 #'
 #' @export
-upload_schema_and_simple_tables <- function(.dm, simple_tables, conn, drop_db_tables = FALSE) {
+upload_schema_and_simple_tables <- function(.dm,
+                                            simple_tables,
+                                            conn,
+                                            drop_db_tables = FALSE) {
+  # Get rid of the tables, if desired
   pl_destroy(conn, destroy_cache = FALSE, drop_tables = drop_db_tables)
+  # Copy the data model to conn
   dm::copy_dm_to(conn, .dm, temporary = FALSE)
-  # # Get the remote data model
-  # remote_dm <- dm::dm_from_con(conn, table_names = names(.dm), learn_keys = TRUE)
-  # # Add tables
-  # dm::dm_rows_append(remote_dm,
-  #                    dm::as_dm(simple_tables),
-  #                    in_place = TRUE)
-
+  # Upload the simple tables
   names(simple_tables) |>
     purrr::map(function(this_table_name) {
-      DBI::dbAppendTable(conn, this_table_name, simple_tables[[this_table_name]])
+      # Get the primary keys data frame
+      pk_table <- dm::dm_get_all_pks(.dm, table = {{this_table_name}})
+      # Make sure we have one and only one primary key column
+      assertthat::assert_that(nrow(pk_table) == 1,
+                              msg = paste0("Table '",
+                                           this_table_name,
+                                           "' has ", nrow(pk_table),
+                                           " primary keys. 1 is required."))
+      # Get the primary key name as a string
+      pk_str <- pk_table |>
+        # "pk_col" is the name of the column of primary key names
+        # in the tibble returned by dm::dm_get_all_pks()
+        magrittr::extract2("pk_col") |>
+        magrittr::extract2(1)
+
+      # Upload the simple table to conn
+      dplyr::tbl(conn, this_table_name) |>
+        dplyr::rows_upsert(simple_tables[[this_table_name]],
+                           by = pk_str,
+                           copy = TRUE,
+                           in_place = TRUE)
     })
-
 }
-
-
-
-
-
-

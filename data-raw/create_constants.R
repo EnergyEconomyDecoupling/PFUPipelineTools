@@ -211,4 +211,12 @@ canonical_countries <- dplyr::setdiff(all_countries,
 usethis::use_data(canonical_countries, overwrite = TRUE)
 
 
+#
+# Metadata about table keys
+#
 
+key_col_info <- list(
+  pk_suffix = "_ID"
+)
+
+usethis::use_data(key_col_info, overwrite = TRUE)

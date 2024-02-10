@@ -4,7 +4,7 @@
 \alias{schema_dm}
 \title{Create a data model from an Excel schema table}
 \usage{
-schema_dm(schema_table, pk_suffix = "_ID")
+schema_dm(schema_table, pk_suffix = PFUPipelineTools::key_col_info$pk_suffix)
 }
 \arguments{
 \item{schema_table}{A schema table, typically the output of \code{load_schema_table()}.}
