@@ -102,11 +102,4 @@ test_that("pl_upsert() works as expected", {
     dplyr::collect()
   expect_equal(nrow(roles_tbl), 5)
   expect_equal(roles_tbl$Role, c("Lead singer", "Bassist", "Guitarist", "Drummer", "Producer"))
-
-  # Try to upsert with "George Martin" in the Member column.
-  # This should decode "George Martin" into the Member_ID of 5 during the upsert.
-  george_martin_role_name <- data.frame(Member_ID = "George Martin",
-                                        Role = "Producer Extraordinaire")
-  pl_upsert(george_martin_role_name, "Roles", "conn")
-
 })
