@@ -5,14 +5,14 @@
 \title{Upload a schema and simple tables for the CL-PFU database}
 \usage{
 upload_schema_and_simple_tables(
-  .dm,
+  schema,
   simple_tables,
   conn,
   drop_db_tables = FALSE
 )
 }
 \arguments{
-\item{.dm}{A data model (a \code{dm} object).}
+\item{schema}{A data model (a \code{dm} object).}
 
 \item{simple_tables}{A named list of data frames with the content of
 tables in \code{conn}.}
@@ -33,11 +33,11 @@ This function makes it easy.
 \details{
 Optionally (by setting \code{drop_db_tables = TRUE}),
 deletes existing tables in the database before uploading
-the schema (\code{.dm}) and simple tables (\code{simple_tables}).
+the schema (\code{schema}) and simple tables (\code{simple_tables}).
 \code{drop_db_tables} is \code{FALSE} by default.
 However, it is unlikely that this function will succeed unless
 \code{drop_db_tables} is set \code{TRUE}, because
-uploading the data model \code{.dm} to \code{conn} will fail
+uploading the data model \code{schema} to \code{conn} will fail
 if the tables already exist in the database at \code{conn}.
 
 \code{simple_tables} should not include any foreign keys,

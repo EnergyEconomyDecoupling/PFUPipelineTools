@@ -183,11 +183,11 @@ schema_dm <- function(schema_table, pk_suffix = PFUPipelineTools::key_col_info$p
 #'
 #' Optionally (by setting `drop_db_tables = TRUE`),
 #' deletes existing tables in the database before uploading
-#' the schema (`.dm`) and simple tables (`simple_tables`).
+#' the schema (`schema`) and simple tables (`simple_tables`).
 #' `drop_db_tables` is `FALSE` by default.
 #' However, it is unlikely that this function will succeed unless
 #' `drop_db_tables` is set `TRUE`, because
-#' uploading the data model `.dm` to `conn` will fail
+#' uploading the data model `schema` to `conn` will fail
 #' if the tables already exist in the database at `conn`.
 #'
 #' `simple_tables` should not include any foreign keys,
@@ -197,7 +197,7 @@ schema_dm <- function(schema_table, pk_suffix = PFUPipelineTools::key_col_info$p
 #'
 #' `conn`'s user must have superuser privileges.
 #'
-#' @param .dm A data model (a `dm` object).
+#' @param schema A data model (a `dm` object).
 #' @param simple_tables A named list of data frames with the content of
 #'                      tables in `conn`.
 #' @param conn A `DBI` connection to a database.
@@ -207,19 +207,19 @@ schema_dm <- function(schema_table, pk_suffix = PFUPipelineTools::key_col_info$p
 #' @return The remote data model
 #'
 #' @export
-upload_schema_and_simple_tables <- function(.dm,
+upload_schema_and_simple_tables <- function(schema,
                                             simple_tables,
                                             conn,
                                             drop_db_tables = FALSE) {
   # Get rid of the tables, if desired
   pl_destroy(conn, destroy_cache = FALSE, drop_tables = drop_db_tables)
   # Copy the data model to conn
-  dm::copy_dm_to(conn, .dm, temporary = FALSE)
+  dm::copy_dm_to(conn, schema, temporary = FALSE)
   # Upload the simple tables
   names(simple_tables) |>
     purrr::map(function(this_table_name) {
       # Get the primary keys data frame
-      pk_table <- dm::dm_get_all_pks(.dm, table = {{this_table_name}})
+      pk_table <- dm::dm_get_all_pks(schema, table = {{this_table_name}})
       # Make sure we have one and only one primary key column
       assertthat::assert_that(nrow(pk_table) == 1,
                               msg = paste0("Table '",
@@ -350,7 +350,7 @@ upload_beatles <- function(conn) {
   roles <- data.frame(Member_ID = as.integer(1:4),
                       Role = c("Lead singer", "Bassist", "Guitarist", "Drummer"))
   tables_to_add <- list(Members = members, Roles = roles)
-  upload_schema_and_simple_tables(.dm = DM,
+  upload_schema_and_simple_tables(schema = DM,
                                   simple_tables = tables_to_add,
                                   conn = conn,
                                   drop_db_tables = TRUE)
