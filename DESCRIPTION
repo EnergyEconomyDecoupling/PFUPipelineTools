@@ -29,7 +29,6 @@ Imports:
     purrr,
     readxl,
     rlang, 
-    tarchetypes,
     tibble
 Depends: 
     R (>= 2.10)
@@ -38,6 +37,7 @@ Suggests:
     RPostgres,
     RSQLite,
     spelling,
+    tarchetypes,
     targets,
     testthat (>= 3.0.0)
 URL: https://energyeconomydecoupling.github.io/PFUPipelineTools/

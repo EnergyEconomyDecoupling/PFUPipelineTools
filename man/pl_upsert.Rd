@@ -48,5 +48,5 @@ The user in \code{conn} must have write access to the database.
 }
 \seealso{
 \code{pl_download()} for the reverse operation.
-\code{upload_schema_and_simple_tables()} for a way to establish the database schema.
+\code{pl_upload_schema_and_simple_tables()} for a way to establish the database schema.
 }

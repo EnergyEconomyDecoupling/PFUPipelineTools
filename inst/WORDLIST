@@ -4,9 +4,12 @@ DOI
 IEA
 Lifecycle
 PFU
+Postgres
 README
 SchemaAndSimpleTables
 Ungroups
+Upsert
+Upserts
 Zenodo
 coldatatype
 colname
@@ -16,9 +19,12 @@ fk
 pinboard
 rds
 readme
+recoded
+recoding
 subtargets
 ungroup
 ungrouped
 ungroups
+upserted
 xlsx
 zenodo

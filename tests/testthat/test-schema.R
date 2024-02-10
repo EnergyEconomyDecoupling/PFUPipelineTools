@@ -45,7 +45,7 @@ test_that("load_simple_tables() works as expected", {
 })
 
 
-test_that("upload_schema_and_simple_tables() works as expected", {
+test_that("pl_upload_schema_and_simple_tables() works as expected", {
   skip_on_ci()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
                          dbname = "unit_testing",

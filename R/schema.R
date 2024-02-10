@@ -207,7 +207,7 @@ schema_dm <- function(schema_table, pk_suffix = PFUPipelineTools::key_col_info$p
 #' @return The remote data model
 #'
 #' @export
-upload_schema_and_simple_tables <- function(schema,
+pl_upload_schema_and_simple_tables <- function(schema,
                                             simple_tables,
                                             conn,
                                             drop_db_tables = FALSE) {
@@ -279,7 +279,7 @@ upload_schema_and_simple_tables <- function(schema,
 #' @return A special hash of `.df`. See details.
 #'
 #' @seealso `pl_download()` for the reverse operation.
-#'          `upload_schema_and_simple_tables()` for a way to establish the database schema.
+#'          `pl_upload_schema_and_simple_tables()` for a way to establish the database schema.
 #'
 #' @export
 pl_upsert <- function(.df, remote_table_name, conn) {
@@ -320,6 +320,13 @@ pl_upsert <- function(.df, remote_table_name, conn) {
 #'
 #' @return A list of tables containing Beatles information
 upload_beatles <- function(conn) {
+  # Avoid some notes in R CMD check
+  Member_ID <- NULL
+  Member <- NULL
+  Role <- NULL
+  Members <- NULL
+  Roles <- NULL
+
   # Band members table specification (no data)
   mems <- matrix(nrow = 0, ncol = 2, dimnames = list(c(), c("Member_ID", "Member"))) |>
     as.data.frame() |>
@@ -348,7 +355,7 @@ upload_beatles <- function(conn) {
   roles <- data.frame(Member_ID = as.integer(1:4),
                       Role = c("Lead singer", "Bassist", "Guitarist", "Drummer"))
   tables_to_add <- list(Members = members, Roles = roles)
-  upload_schema_and_simple_tables(schema = DM,
+  pl_upload_schema_and_simple_tables(schema = DM,
                                   simple_tables = tables_to_add,
                                   conn = conn,
                                   drop_db_tables = TRUE)
