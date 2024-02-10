@@ -48,60 +48,37 @@ test_that("load_simple_tables() works as expected", {
 test_that("upload_schema_and_simple_tables() works as expected", {
   skip_on_ci()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
-                         dbname = "playground",
+                         dbname = "unit_testing",
                          host = "eviz.cs.calvin.edu",
                          port = 5432,
-                         user = "mkh2")
+                         user = "postgres")
   on.exit(DBI::dbDisconnect(conn))
-  # Add tables with foreign keys
-  mems <- matrix(nrow = 0, ncol = 2, dimnames = list(c(), c("Name_ID", "Name"))) |>
-    as.data.frame() |>
-    dplyr::mutate(
-      Name_ID = as.integer(Name_ID),
-      Name = as.character(Name)
-    )
-  rls <- matrix(nrow = 0, ncol = 2, dimnames = list(c(), c("Name_ID", "Role"))) |>
-    as.data.frame() |>
-    dplyr::mutate(
-      Name_ID = as.integer(Name_ID),
-      Role = as.character(Role)
-    )
 
-  DM <- list(Members = mems, Roles = rls) |>
-    dm::as_dm() |>
-    dm::dm_add_pk(table = Members, columns = Name_ID, autoincrement = TRUE) |>
-    dm::dm_add_pk(table = Roles, columns = Name_ID, autoincrement = TRUE) |>
-    dm::dm_add_fk(table = Roles, columns = Name_ID, ref_table = Members, ref_columns = Name_ID)
+  # Build the data model remotely
+  PFUPipelineTools:::upload_beatles(conn)
 
-  # Create tables to add to the DM
-  members <- data.frame(Name_ID = as.integer(1:4),
-                       Name = c("John", "Paul", "George", "Ringo"))
-  roles <- data.frame(Name_ID = as.integer(1:4),
-                       Role = c("Lead singer", "Bassist", "Guitarist", "Drummer"))
-  tables_to_add <- list(Members = members, Roles = roles)
-  upload_schema_and_simple_tables(.dm = DM,
-                                  simple_tables = tables_to_add,
-                                  conn = conn,
-                                  drop_db_tables = TRUE)
-
-  # Get the data model from the database
+  # Get the tables from the database
   tables <- DBI::dbListTables(conn)
   for (table_name in c("Members", "Roles")) {
     expect_true(table_name %in% tables)
   }
+  members <- data.frame(Member_ID = as.integer(1:4),
+                        Member = c("John Lennon", "Paul McCartney", "George Harrison", "Ringo Starr"))
+  roles <- data.frame(Member_ID = as.integer(1:4),
+                      Role = c("Lead singer", "Bassist", "Guitarist", "Drummer"))
   expect_equal(DBI::dbReadTable(conn, "Members"), members)
   expect_equal(DBI::dbReadTable(conn, "Roles"), roles)
 
-  # Try to upload more data.
-  george_martin_member <- data.frame(Name_ID = as.integer(5),
-                                     Name = "George Martin")
-  george_martin_role <- data.frame(Name_ID = as.integer(5),
+  # Try to upload more data for the fifth Beatle.
+  george_martin_member <- data.frame(Member_ID = as.integer(5),
+                                     Member = "George Martin")
+  george_martin_role <- data.frame(Member_ID = as.integer(5),
                                    Role = "Producer")
   # This should fail due to a bad primary key.
   # There is no Name_ID = 5 in the Members table.
   dplyr::tbl(conn, "Roles") |>
     dplyr::rows_upsert(george_martin_role,
-                       by = "Name_ID",
+                       by = "Member_ID",
                        copy = TRUE,
                        in_place = TRUE) |>
     expect_error("Can't modify database table")
@@ -109,14 +86,16 @@ test_that("upload_schema_and_simple_tables() works as expected", {
   # First add George Martin to the Members table.
   dplyr::tbl(conn, "Members") |>
     dplyr::rows_upsert(george_martin_member,
-                       by = "Name_ID",
+                       by = "Member_ID",
                        copy = TRUE,
                        in_place = TRUE)
 
   # Now add to the Roles table
   dplyr::tbl(conn, "Roles") |>
     dplyr::rows_upsert(george_martin_role,
-                       by = "Name_ID",
+                       by = "Member_ID",
                        copy = TRUE,
                        in_place = TRUE)
 })
+
+

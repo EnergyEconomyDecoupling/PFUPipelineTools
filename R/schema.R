@@ -241,3 +241,117 @@ upload_schema_and_simple_tables <- function(.dm,
                            in_place = TRUE)
     })
 }
+
+
+#' Upsert a data frame with optional recoding of foreign keys
+#'
+#' Upserts
+#' (inserts or updates,
+#' depending on whether the information already exists in `remote_table`)
+#' `.df` into `remote_table` at `conn`.
+#' This function decodes foreign keys, when possible,
+#' by assuming that all keys are integers.
+#' If non-integers are provided in foreign key columns of `.df`,
+#' the non-integers will be recoded to the integer key values.
+#' Thus, this function assumes that the data model and schema
+#' already exists in `conn`.
+#'
+#' This function knows about CL-PFU database tables that contain
+#' matrix information.
+#' In particular, if `.df` contains matrices,
+#' they are expanded into row-col-val format
+#' before uploading.
+#'
+#' The output of this function is a special data frame that
+#' contains the following columns:
+#'
+#'     * CLPFUDBTable: A column of character strings, all with the value of `remote_table`.
+#'     * All foreign key columns: With their integer values (to save space).
+#'     * Hash: A column with a hash of all non-foreign-key columns.
+#'
+#' The user in `conn` must have write access to the database.
+#'
+#' @param .df The data frame to be upserted.
+#' @param remote_table A string identifying the destination for `.df`,
+#'                     the name of a remote database table in `conn`.
+#' @param conn A connection to the CL-PFU database.
+#'
+#' @return A special hash of `.df`. See details.
+#'
+#' @seealso `pl_download()` for the reverse operation.
+#'          `upload_schema_and_simple_tables()` for a way to establish the database schema.
+#'
+#' @export
+#'
+#' @examples
+pl_upsert <- function(.df, remote_table_name, conn) {
+  DM <- dm::dm_from_con(conn, table_names = remote_table_name, learn_keys = TRUE)
+  fk_table <- dm::dm_get_all_fks(DM)
+  # Check whether each fk column in .df is an integer.
+  # If so, don't touch it.
+  # If not, try to re-code as an integer key.
+
+  pk_table <- dm::dm_get_all_pks(.dm, table = {{this_table_name}})
+  # Make sure we have one and only one primary key column
+  assertthat::assert_that(nrow(pk_table) == 1,
+                          msg = paste0("Table '",
+                                       remote_table_name,
+                                       "' has ", nrow(pk_table),
+                                       " primary keys. 1 is required."))
+  # Get the primary key name as a string
+  pk_str <- pk_table |>
+    # "pk_col" is the name of the column of primary key names
+    # in the tibble returned by dm::dm_get_all_pks()
+    magrittr::extract2("pk_col") |>
+    magrittr::extract2(1)
+
+  dplyr::tbl(conn, remote_table_name) |>
+    dplyr::rows_upsert(.df,
+                       by = pk_str,
+                       copy = TRUE,
+                       in_place = TRUE)
+}
+
+
+
+#' Upload a small database of Beatles information
+#'
+#' Used only for testing.
+#'
+#' @param conn The connection to a Postgres database. Must have write permission.
+#'
+#' @return A list of tables containing Beatles information
+upload_beatles <- function(conn) {
+  # Band members table specification (no data)
+  mems <- matrix(nrow = 0, ncol = 2, dimnames = list(c(), c("Member_ID", "Member"))) |>
+    as.data.frame() |>
+    dplyr::mutate(
+      Member_ID = as.integer(Member_ID),
+      Member = as.character(Member)
+    )
+  # Band roles table specification (no data)
+  rls <- matrix(nrow = 0, ncol = 2, dimnames = list(c(), c("Member_ID", "Role"))) |>
+    as.data.frame() |>
+    dplyr::mutate(
+      Member_ID = as.integer(Member_ID),
+      Role = as.character(Role)
+    )
+
+  # Build the data model
+  DM <- list(Members = mems, Roles = rls) |>
+    dm::as_dm() |>
+    dm::dm_add_pk(table = Members, columns = Member_ID, autoincrement = TRUE) |>
+    dm::dm_add_pk(table = Roles, columns = Member_ID, autoincrement = TRUE) |>
+    dm::dm_add_fk(table = Roles, columns = Member_ID, ref_table = Members, ref_columns = Member_ID)
+
+  # Create tables to add to the DM
+  members <- data.frame(Member_ID = as.integer(1:4),
+                        Member = c("John Lennon", "Paul McCartney", "George Harrison", "Ringo Starr"))
+  roles <- data.frame(Member_ID = as.integer(1:4),
+                      Role = c("Lead singer", "Bassist", "Guitarist", "Drummer"))
+  tables_to_add <- list(Members = members, Roles = roles)
+  upload_schema_and_simple_tables(.dm = DM,
+                                  simple_tables = tables_to_add,
+                                  conn = conn,
+                                  drop_db_tables = TRUE)
+}
