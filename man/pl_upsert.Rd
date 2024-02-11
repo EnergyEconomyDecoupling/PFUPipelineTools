@@ -4,7 +4,12 @@
 \alias{pl_upsert}
 \title{Upsert a data frame with optional recoding of foreign keys}
 \usage{
-pl_upsert(.df, remote_table_name, conn)
+pl_upsert(
+  .df,
+  remote_table_name,
+  conn,
+  schema = dm::dm_from_con(conn, learn_keys = TRUE)
+)
 }
 \arguments{
 \item{.df}{The data frame to be upserted.}
@@ -13,6 +18,10 @@ pl_upsert(.df, remote_table_name, conn)
 the name of a remote database table in \code{conn}.}
 
 \item{conn}{A connection to the CL-PFU database.}
+
+\item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
+Default is \code{dm::dm_from_con(conn, learn_keys = TRUE)}.
+See details.}
 }
 \value{
 A special hash of \code{.df}. See details.
@@ -43,6 +52,12 @@ contains the following columns:
 * All foreign key columns: With their integer values (to save space).
 * Hash: A column with a hash of all non-foreign-key columns.
 }\if{html}{\out{</div>}}
+
+\code{schema} is a data model (\code{dm} object) for the database in \code{conn}.
+Its default value (\code{dm::dm_from_con(conn, learn_keys = TRUE)})
+extracts the data model for the database at \code{conn} automatically.
+However, if the caller already has the data model,
+supplying it in the \code{schema} argument will save time.
 
 The user in \code{conn} must have write access to the database.
 }

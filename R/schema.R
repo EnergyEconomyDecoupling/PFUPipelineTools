@@ -269,12 +269,21 @@ pl_upload_schema_and_simple_tables <- function(schema,
 #'     * All foreign key columns: With their integer values (to save space).
 #'     * Hash: A column with a hash of all non-foreign-key columns.
 #'
+#' `schema` is a data model (`dm` object) for the database in `conn`.
+#' Its default value (`dm::dm_from_con(conn, learn_keys = TRUE)`)
+#' extracts the data model for the database at `conn` automatically.
+#' However, if the caller already has the data model,
+#' supplying it in the `schema` argument will save time.
+#'
 #' The user in `conn` must have write access to the database.
 #'
 #' @param .df The data frame to be upserted.
 #' @param remote_table_name A string identifying the destination for `.df`,
 #'                          the name of a remote database table in `conn`.
 #' @param conn A connection to the CL-PFU database.
+#' @param schema The data model (`dm` object) for the database in `conn`.
+#'               Default is `dm::dm_from_con(conn, learn_keys = TRUE)`.
+#'               See details.
 #'
 #' @return A special hash of `.df`. See details.
 #'
@@ -282,14 +291,12 @@ pl_upload_schema_and_simple_tables <- function(schema,
 #'          `pl_upload_schema_and_simple_tables()` for a way to establish the database schema.
 #'
 #' @export
-pl_upsert <- function(.df, remote_table_name, conn) {
-  DM <- dm::dm_from_con(conn, table_names = remote_table_name, learn_keys = TRUE)
-  fk_table <- dm::dm_get_all_fks(DM)
-  # Check whether each fk column in .df is an integer.
-  # If so, don't touch it.
-  # If not, try to re-code as an integer key.
+pl_upsert <- function(.df,
+                      remote_table_name,
+                      conn,
+                      schema = dm::dm_from_con(conn, learn_keys = TRUE)) {
 
-  pk_table <- dm::dm_get_all_pks(DM, table = {{remote_table_name}})
+  pk_table <- dm::dm_get_all_pks(schema, table = {{remote_table_name}})
   # Make sure we have one and only one primary key column
   assertthat::assert_that(nrow(pk_table) == 1,
                           msg = paste0("Table '",
@@ -303,13 +310,113 @@ pl_upsert <- function(.df, remote_table_name, conn) {
     magrittr::extract2("pk_col") |>
     magrittr::extract2(1)
 
+  # Replace fk column values in .df with keys, if needed
+
+  recoded_df <- .df |>
+    recode_fks(remote_table_name = remote_table_name, conn = conn, schema = schema)
+
   dplyr::tbl(conn, remote_table_name) |>
-    dplyr::rows_upsert(.df,
+    dplyr::rows_upsert(recoded_df,
                        by = pk_str,
                        copy = TRUE,
                        in_place = TRUE)
 }
 
+
+#' Recode foreign keys in a data frame to be uploaded
+#'
+#' In the CL-PFU pipeline,
+#' we allow data frames about to be uploaded
+#' to have foreign key values (not integers)
+#' in foreign key columns.
+#' This function translates the foreign key values
+#' to integers.
+#'
+#' `schema` is a data model (`dm` object) for the database in `conn`.
+#' Its default value (`dm::dm_from_con(conn, learn_keys = TRUE)`)
+#' extracts the data model for the database at `conn` automatically.
+#' However, if the caller already has the data model,
+#' supplying it in the `schema` argument will save time.
+#'
+#' If any values in a foreign key column of `.df`
+#' does not have a corresponding integer,
+#' an error is thrown.
+#'
+#' @param .df The data frame about to be uploaded.
+#' @param remote_table_name The string name of the remote table in `conn` where `.df` is to be uploaded.
+#' @param conn The connection in which `remote_table_name` resides.
+#' @param schema The data model (`dm` object) for the database in `conn`.
+#'               Default is `dm::dm_from_con(conn, learn_keys = TRUE)`.
+#'               See details.
+#'
+#' @return A version of `.df` with foreign key columns guaranteed to be integers.
+#'
+#' @export
+recode_fks <- function(.df,
+                       remote_table_name,
+                       conn,
+                       schema = dm::dm_from_con(conn, learn_keys = TRUE)) {
+
+  # Get details of all foreign keys in .df
+  fk_details_for_remote_table_name <- dm::dm_get_all_fks(schema) |>
+    dplyr::filter(.data[["child_table"]] == remote_table_name)
+  if (nrow(fk_details_for_remote_table_name) == 0) {
+    # There are no foreign key columns in .df,
+    # so just return .df unmodified.
+    return(.df)
+  }
+
+  # Get a vector of string names of foreign key columns in .df
+  fk_cols_in_df <- fk_details_for_remote_table_name |>
+    magrittr::extract2("child_fk_cols") |>
+    unlist()
+
+  # Map over these names, recoding fk columns
+  # to integers, if necessary.
+  fk_cols_in_df |>
+    purrr::map(function(this_fk_col) {
+      if (is.integer(.df[[this_fk_col]])) {
+        # this_fk_col is already an integer,
+        # do nothing.
+      } else {
+        fk_parent_table_name <- fk_details_for_remote_table_name |>
+          dplyr::filter(.data[["child_table"]] == remote_table_name) |>
+          magrittr::extract2("parent_table")
+
+        fk_table <- dplyr::tbl(conn, fk_parent_table_name) |>
+          dplyr::collect()
+        # Set join specification details.
+        # x column to join by is this_fk_col
+        # y column to join by is this_fk_col less the fk suffix
+
+
+
+        #
+        # Maybe instead do a levels trick.
+        #
+
+
+
+
+        join_by_x <- this_fk_col
+        join_by_y <- sub(pattern = paste0("_ID", "$"),
+                         replacement = "",
+                         x = join_by_x)
+        joined.y <- paste0(join_by_x, ".y")
+        # Left join with .df using the join_by details
+        .df <- dplyr::left_join(.df,
+                                fk_table,
+                                by = dplyr::join_by({{join_by_x}} == {{join_by_y}})) |>
+          # Replace the non-integer column with the new integer column
+          dplyr::mutate(
+            "{join_by_x}" := .data[[joined.y]],
+            "{joined.y}" := NULL
+          )
+      }
+    })
+
+  return(.df)
+}
 
 
 #' Upload a small database of Beatles information

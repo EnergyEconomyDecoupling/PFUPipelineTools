@@ -84,7 +84,6 @@ test_that("pl_upsert() works as expected", {
   # Build the data model remotely
   PFUPipelineTools:::upload_beatles(conn)
 
-
   # Try to upload more data for the fifth Beatle.
   george_martin_member <- data.frame(Member_ID = as.integer(5),
                                      Member = "George Martin")
