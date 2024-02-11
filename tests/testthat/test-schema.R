@@ -102,7 +102,6 @@ test_that("pl_upsert() works as expected", {
   expect_equal(nrow(roles_tbl), 5)
   expect_equal(roles_tbl$Role, c("Lead singer", "Bassist", "Guitarist", "Drummer", "Producer"))
 
-
   # Try to upsert with "George Martin" in the Member column.
   # This should decode "George Martin" into the Member_ID of 5 during the upsert.
   # Then change the Role to "Producer Extraordinaire"
@@ -110,4 +109,11 @@ test_that("pl_upsert() works as expected", {
                                         Role = "Producer Extraordinaire")
   pl_upsert(george_martin_role_name, "Roles", conn)
   # Check that George Martin is now Producer Extraordinaire
+  # and in the Roles table has Member_ID of 5.
+  new_roles <- dplyr::tbl(conn, "Roles") |>
+    dplyr::collect()
+  new_roles |>
+    dplyr::filter(Member_ID == 5) |>
+    magrittr::extract2("Role") |>
+    expect_equal("Producer Extraordinaire")
 })

@@ -8,7 +8,14 @@ recode_fks(
   .df,
   db_table_name,
   conn,
-  schema = dm::dm_from_con(conn, learn_keys = TRUE)
+  schema = dm::dm_from_con(conn, learn_keys = TRUE),
+  parent_tables =
+    lapply(self_name(unique(magrittr::extract2(dplyr::filter(dm::dm_get_all_fks(schema),
+    .data[["child_table"]] == db_table_name), "parent_table"))), FUN =
+    function(this_parent_table) {
+     dplyr::collect(dplyr::tbl(conn,
+    this_parent_table))
+ })
 )
 }
 \arguments{

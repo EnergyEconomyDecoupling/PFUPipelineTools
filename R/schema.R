@@ -311,8 +311,7 @@ pl_upsert <- function(.df,
     magrittr::extract2("pk_col") |>
     magrittr::extract2(1)
 
-  # Replace fk column values in .df with keys, if needed
-
+  # Replace fk column values in .df with integer keys, if needed.
   recoded_df <- .df |>
     recode_fks(db_table_name = db_table_name, conn = conn, schema = schema)
 
@@ -356,7 +355,17 @@ pl_upsert <- function(.df,
 recode_fks <- function(.df,
                        db_table_name,
                        conn,
-                       schema = dm::dm_from_con(conn, learn_keys = TRUE)) {
+                       schema = dm::dm_from_con(conn, learn_keys = TRUE),
+                       parent_tables = schema |>
+                         dm::dm_get_all_fks() |>
+                         dplyr::filter(.data[["child_table"]] == db_table_name) |>
+                         magrittr::extract2("parent_table") |>
+                         unique() |>
+                         self_name() |>
+                         lapply(FUN = function(this_parent_table) {
+                           dplyr::tbl(conn, this_parent_table) |>
+                             dplyr::collect()
+                         })) {
 
   # Get details of all foreign keys in .df
   fk_details_for_db_table <- dm::dm_get_all_fks(schema) |>
@@ -392,7 +401,8 @@ recode_fks <- function(.df,
       dplyr::filter(.data[["child_table"]] == db_table_name) |>
       magrittr::extract2("parent_key_cols") |>
       unlist()
-    # Download the table that contains the actual foreign key
+    # Set the levels for the foreign key column.
+    # Start by downloading the foreign key parent table.
     fk_levels <- dplyr::tbl(conn, fk_parent_table) |>
       dplyr::collect() |>
       # Arrange it by fk_colname_in_foreign_table
