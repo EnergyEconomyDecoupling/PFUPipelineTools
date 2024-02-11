@@ -338,8 +338,18 @@ pl_upsert <- function(.df,
 #' However, if the caller already has the data model,
 #' supplying it in the `schema` argument will save time.
 #'
+#' `parent_tables` is a named list of tables containing the foreign
+#' keys for `db_table_name`.
+#' `parent_tables` is treated as a store from which foreign key tables
+#' are retrieved when needed.
+#' The default value (which is several lines of code)
+#' retrieves all foreign key parent tables from conn,
+#' potentially a lengthy process.
+#' To save time, pre-compute the needed foreign key parent tables
+#' and pass the list directly into `parent_tables`.
+#'
 #' If any values in a foreign key column of `.df`
-#' does not have a corresponding integer,
+#' do not have a corresponding integer,
 #' an error is thrown.
 #'
 #' @param .df The data frame about to be uploaded.
@@ -348,6 +358,8 @@ pl_upsert <- function(.df,
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               Default is `dm::dm_from_con(conn, learn_keys = TRUE)`.
 #'               See details.
+#' @param parent_tables A named list of all parent tables
+#'                      for the foreign keys in `db_table_name`.
 #'
 #' @return A version of `.df` with foreign key columns guaranteed to be integers.
 #'
@@ -365,7 +377,8 @@ recode_fks <- function(.df,
                          lapply(FUN = function(this_parent_table) {
                            dplyr::tbl(conn, this_parent_table) |>
                              dplyr::collect()
-                         })) {
+                         })
+                       ) {
 
   # Get details of all foreign keys in .df
   fk_details_for_db_table <- dm::dm_get_all_fks(schema) |>
