@@ -6,7 +6,7 @@
 \usage{
 pl_upsert(
   .df,
-  remote_table_name,
+  db_table_name,
   conn,
   schema = dm::dm_from_con(conn, learn_keys = TRUE)
 )
@@ -14,7 +14,7 @@ pl_upsert(
 \arguments{
 \item{.df}{The data frame to be upserted.}
 
-\item{remote_table_name}{A string identifying the destination for \code{.df},
+\item{db_table_name}{A string identifying the destination for \code{.df},
 the name of a remote database table in \code{conn}.}
 
 \item{conn}{A connection to the CL-PFU database.}
@@ -29,8 +29,8 @@ A special hash of \code{.df}. See details.
 \description{
 Upserts
 (inserts or updates,
-depending on whether the information already exists in \code{remote_table})
-\code{.df} into \code{remote_table} at \code{conn}.
+depending on whether the information already exists in \code{db_table_name})
+\code{.df} into \code{db_table_name} at \code{conn}.
 This function decodes foreign keys, when possible,
 by assuming that all keys are integers.
 If non-integers are provided in foreign key columns of \code{.df},
@@ -48,7 +48,8 @@ before uploading.
 The output of this function is a special data frame that
 contains the following columns:
 
-\if{html}{\out{<div class="sourceCode">}}\preformatted{* CLPFUDBTable: A column of character strings, all with the value of `remote_table`.
+\if{html}{\out{<div class="sourceCode">}}\preformatted{* CLPFUDBTable: A column of character strings,
+                all with the value of `db_table_name`.
 * All foreign key columns: With their integer values (to save space).
 * Hash: A column with a hash of all non-foreign-key columns.
 }\if{html}{\out{</div>}}

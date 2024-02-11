@@ -6,7 +6,7 @@
 \usage{
 recode_fks(
   .df,
-  remote_table_name,
+  db_table_name,
   conn,
   schema = dm::dm_from_con(conn, learn_keys = TRUE)
 )
@@ -14,7 +14,7 @@ recode_fks(
 \arguments{
 \item{.df}{The data frame about to be uploaded.}
 
-\item{remote_table_name}{The string name of the remote table in \code{conn} where \code{.df} is to be uploaded.}
+\item{db_table_name}{The string name of the table in \code{conn} where \code{.df} is to be uploaded.}
 
 \item{conn}{The connection in which \code{remote_table_name} resides.}
 

@@ -109,4 +109,5 @@ test_that("pl_upsert() works as expected", {
   george_martin_role_name <- data.frame(Member_ID = "George Martin",
                                         Role = "Producer Extraordinaire")
   pl_upsert(george_martin_role_name, "Roles", conn)
+  # Check that George Martin is now Producer Extraordinaire
 })

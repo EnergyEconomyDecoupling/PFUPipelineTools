@@ -247,8 +247,8 @@ pl_upload_schema_and_simple_tables <- function(schema,
 #'
 #' Upserts
 #' (inserts or updates,
-#' depending on whether the information already exists in `remote_table`)
-#' `.df` into `remote_table` at `conn`.
+#' depending on whether the information already exists in `db_table_name`)
+#' `.df` into `db_table_name` at `conn`.
 #' This function decodes foreign keys, when possible,
 #' by assuming that all keys are integers.
 #' If non-integers are provided in foreign key columns of `.df`,
@@ -265,7 +265,8 @@ pl_upload_schema_and_simple_tables <- function(schema,
 #' The output of this function is a special data frame that
 #' contains the following columns:
 #'
-#'     * CLPFUDBTable: A column of character strings, all with the value of `remote_table`.
+#'     * CLPFUDBTable: A column of character strings,
+#'                     all with the value of `db_table_name`.
 #'     * All foreign key columns: With their integer values (to save space).
 #'     * Hash: A column with a hash of all non-foreign-key columns.
 #'
@@ -278,8 +279,8 @@ pl_upload_schema_and_simple_tables <- function(schema,
 #' The user in `conn` must have write access to the database.
 #'
 #' @param .df The data frame to be upserted.
-#' @param remote_table_name A string identifying the destination for `.df`,
-#'                          the name of a remote database table in `conn`.
+#' @param db_table_name A string identifying the destination for `.df`,
+#'                      the name of a remote database table in `conn`.
 #' @param conn A connection to the CL-PFU database.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               Default is `dm::dm_from_con(conn, learn_keys = TRUE)`.
@@ -292,15 +293,15 @@ pl_upload_schema_and_simple_tables <- function(schema,
 #'
 #' @export
 pl_upsert <- function(.df,
-                      remote_table_name,
+                      db_table_name,
                       conn,
                       schema = dm::dm_from_con(conn, learn_keys = TRUE)) {
 
-  pk_table <- dm::dm_get_all_pks(schema, table = {{remote_table_name}})
+  pk_table <- dm::dm_get_all_pks(schema, table = {{db_table_name}})
   # Make sure we have one and only one primary key column
   assertthat::assert_that(nrow(pk_table) == 1,
                           msg = paste0("Table '",
-                                       remote_table_name,
+                                       db_table_name,
                                        "' has ", nrow(pk_table),
                                        " primary keys. 1 is required."))
   # Get the primary key name as a string
@@ -313,9 +314,9 @@ pl_upsert <- function(.df,
   # Replace fk column values in .df with keys, if needed
 
   recoded_df <- .df |>
-    recode_fks(remote_table_name = remote_table_name, conn = conn, schema = schema)
+    recode_fks(db_table_name = db_table_name, conn = conn, schema = schema)
 
-  dplyr::tbl(conn, remote_table_name) |>
+  dplyr::tbl(conn, db_table_name) |>
     dplyr::rows_upsert(recoded_df,
                        by = pk_str,
                        copy = TRUE,
@@ -343,7 +344,7 @@ pl_upsert <- function(.df,
 #' an error is thrown.
 #'
 #' @param .df The data frame about to be uploaded.
-#' @param remote_table_name The string name of the remote table in `conn` where `.df` is to be uploaded.
+#' @param db_table_name The string name of the table in `conn` where `.df` is to be uploaded.
 #' @param conn The connection in which `remote_table_name` resides.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               Default is `dm::dm_from_con(conn, learn_keys = TRUE)`.
@@ -353,121 +354,63 @@ pl_upsert <- function(.df,
 #'
 #' @export
 recode_fks <- function(.df,
-                       remote_table_name,
+                       db_table_name,
                        conn,
                        schema = dm::dm_from_con(conn, learn_keys = TRUE)) {
 
   # Get details of all foreign keys in .df
-  fk_details_for_remote_table_name <- dm::dm_get_all_fks(schema) |>
-    dplyr::filter(.data[["child_table"]] == remote_table_name)
-  if (nrow(fk_details_for_remote_table_name) == 0) {
+  fk_details_for_db_table <- dm::dm_get_all_fks(schema) |>
+    dplyr::filter(.data[["child_table"]] == db_table_name)
+  if (nrow(fk_details_for_db_table) == 0) {
     # There are no foreign key columns in .df,
     # so just return .df unmodified.
     return(.df)
   }
 
   # Get a vector of string names of foreign key columns in .df
-  fk_cols_in_df <- fk_details_for_remote_table_name |>
+  fk_cols_in_df <- fk_details_for_db_table |>
     magrittr::extract2("child_fk_cols") |>
     unlist()
 
-  # Map over these names, recoding fk columns
-  # to integers, if necessary.
-  fk_cols_in_df |>
-    purrr::map(function(this_fk_col) {
-      if (is.integer(.df[[this_fk_col]])) {
-        # this_fk_col is already an integer,
-        # do nothing.
-      } else {
-        # fk_parent_table_name <- fk_details_for_remote_table_name |>
-        #   dplyr::filter(.data[["child_table"]] == remote_table_name) |>
-        #   magrittr::extract2("parent_table")
-        #
-        # fk_table <- dplyr::tbl(conn, fk_parent_table_name) |>
-        #   dplyr::collect()
-        # # Set join specification details.
-        # # x column to join by is this_fk_col
-        # # y column to join by is this_fk_col less the fk suffix
-        #
-        #
-        #
-        # #
-        # # Maybe instead do a levels trick.
-        # #
-        #
-        #
-        #
-        #
-        # join_by_x <- this_fk_col
-        # join_by_y <- sub(pattern = paste0("_ID", "$"),
-        #                  replacement = "",
-        #                  x = join_by_x)
-        # joined.y <- paste0(join_by_x, ".y")
-        # # Left join with .df using the join_by details
-        # .df <- dplyr::left_join(.df,
-        #                         fk_table,
-        #                         by = dplyr::join_by({{join_by_x}} == {{join_by_y}})) |>
-        #   # Replace the non-integer column with the new integer column
-        #   dplyr::mutate(
-        #     "{join_by_x}" := .data[[joined.y]],
-        #     "{joined.y}" := NULL
-        #   )
-        fk_parent_table_name <- fk_details_for_remote_table_name |>
-          dplyr::filter(.data[["child_table"]] == remote_table_name) |>
-          magrittr::extract2("parent_table")
+  for (this_fk_col_in_df in fk_cols_in_df) {
+    if (is.integer(.df[[this_fk_col_in_df]])) {
+      # this_fk_col_in_df is already an integer,
+      # No need to recode.
+      # Do nothing.
+      break
+    }
+    # this_fk_col_in_df is NOT an integer.
+    # Need to recode.
+    fk_parent_table <- fk_details_for_db_table |>
+      # Get the foreign table name
+      dplyr::filter(.data[["child_table"]] == db_table_name) |>
+      magrittr::extract2("parent_table")
 
-
-        # Get a data frame of foreign keys for remote_table_name
-        fks_for_remote_table_name <- schema |>
-          dm::dm_get_all_fks() |>
-          dplyr::filter(.data[["child_table"]] == remote_table_name)
-
-        if (nrow(fks_for_remote_table_name) == 0) {
-          # There are no foreign key columns in .df,
-          # so just return .df unmodified.
-          return(.df)
-        }
-
-        # Get a vector of string names of foreign key columns in .df
-        fk_cols_in_df <- fks_for_remote_table_name |>
-          magrittr::extract2("child_fk_cols") |>
-          unlist()
-
-        # Map over these names, recoding fk columns
-        # to integers, if necessary.
-        fk_cols_in_df |>
-          purrr::map(function(this_fk_col) {
-            fk_parent_table_name <- fks_for_remote_table_name |>
-              # Get the foreign table name
-              dplyr::filter(.data[["child_table"]] == remote_table_name) |>
-              magrittr::extract2("parent_table")
-            # Get the name of the column in fk_parent_table_name
-            # that contains the foreign key
-            fk_colname_in_foreign_table <- fks_for_remote_table_name |>
-              dplyr::filter(.data[["child_table"]] == remote_table_name) |>
-              magrittr::extract2("parent_key_cols") |>
-              unlist()
-            # Download the table that contains the actual foreign key
-            fk_levels <- dplyr::tbl(conn, fk_parent_table_name) |>
-              dplyr::collect() |>
-              # Arrange it by fk_colname_in_foreign_table
-              # to generate ordered levels
-              dplyr::arrange(fk_colname_in_foreign_table) |>
-              # Extract the column that is NOT the foreign key.
-              # This is probably a column of names, but they are the
-              # levels we will need.
-              dplyr::select(-{{this_fk_col}}) |>
-              unlist() |>
-              unname()
-            # Change this_fk_col to a factor with those levels.
-            .df <- .df |>
-              dplyr::mutate(
-                "{this_fk_col}" := factor(.data[[this_fk_col]], levels = fk_levels),
-                "{this_fk_col}" := as.integer(.data[[this_fk_col]])
-              )
-          })
-        }
-    })
+    # Get the name of the column in fk_parent_table_name
+    # that contains the foreign key
+    fk_colname_in_foreign_table <- fk_details_for_db_table |>
+      dplyr::filter(.data[["child_table"]] == db_table_name) |>
+      magrittr::extract2("parent_key_cols") |>
+      unlist()
+    # Download the table that contains the actual foreign key
+    fk_levels <- dplyr::tbl(conn, fk_parent_table) |>
+      dplyr::collect() |>
+      # Arrange it by fk_colname_in_foreign_table
+      # to generate ordered levels
+      dplyr::arrange(fk_colname_in_foreign_table) |>
+      # Extract the column that is NOT the foreign key.
+      # This is probably a column of names, but they are the
+      # levels we will need.
+      dplyr::select(-{{this_fk_col_in_df}}) |>
+      unlist() |>
+      unname()
+    # Change this_fk_col to a factor with those levels.
+    .df <- .df |>
+      dplyr::mutate(
+        "{this_fk_col_in_df}" := factor(.data[[this_fk_col_in_df]], levels = fk_levels),
+        "{this_fk_col_in_df}" := as.integer(.data[[this_fk_col_in_df]])
+      )
+  }
 
   return(.df)
 }
