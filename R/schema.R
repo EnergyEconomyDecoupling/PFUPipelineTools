@@ -379,40 +379,94 @@ recode_fks <- function(.df,
         # this_fk_col is already an integer,
         # do nothing.
       } else {
+        # fk_parent_table_name <- fk_details_for_remote_table_name |>
+        #   dplyr::filter(.data[["child_table"]] == remote_table_name) |>
+        #   magrittr::extract2("parent_table")
+        #
+        # fk_table <- dplyr::tbl(conn, fk_parent_table_name) |>
+        #   dplyr::collect()
+        # # Set join specification details.
+        # # x column to join by is this_fk_col
+        # # y column to join by is this_fk_col less the fk suffix
+        #
+        #
+        #
+        # #
+        # # Maybe instead do a levels trick.
+        # #
+        #
+        #
+        #
+        #
+        # join_by_x <- this_fk_col
+        # join_by_y <- sub(pattern = paste0("_ID", "$"),
+        #                  replacement = "",
+        #                  x = join_by_x)
+        # joined.y <- paste0(join_by_x, ".y")
+        # # Left join with .df using the join_by details
+        # .df <- dplyr::left_join(.df,
+        #                         fk_table,
+        #                         by = dplyr::join_by({{join_by_x}} == {{join_by_y}})) |>
+        #   # Replace the non-integer column with the new integer column
+        #   dplyr::mutate(
+        #     "{join_by_x}" := .data[[joined.y]],
+        #     "{joined.y}" := NULL
+        #   )
         fk_parent_table_name <- fk_details_for_remote_table_name |>
           dplyr::filter(.data[["child_table"]] == remote_table_name) |>
           magrittr::extract2("parent_table")
 
-        fk_table <- dplyr::tbl(conn, fk_parent_table_name) |>
-          dplyr::collect()
-        # Set join specification details.
-        # x column to join by is this_fk_col
-        # y column to join by is this_fk_col less the fk suffix
 
+        # Get a data frame of foreign keys for remote_table_name
+        fks_for_remote_table_name <- schema |>
+          dm::dm_get_all_fks() |>
+          dplyr::filter(.data[["child_table"]] == remote_table_name)
 
+        if (nrow(fks_for_remote_table_name) == 0) {
+          # There are no foreign key columns in .df,
+          # so just return .df unmodified.
+          return(.df)
+        }
 
-        #
-        # Maybe instead do a levels trick.
-        #
+        # Get a vector of string names of foreign key columns in .df
+        fk_cols_in_df <- fks_for_remote_table_name |>
+          magrittr::extract2("child_fk_cols") |>
+          unlist()
 
-
-
-
-        join_by_x <- this_fk_col
-        join_by_y <- sub(pattern = paste0("_ID", "$"),
-                         replacement = "",
-                         x = join_by_x)
-        joined.y <- paste0(join_by_x, ".y")
-        # Left join with .df using the join_by details
-        .df <- dplyr::left_join(.df,
-                                fk_table,
-                                by = dplyr::join_by({{join_by_x}} == {{join_by_y}})) |>
-          # Replace the non-integer column with the new integer column
-          dplyr::mutate(
-            "{join_by_x}" := .data[[joined.y]],
-            "{joined.y}" := NULL
-          )
-      }
+        # Map over these names, recoding fk columns
+        # to integers, if necessary.
+        fk_cols_in_df |>
+          purrr::map(function(this_fk_col) {
+            fk_parent_table_name <- fks_for_remote_table_name |>
+              # Get the foreign table name
+              dplyr::filter(.data[["child_table"]] == remote_table_name) |>
+              magrittr::extract2("parent_table")
+            # Get the name of the column in fk_parent_table_name
+            # that contains the foreign key
+            fk_colname_in_foreign_table <- fks_for_remote_table_name |>
+              dplyr::filter(.data[["child_table"]] == remote_table_name) |>
+              magrittr::extract2("parent_key_cols") |>
+              unlist()
+            # Download the table that contains the actual foreign key
+            fk_levels <- dplyr::tbl(conn, fk_parent_table_name) |>
+              dplyr::collect() |>
+              # Arrange it by fk_colname_in_foreign_table
+              # to generate ordered levels
+              dplyr::arrange(fk_colname_in_foreign_table) |>
+              # Extract the column that is NOT the foreign key.
+              # This is probably a column of names, but they are the
+              # levels we will need.
+              dplyr::select(-{{this_fk_col}}) |>
+              unlist() |>
+              unname()
+            # Change this_fk_col to a factor with those levels.
+            .df <- .df |>
+              dplyr::mutate(
+                "{this_fk_col}" := factor(.data[[this_fk_col]], levels = fk_levels),
+                "{this_fk_col}" := as.integer(.data[[this_fk_col]])
+              )
+          })
+        }
     })
 
   return(.df)
