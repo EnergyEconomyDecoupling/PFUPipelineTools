@@ -14,10 +14,12 @@ Upserts
 Zenodo
 coldatatype
 colname
+conn
 csv
 doi
 fk
 pinboard
+pre
 rds
 readme
 recoded

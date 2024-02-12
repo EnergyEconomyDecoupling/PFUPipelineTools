@@ -28,6 +28,9 @@ recode_fks(
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
 Default is \code{dm::dm_from_con(conn, learn_keys = TRUE)}.
 See details.}
+
+\item{parent_tables}{A named list of all parent tables
+for the foreign keys in \code{db_table_name}.}
 }
 \value{
 A version of \code{.df} with foreign key columns guaranteed to be integers.
@@ -47,7 +50,17 @@ extracts the data model for the database at \code{conn} automatically.
 However, if the caller already has the data model,
 supplying it in the \code{schema} argument will save time.
 
+\code{parent_tables} is a named list of tables containing the foreign
+keys for \code{db_table_name}.
+\code{parent_tables} is treated as a store from which foreign key tables
+are retrieved when needed.
+The default value (which is several lines of code)
+retrieves all foreign key parent tables from conn,
+potentially a lengthy process.
+To save time, pre-compute the needed foreign key parent tables
+and pass the list directly into \code{parent_tables}.
+
 If any values in a foreign key column of \code{.df}
-does not have a corresponding integer,
+do not have a corresponding integer,
 an error is thrown.
 }
