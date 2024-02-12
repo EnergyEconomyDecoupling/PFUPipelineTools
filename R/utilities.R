@@ -43,18 +43,18 @@ self_name <- function(x) {
 #' However, if the caller already has the data model,
 #' supplying it in the `schema` argument will save some time.
 #'
+#' @param conn A connection to a database.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               Default is `dm::dm_from_con(conn, learn_keys = TRUE)`.
 #'               See details.
-#' @param conn A connection to a database.
 #'
 #' @return A named list of data frames,
 #'         where each data frame
 #'         is a table in `conn` that contains
 #'         foreign keys and their values.
 #' @export
-get_all_fk_tables <- function(schema = dm::dm_from_con(conn, learn_keys = TRUE),
-                              conn) {
+get_all_fk_tables <- function(conn,
+                              schema = dm::dm_from_con(conn, learn_keys = TRUE)) {
   schema |>
     dm::dm_get_all_fks() |>
     magrittr::extract2("parent_table") |>

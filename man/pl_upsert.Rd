@@ -7,10 +7,10 @@
 pl_upsert(
   .df,
   db_table_name,
-  in_place = FALSE,
   conn,
+  in_place = FALSE,
   schema = dm::dm_from_con(conn, learn_keys = TRUE),
-  fk_tables = get_all_fk_tables(schema, conn)
+  fk_parent_tables = PFUPipelineTools::get_all_fk_tables(conn = conn, schema = schema)
 )
 }
 \arguments{
@@ -19,17 +19,17 @@ pl_upsert(
 \item{db_table_name}{A string identifying the destination for \code{.df},
 the name of a remote database table in \code{conn}.}
 
+\item{conn}{A connection to the CL-PFU database.}
+
 \item{in_place}{A boolean that tells whether to modify the database at \code{conn}.
 Default is \code{FALSE}, which is helpful if you want to chain
 several requests.}
-
-\item{conn}{A connection to the CL-PFU database.}
 
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
 Default is \code{dm::dm_from_con(conn, learn_keys = TRUE)}.
 See details.}
 
-\item{parent_tables}{A named list of all parent tables
+\item{fk_parent_tables}{A named list of all parent tables
 for the foreign keys in \code{db_table_name}.
 See details.}
 }

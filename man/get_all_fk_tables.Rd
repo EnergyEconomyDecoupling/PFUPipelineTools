@@ -4,14 +4,14 @@
 \alias{get_all_fk_tables}
 \title{Get a named list of foreign key tables}
 \usage{
-get_all_fk_tables(schema = dm::dm_from_con(conn, learn_keys = TRUE), conn)
+get_all_fk_tables(conn, schema = dm::dm_from_con(conn, learn_keys = TRUE))
 }
 \arguments{
+\item{conn}{A connection to a database.}
+
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
 Default is \code{dm::dm_from_con(conn, learn_keys = TRUE)}.
 See details.}
-
-\item{conn}{A connection to a database.}
 }
 \value{
 A named list of data frames,

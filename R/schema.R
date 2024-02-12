@@ -293,16 +293,16 @@ pl_upload_schema_and_simple_tables <- function(schema,
 #' @param .df The data frame to be upserted.
 #' @param db_table_name A string identifying the destination for `.df`,
 #'                      the name of a remote database table in `conn`.
+#' @param conn A connection to the CL-PFU database.
 #' @param in_place A boolean that tells whether to modify the database at `conn`.
 #'                 Default is `FALSE`, which is helpful if you want to chain
 #'                 several requests.
-#' @param conn A connection to the CL-PFU database.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               Default is `dm::dm_from_con(conn, learn_keys = TRUE)`.
 #'               See details.
-#' @param parent_tables A named list of all parent tables
-#'                      for the foreign keys in `db_table_name`.
-#'                      See details.
+#' @param fk_parent_tables A named list of all parent tables
+#'                         for the foreign keys in `db_table_name`.
+#'                         See details.
 #'
 #' @return A special hash of `.df`. See details.
 #'
@@ -312,10 +312,10 @@ pl_upload_schema_and_simple_tables <- function(schema,
 #' @export
 pl_upsert <- function(.df,
                       db_table_name,
-                      in_place = FALSE,
                       conn,
+                      in_place = FALSE,
                       schema = dm::dm_from_con(conn, learn_keys = TRUE),
-                      fk_tables = get_all_fk_tables(schema, conn)) {
+                      fk_parent_tables = PFUPipelineTools::get_all_fk_tables(conn = conn, schema = schema)) {
 
   pk_table <- dm::dm_get_all_pks(schema, table = {{db_table_name}})
   # Make sure we have one and only one primary key column
@@ -334,9 +334,8 @@ pl_upsert <- function(.df,
   # Replace fk column values in .df with integer keys, if needed.
   recoded_df <- .df |>
     recode_fks(db_table_name = db_table_name,
-               conn = conn,
                schema = schema,
-               parent_tables = fk_tables)
+               fk_parent_tables = fk_parent_tables)
 
   dplyr::tbl(conn, db_table_name) |>
     dplyr::rows_upsert(recoded_df,
@@ -350,61 +349,45 @@ pl_upsert <- function(.df,
 #'
 #' In the CL-PFU pipeline,
 #' we allow data frames about to be uploaded
-#' to have foreign key values (not integers)
+#' to the database
+#' to have foreign key values (usually strings)
 #' in foreign key columns.
-#' This function translates the foreign key values
-#' to integers.
+#' This function translates the fk values
+#' to fk keys.
 #'
-#' `schema` is a data model (`dm` object) for the database in `conn`.
-#' Its default value (`dm::dm_from_con(conn, learn_keys = TRUE)`)
-#' extracts the data model for the database at `conn` automatically.
-#' However, if the caller already has the data model,
-#' supplying it in the `schema` argument will save time.
+#' `schema` is a data model (`dm` object) for the CL-PFU database.
+#' It can be obtained from code such as
+#' `dm::dm_from_con(con = << a database connection >>, learn_keys = TRUE)`.
 #'
 #' `parent_tables` is a named list of tables,
-#' one of which (the one named `db_table_name`)
-#' contains the foreign keys for `db_table_name`.
-#' `parent_tables` is treated as a store from which foreign key tables
+#' some of which are fk parent tables containing
+#' the mapping between fk values (usually string)
+#' and fk keys (usually integers)
+#' for `db_table_name`.
+#' `fk_parent_tables` is treated as a store from which foreign key tables
 #' are retrieved by name when needed.
-#' The default value (which is several lines of code)
-#' retrieves all possible foreign key parent tables from conn,
-#' potentially a time-consuming process.
-#' For speed, pre-compute all foreign key parent tables once
-#' and pass the list to the `parent_tables` argument
-#' of all similar functions.
+#' An appropriate value for `parent_tables` can be obtained
+#' from `get_all_fk_tables()`.
 #'
-#' If any values in a foreign key column of `.df`
-#' do not have a corresponding integer,
-#' an error is thrown.
+#' If `.df` contains no foreign key columns,
+#' `.df` is returned unmodified.
 #'
 #' @param .df The data frame about to be uploaded.
-#' @param db_table_name The string name of the table in `conn` where `.df` is to be uploaded.
-#' @param conn The connection in which `remote_table_name` resides.
+#' @param db_table_name The string name of the database table where `.df` is to be uploaded.
 #' @param schema The data model (`dm` object) for the database in `conn`.
-#'               Default is `dm::dm_from_con(conn, learn_keys = TRUE)`.
 #'               See details.
 #' @param parent_tables A named list of all parent tables
 #'                      for the foreign keys in `db_table_name`.
 #'                      See details.
 #'
-#' @return A version of `.df` with foreign key columns guaranteed to be integers.
+#' @return A version of `.df` with fk values (often strings)
+#'         replaced by fk keys (integers).
 #'
 #' @export
 recode_fks <- function(.df,
                        db_table_name,
-                       conn,
-                       schema = dm::dm_from_con(conn, learn_keys = TRUE),
-                       parent_tables = schema |>
-                         dm::dm_get_all_fks() |>
-                         dplyr::filter(.data[["child_table"]] == db_table_name) |>
-                         magrittr::extract2("parent_table") |>
-                         unique() |>
-                         self_name() |>
-                         lapply(FUN = function(this_parent_table) {
-                           dplyr::tbl(conn, this_parent_table) |>
-                             dplyr::collect()
-                         })
-                       ) {
+                       schema,
+                       fk_parent_tables) {
 
   # Get details of all foreign keys in .df
   fk_details_for_db_table <- schema |>
@@ -444,7 +427,7 @@ recode_fks <- function(.df,
     # The levels information is contained in parent_tables.
     # Start by extracting the parent table that we need from
     # the parent_tables list.
-    fk_levels <- parent_tables[[fk_parent_table]] |>
+    fk_levels <- fk_parent_tables[[fk_parent_table]] |>
       # Arrange it by fk_colname_in_foreign_table
       # to generate ordered levels
       dplyr::arrange(fk_colname_in_foreign_table) |>

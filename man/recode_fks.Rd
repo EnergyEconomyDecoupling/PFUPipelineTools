@@ -4,29 +4,14 @@
 \alias{recode_fks}
 \title{Recode foreign keys in a data frame to be uploaded}
 \usage{
-recode_fks(
-  .df,
-  db_table_name,
-  conn,
-  schema = dm::dm_from_con(conn, learn_keys = TRUE),
-  parent_tables =
-    lapply(self_name(unique(magrittr::extract2(dplyr::filter(dm::dm_get_all_fks(schema),
-    .data[["child_table"]] == db_table_name), "parent_table"))), FUN =
-    function(this_parent_table) {
-     dplyr::collect(dplyr::tbl(conn,
-    this_parent_table))
- })
-)
+recode_fks(.df, db_table_name, schema, fk_parent_tables)
 }
 \arguments{
 \item{.df}{The data frame about to be uploaded.}
 
-\item{db_table_name}{The string name of the table in \code{conn} where \code{.df} is to be uploaded.}
-
-\item{conn}{The connection in which \code{remote_table_name} resides.}
+\item{db_table_name}{The string name of the database table where \code{.df} is to be uploaded.}
 
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
-Default is \code{dm::dm_from_con(conn, learn_keys = TRUE)}.
 See details.}
 
 \item{parent_tables}{A named list of all parent tables
@@ -34,36 +19,33 @@ for the foreign keys in \code{db_table_name}.
 See details.}
 }
 \value{
-A version of \code{.df} with foreign key columns guaranteed to be integers.
+A version of \code{.df} with fk values (often strings)
+replaced by fk keys (integers).
 }
 \description{
 In the CL-PFU pipeline,
 we allow data frames about to be uploaded
-to have foreign key values (not integers)
+to the database
+to have foreign key values (usually strings)
 in foreign key columns.
-This function translates the foreign key values
-to integers.
+This function translates the fk values
+to fk keys.
 }
 \details{
-\code{schema} is a data model (\code{dm} object) for the database in \code{conn}.
-Its default value (\code{dm::dm_from_con(conn, learn_keys = TRUE)})
-extracts the data model for the database at \code{conn} automatically.
-However, if the caller already has the data model,
-supplying it in the \code{schema} argument will save time.
+\code{schema} is a data model (\code{dm} object) for the CL-PFU database.
+It can be obtained from code such as
+\verb{dm::dm_from_con(con = << a database connection >>, learn_keys = TRUE)}.
 
 \code{parent_tables} is a named list of tables,
-one of which (the one named \code{db_table_name})
-contains the foreign keys for \code{db_table_name}.
-\code{parent_tables} is treated as a store from which foreign key tables
+some of which are fk parent tables containing
+the mapping between fk values (usually string)
+and fk keys (usually integers)
+for \code{db_table_name}.
+\code{fk_parent_tables} is treated as a store from which foreign key tables
 are retrieved by name when needed.
-The default value (which is several lines of code)
-retrieves all possible foreign key parent tables from conn,
-potentially a time-consuming process.
-For speed, pre-compute all foreign key parent tables once
-and pass the list to the \code{parent_tables} argument
-of all similar functions.
+An appropriate value for \code{parent_tables} can be obtained
+from \code{get_all_fk_tables()}.
 
-If any values in a foreign key column of \code{.df}
-do not have a corresponding integer,
-an error is thrown.
+If \code{.df} contains no foreign key columns,
+\code{.df} is returned unmodified.
 }

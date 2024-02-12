@@ -91,12 +91,12 @@ test_that("pl_upsert() works as expected", {
                                    Role = "Producer")
   # This should fail due to a bad primary key.
   # There is no Name_ID = 5 in the Members table.
-  pl_upsert(george_martin_role, "Roles", in_place = TRUE, conn = conn) |>
+  pl_upsert(george_martin_role, "Roles", conn, in_place = TRUE) |>
     expect_error('insert or update on table "Roles" violates foreign key constraint')
   # Instead, add George Martin to the Members table so that his primary key will be available.
-  pl_upsert(george_martin_member, "Members", in_place = TRUE, conn = conn)
+  pl_upsert(george_martin_member, "Members", conn, in_place = TRUE)
   # Then Now add to the Roles table
-  pl_upsert(george_martin_role, "Roles", in_place = TRUE, conn)
+  pl_upsert(george_martin_role, "Roles", conn, in_place = TRUE)
   roles_tbl <- dplyr::tbl(conn, "Roles") |>
     dplyr::collect()
   expect_equal(nrow(roles_tbl), 5)
@@ -107,7 +107,7 @@ test_that("pl_upsert() works as expected", {
   # Then change the Role to "Producer Extraordinaire"
   george_martin_role_name <- data.frame(Member_ID = "George Martin",
                                         Role = "Producer Extraordinaire")
-  pl_upsert(george_martin_role_name, "Roles", in_place = TRUE, conn = conn)
+  pl_upsert(george_martin_role_name, "Roles", conn, in_place = TRUE)
   # Check that George Martin is now Producer Extraordinaire
   # and in the Roles table has Member_ID of 5.
   new_roles <- dplyr::tbl(conn, "Roles") |>
