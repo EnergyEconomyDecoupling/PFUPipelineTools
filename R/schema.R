@@ -376,9 +376,9 @@ pl_upsert <- function(.df,
 #' @param db_table_name The string name of the database table where `.df` is to be uploaded.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               See details.
-#' @param parent_tables A named list of all parent tables
-#'                      for the foreign keys in `db_table_name`.
-#'                      See details.
+#' @param fk_parent_tables A named list of all parent tables
+#'                        for the foreign keys in `db_table_name`.
+#'                        See details.
 #'
 #' @return A version of `.df` with fk values (often strings)
 #'         replaced by fk keys (integers).

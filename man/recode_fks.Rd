@@ -14,7 +14,7 @@ recode_fks(.df, db_table_name, schema, fk_parent_tables)
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
 See details.}
 
-\item{parent_tables}{A named list of all parent tables
+\item{fk_parent_tables}{A named list of all parent tables
 for the foreign keys in \code{db_table_name}.
 See details.}
 }
