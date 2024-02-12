@@ -60,11 +60,10 @@ load_simple_tables <- function(version,
                                simple_tables_path = PFUSetup::get_abs_paths(version = version)[["schema_path"]],
                                readme_sheet = "README",
                                schema_sheet = "Schema") {
-  simple_table_sheet_names <- simple_tables_path |>
+  simple_tables_path |>
     readxl::excel_sheets() |>
-    setdiff(c(readme_sheet, schema_sheet))
-  simple_table_sheet_names |>
-    stats::setNames(simple_table_sheet_names) |>
+    setdiff(c(readme_sheet, schema_sheet)) |>
+    self_name() |>
     lapply(FUN = function(this_sheet_name) {
       readxl::read_excel(simple_tables_path, sheet = this_sheet_name)
     })
@@ -208,9 +207,9 @@ schema_dm <- function(schema_table, pk_suffix = PFUPipelineTools::key_col_info$p
 #'
 #' @export
 pl_upload_schema_and_simple_tables <- function(schema,
-                                            simple_tables,
-                                            conn,
-                                            drop_db_tables = FALSE) {
+                                               simple_tables,
+                                               conn,
+                                               drop_db_tables = FALSE) {
   # Get rid of the tables, if desired
   pl_destroy(conn, destroy_cache = FALSE, drop_tables = drop_db_tables)
   # Copy the data model to conn
