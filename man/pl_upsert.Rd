@@ -7,8 +7,10 @@
 pl_upsert(
   .df,
   db_table_name,
+  in_place = FALSE,
   conn,
-  schema = dm::dm_from_con(conn, learn_keys = TRUE)
+  schema = dm::dm_from_con(conn, learn_keys = TRUE),
+  fk_tables = get_all_fk_tables(schema, conn)
 )
 }
 \arguments{
@@ -17,10 +19,18 @@ pl_upsert(
 \item{db_table_name}{A string identifying the destination for \code{.df},
 the name of a remote database table in \code{conn}.}
 
+\item{in_place}{A boolean that tells whether to modify the database at \code{conn}.
+Default is \code{FALSE}, which is helpful if you want to chain
+several requests.}
+
 \item{conn}{A connection to the CL-PFU database.}
 
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
 Default is \code{dm::dm_from_con(conn, learn_keys = TRUE)}.
+See details.}
+
+\item{parent_tables}{A named list of all parent tables
+for the foreign keys in \code{db_table_name}.
 See details.}
 }
 \value{
@@ -59,6 +69,18 @@ Its default value (\code{dm::dm_from_con(conn, learn_keys = TRUE)})
 extracts the data model for the database at \code{conn} automatically.
 However, if the caller already has the data model,
 supplying it in the \code{schema} argument will save time.
+
+\code{parent_tables} is a named list of tables,
+one of which (the one named \code{db_table_name})
+contains the foreign keys for \code{db_table_name}.
+\code{parent_tables} is treated as a store from which foreign key tables
+are retrieved by name when needed.
+The default value (which is several lines of code)
+retrieves all possible foreign key parent tables from conn,
+potentially a time-consuming process.
+For speed, pre-compute all foreign key parent tables once
+and pass the list to the \code{parent_tables} argument
+of all similar functions.
 
 The user in \code{conn} must have write access to the database.
 }
