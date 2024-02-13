@@ -7,7 +7,7 @@
 self_name(x)
 }
 \arguments{
-\item{x}{The character vector or list of characters
+\item{x}{The character vector or list of character strings
 to be self-named.}
 }
 \value{

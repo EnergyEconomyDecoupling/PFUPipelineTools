@@ -99,7 +99,8 @@ load_simple_tables <- function(version,
 #'                       "Country", "Country", "text", "NA", "NA",
 #'                       "Country", "Description", "text", "NA", "NA")
 #' schema_dm(st)
-schema_dm <- function(schema_table, pk_suffix = PFUPipelineTools::key_col_info$pk_suffix) {
+schema_dm <- function(schema_table,
+                      pk_suffix = PFUPipelineTools::key_col_info$pk_suffix) {
 
   dm_tables <- schema_table[["Table"]] |>
     unique() |>
@@ -164,7 +165,8 @@ schema_dm <- function(schema_table, pk_suffix = PFUPipelineTools::key_col_info$p
         dm::dm_add_fk(table = {{this_table_name}},
                       columns = {{colname}},
                       ref_table = {{fk_table}},
-                      ref_columns = {{fk_colname}})
+                      ref_columns = {{fk_colname}},
+                      check = TRUE)
     }
   }
   return(dm_tables)
@@ -211,9 +213,11 @@ pl_upload_schema_and_simple_tables <- function(schema,
   pl_destroy(conn, destroy_cache = FALSE, drop_tables = drop_db_tables)
   # Copy the data model to conn
   dm::copy_dm_to(dest = conn, dm = schema, temporary = FALSE)
+
+  # Set NOT NULL constraints on all foreign key columns
+  set_not_null_constraints_on_fk_cols(schema, conn)
+
   # Upload the simple tables
-
-
   for (this_table_name in names(simple_tables)) {
     # Get the primary keys data frame
     pk_table <- dm::dm_get_all_pks(schema, table = {{this_table_name}})
@@ -237,35 +241,40 @@ pl_upload_schema_and_simple_tables <- function(schema,
                          copy = TRUE,
                          in_place = TRUE)
   }
-
-
-
-  # names(simple_tables) |>
-  #   purrr::map(function(this_table_name) {
-  #     # Get the primary keys data frame
-  #     pk_table <- dm::dm_get_all_pks(schema, table = {{this_table_name}})
-  #     # Make sure we have one and only one primary key column
-  #     assertthat::assert_that(nrow(pk_table) == 1,
-  #                             msg = paste0("Table '",
-  #                                          this_table_name,
-  #                                          "' has ", nrow(pk_table),
-  #                                          " primary keys. 1 is required."))
-  #     # Get the primary key name as a string
-  #     pk_str <- pk_table |>
-  #       # "pk_col" is the name of the column of primary key names
-  #       # in the tibble returned by dm::dm_get_all_pks()
-  #       magrittr::extract2("pk_col") |>
-  #       magrittr::extract2(1)
-  #
-  #     # Upload the simple table to conn
-  #     dplyr::tbl(conn, this_table_name) |>
-  #       dplyr::rows_upsert(simple_tables[[this_table_name]],
-  #                          by = pk_str,
-  #                          copy = TRUE,
-  #                          in_place = TRUE)
-  #   })
 }
 
+
+#' Set NOT NULL constraints on foreign key columns
+#'
+#' To maintain the integrity of data in a database,
+#' it is important to enforce NOT NULL constraints on foreign key columns.
+#' This function adds NOT NULL constraints to every foreign key column
+#' in `schema`.
+#'
+#' @param schema A `dm` object describing the schema for the database at `conn`.
+#' @param conn A database connection.
+#'
+#' @return `NULL` silently.
+#'
+#' @export
+set_not_null_constraints_on_fk_cols <- function(schema, conn) {
+  # Set NOT NULL constraint on all foreign key columns
+  schema |>
+    dm::dm_get_all_fks() |>
+    dplyr::mutate(
+      # Convert <keys> to <chr>
+      child_fk_cols = unlist(child_fk_cols)
+    ) |>
+    purrr::pmap(.f = function(child_table, child_fk_cols, parent_table, parent_key_cols, on_delete) {
+      print(child_table)
+      print(child_fk_cols)
+      stmt <- paste("ALTER TABLE", child_table,
+                    "ALTER COLUMN", child_fk_cols,
+                    "set NOT NULL;")
+      DBI::dbExecute(conn, stmt)
+    })
+  return(invisible(NULL))
+}
 
 #' Upsert a data frame with optional recoding of foreign keys
 #'
@@ -416,7 +425,13 @@ recode_fks <- function(.df,
   # Get details of all foreign keys in .df
   fk_details_for_db_table <- schema |>
     dm::dm_get_all_fks() |>
-    dplyr::filter(.data[["child_table"]] == db_table_name)
+    dplyr::filter(.data[["child_table"]] == db_table_name) |>
+    dplyr::mutate(
+      # Remove the <keys> class on child_fk_cols and parent_key_cols.
+      child_fk_cols = unlist(child_fk_cols),
+      parent_key_cols = unlist(parent_key_cols)
+    )
+
   if (nrow(fk_details_for_db_table) == 0) {
     # There are no foreign key columns in .df,
     # so just return .df unmodified.
@@ -432,22 +447,24 @@ recode_fks <- function(.df,
     if (is.integer(.df[[this_fk_col_in_df]])) {
       # this_fk_col_in_df is already an integer,
       # No need to recode.
-      # Do nothing.
-      break
+      # Do nothing for this_fk_col_in_df, and
+      # move on to the *next* one.
+      next
     }
     # this_fk_col_in_df is NOT an integer.
     # Need to recode.
-    fk_parent_table <- fk_details_for_db_table |>
-      # Get the foreign table name
-      dplyr::filter(.data[["child_table"]] == db_table_name) |>
-      magrittr::extract2("parent_table")
 
+    # Get a data frame in which each row gives details of a
+    # foreign key (parent table, parent column, etc.)
+    child_fk_row <- fk_details_for_db_table |>
+      # Get the foreign table name
+      dplyr::filter(.data[["child_fk_cols"]] == this_fk_col_in_df)
+    fk_parent_table <- child_fk_row |>
+      magrittr::extract2("parent_table")
     # Get the name of the column in fk_parent_table_name
     # that contains the foreign key
-    fk_colname_in_foreign_table <- fk_details_for_db_table |>
-      dplyr::filter(.data[["child_table"]] == db_table_name) |>
-      magrittr::extract2("parent_key_cols") |>
-      unlist()
+    fk_colname_in_foreign_table <- child_fk_row |>
+      magrittr::extract2("parent_key_cols")
     # The levels information is contained in parent_tables.
     # Start by extracting the parent table that we need from
     # the parent_tables list.
@@ -482,65 +499,11 @@ recode_fks <- function(.df,
 #'
 #' Used only for testing.
 #'
-#' @param conn The connection to a Postgres database. Must have write permission.
+#' @param conn The connection to a Postgres database.
+#'             The user must have write permission.
 #'
 #' @return A list of tables containing Beatles information
 upload_beatles <- function(conn) {
-  # # Avoid some notes in R CMD check
-  # Member_ID <- NULL
-  # Tour_ID <- NULL
-  # Member <- NULL
-  # Role <- NULL
-  # Tour <- NULL
-  # Members <- NULL
-  # Roles <- NULL
-  # Tours <- NULL
-  #
-  # # Band members table specification (no data)
-  # mems <- matrix(nrow = 0, ncol = 2, dimnames = list(c(), c("Member_ID", "Member"))) |>
-  #   as.data.frame() |>
-  #   dplyr::mutate(
-  #     Member_ID = as.integer(Member_ID),
-  #     Member = as.character(Member))
-  #
-  # # Band roles table specification (no data)
-  # rls <- matrix(nrow = 0, ncol = 2, dimnames = list(c(), c("Member_ID", "Role"))) |>
-  #   as.data.frame() |>
-  #   dplyr::mutate(
-  #     Member_ID = as.integer(Member_ID),
-  #     Role = as.character(Role))
-  #
-  # # Tours and ages to test a table with more than one foreign key
-  # tour_age <- matrix(nrow = 0, ncol = 3, dimnames = list(c(), c("Member_ID, Tour_ID, Age"))) |>
-  #   as.data.frame() |>
-  #   dplyr::mutate(Member_ID = as.integer(Member_ID),
-  #                 Tour_ID = as.integer(Tour_ID),
-  #                 Age = as.double(Age))
-  #
-  # # Build the data model
-  # DM <- list(Members = mems, Roles = rls) |>
-  #   dm::as_dm() |>
-  #   dm::dm_add_pk(table = Members, columns = Member_ID, autoincrement = TRUE) |>
-  #   dm::dm_add_pk(table = Roles, columns = Member_ID, autoincrement = TRUE) |>
-  #   dm::dm_add_pk(table = Tours, columns = Tour_ID, autoincrement = TRUE) |>
-  #   dm::dm_add_fk(table = Roles, columns = Member_ID, ref_table = Members, ref_columns = Member_ID) |>
-  #   dm::dm_add_fk(table = Tours, columns = Member_ID, ref_table = Members, ref_columns = Member_ID) |>
-  #   dm::dm_add_fk(table = Tours, columns = Tour_ID, ref_table = Tours, ref_columns = Tour_ID)
-  #
-  #
-  # # Create tables to add to the DM
-  # members <- data.frame(Member_ID = as.integer(1:4),
-  #                       Member = c("John Lennon", "Paul McCartney", "George Harrison", "Ringo Starr"))
-  # roles <- data.frame(Member_ID = as.integer(1:4),
-  #                     Role = c("Lead singer", "Bassist", "Guitarist", "Drummer"))
-  # tours <- data.frame(Tour_ID = as.integer(1),
-  #                     Tour_ID = "")
-  # tables_to_add <- list(Members = members, Roles = roles)
-  # pl_upload_schema_and_simple_tables(schema = DM,
-  #                                    simple_tables = tables_to_add,
-  #                                    conn = conn,
-  #                                    drop_db_tables = TRUE)
-
   PFUPipelineTools::beatles_schema_table |>
     schema_dm() |>
     pl_upload_schema_and_simple_tables(simple_tables = PFUPipelineTools::beatles_fk_tables,

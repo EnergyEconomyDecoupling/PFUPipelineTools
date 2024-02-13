@@ -216,7 +216,7 @@ usethis::use_data(canonical_countries, overwrite = TRUE)
 #
 
 key_col_info <- list(
-  pk_suffix = "_ID"
+  pk_suffix = "ID"
 )
 
 usethis::use_data(key_col_info, overwrite = TRUE)

@@ -7,7 +7,8 @@
 upload_beatles(conn)
 }
 \arguments{
-\item{conn}{The connection to a Postgres database. Must have write permission.}
+\item{conn}{The connection to a Postgres database.
+The user must have write permission.}
 }
 \value{
 A list of tables containing Beatles information

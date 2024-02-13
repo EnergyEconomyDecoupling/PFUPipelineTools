@@ -59,15 +59,15 @@ test_that("pl_upload_schema_and_simple_tables() works as expected", {
 
   # Get the tables from the database
   tables <- DBI::dbListTables(conn)
-  for (table_name in c("Members", "Roles")) {
+  for (table_name in c("Member", "Role")) {
     expect_true(table_name %in% tables)
   }
   members <- data.frame(Member_ID = as.integer(1:4),
                         Member = c("John Lennon", "Paul McCartney", "George Harrison", "Ringo Starr"))
-  roles <- data.frame(Member_ID = as.integer(1:4),
+  roles <- data.frame(Role_ID = as.integer(1:4),
                       Role = c("Lead singer", "Bassist", "Guitarist", "Drummer"))
-  expect_equal(DBI::dbReadTable(conn, "Members"), members)
-  expect_equal(DBI::dbReadTable(conn, "Roles"), roles)
+  expect_equal(DBI::dbReadTable(conn, "Member"), members)
+  expect_equal(DBI::dbReadTable(conn, "Role"), roles)
 })
 
 
@@ -83,15 +83,31 @@ test_that("pl_upsert() works as expected", {
   # Build the data model remotely
   PFUPipelineTools:::upload_beatles(conn)
 
-  # Try to upload more data for the fifth Beatle.
-  george_martin_member <- data.frame(Member_ID = as.integer(5),
+  # Add a MemberRole table, linking members and roles
+  memberrole <- data.frame(MemberRoleID = 1:4, Member = 1:4, Role = 1:4)
+  pl_upsert(memberrole, db_table_name = "MemberRole", conn = conn, in_place = TRUE)
+
+
+  # Try to upload more data for the fifth Beatle
+  george_martin_member <- data.frame(MemberID = as.integer(5),
                                      Member = "George Martin")
-  george_martin_role <- data.frame(Member_ID = as.integer(5),
-                                   Role = "Producer")
-  # This should fail due to a bad primary key.
-  # There is no Name_ID = 5 in the Members table.
-  pl_upsert(george_martin_role, "Roles", conn, in_place = TRUE) |>
-    expect_error('insert or update on table "Roles" violates foreign key constraint')
+  # Add George Martin as the fifth Beatle in the Member table
+  pl_upsert(george_martin_member, "Member", conn, in_place = TRUE)
+
+  # But now try to add George into the MemberRole table.
+  # This should fail due to a bad foreign key.
+  # There is no RoleID = 5 in the Roles table.
+  george_martin_memberrole <- data.frame(MemberRoleID = 5,
+                                         Member = 5,
+                                         Role = 5)
+  pl_upsert(george_martin_memberrole, "MemberRole", conn, in_place = TRUE)
+
+
+
+
+  producer_role <- data.frame(Role_ID = 5,
+                              Role = "Producer")
+
   # Instead, add George Martin to the Members table so that his primary key will be available.
   pl_upsert(george_martin_member, "Members", conn, in_place = TRUE)
   # Now add to the Roles table
