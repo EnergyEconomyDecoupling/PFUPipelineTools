@@ -46,3 +46,33 @@
 #' @examples
 #' key_col_info
 "key_col_info"
+
+
+#' Example database schema table
+#'
+#' A data frame containing several columns
+#' that describe a database schema
+#' for simple facts about the Beatles.
+#'
+#' @format A data frame with columns "Table", "colname", "coldatatype", "fk.table", and "fk.colname".
+#'
+#' @examples
+#' beatles_schema_table
+"beatles_schema_table"
+
+
+#' Example simple database tables
+#'
+#' A named list of data frames, each of which
+#' is a foreign key table (fk table)
+#' with simple information about the Beatles.
+#'
+#' This list is in the correct format
+#' for the function `pl_upload_schema_and_simple_tables()`.
+#'
+#' @format A named list of data frames.
+#'
+#' @examples
+#' beatles_fk_tables
+"beatles_fk_tables"
+

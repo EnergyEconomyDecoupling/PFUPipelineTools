@@ -101,10 +101,9 @@ load_simple_tables <- function(version,
 #' schema_dm(st)
 schema_dm <- function(schema_table, pk_suffix = PFUPipelineTools::key_col_info$pk_suffix) {
 
-  dm_table_names <- schema_table[["Table"]] |>
-    unique()
-  dm_tables <- dm_table_names |>
-    stats::setNames(dm_table_names) |>
+  dm_tables <- schema_table[["Table"]] |>
+    unique() |>
+    self_name() |>
     lapply(FUN = function(this_table_name) {
       colnames <- schema_table |>
         dplyr::filter(.data[["Table"]] == this_table_name) |>
@@ -136,13 +135,11 @@ schema_dm <- function(schema_table, pk_suffix = PFUPipelineTools::key_col_info$p
     }) |>
     dm::as_dm()
 
-  # Set primary keys according to the convention
-  # that the primary key column ends with pk_suffix
-  primary_key_colnames <- dm_tables |>
-    lapply(FUN = function(this_table) {
-      cnames <- colnames(this_table)
-      cnames[[which(endsWith(cnames, pk_suffix), arr.ind = TRUE)]]
-    })
+  # Set primary key according to the convention
+  # that the primary key column name is
+  # the the table name with pk_suffix.
+  dm_table_names <- names(dm_tables)
+  primary_key_colnames <- paste0(dm_table_names, pk_suffix)
 
   for (itbl in 1:length(dm_table_names)) {
     this_table_name <- dm_table_names[[itbl]]
@@ -213,32 +210,60 @@ pl_upload_schema_and_simple_tables <- function(schema,
   # Get rid of the tables, if desired
   pl_destroy(conn, destroy_cache = FALSE, drop_tables = drop_db_tables)
   # Copy the data model to conn
-  dm::copy_dm_to(conn, schema, temporary = FALSE)
+  dm::copy_dm_to(dest = conn, dm = schema, temporary = FALSE)
   # Upload the simple tables
-  names(simple_tables) |>
-    purrr::map(function(this_table_name) {
-      # Get the primary keys data frame
-      pk_table <- dm::dm_get_all_pks(schema, table = {{this_table_name}})
-      # Make sure we have one and only one primary key column
-      assertthat::assert_that(nrow(pk_table) == 1,
-                              msg = paste0("Table '",
-                                           this_table_name,
-                                           "' has ", nrow(pk_table),
-                                           " primary keys. 1 is required."))
-      # Get the primary key name as a string
-      pk_str <- pk_table |>
-        # "pk_col" is the name of the column of primary key names
-        # in the tibble returned by dm::dm_get_all_pks()
-        magrittr::extract2("pk_col") |>
-        magrittr::extract2(1)
 
-      # Upload the simple table to conn
-      dplyr::tbl(conn, this_table_name) |>
-        dplyr::rows_upsert(simple_tables[[this_table_name]],
-                           by = pk_str,
-                           copy = TRUE,
-                           in_place = TRUE)
-    })
+
+  for (this_table_name in names(simple_tables)) {
+    # Get the primary keys data frame
+    pk_table <- dm::dm_get_all_pks(schema, table = {{this_table_name}})
+    # Make sure we have one and only one primary key column
+    assertthat::assert_that(nrow(pk_table) == 1,
+                            msg = paste0("Table '",
+                                         this_table_name,
+                                         "' has ", nrow(pk_table),
+                                         " primary keys. 1 is required."))
+    # Get the primary key name as a string
+    pk_str <- pk_table |>
+      # "pk_col" is the name of the column of primary key names
+      # in the tibble returned by dm::dm_get_all_pks()
+      magrittr::extract2("pk_col") |>
+      magrittr::extract2(1)
+
+    # Upload the simple table to conn
+    dplyr::tbl(conn, this_table_name) |>
+      dplyr::rows_upsert(simple_tables[[this_table_name]],
+                         by = pk_str,
+                         copy = TRUE,
+                         in_place = TRUE)
+  }
+
+
+
+  # names(simple_tables) |>
+  #   purrr::map(function(this_table_name) {
+  #     # Get the primary keys data frame
+  #     pk_table <- dm::dm_get_all_pks(schema, table = {{this_table_name}})
+  #     # Make sure we have one and only one primary key column
+  #     assertthat::assert_that(nrow(pk_table) == 1,
+  #                             msg = paste0("Table '",
+  #                                          this_table_name,
+  #                                          "' has ", nrow(pk_table),
+  #                                          " primary keys. 1 is required."))
+  #     # Get the primary key name as a string
+  #     pk_str <- pk_table |>
+  #       # "pk_col" is the name of the column of primary key names
+  #       # in the tibble returned by dm::dm_get_all_pks()
+  #       magrittr::extract2("pk_col") |>
+  #       magrittr::extract2(1)
+  #
+  #     # Upload the simple table to conn
+  #     dplyr::tbl(conn, this_table_name) |>
+  #       dplyr::rows_upsert(simple_tables[[this_table_name]],
+  #                          by = pk_str,
+  #                          copy = TRUE,
+  #                          in_place = TRUE)
+  #   })
 }
 
 
@@ -461,43 +486,64 @@ recode_fks <- function(.df,
 #'
 #' @return A list of tables containing Beatles information
 upload_beatles <- function(conn) {
-  # Avoid some notes in R CMD check
-  Member_ID <- NULL
-  Member <- NULL
-  Role <- NULL
-  Members <- NULL
-  Roles <- NULL
+  # # Avoid some notes in R CMD check
+  # Member_ID <- NULL
+  # Tour_ID <- NULL
+  # Member <- NULL
+  # Role <- NULL
+  # Tour <- NULL
+  # Members <- NULL
+  # Roles <- NULL
+  # Tours <- NULL
+  #
+  # # Band members table specification (no data)
+  # mems <- matrix(nrow = 0, ncol = 2, dimnames = list(c(), c("Member_ID", "Member"))) |>
+  #   as.data.frame() |>
+  #   dplyr::mutate(
+  #     Member_ID = as.integer(Member_ID),
+  #     Member = as.character(Member))
+  #
+  # # Band roles table specification (no data)
+  # rls <- matrix(nrow = 0, ncol = 2, dimnames = list(c(), c("Member_ID", "Role"))) |>
+  #   as.data.frame() |>
+  #   dplyr::mutate(
+  #     Member_ID = as.integer(Member_ID),
+  #     Role = as.character(Role))
+  #
+  # # Tours and ages to test a table with more than one foreign key
+  # tour_age <- matrix(nrow = 0, ncol = 3, dimnames = list(c(), c("Member_ID, Tour_ID, Age"))) |>
+  #   as.data.frame() |>
+  #   dplyr::mutate(Member_ID = as.integer(Member_ID),
+  #                 Tour_ID = as.integer(Tour_ID),
+  #                 Age = as.double(Age))
+  #
+  # # Build the data model
+  # DM <- list(Members = mems, Roles = rls) |>
+  #   dm::as_dm() |>
+  #   dm::dm_add_pk(table = Members, columns = Member_ID, autoincrement = TRUE) |>
+  #   dm::dm_add_pk(table = Roles, columns = Member_ID, autoincrement = TRUE) |>
+  #   dm::dm_add_pk(table = Tours, columns = Tour_ID, autoincrement = TRUE) |>
+  #   dm::dm_add_fk(table = Roles, columns = Member_ID, ref_table = Members, ref_columns = Member_ID) |>
+  #   dm::dm_add_fk(table = Tours, columns = Member_ID, ref_table = Members, ref_columns = Member_ID) |>
+  #   dm::dm_add_fk(table = Tours, columns = Tour_ID, ref_table = Tours, ref_columns = Tour_ID)
+  #
+  #
+  # # Create tables to add to the DM
+  # members <- data.frame(Member_ID = as.integer(1:4),
+  #                       Member = c("John Lennon", "Paul McCartney", "George Harrison", "Ringo Starr"))
+  # roles <- data.frame(Member_ID = as.integer(1:4),
+  #                     Role = c("Lead singer", "Bassist", "Guitarist", "Drummer"))
+  # tours <- data.frame(Tour_ID = as.integer(1),
+  #                     Tour_ID = "")
+  # tables_to_add <- list(Members = members, Roles = roles)
+  # pl_upload_schema_and_simple_tables(schema = DM,
+  #                                    simple_tables = tables_to_add,
+  #                                    conn = conn,
+  #                                    drop_db_tables = TRUE)
 
-  # Band members table specification (no data)
-  mems <- matrix(nrow = 0, ncol = 2, dimnames = list(c(), c("Member_ID", "Member"))) |>
-    as.data.frame() |>
-    dplyr::mutate(
-      Member_ID = as.integer(Member_ID),
-      Member = as.character(Member)
-    )
-  # Band roles table specification (no data)
-  rls <- matrix(nrow = 0, ncol = 2, dimnames = list(c(), c("Member_ID", "Role"))) |>
-    as.data.frame() |>
-    dplyr::mutate(
-      Member_ID = as.integer(Member_ID),
-      Role = as.character(Role)
-    )
-
-  # Build the data model
-  DM <- list(Members = mems, Roles = rls) |>
-    dm::as_dm() |>
-    dm::dm_add_pk(table = Members, columns = Member_ID, autoincrement = TRUE) |>
-    dm::dm_add_pk(table = Roles, columns = Member_ID, autoincrement = TRUE) |>
-    dm::dm_add_fk(table = Roles, columns = Member_ID, ref_table = Members, ref_columns = Member_ID)
-
-  # Create tables to add to the DM
-  members <- data.frame(Member_ID = as.integer(1:4),
-                        Member = c("John Lennon", "Paul McCartney", "George Harrison", "Ringo Starr"))
-  roles <- data.frame(Member_ID = as.integer(1:4),
-                      Role = c("Lead singer", "Bassist", "Guitarist", "Drummer"))
-  tables_to_add <- list(Members = members, Roles = roles)
-  pl_upload_schema_and_simple_tables(schema = DM,
-                                  simple_tables = tables_to_add,
-                                  conn = conn,
-                                  drop_db_tables = TRUE)
+  PFUPipelineTools::beatles_schema_table |>
+    schema_dm() |>
+    pl_upload_schema_and_simple_tables(simple_tables = PFUPipelineTools::beatles_fk_tables,
+                                       conn = conn,
+                                       drop_db_tables = TRUE)
 }
