@@ -266,8 +266,6 @@ set_not_null_constraints_on_fk_cols <- function(schema, conn) {
       child_fk_cols = unlist(child_fk_cols)
     ) |>
     purrr::pmap(.f = function(child_table, child_fk_cols, parent_table, parent_key_cols, on_delete) {
-      print(child_table)
-      print(child_fk_cols)
       stmt <- paste("ALTER TABLE", child_table,
                     "ALTER COLUMN", child_fk_cols,
                     "set NOT NULL;")
