@@ -8,7 +8,7 @@
 #' Internally, this function calls
 #' `magrittr::set_names(x, x)`.
 #'
-#' @param x The character vector or list of characters
+#' @param x The character vector or list of character strings
 #'          to be self-named.
 #'
 #' @return A self-named version of `x`.
