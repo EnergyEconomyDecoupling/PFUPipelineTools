@@ -188,10 +188,13 @@ schema_dm <- function(schema_table,
 #' uploading the data model `schema` to `conn` will fail
 #' if the tables already exist in the database at `conn`.
 #'
-#' `simple_tables` should not include any foreign keys,
-#' because the order for uploading `simple_tables` is not guaranteed
-#' to avoid uploading a table with a foreign key before
-#' the table containing the foreign key is available.
+#' `simple_tables` should not include tables with foreign keys,
+#' because the order for uploading `simple_tables` is not guaranteed.
+#' Doing so will avoid uploading a table with a foreign key before
+#' the parent table containing the foreign key values has been uploaded.
+#'
+#' `set_not_null_constraints` controls setting of
+#' `NOT NULL` constraints for all foreign key columns in `schema`.
 #'
 #' `conn`'s user must have superuser privileges.
 #'
@@ -199,6 +202,10 @@ schema_dm <- function(schema_table,
 #' @param simple_tables A named list of data frames with the content of
 #'                      tables in `conn`.
 #' @param conn A `DBI` connection to a database.
+#' @param set_not_null_constraints A boolean that tells whether
+#'                                 `NOT NULL` constraints are set on
+#'                                 foreign key columns in `schema`.
+#'                                 Default is `TRUE`.
 #' @param drop_db_tables A boolean that tells whether to delete
 #'                       existing tables before uploading the new schema.
 #'
@@ -208,14 +215,17 @@ schema_dm <- function(schema_table,
 pl_upload_schema_and_simple_tables <- function(schema,
                                                simple_tables,
                                                conn,
+                                               set_not_null_constraints = TRUE,
                                                drop_db_tables = FALSE) {
   # Get rid of the tables, if desired
   pl_destroy(conn, destroy_cache = FALSE, drop_tables = drop_db_tables)
   # Copy the data model to conn
   dm::copy_dm_to(dest = conn, dm = schema, temporary = FALSE)
 
-  # Set NOT NULL constraints on all foreign key columns
-  set_not_null_constraints_on_fk_cols(schema, conn)
+  if (set_not_null_constraints) {
+    # Set NOT NULL constraints on all foreign key columns
+    set_not_null_constraints_on_fk_cols(schema, conn)
+  }
 
   # Upload the simple tables
   for (this_table_name in names(simple_tables)) {
@@ -438,50 +448,22 @@ recode_fks <- function(.df,
 
   # Get a vector of string names of foreign key columns in .df
   fk_cols_in_df <- fk_details_for_db_table |>
-    magrittr::extract2("child_fk_cols") |>
-    unlist()
+    dplyr::select(child_fk_cols) |>
+    unlist() |>
+    unname()
 
   for (this_fk_col_in_df in fk_cols_in_df) {
     if (is.integer(.df[[this_fk_col_in_df]])) {
-      # this_fk_col_in_df is already an integer,
-      # No need to recode.
-      # Do nothing for this_fk_col_in_df, and
-      # move on to the *next* one.
+      # This is already an integer, and
+      # presumably no need to recode
       next
     }
-    # this_fk_col_in_df is NOT an integer.
-    # Need to recode.
-
-    # Get a data frame in which each row gives details of a
-    # foreign key (parent table, parent column, etc.)
-    child_fk_row <- fk_details_for_db_table |>
-      # Get the foreign table name
-      dplyr::filter(.data[["child_fk_cols"]] == this_fk_col_in_df)
-    fk_parent_table <- child_fk_row |>
-      magrittr::extract2("parent_table")
-    # Get the name of the column in fk_parent_table_name
-    # that contains the foreign key
-    fk_colname_in_foreign_table <- child_fk_row |>
-      magrittr::extract2("parent_key_cols")
-    # The levels information is contained in parent_tables.
-    # Start by extracting the parent table that we need from
-    # the parent_tables list.
-    fk_levels <- fk_parent_tables[[fk_parent_table]] |>
-      # Arrange it by fk_colname_in_foreign_table
-      # to generate ordered levels
-      dplyr::arrange(fk_colname_in_foreign_table) |>
-      # There are meant to be only two columns in the foreign key table,
-      # one named "<<table_name>>_ID"
-      # (which has the name this_fk_col_in_df) and
-      # the other labelled <<table_name>>
-      # Extract the column that is NOT the foreign key
-      # by deselecting ?<<table_name>>_ID" (this_fk_col_in_df).
-      # This will leave a column of names only,
-      # which are the levels we will need.
-      dplyr::select(-{{this_fk_col_in_df}}) |>
+    # Get the parent levels
+    fk_levels <- fk_parent_tables[[this_fk_col_in_df]] |>
+      dplyr::arrange(.data[[paste0(this_fk_col_in_df, "ID")]]) |>
+      dplyr::select(this_fk_col_in_df) |>
       unlist() |>
       unname()
-    # Change this_fk_col to a factor with those levels.
     .df <- .df |>
       dplyr::mutate(
         "{this_fk_col_in_df}" := factor(.data[[this_fk_col_in_df]], levels = fk_levels),

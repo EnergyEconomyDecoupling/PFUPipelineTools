@@ -62,9 +62,9 @@ test_that("pl_upload_schema_and_simple_tables() works as expected", {
   for (table_name in c("Member", "Role")) {
     expect_true(table_name %in% tables)
   }
-  members <- data.frame(Member_ID = as.integer(1:4),
+  members <- data.frame(MemberID = 1:4,
                         Member = c("John Lennon", "Paul McCartney", "George Harrison", "Ringo Starr"))
-  roles <- data.frame(Role_ID = as.integer(1:4),
+  roles <- data.frame(RoleID = 1:4,
                       Role = c("Lead singer", "Bassist", "Guitarist", "Drummer"))
   expect_equal(DBI::dbReadTable(conn, "Member"), members)
   expect_equal(DBI::dbReadTable(conn, "Role"), roles)
@@ -73,6 +73,7 @@ test_that("pl_upload_schema_and_simple_tables() works as expected", {
 
 test_that("pl_upsert() works as expected", {
   skip_on_ci()
+  skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
                          dbname = "unit_testing",
                          host = "eviz.cs.calvin.edu",
@@ -94,80 +95,81 @@ test_that("pl_upsert() works as expected", {
   # Add George Martin as the fifth Beatle in the Member table
   pl_upsert(george_martin_member, "Member", conn, in_place = TRUE)
 
-  # But now try to add George into the MemberRole table.
+  # But now try to add George Martin to the MemberRole table.
   # This should fail due to a bad foreign key.
   # There is no RoleID = 5 in the Roles table.
-  george_martin_memberrole <- data.frame(MemberRoleID = 5,
-                                         Member = 5,
-                                         Role = 5)
-  pl_upsert(george_martin_memberrole, "MemberRole", conn, in_place = TRUE)
+  george_martin_memberrole <- data.frame(MemberRoleID = as.integer(5),
+                                         Member = as.integer(5),
+                                         Role = as.integer(5))
+  pl_upsert(george_martin_memberrole, "MemberRole", conn, in_place = TRUE) |>
+    expect_error(regexp = 'insert or update on table "MemberRole" violates foreign key constraint "MemberRole_Role_fkey"')
 
-
-
-
-  producer_role <- data.frame(Role_ID = 5,
+  # To fix the problem, add a Producer role to the Role table
+  producer_role <- data.frame(RoleID = as.integer(5),
                               Role = "Producer")
-
-  # Instead, add George Martin to the Members table so that his primary key will be available.
-  pl_upsert(george_martin_member, "Members", conn, in_place = TRUE)
-  # Now add to the Roles table
-  pl_upsert(george_martin_role, "Roles", conn, in_place = TRUE)
-  roles_tbl <- dplyr::tbl(conn, "Roles") |>
+  pl_upsert(producer_role, "Role", conn, in_place = TRUE)
+  roles_tbl <- dplyr::tbl(conn, "Role") |>
     dplyr::collect()
   expect_equal(nrow(roles_tbl), 5)
-  expect_equal(roles_tbl$Role, c("Lead singer", "Bassist", "Guitarist", "Drummer", "Producer"))
+  expect_equal(roles_tbl[["Role"]], c("Lead singer", "Bassist", "Guitarist", "Drummer", "Producer"))
 
-  # Try to upsert with "George Martin" in the Member column.
-  # This should decode "George Martin" into the Member_ID of 5 during the upsert.
+  # Update the Role table with Producer Extraordinaire.
+  prod_extra <- data.frame(RoleID = as.integer(6),
+                           Role = "Producer Extraordinaire")
+  pl_upsert(prod_extra, db_table_name = "Role", conn = conn, in_place = TRUE)
+  roles_tbl <- dplyr::tbl(conn, "Role") |>
+    dplyr::collect()
+  expect_equal(nrow(roles_tbl), 6)
+  expect_equal(roles_tbl$Role, c("Lead singer", "Bassist", "Guitarist", "Drummer", "Producer", "Producer Extraordinaire"))
+
+
+  # This should decode "George Martin" into the MemberID of 5 during the upsert.
   # Then change the Role to "Producer Extraordinaire"
-  george_martin_role_name <- data.frame(Member_ID = "George Martin",
-                                        Role = "Producer Extraordinaire")
-  pl_upsert(george_martin_role_name, "Roles", conn, in_place = TRUE)
+  george_martin_role_names <- data.frame(MemberRoleID = as.integer(5),
+                                         Member = "George Martin",
+                                         Role = "Producer Extraordinaire")
+  pl_upsert(george_martin_role_names, "MemberRole", conn, in_place = TRUE)
   # Check that George Martin is now Producer Extraordinaire
   # and in the Roles table has Member_ID of 5.
-  new_roles <- dplyr::tbl(conn, "Roles") |>
+  new_roles <- dplyr::tbl(conn, "MemberRole") |>
     dplyr::collect()
   new_roles |>
-    dplyr::filter(Member_ID == 5) |>
+    dplyr::filter(Member == 5) |>
     magrittr::extract2("Role") |>
-    expect_equal("Producer Extraordinaire")
+    expect_equal(6)
 
   # Now try to add Pete Best, this time using pl_upsert with schema and
   # fk_parent_tables pre-computed
   schema <- dm::dm_from_con(conn, learn_keys = TRUE)
   fk_parent_tables <- get_all_fk_tables(conn, schema)
-  pete_best <- data.frame(Member_ID = 6, Member = "Pete Best")
+  pete_best <- data.frame(MemberID = 6, Member = "Pete Best")
   # Using the old fk_parent_tables for now.
   # But it doesn't matter, because the upsert
   # to the Members table doesn't rely upon any foreign keys.
   pl_upsert(pete_best,
-            db_table_name = "Members",
+            db_table_name = "Member",
             conn = conn,
             in_place = TRUE,
             fk_parent_tables = fk_parent_tables)
   # Try to upsert Pete's role with the old fk_parent_tables.
   # This should fail.
-  pete_best_role <- data.frame(Member_ID = "Pete Best", Role = "Drummer")
-  pl_upsert(pete_best_role,
-            db_table_name = "Roles",
+  pete_best_memberrole <- data.frame(MemberRoleID = 6, Member = "Pete Best", Role = "Drummer")
+  pl_upsert(pete_best_memberrole,
+            db_table_name = "MemberRole",
             conn = conn,
             in_place = TRUE,
             schema = schema,
             fk_parent_tables = fk_parent_tables) |>
-    expect_error('null value in column "Member_ID" of relation "Roles" violates not-null constraint')
+    expect_error('null value in column "Member" of relation "MemberRole" violates not-null constraint')
   # Get the new fk_parent_tables
   fk_parent_tables_new <- get_all_fk_tables(conn, schema)
   # The upsert should work with the new fk_parent_tables
-  pl_upsert(pete_best_role,
-            db_table_name = "Roles",
+  pl_upsert(pete_best_memberrole,
+            db_table_name = "MemberRole",
             conn = conn,
             in_place = TRUE,
             schema = schema,
             fk_parent_tables = fk_parent_tables_new)
-  roles_tbl <- dplyr::tbl(conn, "Roles") |>
-    dplyr::collect()
-  expect_equal(nrow(roles_tbl), 6)
-  expect_equal(roles_tbl$Role, c("Lead singer", "Bassist", "Guitarist", "Drummer", "Producer Extraordinaire", "Drummer"))
 })
 
 

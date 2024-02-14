@@ -8,6 +8,7 @@ pl_upload_schema_and_simple_tables(
   schema,
   simple_tables,
   conn,
+  set_not_null_constraints = TRUE,
   drop_db_tables = FALSE
 )
 }
@@ -18,6 +19,11 @@ pl_upload_schema_and_simple_tables(
 tables in \code{conn}.}
 
 \item{conn}{A \code{DBI} connection to a database.}
+
+\item{set_not_null_constraints}{A boolean that tells whether
+\verb{NOT NULL} constraints are set on
+foreign key columns in \code{schema}.
+Default is \code{TRUE}.}
 
 \item{drop_db_tables}{A boolean that tells whether to delete
 existing tables before uploading the new schema.}
@@ -40,10 +46,13 @@ However, it is unlikely that this function will succeed unless
 uploading the data model \code{schema} to \code{conn} will fail
 if the tables already exist in the database at \code{conn}.
 
-\code{simple_tables} should not include any foreign keys,
-because the order for uploading \code{simple_tables} is not guaranteed
-to avoid uploading a table with a foreign key before
-the table containing the foreign key is available.
+\code{simple_tables} should not include tables with foreign keys,
+because the order for uploading \code{simple_tables} is not guaranteed.
+Doing so will avoid uploading a table with a foreign key before
+the parent table containing the foreign key values has been uploaded.
+
+\code{set_not_null_constraints} controls setting of
+\verb{NOT NULL} constraints for all foreign key columns in \code{schema}.
 
 \code{conn}'s user must have superuser privileges.
 }
