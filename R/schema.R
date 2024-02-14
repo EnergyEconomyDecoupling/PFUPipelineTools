@@ -398,12 +398,13 @@ pl_upsert <- function(.df,
 }
 
 
-#' Recode foreign keys in a data frame to be uploaded
+#' Code foreign keys in a data frame to be uploaded
 #'
 #' In the CL-PFU pipeline,
 #' we allow data frames about to be uploaded
 #' to the database
 #' to have foreign key values (usually strings)
+#' instead of foreign keys (integers)
 #' in foreign key columns.
 #' This function translates the fk values
 #' to fk keys.
@@ -412,14 +413,14 @@ pl_upsert <- function(.df,
 #' It can be obtained from code such as
 #' `dm::dm_from_con(con = << a database connection >>, learn_keys = TRUE)`.
 #'
-#' `parent_tables` is a named list of tables,
+#' `fk_parent_tables` is a named list of tables,
 #' some of which are fk parent tables containing
 #' the mapping between fk values (usually string)
 #' and fk keys (usually integers)
 #' for `db_table_name`.
 #' `fk_parent_tables` is treated as a store from which foreign key tables
 #' are retrieved by name when needed.
-#' An appropriate value for `parent_tables` can be obtained
+#' An appropriate value for `fk_parent_tables` can be obtained
 #' from `get_all_fk_tables()`.
 #'
 #' If `.df` contains no foreign key columns,
@@ -430,8 +431,11 @@ pl_upsert <- function(.df,
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               See details.
 #' @param fk_parent_tables A named list of all parent tables
-#'                        for the foreign keys in `db_table_name`.
-#'                        See details.
+#'                         for the foreign keys in `db_table_name`.
+#'                         See details.
+#'
+#' @seealso [decode_keys()] for the inverse operation,
+#'          albeit for all keys, primary and foreign.
 #'
 #' @return A version of `.df` with fk values (often strings)
 #'         replaced by fk keys (integers).
@@ -483,6 +487,69 @@ code_fks <- function(.df,
       )
   }
 
+  return(.df)
+}
+
+
+#' Decode keys in a downloaded data frame
+#'
+#' When downloading a data frame from a database,
+#' it is helpful to decode the primary and foreign keys
+#' in the data frame,
+#' i.e. to translate from keys to values.
+#' This function provides that service.
+#'
+#' `schema` is a data model (`dm` object) for the CL-PFU database.
+#' It can be obtained from code such as
+#' `dm::dm_from_con(con = << a database connection >>, learn_keys = TRUE)`.
+#'
+#' @param .df The data frame about to be uploaded.
+#' @param db_table_name The string name of the database table where `.df` is to be uploaded.
+#' @param schema The data model (`dm` object) for the database in `conn`.
+#'               See details.
+#'
+#' @return
+#' @export
+#'
+#' @examples
+decode_keys <- function(.df,
+                        db_table_name,
+                        schema,
+                        fk_parent_tables) {
+
+  # Get details of all foreign keys in .df
+  fk_details_for_db_table <- schema |>
+    dm::dm_get_all_fks() |>
+    dplyr::filter(.data[["child_table"]] == db_table_name) |>
+    dplyr::mutate(
+      # Remove the <keys> class on child_fk_cols and parent_key_cols.
+      child_fk_cols = unlist(child_fk_cols),
+      parent_key_cols = unlist(parent_key_cols)
+    )
+
+  if (nrow(fk_details_for_db_table) == 0) {
+    # There are no foreign key columns in .df,
+    # so just return .df unmodified.
+    return(.df)
+  }
+
+  # Get a vector of string names of foreign key columns in .df
+  fk_cols_in_df <- fk_details_for_db_table |>
+    dplyr::select(child_fk_cols) |>
+    unlist() |>
+    unname()
+
+  for (this_fk_col_in_df in fk_cols_in_df) {
+    joined_colname <- paste0(this_fk_col_in_df, ".y")
+    tablenameID <- paste0(this_fk_col_in_df, "ID")
+    .df <- .df |>
+      dplyr::left_join(fk_parent_tables[[this_fk_col_in_df]],
+                       by = dplyr::join_by({{this_fk_col_in_df}} == {{tablenameID}})) |>
+      dplyr::mutate(
+        "{this_fk_col_in_df}" := .data[[joined_colname]],
+        "{joined_colname}" := NULL
+      )
+  }
   return(.df)
 }
 
