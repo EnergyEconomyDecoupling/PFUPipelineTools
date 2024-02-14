@@ -56,6 +56,51 @@
 "schema_table_colnames"
 
 
+#' Column names in primary key tables from `dm`
+#'
+#' `dm::dm_get_all_pks()` returns a data frame with several columns.
+#' This constant gives those names as a string list
+#' to document their meaning and
+#' to guard against future changes.
+#'
+#' @format A string list with `r length(dm_pk_colnames)` entries.
+#' \describe{
+#' \item{table}{The name of a string column that tells table names.}
+#' \item{pk_col}{The name of a string column that identifies primary key columns in `table`.}
+#' \item{autoincrement}{The name of a boolean column that tells whether `pk_col` is auto-incrementing.}
+#' }
+#'
+#' @examples
+#' dm_pk_colnames
+"dm_pk_colnames"
+
+
+#' Column names in foreign key tables from `dm`
+#'
+#' `dm::dm_get_all_fks()` returns a data frame with several columns.
+#' This constant gives those names as a string list
+#' to document their meaning and
+#' to guard against future changes.
+#'
+#' In this context, a "parent" table contains the foreign key definition
+#' and its values.
+#' A "child" table contains at least one foreign column that references
+#' a column in the parent table.
+#'
+#' @format A string list with `r length(dm_fk_colnames)` entries.
+#' \describe{
+#' \item{child_table}{The name of a string column that tells child table names.}
+#' \item{child_fk_cols}{The name of a string column that identifies foreign key columns in the child table.}
+#' \item{parent_table}{The name of a string column that identifies the table where the child's foreign key is defined.}
+#' \item{parent_key_cols}{The name of a string column that tells which column in the parent table contains the definition of the foreign key.}
+#' \item{on_delete}{Tells what will happen when the foreign key column is deleted.}
+#' }
+#'
+#' @examples
+#' dm_fk_colnames
+"dm_fk_colnames"
+
+
 #' Key column info
 #'
 #' A string list containing information about database table keys.

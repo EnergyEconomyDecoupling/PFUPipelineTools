@@ -231,6 +231,7 @@ schema_dm <- function(schema_table,
 #'                                 Default is `TRUE`.
 #' @param drop_db_tables A boolean that tells whether to delete
 #'                       existing tables before uploading the new schema.
+#' @param .pk_col See `PFUPipelineTools::dm_pk_colnames`.
 #'
 #' @return The remote data model
 #'
@@ -239,8 +240,9 @@ pl_upload_schema_and_simple_tables <- function(schema,
                                                simple_tables,
                                                conn,
                                                set_not_null_constraints = TRUE,
-                                               drop_db_tables = FALSE) {
-  # Get rid of the tables, if desired
+                                               drop_db_tables = FALSE,
+                                               .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col) {
+  # Get rid of the tables, but not the targets cache, if desired
   pl_destroy(conn, destroy_cache = FALSE, drop_tables = drop_db_tables)
   # Copy the data model to conn
   dm::copy_dm_to(dest = conn, dm = schema, temporary = FALSE)
@@ -264,7 +266,7 @@ pl_upload_schema_and_simple_tables <- function(schema,
     pk_str <- pk_table |>
       # "pk_col" is the name of the column of primary key names
       # in the tibble returned by dm::dm_get_all_pks()
-      magrittr::extract2("pk_col") |>
+      magrittr::extract2(.pk_col) |>
       magrittr::extract2(1)
 
     # Upload the simple table to conn
@@ -290,22 +292,37 @@ pl_upload_schema_and_simple_tables <- function(schema,
 #' @return `NULL` silently.
 #'
 #' @export
-set_not_null_constraints_on_fk_cols <- function(schema, conn) {
-  # Set NOT NULL constraint on all foreign key columns
-  schema |>
+set_not_null_constraints_on_fk_cols <- function(schema,
+                                                conn,
+                                                .child_table = PFUPipelineTools::dm_fk_colnames$child_table,
+                                                .child_fk_cols = PFUPipelineTools::dm_fk_colnames$child_fk_cols) {
+  # Find details about foreign keys
+  fk_details <- schema |>
     dm::dm_get_all_fks() |>
+    dplyr::select(dplyr::all_of(c(.child_table, .child_fk_cols))) |>
     dplyr::mutate(
       # Convert <keys> to <chr>
-      child_fk_cols = unlist(child_fk_cols)
-    ) |>
-    purrr::pmap(.f = function(child_table, child_fk_cols, parent_table, parent_key_cols, on_delete) {
-      stmt <- paste0('ALTER TABLE "', child_table,
-                    '" ALTER COLUMN "', child_fk_cols,
-                    '" set NOT NULL;')
-      DBI::dbExecute(conn, stmt)
-    })
+      "{.child_fk_cols}" := unlist(.data[[.child_fk_cols]])
+    )
+
+  # If there are no foreign keys, just return.
+  if (nrow(fk_details) == 0) {
+    return(invisible(NULL))
+  }
+
+  # Loop over all of the foreign keys
+  # and set the NOT NULL constraint.
+  for (i in 1:nrow(fk_details)) {
+    this_child_table <- fk_details[[.child_table]][[i]]
+    this_child_fk_col <- fk_details[[.child_fk_cols]][[i]]
+    stmt <- paste0('ALTER TABLE "', this_child_table,
+                   '" ALTER COLUMN "', this_child_fk_col,
+                   '" set NOT NULL;')
+    DBI::dbExecute(conn, stmt)
+  }
   return(invisible(NULL))
 }
+
 
 #' Upsert a data frame with optional recoding of foreign keys
 #'
