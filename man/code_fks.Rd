@@ -37,19 +37,20 @@ to fk keys.
 It can be obtained from code such as
 \verb{dm::dm_from_con(con = << a database connection >>, learn_keys = TRUE)}.
 
-\code{parent_tables} is a named list of tables,
+\code{fk_parent_tables} is a named list of tables,
 some of which are fk parent tables containing
 the mapping between fk values (usually string)
 and fk keys (usually integers)
 for \code{db_table_name}.
 \code{fk_parent_tables} is treated as a store from which foreign key tables
 are retrieved by name when needed.
-An appropriate value for \code{parent_tables} can be obtained
+An appropriate value for \code{fk_parent_tables} can be obtained
 from \code{get_all_fk_tables()}.
 
 If \code{.df} contains no foreign key columns,
 \code{.df} is returned unmodified.
 }
 \seealso{
-\code{\link[=decode_fks]{decode_fks()}} for the inverse operation.
+\code{\link[=decode_keys]{decode_keys()}} for the inverse operation,
+albeit for all keys, primary and foreign.
 }

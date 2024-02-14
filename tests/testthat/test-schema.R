@@ -131,7 +131,7 @@ test_that("pl_upload_schema_and_simple_tables() works as expected", {
 })
 
 
-test_that("pl_upsert() works with auto-incrementing columns", {
+test_that("decode_keys() works as expected", {
   skip_on_ci()
   skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
@@ -145,8 +145,37 @@ test_that("pl_upsert() works with auto-incrementing columns", {
   PFUPipelineTools:::upload_beatles(conn)
 
   # Add Stu Sutcliff
-  stu_sutcliff_member <- data.frame(MemberID = as.integer(6),
+  stu_sutcliff_member <- data.frame(MemberID = as.integer(5),
                                     Member = "Stu Sutcliff")
   pl_upsert(stu_sutcliff_member, "Member", conn, in_place = TRUE)
+  # Now add to MemberRole table
+  stu_sutcliff_memberrole <- data.frame(Member = "Stu Sutcliff",
+                                        Role = "Bassist")
+  pl_upsert(stu_sutcliff_memberrole, "MemberRole", conn, in_place = TRUE)
+  memberrole_tbl <- dplyr::tbl(conn, "MemberRole") |>
+    dplyr::collect() |>
+    as.data.frame()
+  memberrole_tbl |>
+    expect_equal(data.frame(Member = 5, Role = 2))
+
+  # Check decoding
+  schema <- dm::dm_from_con(con = conn, learn_keys = TRUE)
+  fk_parent_tables <- get_all_fk_tables(conn = conn, schema = schema)
+  memberrole_tbl |>
+    decode_keys(db_table_name = "MemberRole",
+                schema = schema,
+                fk_parent_tables = fk_parent_tables) |>
+    expect_equal(data.frame(Member = "Stu Sutcliff",
+                            Role = "Bassist"))
 })
+
+
+
+
+
+
+
+
+
+
 
