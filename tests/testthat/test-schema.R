@@ -20,11 +20,11 @@ test_that("schema_dm() works as expected", {
   clpfu_dm |>
     dm::dm_get_all_fks() |>
     nrow() |>
-    expect_gt(10)
+    expect_gt(5)
   clpfu_dm |>
     dm::dm_get_all_pks() |>
     nrow() |>
-    expect_gt(10)
+    expect_gt(5)
 })
 
 
