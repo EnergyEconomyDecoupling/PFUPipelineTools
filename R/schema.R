@@ -19,7 +19,7 @@
 #'
 #' @examples
 #' \dontrun{
-#' load_schema_table(version = "v1.4")
+#' load_schema_table(version = "v2.0")
 #' }
 load_schema_table <- function(version,
                               schema_path = PFUSetup::get_abs_paths(version = version)[["schema_path"]],
@@ -77,38 +77,48 @@ load_simple_tables <- function(version,
 #'
 #' `schema_table` is assumed to be a data frame with the following columns:
 #'
-#'   * Table: gives table names in the database
-#'   * colname: gives column names in each table; if suffixed with `pk_suffix`,
-#'              interpreted as a primary key column
-#'   * coldatatype: gives the data type for the column,
-#'                  one of "int", "boolean", "text", or "double precision"
-#'   * fk.table: gives a table in which the foreign key can be found
-#'   * fk.colname: gives the column name in fk.table where the foreign key can be found
+#'   * `.table`: gives table names in the database.
+#'   * `.colname`: gives column names in each table; if suffixed with `pk_suffix`,
+#'                 interpreted as a primary key column.
+#'   * `.is_pk`: tells if `.colname` is a primary key for `.table`.
+#'   * `.coldatatype`: gives the data type for the column,
+#'                     one of "int", "boolean", "text", or "double precision".
+#'   * `.fk_table`: gives a table in which the foreign key can be found
+#'   * `.fk_colname`: gives the column name in fk.table where the foreign key can be found
 #'
 #' @param schema_table A schema table, typically the output of `load_schema_table()`.
 #' @param pk_suffix The suffix for primary keys.
-#'                  Default is "_ID"
+#'                  Default is "_ID".
+#' @param .table,.colname,.is_pk,.coldatatype,.fk_table,.fk_colname See `PFUPipelineTools::schema_table_colnames`.
+#' @param .pk_cols Column names used internally.
 #'
 #' @return A `dm` object created from `schema_table`.
 #'
 #' @export
 #'
 #' @examples
-#' st <- tibble::tribble(~Table, ~colname, ~coldatatype, ~fk.table, ~fk.colname,
-#'                       "Country", "Country_ID", "int", "NA", "NA",
-#'                       "Country", "Country", "text", "NA", "NA",
-#'                       "Country", "Description", "text", "NA", "NA")
+#' st <- tibble::tribble(~Table, ~Colname, ~IsPK, ~ColDataType, ~FKTable, ~FKColname,
+#'                       "Country", "CountryID", TRUE, "text", "NA", "NA",
+#'                       "Country", "Country", FALSE, "text", "NA", "NA",
+#'                       "Country", "Description", FALSE, "text", "NA", "NA")
 #' schema_dm(st)
 schema_dm <- function(schema_table,
-                      pk_suffix = PFUPipelineTools::key_col_info$pk_suffix) {
+                      pk_suffix = PFUPipelineTools::key_col_info$pk_suffix,
+                      .table = PFUPipelineTools::schema_table_colnames$table,
+                      .colname = PFUPipelineTools::schema_table_colnames$colname,
+                      .is_pk = PFUPipelineTools::schema_table_colnames$is_pk,
+                      .coldatatype = PFUPipelineTools::schema_table_colnames$coldatatype,
+                      .fk_table = PFUPipelineTools::schema_table_colnames$fk_table,
+                      .fk_colname = PFUPipelineTools::schema_table_colnames$fk_colname,
+                      .pk_cols = ".pk_cols") {
 
-  dm_tables <- schema_table[["Table"]] |>
+  dm_tables <- schema_table[[.table]] |>
     unique() |>
     self_name() |>
     lapply(FUN = function(this_table_name) {
       colnames <- schema_table |>
-        dplyr::filter(.data[["Table"]] == this_table_name) |>
-        magrittr::extract2("colname")
+        dplyr::filter(.data[[.table]] == this_table_name) |>
+        magrittr::extract2(.colname)
       # Convert to a data frame
       this_mat <- matrix(nrow = 0, ncol = length(colnames), dimnames = list(NULL, colnames))
       this_dm_table <- this_mat |>
@@ -116,8 +126,8 @@ schema_dm <- function(schema_table,
         tibble::as_tibble()
       # Set data types
       coldatatypes <- schema_table |>
-        dplyr::filter(.data[["Table"]] == this_table_name) |>
-        magrittr::extract2("coldatatype")
+        dplyr::filter(.data[[.table]] == this_table_name) |>
+        magrittr::extract2(.coldatatype)
       for (icol in 1:length(coldatatypes)) {
         this_data_type <- coldatatypes[[icol]]
         if (this_data_type == "int") {
@@ -141,38 +151,39 @@ schema_dm <- function(schema_table,
   # Note, there could be multiple primary keys for a table.
   # Get the primary key info for all tables.
   pk_info <- schema_table |>
-    dplyr::filter(IsPK) |>
-    dplyr::select(Table, colname) |>
-    dplyr::rename(pk_cols = colname)
+    dplyr::filter(.data[[.is_pk]]) |>
+    dplyr::select(dplyr::all_of(c(.table, .colname))) |>
+    # dplyr::rename(.pk_cols = .data[[.colname]])
+    dplyr::rename(.pk_cols = dplyr::all_of(.colname))
   # Get a list of all tables in the schema
   tables <- schema_table |>
-    dplyr::select(Table) |>
+    dplyr::select(dplyr::all_of(.table)) |>
     unlist() |>
     unname() |>
     unique()
   # Cycle through each table, setting primary keys
   # in the data model (dm_tables)
   for (this_table in tables) {
-    pk_cols <- pk_info |>
-      dplyr::filter(Table == this_table) |>
-      dplyr::select(pk_cols) |>
+    these_pk_cols <- pk_info |>
+      dplyr::filter(.data[[.table]] == this_table) |>
+      dplyr::select(dplyr::all_of(.pk_cols)) |>
       unlist() |>
       unname()
     dm_tables <- dm_tables |>
       dm::dm_add_pk(table = {{this_table}},
-                    columns = {{pk_cols}})
+                    columns = {{these_pk_cols}})
   }
 
   # Set foreign keys according to the schema_table
   fk_info <- schema_table |>
-    dplyr::filter(.data[["fk.colname"]] != "NA")
+    dplyr::filter(.data[[.fk_colname]] != "NA")
 
   if (nrow(fk_info) > 0) {
     for (irow in 1:nrow(fk_info)) {
-      this_table_name <- fk_info[["Table"]][[irow]]
-      colname <- fk_info[["colname"]][[irow]]
-      fk_table <- fk_info[["fk.table"]][[irow]]
-      fk_colname <- fk_info[["fk.colname"]][[irow]]
+      this_table_name <- fk_info[[.table]][[irow]]
+      colname <- fk_info[[.colname]][[irow]]
+      fk_table <- fk_info[[.fk_table]][[irow]]
+      fk_colname <- fk_info[[.fk_colname]][[irow]]
       dm_tables <- dm_tables |>
         dm::dm_add_fk(table = {{this_table_name}},
                       columns = {{colname}},
@@ -220,6 +231,7 @@ schema_dm <- function(schema_table,
 #'                                 Default is `TRUE`.
 #' @param drop_db_tables A boolean that tells whether to delete
 #'                       existing tables before uploading the new schema.
+#' @param .pk_col See `PFUPipelineTools::dm_pk_colnames`.
 #'
 #' @return The remote data model
 #'
@@ -228,8 +240,9 @@ pl_upload_schema_and_simple_tables <- function(schema,
                                                simple_tables,
                                                conn,
                                                set_not_null_constraints = TRUE,
-                                               drop_db_tables = FALSE) {
-  # Get rid of the tables, if desired
+                                               drop_db_tables = FALSE,
+                                               .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col) {
+  # Get rid of the tables, but not the targets cache, if desired
   pl_destroy(conn, destroy_cache = FALSE, drop_tables = drop_db_tables)
   # Copy the data model to conn
   dm::copy_dm_to(dest = conn, dm = schema, temporary = FALSE)
@@ -253,7 +266,7 @@ pl_upload_schema_and_simple_tables <- function(schema,
     pk_str <- pk_table |>
       # "pk_col" is the name of the column of primary key names
       # in the tibble returned by dm::dm_get_all_pks()
-      magrittr::extract2("pk_col") |>
+      magrittr::extract2(.pk_col) |>
       magrittr::extract2(1)
 
     # Upload the simple table to conn
@@ -275,26 +288,42 @@ pl_upload_schema_and_simple_tables <- function(schema,
 #'
 #' @param schema A `dm` object describing the schema for the database at `conn`.
 #' @param conn A database connection.
+#' @param .child_table,.child_fk_cols See `PFUPpipelineTools::dm_fk_colnames`.
 #'
 #' @return `NULL` silently.
 #'
 #' @export
-set_not_null_constraints_on_fk_cols <- function(schema, conn) {
-  # Set NOT NULL constraint on all foreign key columns
-  schema |>
+set_not_null_constraints_on_fk_cols <- function(schema,
+                                                conn,
+                                                .child_table = PFUPipelineTools::dm_fk_colnames$child_table,
+                                                .child_fk_cols = PFUPipelineTools::dm_fk_colnames$child_fk_cols) {
+  # Find details about foreign keys
+  fk_details <- schema |>
     dm::dm_get_all_fks() |>
+    dplyr::select(dplyr::all_of(c(.child_table, .child_fk_cols))) |>
     dplyr::mutate(
       # Convert <keys> to <chr>
-      child_fk_cols = unlist(child_fk_cols)
-    ) |>
-    purrr::pmap(.f = function(child_table, child_fk_cols, parent_table, parent_key_cols, on_delete) {
-      stmt <- paste0('ALTER TABLE "', child_table,
-                    '" ALTER COLUMN "', child_fk_cols,
-                    '" set NOT NULL;')
-      DBI::dbExecute(conn, stmt)
-    })
+      "{.child_fk_cols}" := unlist(.data[[.child_fk_cols]])
+    )
+
+  # If there are no foreign keys, just return.
+  if (nrow(fk_details) == 0) {
+    return(invisible(NULL))
+  }
+
+  # Loop over all of the foreign keys
+  # and set the NOT NULL constraint.
+  for (i in 1:nrow(fk_details)) {
+    this_child_table <- fk_details[[.child_table]][[i]]
+    this_child_fk_col <- fk_details[[.child_fk_cols]][[i]]
+    stmt <- paste0('ALTER TABLE "', this_child_table,
+                   '" ALTER COLUMN "', this_child_fk_col,
+                   '" set NOT NULL;')
+    DBI::dbExecute(conn, stmt)
+  }
   return(invisible(NULL))
 }
+
 
 #' Upsert a data frame with optional recoding of foreign keys
 #'
@@ -350,12 +379,16 @@ set_not_null_constraints_on_fk_cols <- function(schema, conn) {
 #' @param in_place A boolean that tells whether to modify the database at `conn`.
 #'                 Default is `FALSE`, which is helpful if you want to chain
 #'                 several requests.
+#' @param code_fks A boolean that tells whether to code foreign keys in `.df`.
+#'                 Default is `TRUE`.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               Default is `dm::dm_from_con(conn, learn_keys = TRUE)`.
 #'               See details.
 #' @param fk_parent_tables A named list of all parent tables
 #'                         for the foreign keys in `db_table_name`.
 #'                         See details.
+#' @param .pk_col The name of the primary key column in a primary key table.
+#'                See `PFUPipelineTools::dm_pk_colnames`.
 #'
 #' @return A special hash of `.df`. See details.
 #'
@@ -367,8 +400,10 @@ pl_upsert <- function(.df,
                       db_table_name,
                       conn,
                       in_place = FALSE,
+                      code_fks = TRUE,
                       schema = dm::dm_from_con(conn, learn_keys = TRUE),
-                      fk_parent_tables = PFUPipelineTools::get_all_fk_tables(conn = conn, schema = schema)) {
+                      fk_parent_tables = PFUPipelineTools::get_all_fk_tables(conn = conn, schema = schema),
+                      .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col) {
 
   pk_table <- dm::dm_get_all_pks(schema, table = {{db_table_name}})
   # Make sure we have one and only one primary key column
@@ -379,19 +414,21 @@ pl_upsert <- function(.df,
                                        " primary keys. 1 is required."))
   # Get the primary key name as a string
   pk_str <- pk_table |>
-    # "pk_col" is the name of the column of primary key names
+    # .pk_col is the name of the column of primary key names
     # in the tibble returned by dm::dm_get_all_pks()
-    magrittr::extract2("pk_col") |>
+    magrittr::extract2(.pk_col) |>
     magrittr::extract2(1)
 
   # Replace fk column values in .df with integer keys, if needed.
-  recoded_df <- .df |>
-    code_fks(db_table_name = db_table_name,
-             schema = schema,
-             fk_parent_tables = fk_parent_tables)
+  if (code_fks) {
+    .df <- .df |>
+      code_fks(db_table_name = db_table_name,
+               schema = schema,
+               fk_parent_tables = fk_parent_tables)
+  }
 
   dplyr::tbl(conn, db_table_name) |>
-    dplyr::rows_upsert(recoded_df,
+    dplyr::rows_upsert(.df,
                        by = pk_str,
                        copy = TRUE,
                        in_place = in_place)
@@ -415,7 +452,7 @@ pl_upsert <- function(.df,
 #'
 #' `fk_parent_tables` is a named list of tables,
 #' some of which are fk parent tables containing
-#' the mapping between fk values (usually string)
+#' the mapping between fk values (usually strings)
 #' and fk keys (usually integers)
 #' for `db_table_name`.
 #' `fk_parent_tables` is treated as a store from which foreign key tables
@@ -433,6 +470,8 @@ pl_upsert <- function(.df,
 #' @param fk_parent_tables A named list of all parent tables
 #'                         for the foreign keys in `db_table_name`.
 #'                         See details.
+#' @param .child_table,.child_fk_cols,.parent_key_cols See `PFUPipelineTools::dm_fk_colnames`.
+#' @param .pk_suffix See `PFUPipelineTools::key_col_info`.
 #'
 #' @seealso [decode_keys()] for the inverse operation,
 #'          albeit for all keys, primary and foreign.
@@ -444,16 +483,20 @@ pl_upsert <- function(.df,
 code_fks <- function(.df,
                      db_table_name,
                      schema,
-                     fk_parent_tables) {
+                     fk_parent_tables,
+                     .child_table = PFUPipelineTools::dm_fk_colnames$child_table,
+                     .child_fk_cols = PFUPipelineTools::dm_fk_colnames$child_fk_cols,
+                     .parent_key_cols = PFUPipelineTools::dm_fk_colnames$parent_key_cols,
+                     .pk_suffix = PFUPipelineTools::key_col_info$pk_suffix) {
 
   # Get details of all foreign keys in .df
   fk_details_for_db_table <- schema |>
     dm::dm_get_all_fks() |>
-    dplyr::filter(.data[["child_table"]] == db_table_name) |>
+    dplyr::filter(.data[[.child_table]] == db_table_name) |>
     dplyr::mutate(
       # Remove the <keys> class on child_fk_cols and parent_key_cols.
-      child_fk_cols = unlist(child_fk_cols),
-      parent_key_cols = unlist(parent_key_cols)
+      "{.child_fk_cols}" := unlist(.data[[.child_fk_cols]]),
+      "{.parent_key_cols}" := unlist(.data[[.parent_key_cols]])
     )
 
   if (nrow(fk_details_for_db_table) == 0) {
@@ -464,7 +507,8 @@ code_fks <- function(.df,
 
   # Get a vector of string names of foreign key columns in .df
   fk_cols_in_df <- fk_details_for_db_table |>
-    dplyr::select(child_fk_cols) |>
+    # dplyr::select(child_fk_cols) |>
+    dplyr::select(dplyr::all_of(.child_fk_cols)) |>
     unlist() |>
     unname()
 
@@ -476,7 +520,9 @@ code_fks <- function(.df,
     }
     # Get the parent levels
     fk_levels <- fk_parent_tables[[this_fk_col_in_df]] |>
-      dplyr::arrange(.data[[paste0(this_fk_col_in_df, "ID")]]) |>
+      # Arrange by parent key values
+      dplyr::arrange(.data[[paste0(this_fk_col_in_df, .pk_suffix)]]) |>
+      # Grab the string columns
       dplyr::select(dplyr::all_of(this_fk_col_in_df)) |>
       unlist() |>
       unname()
@@ -486,7 +532,6 @@ code_fks <- function(.df,
         "{this_fk_col_in_df}" := as.integer(.data[[this_fk_col_in_df]])
       )
   }
-
   return(.df)
 }
 
@@ -503,28 +548,49 @@ code_fks <- function(.df,
 #' It can be obtained from code such as
 #' `dm::dm_from_con(con = << a database connection >>, learn_keys = TRUE)`.
 #'
+#' `fk_parent_tables` is a named list of tables,
+#' some of which are fk parent tables containing
+#' the mapping between fk values (usually strings)
+#' and fk keys (usually integers)
+#' for `db_table_name`.
+#' `fk_parent_tables` is treated as a store from which foreign key tables
+#' are retrieved by name when needed.
+#' An appropriate value for `fk_parent_tables` can be obtained
+#' from `get_all_fk_tables()`.
+#'
 #' @param .df The data frame about to be uploaded.
 #' @param db_table_name The string name of the database table where `.df` is to be uploaded.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               See details.
+#' @param fk_parent_tables A named list of all parent tables
+#'                         for the foreign keys in `db_table_name`.
+#'                         See details.
+#' @param .child_table,.child_fk_cols,.parent_key_cols See `PFUPipelineTools::dm_fk_colnames`.
+#' @param .pk_suffix See `PFUPipelineTools::key_col_info`.
+#' @param .y_joining_suffix The y column name suffix for `left_join()`.
+#'                          Default is ".y".
 #'
-#' @return
+#' @return A version of `.df` with integer keys replaced by key values.
+#'
 #' @export
-#'
-#' @examples
 decode_keys <- function(.df,
                         db_table_name,
                         schema,
-                        fk_parent_tables) {
+                        fk_parent_tables,
+                        .child_table = PFUPipelineTools::dm_fk_colnames$child_table,
+                        .child_fk_cols = PFUPipelineTools::dm_fk_colnames$child_fk_cols,
+                        .parent_key_cols = PFUPipelineTools::dm_fk_colnames$parent_key_cols,
+                        .pk_suffix = PFUPipelineTools::key_col_info$pk_suffix,
+                        .y_joining_suffix = ".y") {
 
   # Get details of all foreign keys in .df
   fk_details_for_db_table <- schema |>
     dm::dm_get_all_fks() |>
-    dplyr::filter(.data[["child_table"]] == db_table_name) |>
+    dplyr::filter(.data[[.child_table]] == db_table_name) |>
     dplyr::mutate(
       # Remove the <keys> class on child_fk_cols and parent_key_cols.
-      child_fk_cols = unlist(child_fk_cols),
-      parent_key_cols = unlist(parent_key_cols)
+      "{.child_fk_cols}" := unlist(.data[[.child_fk_cols]]),
+      "{.parent_key_cols}" := unlist(.data[[.parent_key_cols]])
     )
 
   if (nrow(fk_details_for_db_table) == 0) {
@@ -535,13 +601,13 @@ decode_keys <- function(.df,
 
   # Get a vector of string names of foreign key columns in .df
   fk_cols_in_df <- fk_details_for_db_table |>
-    dplyr::select(child_fk_cols) |>
+    dplyr::select(dplyr::all_of(.child_fk_cols)) |>
     unlist() |>
     unname()
 
   for (this_fk_col_in_df in fk_cols_in_df) {
-    joined_colname <- paste0(this_fk_col_in_df, ".y")
-    tablenameID <- paste0(this_fk_col_in_df, "ID")
+    joined_colname <- paste0(this_fk_col_in_df, .y_joining_suffix)
+    tablenameID <- paste0(this_fk_col_in_df, .pk_suffix)
     .df <- .df |>
       dplyr::left_join(fk_parent_tables[[this_fk_col_in_df]],
                        by = dplyr::join_by({{this_fk_col_in_df}} == {{tablenameID}})) |>

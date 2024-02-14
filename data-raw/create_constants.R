@@ -223,6 +223,50 @@ usethis::use_data(key_col_info, overwrite = TRUE)
 
 
 #
+# schema_table_colnames
+#
+
+schema_table_colnames <- list(
+  table = "Table",
+  colname = "Colname",
+  is_pk = "IsPK",
+  coldatatype = "ColDataType",
+  fk_table = "FKTable",
+  fk_colname = "FKColname"
+)
+
+usethis::use_data(schema_table_colnames, overwrite = TRUE)
+
+
+#
+# Column names in primary key data frames from the `dm` package
+#
+
+dm_pk_colnames <- list(
+  table = "table",
+  pk_col = "pk_col",
+  autoincrement = "autoincrement"
+)
+
+usethis::use_data(dm_pk_colnames, overwrite = TRUE)
+
+
+#
+# Column names in foreign key data frames from the `dm` package
+#
+
+dm_fk_colnames <- list(
+  child_table = "child_table",
+  child_fk_cols = "child_fk_cols",
+  parent_table = "parent_table",
+  parent_key_cols = "parent_key_cols",
+  on_delete = "on_delete"
+)
+
+usethis::use_data(dm_fk_colnames, overwrite = TRUE)
+
+
+#
 # Beatles tables
 #
 

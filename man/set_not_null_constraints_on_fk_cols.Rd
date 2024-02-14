@@ -4,12 +4,19 @@
 \alias{set_not_null_constraints_on_fk_cols}
 \title{Set NOT NULL constraints on foreign key columns}
 \usage{
-set_not_null_constraints_on_fk_cols(schema, conn)
+set_not_null_constraints_on_fk_cols(
+  schema,
+  conn,
+  .child_table = PFUPipelineTools::dm_fk_colnames$child_table,
+  .child_fk_cols = PFUPipelineTools::dm_fk_colnames$child_fk_cols
+)
 }
 \arguments{
 \item{schema}{A \code{dm} object describing the schema for the database at \code{conn}.}
 
 \item{conn}{A database connection.}
+
+\item{.child_table, .child_fk_cols}{See \code{PFUPpipelineTools::dm_fk_colnames}.}
 }
 \value{
 \code{NULL} silently.

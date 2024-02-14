@@ -4,10 +4,10 @@ test_that("load_schema_table() works as expected", {
   skip_on_cran()
   st <- load_schema_table(version = "v2.0")
   expect_true("Table" %in% colnames(st))
-  expect_true("colname" %in% colnames(st))
-  expect_true("coldatatype" %in% colnames(st))
-  expect_true("fk.table" %in% colnames(st))
-  expect_true("fk.colname" %in% colnames(st))
+  expect_true("Colname" %in% colnames(st))
+  expect_true("ColDataType" %in% colnames(st))
+  expect_true("FKTable" %in% colnames(st))
+  expect_true("FKColname" %in% colnames(st))
 })
 
 
@@ -37,10 +37,10 @@ test_that("schema_dm() works as expected", {
 
 
 test_that("schema_dm() fails with unknown data type", {
-  st <- tibble::tribble(~Table, ~colname, ~coldatatype, ~fk.table, ~fk.colname,
-                        "Country", "Country_ID", "bogus", "NA", "NA",
-                        "Country", "Country", "text", "NA", "NA",
-                        "Country", "Description", "text", "NA", "NA")
+  st <- tibble::tribble(~Table, ~Colname, ~IsPK, ~ColDataType, ~FKTable, ~FKColname,
+                        "Country", "CountryID", TRUE, "bogus", "NA", "NA",
+                        "Country", "Country", FALSE, "text", "NA", "NA",
+                        "Country", "Description", FALSE, "text", "NA", "NA")
   st |>
     schema_dm() |>
     expect_error(regexp = "Unknown data type: 'bogus' in schema_dm")

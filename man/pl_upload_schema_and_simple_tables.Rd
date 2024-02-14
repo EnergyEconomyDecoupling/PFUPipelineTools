@@ -9,7 +9,8 @@ pl_upload_schema_and_simple_tables(
   simple_tables,
   conn,
   set_not_null_constraints = TRUE,
-  drop_db_tables = FALSE
+  drop_db_tables = FALSE,
+  .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col
 )
 }
 \arguments{
@@ -27,6 +28,8 @@ Default is \code{TRUE}.}
 
 \item{drop_db_tables}{A boolean that tells whether to delete
 existing tables before uploading the new schema.}
+
+\item{.pk_col}{See \code{PFUPipelineTools::dm_pk_colnames}.}
 }
 \value{
 The remote data model

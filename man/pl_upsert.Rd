@@ -9,8 +9,10 @@ pl_upsert(
   db_table_name,
   conn,
   in_place = FALSE,
+  code_fks = TRUE,
   schema = dm::dm_from_con(conn, learn_keys = TRUE),
-  fk_parent_tables = PFUPipelineTools::get_all_fk_tables(conn = conn, schema = schema)
+  fk_parent_tables = PFUPipelineTools::get_all_fk_tables(conn = conn, schema = schema),
+  .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col
 )
 }
 \arguments{
@@ -25,6 +27,9 @@ the name of a remote database table in \code{conn}.}
 Default is \code{FALSE}, which is helpful if you want to chain
 several requests.}
 
+\item{code_fks}{A boolean that tells whether to code foreign keys in \code{.df}.
+Default is \code{TRUE}.}
+
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
 Default is \code{dm::dm_from_con(conn, learn_keys = TRUE)}.
 See details.}
@@ -32,6 +37,9 @@ See details.}
 \item{fk_parent_tables}{A named list of all parent tables
 for the foreign keys in \code{db_table_name}.
 See details.}
+
+\item{.pk_col}{The name of the primary key column in a primary key table.
+See \code{PFUPipelineTools::dm_pk_colnames}.}
 }
 \value{
 A special hash of \code{.df}. See details.
