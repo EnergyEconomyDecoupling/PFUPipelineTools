@@ -4,7 +4,16 @@
 \alias{code_fks}
 \title{Code foreign keys in a data frame to be uploaded}
 \usage{
-code_fks(.df, db_table_name, schema, fk_parent_tables)
+code_fks(
+  .df,
+  db_table_name,
+  schema,
+  fk_parent_tables,
+  .child_table = PFUPipelineTools::dm_fk_colnames$child_table,
+  .child_fk_cols = PFUPipelineTools::dm_fk_colnames$child_fk_cols,
+  .parent_key_cols = PFUPipelineTools::dm_fk_colnames$parent_key_cols,
+  .pk_suffix = PFUPipelineTools::key_col_info$pk_suffix
+)
 }
 \arguments{
 \item{.df}{The data frame about to be uploaded.}
@@ -17,6 +26,10 @@ See details.}
 \item{fk_parent_tables}{A named list of all parent tables
 for the foreign keys in \code{db_table_name}.
 See details.}
+
+\item{.child_table, .child_fk_cols, .parent_key_cols}{See \code{PFUPipelineTools::dm_fk_colnames}.}
+
+\item{.pk_suffix}{See \code{PFUPipelineTools::key_col_info}.}
 }
 \value{
 A version of \code{.df} with fk values (often strings)

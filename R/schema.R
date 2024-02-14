@@ -470,6 +470,8 @@ pl_upsert <- function(.df,
 #' @param fk_parent_tables A named list of all parent tables
 #'                         for the foreign keys in `db_table_name`.
 #'                         See details.
+#' @param .child_table,.child_fk_cols,.parent_key_cols See `PFUPipelineTools::dm_fk_colnames`.
+#' @param .pk_suffix See `PFUPipelineTools::key_col_info`.
 #'
 #' @seealso [decode_keys()] for the inverse operation,
 #'          albeit for all keys, primary and foreign.
@@ -481,16 +483,20 @@ pl_upsert <- function(.df,
 code_fks <- function(.df,
                      db_table_name,
                      schema,
-                     fk_parent_tables) {
+                     fk_parent_tables,
+                     .child_table = PFUPipelineTools::dm_fk_colnames$child_table,
+                     .child_fk_cols = PFUPipelineTools::dm_fk_colnames$child_fk_cols,
+                     .parent_key_cols = PFUPipelineTools::dm_fk_colnames$parent_key_cols,
+                     .pk_suffix = PFUPipelineTools::key_col_info$pk_suffix) {
 
   # Get details of all foreign keys in .df
   fk_details_for_db_table <- schema |>
     dm::dm_get_all_fks() |>
-    dplyr::filter(.data[["child_table"]] == db_table_name) |>
+    dplyr::filter(.data[[.child_table]] == db_table_name) |>
     dplyr::mutate(
       # Remove the <keys> class on child_fk_cols and parent_key_cols.
-      child_fk_cols = unlist(child_fk_cols),
-      parent_key_cols = unlist(parent_key_cols)
+      "{.child_fk_cols}" := unlist(.data[[.child_fk_cols]]),
+      "{.parent_key_cols}" := unlist(.data[[.parent_key_cols]])
     )
 
   if (nrow(fk_details_for_db_table) == 0) {
@@ -501,7 +507,8 @@ code_fks <- function(.df,
 
   # Get a vector of string names of foreign key columns in .df
   fk_cols_in_df <- fk_details_for_db_table |>
-    dplyr::select(child_fk_cols) |>
+    # dplyr::select(child_fk_cols) |>
+    dplyr::select(dplyr::all_of(.child_fk_cols)) |>
     unlist() |>
     unname()
 
@@ -513,7 +520,9 @@ code_fks <- function(.df,
     }
     # Get the parent levels
     fk_levels <- fk_parent_tables[[this_fk_col_in_df]] |>
-      dplyr::arrange(.data[[paste0(this_fk_col_in_df, "ID")]]) |>
+      # Arrange by parent key values
+      dplyr::arrange(.data[[paste0(this_fk_col_in_df, .pk_suffix)]]) |>
+      # Grab the string columns
       dplyr::select(dplyr::all_of(this_fk_col_in_df)) |>
       unlist() |>
       unname()
@@ -523,7 +532,6 @@ code_fks <- function(.df,
         "{this_fk_col_in_df}" := as.integer(.data[[this_fk_col_in_df]])
       )
   }
-
   return(.df)
 }
 
