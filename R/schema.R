@@ -60,11 +60,10 @@ load_simple_tables <- function(version,
                                simple_tables_path = PFUSetup::get_abs_paths(version = version)[["schema_path"]],
                                readme_sheet = "README",
                                schema_sheet = "Schema") {
-  simple_table_sheet_names <- simple_tables_path |>
+  simple_tables_path |>
     readxl::excel_sheets() |>
-    setdiff(c(readme_sheet, schema_sheet))
-  simple_table_sheet_names |>
-    stats::setNames(simple_table_sheet_names) |>
+    setdiff(c(readme_sheet, schema_sheet)) |>
+    self_name() |>
     lapply(FUN = function(this_sheet_name) {
       readxl::read_excel(simple_tables_path, sheet = this_sheet_name)
     })
@@ -100,12 +99,12 @@ load_simple_tables <- function(version,
 #'                       "Country", "Country", "text", "NA", "NA",
 #'                       "Country", "Description", "text", "NA", "NA")
 #' schema_dm(st)
-schema_dm <- function(schema_table, pk_suffix = PFUPipelineTools::key_col_info$pk_suffix) {
+schema_dm <- function(schema_table,
+                      pk_suffix = PFUPipelineTools::key_col_info$pk_suffix) {
 
-  dm_table_names <- schema_table[["Table"]] |>
-    unique()
-  dm_tables <- dm_table_names |>
-    stats::setNames(dm_table_names) |>
+  dm_tables <- schema_table[["Table"]] |>
+    unique() |>
+    self_name() |>
     lapply(FUN = function(this_table_name) {
       colnames <- schema_table |>
         dplyr::filter(.data[["Table"]] == this_table_name) |>
@@ -137,21 +136,21 @@ schema_dm <- function(schema_table, pk_suffix = PFUPipelineTools::key_col_info$p
     }) |>
     dm::as_dm()
 
-  # Set primary keys according to the convention
-  # that the primary key column ends with pk_suffix
-  primary_key_colnames <- dm_tables |>
-    lapply(FUN = function(this_table) {
-      cnames <- colnames(this_table)
-      cnames[[which(endsWith(cnames, pk_suffix), arr.ind = TRUE)]]
-    })
+  # Set primary key according to the convention
+  # that the primary key column name is
+  # the the table name with pk_suffix.
+  dm_table_names <- names(dm_tables)
+  primary_key_colnames <- paste0(dm_table_names, pk_suffix)
 
   for (itbl in 1:length(dm_table_names)) {
     this_table_name <- dm_table_names[[itbl]]
     this_primary_key_colname <- primary_key_colnames[[itbl]]
-    dm_tables <- dm_tables |>
-      dm::dm_add_pk(table = {{this_table_name}},
-                    columns = {{this_primary_key_colname}},
-                    autoincrement = TRUE)
+    if (this_primary_key_colname %in% colnames(dm_tables[[this_table_name]])) {
+      dm_tables <- dm_tables |>
+        dm::dm_add_pk(table = {{this_table_name}},
+                      columns = {{this_primary_key_colname}},
+                      autoincrement = TRUE)
+    }
   }
 
   # Set foreign keys according to the schema_table
@@ -168,7 +167,8 @@ schema_dm <- function(schema_table, pk_suffix = PFUPipelineTools::key_col_info$p
         dm::dm_add_fk(table = {{this_table_name}},
                       columns = {{colname}},
                       ref_table = {{fk_table}},
-                      ref_columns = {{fk_colname}})
+                      ref_columns = {{fk_colname}},
+                      check = TRUE)
     }
   }
   return(dm_tables)
@@ -190,10 +190,13 @@ schema_dm <- function(schema_table, pk_suffix = PFUPipelineTools::key_col_info$p
 #' uploading the data model `schema` to `conn` will fail
 #' if the tables already exist in the database at `conn`.
 #'
-#' `simple_tables` should not include any foreign keys,
-#' because the order for uploading `simple_tables` is not guaranteed
-#' to avoid uploading a table with a foreign key before
-#' the table containing the foreign key is available.
+#' `simple_tables` should not include tables with foreign keys,
+#' because the order for uploading `simple_tables` is not guaranteed.
+#' Doing so will avoid uploading a table with a foreign key before
+#' the parent table containing the foreign key values has been uploaded.
+#'
+#' `set_not_null_constraints` controls setting of
+#' `NOT NULL` constraints for all foreign key columns in `schema`.
 #'
 #' `conn`'s user must have superuser privileges.
 #'
@@ -201,54 +204,94 @@ schema_dm <- function(schema_table, pk_suffix = PFUPipelineTools::key_col_info$p
 #' @param simple_tables A named list of data frames with the content of
 #'                      tables in `conn`.
 #' @param conn A `DBI` connection to a database.
+#' @param set_not_null_constraints A boolean that tells whether
+#'                                 `NOT NULL` constraints are set on
+#'                                 foreign key columns in `schema`.
+#'                                 Default is `TRUE`.
 #' @param drop_db_tables A boolean that tells whether to delete
 #'                       existing tables before uploading the new schema.
 #'
 #' @return The remote data model
 #'
 #' @export
-upload_schema_and_simple_tables <- function(schema,
-                                            simple_tables,
-                                            conn,
-                                            drop_db_tables = FALSE) {
+pl_upload_schema_and_simple_tables <- function(schema,
+                                               simple_tables,
+                                               conn,
+                                               set_not_null_constraints = TRUE,
+                                               drop_db_tables = FALSE) {
   # Get rid of the tables, if desired
   pl_destroy(conn, destroy_cache = FALSE, drop_tables = drop_db_tables)
   # Copy the data model to conn
-  dm::copy_dm_to(conn, schema, temporary = FALSE)
-  # Upload the simple tables
-  names(simple_tables) |>
-    purrr::map(function(this_table_name) {
-      # Get the primary keys data frame
-      pk_table <- dm::dm_get_all_pks(schema, table = {{this_table_name}})
-      # Make sure we have one and only one primary key column
-      assertthat::assert_that(nrow(pk_table) == 1,
-                              msg = paste0("Table '",
-                                           this_table_name,
-                                           "' has ", nrow(pk_table),
-                                           " primary keys. 1 is required."))
-      # Get the primary key name as a string
-      pk_str <- pk_table |>
-        # "pk_col" is the name of the column of primary key names
-        # in the tibble returned by dm::dm_get_all_pks()
-        magrittr::extract2("pk_col") |>
-        magrittr::extract2(1)
+  dm::copy_dm_to(dest = conn, dm = schema, temporary = FALSE)
 
-      # Upload the simple table to conn
-      dplyr::tbl(conn, this_table_name) |>
-        dplyr::rows_upsert(simple_tables[[this_table_name]],
-                           by = pk_str,
-                           copy = TRUE,
-                           in_place = TRUE)
-    })
+  if (set_not_null_constraints) {
+    # Set NOT NULL constraints on all foreign key columns
+    set_not_null_constraints_on_fk_cols(schema, conn)
+  }
+
+  # Upload the simple tables
+  for (this_table_name in names(simple_tables)) {
+    # Get the primary keys data frame
+    pk_table <- dm::dm_get_all_pks(schema, table = {{this_table_name}})
+    # Make sure we have one and only one primary key column
+    assertthat::assert_that(nrow(pk_table) == 1,
+                            msg = paste0("Table '",
+                                         this_table_name,
+                                         "' has ", nrow(pk_table),
+                                         " primary keys. 1 is required."))
+    # Get the primary key name as a string
+    pk_str <- pk_table |>
+      # "pk_col" is the name of the column of primary key names
+      # in the tibble returned by dm::dm_get_all_pks()
+      magrittr::extract2("pk_col") |>
+      magrittr::extract2(1)
+
+    # Upload the simple table to conn
+    dplyr::tbl(conn, this_table_name) |>
+      dplyr::rows_upsert(simple_tables[[this_table_name]],
+                         by = pk_str,
+                         copy = TRUE,
+                         in_place = TRUE)
+  }
 }
 
+
+#' Set NOT NULL constraints on foreign key columns
+#'
+#' To maintain the integrity of data in a database,
+#' it is important to enforce NOT NULL constraints on foreign key columns.
+#' This function adds NOT NULL constraints to every foreign key column
+#' in `schema`.
+#'
+#' @param schema A `dm` object describing the schema for the database at `conn`.
+#' @param conn A database connection.
+#'
+#' @return `NULL` silently.
+#'
+#' @export
+set_not_null_constraints_on_fk_cols <- function(schema, conn) {
+  # Set NOT NULL constraint on all foreign key columns
+  schema |>
+    dm::dm_get_all_fks() |>
+    dplyr::mutate(
+      # Convert <keys> to <chr>
+      child_fk_cols = unlist(child_fk_cols)
+    ) |>
+    purrr::pmap(.f = function(child_table, child_fk_cols, parent_table, parent_key_cols, on_delete) {
+      stmt <- paste0('ALTER TABLE "', child_table,
+                    '" ALTER COLUMN "', child_fk_cols,
+                    '" set NOT NULL;')
+      DBI::dbExecute(conn, stmt)
+    })
+  return(invisible(NULL))
+}
 
 #' Upsert a data frame with optional recoding of foreign keys
 #'
 #' Upserts
 #' (inserts or updates,
-#' depending on whether the information already exists in `remote_table`)
-#' `.df` into `remote_table` at `conn`.
+#' depending on whether the information already exists in `db_table_name`)
+#' `.df` into `db_table_name` at `conn`.
 #' This function decodes foreign keys, when possible,
 #' by assuming that all keys are integers.
 #' If non-integers are provided in foreign key columns of `.df`,
@@ -265,37 +308,63 @@ upload_schema_and_simple_tables <- function(schema,
 #' The output of this function is a special data frame that
 #' contains the following columns:
 #'
-#'     * CLPFUDBTable: A column of character strings, all with the value of `remote_table`.
+#'     * CLPFUDBTable: A column of character strings,
+#'                     all with the value of `db_table_name`.
 #'     * All foreign key columns: With their integer values (to save space).
 #'     * Hash: A column with a hash of all non-foreign-key columns.
+#'
+#' `schema` is a data model (`dm` object) for the database in `conn`.
+#' Its default value (`dm::dm_from_con(conn, learn_keys = TRUE)`)
+#' extracts the data model for the database at `conn` automatically.
+#' However, if the caller already has the data model,
+#' supplying it in the `schema` argument will save time.
+#'
+#' `parent_tables` is a named list of tables,
+#' one of which (the one named `db_table_name`)
+#' contains the foreign keys for `db_table_name`.
+#' `parent_tables` is treated as a store from which foreign key tables
+#' are retrieved by name when needed.
+#' The default value (which is several lines of code)
+#' retrieves all possible foreign key parent tables from conn,
+#' potentially a time-consuming process.
+#' For speed, pre-compute all foreign key parent tables once
+#' and pass the list to the `parent_tables` argument
+#' of all similar functions.
 #'
 #' The user in `conn` must have write access to the database.
 #'
 #' @param .df The data frame to be upserted.
-#' @param remote_table A string identifying the destination for `.df`,
-#'                     the name of a remote database table in `conn`.
+#' @param db_table_name A string identifying the destination for `.df`,
+#'                      the name of a remote database table in `conn`.
 #' @param conn A connection to the CL-PFU database.
+#' @param in_place A boolean that tells whether to modify the database at `conn`.
+#'                 Default is `FALSE`, which is helpful if you want to chain
+#'                 several requests.
+#' @param schema The data model (`dm` object) for the database in `conn`.
+#'               Default is `dm::dm_from_con(conn, learn_keys = TRUE)`.
+#'               See details.
+#' @param fk_parent_tables A named list of all parent tables
+#'                         for the foreign keys in `db_table_name`.
+#'                         See details.
 #'
 #' @return A special hash of `.df`. See details.
 #'
 #' @seealso `pl_download()` for the reverse operation.
-#'          `upload_schema_and_simple_tables()` for a way to establish the database schema.
+#'          `pl_upload_schema_and_simple_tables()` for a way to establish the database schema.
 #'
 #' @export
-#'
-#' @examples
-pl_upsert <- function(.df, remote_table_name, conn) {
-  DM <- dm::dm_from_con(conn, table_names = remote_table_name, learn_keys = TRUE)
-  fk_table <- dm::dm_get_all_fks(DM)
-  # Check whether each fk column in .df is an integer.
-  # If so, don't touch it.
-  # If not, try to re-code as an integer key.
+pl_upsert <- function(.df,
+                      db_table_name,
+                      conn,
+                      in_place = FALSE,
+                      schema = dm::dm_from_con(conn, learn_keys = TRUE),
+                      fk_parent_tables = PFUPipelineTools::get_all_fk_tables(conn = conn, schema = schema)) {
 
-  pk_table <- dm::dm_get_all_pks(DM, table = {{remote_table_name}})
+  pk_table <- dm::dm_get_all_pks(schema, table = {{db_table_name}})
   # Make sure we have one and only one primary key column
   assertthat::assert_that(nrow(pk_table) == 1,
                           msg = paste0("Table '",
-                                       remote_table_name,
+                                       db_table_name,
                                        "' has ", nrow(pk_table),
                                        " primary keys. 1 is required."))
   # Get the primary key name as a string
@@ -305,53 +374,121 @@ pl_upsert <- function(.df, remote_table_name, conn) {
     magrittr::extract2("pk_col") |>
     magrittr::extract2(1)
 
-  dplyr::tbl(conn, remote_table_name) |>
-    dplyr::rows_upsert(.df,
+  # Replace fk column values in .df with integer keys, if needed.
+  recoded_df <- .df |>
+    code_fks(db_table_name = db_table_name,
+             schema = schema,
+             fk_parent_tables = fk_parent_tables)
+
+  dplyr::tbl(conn, db_table_name) |>
+    dplyr::rows_upsert(recoded_df,
                        by = pk_str,
                        copy = TRUE,
-                       in_place = TRUE)
+                       in_place = in_place)
 }
 
+
+#' Recode foreign keys in a data frame to be uploaded
+#'
+#' In the CL-PFU pipeline,
+#' we allow data frames about to be uploaded
+#' to the database
+#' to have foreign key values (usually strings)
+#' in foreign key columns.
+#' This function translates the fk values
+#' to fk keys.
+#'
+#' `schema` is a data model (`dm` object) for the CL-PFU database.
+#' It can be obtained from code such as
+#' `dm::dm_from_con(con = << a database connection >>, learn_keys = TRUE)`.
+#'
+#' `parent_tables` is a named list of tables,
+#' some of which are fk parent tables containing
+#' the mapping between fk values (usually string)
+#' and fk keys (usually integers)
+#' for `db_table_name`.
+#' `fk_parent_tables` is treated as a store from which foreign key tables
+#' are retrieved by name when needed.
+#' An appropriate value for `parent_tables` can be obtained
+#' from `get_all_fk_tables()`.
+#'
+#' If `.df` contains no foreign key columns,
+#' `.df` is returned unmodified.
+#'
+#' @param .df The data frame about to be uploaded.
+#' @param db_table_name The string name of the database table where `.df` is to be uploaded.
+#' @param schema The data model (`dm` object) for the database in `conn`.
+#'               See details.
+#' @param fk_parent_tables A named list of all parent tables
+#'                        for the foreign keys in `db_table_name`.
+#'                        See details.
+#'
+#' @return A version of `.df` with fk values (often strings)
+#'         replaced by fk keys (integers).
+#'
+#' @export
+code_fks <- function(.df,
+                     db_table_name,
+                     schema,
+                     fk_parent_tables) {
+
+  # Get details of all foreign keys in .df
+  fk_details_for_db_table <- schema |>
+    dm::dm_get_all_fks() |>
+    dplyr::filter(.data[["child_table"]] == db_table_name) |>
+    dplyr::mutate(
+      # Remove the <keys> class on child_fk_cols and parent_key_cols.
+      child_fk_cols = unlist(child_fk_cols),
+      parent_key_cols = unlist(parent_key_cols)
+    )
+
+  if (nrow(fk_details_for_db_table) == 0) {
+    # There are no foreign key columns in .df,
+    # so just return .df unmodified.
+    return(.df)
+  }
+
+  # Get a vector of string names of foreign key columns in .df
+  fk_cols_in_df <- fk_details_for_db_table |>
+    dplyr::select(child_fk_cols) |>
+    unlist() |>
+    unname()
+
+  for (this_fk_col_in_df in fk_cols_in_df) {
+    if (is.integer(.df[[this_fk_col_in_df]])) {
+      # This is already an integer, and
+      # presumably no need to recode
+      next
+    }
+    # Get the parent levels
+    fk_levels <- fk_parent_tables[[this_fk_col_in_df]] |>
+      dplyr::arrange(.data[[paste0(this_fk_col_in_df, "ID")]]) |>
+      dplyr::select(dplyr::all_of(this_fk_col_in_df)) |>
+      unlist() |>
+      unname()
+    .df <- .df |>
+      dplyr::mutate(
+        "{this_fk_col_in_df}" := factor(.data[[this_fk_col_in_df]], levels = fk_levels),
+        "{this_fk_col_in_df}" := as.integer(.data[[this_fk_col_in_df]])
+      )
+  }
+
+  return(.df)
+}
 
 
 #' Upload a small database of Beatles information
 #'
 #' Used only for testing.
 #'
-#' @param conn The connection to a Postgres database. Must have write permission.
+#' @param conn The connection to a Postgres database.
+#'             The user must have write permission.
 #'
 #' @return A list of tables containing Beatles information
 upload_beatles <- function(conn) {
-  # Band members table specification (no data)
-  mems <- matrix(nrow = 0, ncol = 2, dimnames = list(c(), c("Member_ID", "Member"))) |>
-    as.data.frame() |>
-    dplyr::mutate(
-      Member_ID = as.integer(Member_ID),
-      Member = as.character(Member)
-    )
-  # Band roles table specification (no data)
-  rls <- matrix(nrow = 0, ncol = 2, dimnames = list(c(), c("Member_ID", "Role"))) |>
-    as.data.frame() |>
-    dplyr::mutate(
-      Member_ID = as.integer(Member_ID),
-      Role = as.character(Role)
-    )
-
-  # Build the data model
-  DM <- list(Members = mems, Roles = rls) |>
-    dm::as_dm() |>
-    dm::dm_add_pk(table = Members, columns = Member_ID, autoincrement = TRUE) |>
-    dm::dm_add_pk(table = Roles, columns = Member_ID, autoincrement = TRUE) |>
-    dm::dm_add_fk(table = Roles, columns = Member_ID, ref_table = Members, ref_columns = Member_ID)
-
-  # Create tables to add to the DM
-  members <- data.frame(Member_ID = as.integer(1:4),
-                        Member = c("John Lennon", "Paul McCartney", "George Harrison", "Ringo Starr"))
-  roles <- data.frame(Member_ID = as.integer(1:4),
-                      Role = c("Lead singer", "Bassist", "Guitarist", "Drummer"))
-  tables_to_add <- list(Members = members, Roles = roles)
-  upload_schema_and_simple_tables(schema = DM,
-                                  simple_tables = tables_to_add,
-                                  conn = conn,
-                                  drop_db_tables = TRUE)
+  PFUPipelineTools::beatles_schema_table |>
+    schema_dm() |>
+    pl_upload_schema_and_simple_tables(simple_tables = PFUPipelineTools::beatles_fk_tables,
+                                       conn = conn,
+                                       drop_db_tables = TRUE)
 }

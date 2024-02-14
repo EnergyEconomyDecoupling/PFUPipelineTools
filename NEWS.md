@@ -8,8 +8,8 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
-* New functions `load_schema_table()`, `schema_dm()`, and `pl_destroy()`
-  to assist transition to a proper database.
+* New function `self_name()` is helpful in many places.
+* Several new functions to assist with database schema, etc.
 
 
 # PFUPipelineTools 0.1.8 (2023-12-21) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10420449.svg)](https://doi.org/10.5281/zenodo.10420449)

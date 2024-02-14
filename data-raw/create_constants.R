@@ -216,7 +216,24 @@ usethis::use_data(canonical_countries, overwrite = TRUE)
 #
 
 key_col_info <- list(
-  pk_suffix = "_ID"
+  pk_suffix = "ID"
 )
 
 usethis::use_data(key_col_info, overwrite = TRUE)
+
+
+#
+# Beatles tables
+#
+
+beatles_file_path <- file.path("data-raw", "BeatlesSchema.xlsx")
+beatles_schema_table <- load_schema_table(schema_path = beatles_file_path,
+                                          schema_sheet = "Schema")
+
+usethis::use_data(beatles_schema_table, overwrite = TRUE)
+
+beatles_fk_tables <- load_simple_tables(simple_tables_path = beatles_file_path,
+                                        readme_sheet = "README",
+                                        schema_sheet = "Schema")
+
+usethis::use_data(beatles_fk_tables, overwrite = TRUE)

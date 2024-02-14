@@ -4,15 +4,34 @@
 \alias{pl_upsert}
 \title{Upsert a data frame with optional recoding of foreign keys}
 \usage{
-pl_upsert(.df, remote_table_name, conn)
+pl_upsert(
+  .df,
+  db_table_name,
+  conn,
+  in_place = FALSE,
+  schema = dm::dm_from_con(conn, learn_keys = TRUE),
+  fk_parent_tables = PFUPipelineTools::get_all_fk_tables(conn = conn, schema = schema)
+)
 }
 \arguments{
 \item{.df}{The data frame to be upserted.}
 
+\item{db_table_name}{A string identifying the destination for \code{.df},
+the name of a remote database table in \code{conn}.}
+
 \item{conn}{A connection to the CL-PFU database.}
 
-\item{remote_table}{A string identifying the destination for \code{.df},
-the name of a remote database table in \code{conn}.}
+\item{in_place}{A boolean that tells whether to modify the database at \code{conn}.
+Default is \code{FALSE}, which is helpful if you want to chain
+several requests.}
+
+\item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
+Default is \code{dm::dm_from_con(conn, learn_keys = TRUE)}.
+See details.}
+
+\item{fk_parent_tables}{A named list of all parent tables
+for the foreign keys in \code{db_table_name}.
+See details.}
 }
 \value{
 A special hash of \code{.df}. See details.
@@ -20,8 +39,8 @@ A special hash of \code{.df}. See details.
 \description{
 Upserts
 (inserts or updates,
-depending on whether the information already exists in \code{remote_table})
-\code{.df} into \code{remote_table} at \code{conn}.
+depending on whether the information already exists in \code{db_table_name})
+\code{.df} into \code{db_table_name} at \code{conn}.
 This function decodes foreign keys, when possible,
 by assuming that all keys are integers.
 If non-integers are provided in foreign key columns of \code{.df},
@@ -39,14 +58,33 @@ before uploading.
 The output of this function is a special data frame that
 contains the following columns:
 
-\if{html}{\out{<div class="sourceCode">}}\preformatted{* CLPFUDBTable: A column of character strings, all with the value of `remote_table`.
+\if{html}{\out{<div class="sourceCode">}}\preformatted{* CLPFUDBTable: A column of character strings,
+                all with the value of `db_table_name`.
 * All foreign key columns: With their integer values (to save space).
 * Hash: A column with a hash of all non-foreign-key columns.
 }\if{html}{\out{</div>}}
+
+\code{schema} is a data model (\code{dm} object) for the database in \code{conn}.
+Its default value (\code{dm::dm_from_con(conn, learn_keys = TRUE)})
+extracts the data model for the database at \code{conn} automatically.
+However, if the caller already has the data model,
+supplying it in the \code{schema} argument will save time.
+
+\code{parent_tables} is a named list of tables,
+one of which (the one named \code{db_table_name})
+contains the foreign keys for \code{db_table_name}.
+\code{parent_tables} is treated as a store from which foreign key tables
+are retrieved by name when needed.
+The default value (which is several lines of code)
+retrieves all possible foreign key parent tables from conn,
+potentially a time-consuming process.
+For speed, pre-compute all foreign key parent tables once
+and pass the list to the \code{parent_tables} argument
+of all similar functions.
 
 The user in \code{conn} must have write access to the database.
 }
 \seealso{
 \code{pl_download()} for the reverse operation.
-\code{upload_schema_and_simple_tables()} for a way to establish the database schema.
+\code{pl_upload_schema_and_simple_tables()} for a way to establish the database schema.
 }

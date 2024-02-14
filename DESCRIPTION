@@ -37,6 +37,7 @@ Suggests:
     RPostgres,
     RSQLite,
     spelling,
+    tarchetypes,
     targets,
     testthat (>= 3.0.0)
 URL: https://energyeconomydecoupling.github.io/PFUPipelineTools/
