@@ -11,7 +11,8 @@ pl_upsert(
   in_place = FALSE,
   code_fks = TRUE,
   schema = dm::dm_from_con(conn, learn_keys = TRUE),
-  fk_parent_tables = PFUPipelineTools::get_all_fk_tables(conn = conn, schema = schema)
+  fk_parent_tables = PFUPipelineTools::get_all_fk_tables(conn = conn, schema = schema),
+  .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col
 )
 }
 \arguments{
@@ -36,6 +37,9 @@ See details.}
 \item{fk_parent_tables}{A named list of all parent tables
 for the foreign keys in \code{db_table_name}.
 See details.}
+
+\item{.pk_col}{The name of the primary key column in a primary key table.
+See \code{PFUPipelineTools::dm_pk_colnames}.}
 }
 \value{
 A special hash of \code{.df}. See details.

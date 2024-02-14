@@ -6,7 +6,6 @@ Lifecycle
 PFU
 Postgres
 README
-Recode
 SchemaAndSimpleTables
 Ungroups
 Upsert
@@ -18,6 +17,7 @@ conn
 csv
 doi
 fk
+incrementing
 pinboard
 pre
 rds

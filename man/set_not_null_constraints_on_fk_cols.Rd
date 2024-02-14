@@ -15,6 +15,8 @@ set_not_null_constraints_on_fk_cols(
 \item{schema}{A \code{dm} object describing the schema for the database at \code{conn}.}
 
 \item{conn}{A database connection.}
+
+\item{.child_table, .child_fk_cols}{See \code{PFUPpipelineTools::dm_fk_colnames}.}
 }
 \value{
 \code{NULL} silently.

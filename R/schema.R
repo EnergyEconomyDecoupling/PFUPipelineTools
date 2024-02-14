@@ -288,6 +288,7 @@ pl_upload_schema_and_simple_tables <- function(schema,
 #'
 #' @param schema A `dm` object describing the schema for the database at `conn`.
 #' @param conn A database connection.
+#' @param .child_table,.child_fk_cols See `PFUPpipelineTools::dm_fk_colnames`.
 #'
 #' @return `NULL` silently.
 #'
@@ -386,6 +387,8 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #' @param fk_parent_tables A named list of all parent tables
 #'                         for the foreign keys in `db_table_name`.
 #'                         See details.
+#' @param .pk_col The name of the primary key column in a primary key table.
+#'                See `PFUPipelineTools::dm_pk_colnames`.
 #'
 #' @return A special hash of `.df`. See details.
 #'
@@ -399,7 +402,8 @@ pl_upsert <- function(.df,
                       in_place = FALSE,
                       code_fks = TRUE,
                       schema = dm::dm_from_con(conn, learn_keys = TRUE),
-                      fk_parent_tables = PFUPipelineTools::get_all_fk_tables(conn = conn, schema = schema)) {
+                      fk_parent_tables = PFUPipelineTools::get_all_fk_tables(conn = conn, schema = schema),
+                      .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col) {
 
   pk_table <- dm::dm_get_all_pks(schema, table = {{db_table_name}})
   # Make sure we have one and only one primary key column
@@ -410,9 +414,9 @@ pl_upsert <- function(.df,
                                        " primary keys. 1 is required."))
   # Get the primary key name as a string
   pk_str <- pk_table |>
-    # "pk_col" is the name of the column of primary key names
+    # .pk_col is the name of the column of primary key names
     # in the tibble returned by dm::dm_get_all_pks()
-    magrittr::extract2("pk_col") |>
+    magrittr::extract2(.pk_col) |>
     magrittr::extract2(1)
 
   # Replace fk column values in .df with integer keys, if needed.
