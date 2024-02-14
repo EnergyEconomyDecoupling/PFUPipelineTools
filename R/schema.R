@@ -83,13 +83,13 @@ load_simple_tables <- function(version,
 #'   * `.is_pk`: tells if `.colname` is a primary key for `.table`.
 #'   * `.coldatatype`: gives the data type for the column,
 #'                     one of "int", "boolean", "text", or "double precision".
-#'   * fk.table: gives a table in which the foreign key can be found
-#'   * fk.colname: gives the column name in fk.table where the foreign key can be found
+#'   * `.fk_table`: gives a table in which the foreign key can be found
+#'   * `.fk_colname`: gives the column name in fk.table where the foreign key can be found
 #'
 #' @param schema_table A schema table, typically the output of `load_schema_table()`.
 #' @param pk_suffix The suffix for primary keys.
 #'                  Default is "_ID".
-#' @param .table,.colname,.is_pk,.coldatatype See `PFUPipelineTools::schema_table_colnames`.
+#' @param .table,.colname,.is_pk,.coldatatype,.fk_table,.fk_colname See `PFUPipelineTools::schema_table_colnames`.
 #' @param .pk_cols Column names used internally.
 #'
 #' @return A `dm` object created from `schema_table`.
@@ -97,10 +97,10 @@ load_simple_tables <- function(version,
 #' @export
 #'
 #' @examples
-#' st <- tibble::tribble(~Table, ~colname, ~coldatatype, ~fk.table, ~fk.colname,
-#'                       "Country", "Country_ID", "int", "NA", "NA",
-#'                       "Country", "Country", "text", "NA", "NA",
-#'                       "Country", "Description", "text", "NA", "NA")
+#' st <- tibble::tribble(~Table, ~Colname, ~IsPK, ~ColDataType, ~FKTable, ~FKColname,
+#'                       "Country", "CountryID", TRUE, "text", "NA", "NA",
+#'                       "Country", "Country", FALSE, "text", "NA", "NA",
+#'                       "Country", "Description", FALSE, "text", "NA", "NA")
 #' schema_dm(st)
 schema_dm <- function(schema_table,
                       pk_suffix = PFUPipelineTools::key_col_info$pk_suffix,
@@ -426,7 +426,7 @@ pl_upsert <- function(.df,
 #'
 #' `fk_parent_tables` is a named list of tables,
 #' some of which are fk parent tables containing
-#' the mapping between fk values (usually string)
+#' the mapping between fk values (usually strings)
 #' and fk keys (usually integers)
 #' for `db_table_name`.
 #' `fk_parent_tables` is treated as a store from which foreign key tables
@@ -514,15 +514,27 @@ code_fks <- function(.df,
 #' It can be obtained from code such as
 #' `dm::dm_from_con(con = << a database connection >>, learn_keys = TRUE)`.
 #'
+#' `fk_parent_tables` is a named list of tables,
+#' some of which are fk parent tables containing
+#' the mapping between fk values (usually strings)
+#' and fk keys (usually integers)
+#' for `db_table_name`.
+#' `fk_parent_tables` is treated as a store from which foreign key tables
+#' are retrieved by name when needed.
+#' An appropriate value for `fk_parent_tables` can be obtained
+#' from `get_all_fk_tables()`.
+#'
 #' @param .df The data frame about to be uploaded.
 #' @param db_table_name The string name of the database table where `.df` is to be uploaded.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               See details.
+#' @param fk_parent_tables A named list of all parent tables
+#'                         for the foreign keys in `db_table_name`.
+#'                         See details.
 #'
-#' @return
+#' @return A version of `.df` with integer keys replaced by key values.
+#'
 #' @export
-#'
-#' @examples
 decode_keys <- function(.df,
                         db_table_name,
                         schema,

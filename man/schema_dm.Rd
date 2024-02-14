@@ -22,7 +22,7 @@ schema_dm(
 \item{pk_suffix}{The suffix for primary keys.
 Default is "_ID".}
 
-\item{.table, .colname, .is_pk, .coldatatype}{See \code{PFUPipelineTools::schema_table_colnames}.}
+\item{.table, .colname, .is_pk, .coldatatype, .fk_table, .fk_colname}{See \code{PFUPipelineTools::schema_table_colnames}.}
 
 \item{.pk_cols}{Column names used internally.}
 }
@@ -42,14 +42,14 @@ interpreted as a primary key column.
 \item \code{.is_pk}: tells if \code{.colname} is a primary key for \code{.table}.
 \item \code{.coldatatype}: gives the data type for the column,
 one of "int", "boolean", "text", or "double precision".
-\item fk.table: gives a table in which the foreign key can be found
-\item fk.colname: gives the column name in fk.table where the foreign key can be found
+\item \code{.fk_table}: gives a table in which the foreign key can be found
+\item \code{.fk_colname}: gives the column name in fk.table where the foreign key can be found
 }
 }
 \examples{
-st <- tibble::tribble(~Table, ~colname, ~coldatatype, ~fk.table, ~fk.colname,
-                      "Country", "Country_ID", "int", "NA", "NA",
-                      "Country", "Country", "text", "NA", "NA",
-                      "Country", "Description", "text", "NA", "NA")
+st <- tibble::tribble(~Table, ~Colname, ~IsPK, ~ColDataType, ~FKTable, ~FKColname,
+                      "Country", "CountryID", TRUE, "text", "NA", "NA",
+                      "Country", "Country", FALSE, "text", "NA", "NA",
+                      "Country", "Description", FALSE, "text", "NA", "NA")
 schema_dm(st)
 }

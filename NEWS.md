@@ -8,6 +8,10 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+* Removed `stash_cache()` and associated tests.
+  We no longer save the pipeline cache.
+  It seemed like a good idea at the time, but
+  we never looked at it.
 * New function `self_name()` is helpful in many places.
 * Several new functions to assist with database schema, etc.
 

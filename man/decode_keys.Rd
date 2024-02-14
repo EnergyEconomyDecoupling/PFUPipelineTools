@@ -13,6 +13,13 @@ decode_keys(.df, db_table_name, schema, fk_parent_tables)
 
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
 See details.}
+
+\item{fk_parent_tables}{A named list of all parent tables
+for the foreign keys in \code{db_table_name}.
+See details.}
+}
+\value{
+A version of \code{.df} with integer keys replaced by key values.
 }
 \description{
 When downloading a data frame from a database,
@@ -25,4 +32,14 @@ This function provides that service.
 \code{schema} is a data model (\code{dm} object) for the CL-PFU database.
 It can be obtained from code such as
 \verb{dm::dm_from_con(con = << a database connection >>, learn_keys = TRUE)}.
+
+\code{fk_parent_tables} is a named list of tables,
+some of which are fk parent tables containing
+the mapping between fk values (usually strings)
+and fk keys (usually integers)
+for \code{db_table_name}.
+\code{fk_parent_tables} is treated as a store from which foreign key tables
+are retrieved by name when needed.
+An appropriate value for \code{fk_parent_tables} can be obtained
+from \code{get_all_fk_tables()}.
 }

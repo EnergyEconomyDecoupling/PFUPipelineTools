@@ -76,38 +76,38 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 #'         If `release = FALSE`, the string "Release not requested." is returned.
 #'
 #' @export
-stash_cache <- function(pipeline_caches_folder, cache_folder, file_prefix, dependency, release = FALSE) {
-  if (!release) {
-    return("Release not requested.")
-  }
-  # Zip the drake cache
-  zipped_cache_filename <- paste0(file_prefix, parsedate::format_iso_8601(Sys.time()), ".zip") |>
-    # Change file name format to be equivalent to the pins file format.
-    # Eliminate "-" characters
-    gsub(pattern = "-", replacement = "") |>
-    # Eliminate ":" characters, because they cause problems on some OSes.
-    gsub(pattern = ":", replacement = "") |>
-    # Change "+0000" to "Z", where "Z" means Zulu time (GMT offset of 00:00)
-    gsub(pattern = "\\+0000", replacement = "Z")
-  invisible(utils::zip(zipfile = zipped_cache_filename, files = cache_folder, flags = "--quiet"))
-  # Calculate the folder structure for the output
-  year <- lubridate::year(Sys.Date())
-  month <- lubridate::month(Sys.Date())
-  month <- sprintf("%02d", month)
-  output_year_dir <- file.path(pipeline_caches_folder, year)
-  dir.create(output_year_dir, showWarnings = FALSE)
-  output_month_dir <- file.path(output_year_dir, month)
-  dir.create(output_month_dir, showWarnings = FALSE)
-  # Copy the file to the workflow output folder
-  copy_successful <- file.copy(from = zipped_cache_filename,
-                               to = output_month_dir)
-  if (!copy_successful) {
-    stop(paste("copying of pipeline cache unsuccessful in stach_cache():",
-               zipped_cache_filename))
-  }
-  if (file.exists(zipped_cache_filename)) {
-    # To keep things clean
-    file.remove(zipped_cache_filename)
-  }
-  return(file_prefix)
-}
+# stash_cache <- function(pipeline_caches_folder, cache_folder, file_prefix, dependency, release = FALSE) {
+#   if (!release) {
+#     return("Release not requested.")
+#   }
+#   # Zip the drake cache
+#   zipped_cache_filename <- paste0(file_prefix, parsedate::format_iso_8601(Sys.time()), ".zip") |>
+#     # Change file name format to be equivalent to the pins file format.
+#     # Eliminate "-" characters
+#     gsub(pattern = "-", replacement = "") |>
+#     # Eliminate ":" characters, because they cause problems on some OSes.
+#     gsub(pattern = ":", replacement = "") |>
+#     # Change "+0000" to "Z", where "Z" means Zulu time (GMT offset of 00:00)
+#     gsub(pattern = "\\+0000", replacement = "Z")
+#   invisible(utils::zip(zipfile = zipped_cache_filename, files = cache_folder, flags = "--quiet"))
+#   # Calculate the folder structure for the output
+#   year <- lubridate::year(Sys.Date())
+#   month <- lubridate::month(Sys.Date())
+#   month <- sprintf("%02d", month)
+#   output_year_dir <- file.path(pipeline_caches_folder, year)
+#   dir.create(output_year_dir, showWarnings = FALSE)
+#   output_month_dir <- file.path(output_year_dir, month)
+#   dir.create(output_month_dir, showWarnings = FALSE)
+#   # Copy the file to the workflow output folder
+#   copy_successful <- file.copy(from = zipped_cache_filename,
+#                                to = output_month_dir)
+#   if (!copy_successful) {
+#     stop(paste("copying of pipeline cache unsuccessful in stach_cache():",
+#                zipped_cache_filename))
+#   }
+#   if (file.exists(zipped_cache_filename)) {
+#     # To keep things clean
+#     file.remove(zipped_cache_filename)
+#   }
+#   return(file_prefix)
+# }

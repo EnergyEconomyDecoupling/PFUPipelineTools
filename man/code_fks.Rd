@@ -39,7 +39,7 @@ It can be obtained from code such as
 
 \code{fk_parent_tables} is a named list of tables,
 some of which are fk parent tables containing
-the mapping between fk values (usually string)
+the mapping between fk values (usually strings)
 and fk keys (usually integers)
 for \code{db_table_name}.
 \code{fk_parent_tables} is treated as a store from which foreign key tables
