@@ -88,10 +88,9 @@ test_that("pl_upsert() works with auto-incrementing columns", {
   # Build the data model remotely
   PFUPipelineTools:::upload_beatles(conn)
 
-  # Try to add Stu Sutcliff without a MemberID value
-  # This should work, because the MemberID column is
-  # a sequencing integer.
-  stu_sutcliff_member <- data.frame(Member = "Stu Sutcliff")
+  # Add Stu Sutcliff
+  stu_sutcliff_member <- data.frame(MemberID = as.integer(6),
+                                    Member = "Stu Sutcliff")
   pl_upsert(stu_sutcliff_member, "Member", conn, in_place = TRUE)
 })
 
