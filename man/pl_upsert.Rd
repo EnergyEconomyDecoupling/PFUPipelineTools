@@ -9,6 +9,7 @@ pl_upsert(
   db_table_name,
   conn,
   in_place = FALSE,
+  code_fks = TRUE,
   schema = dm::dm_from_con(conn, learn_keys = TRUE),
   fk_parent_tables = PFUPipelineTools::get_all_fk_tables(conn = conn, schema = schema)
 )
@@ -24,6 +25,9 @@ the name of a remote database table in \code{conn}.}
 \item{in_place}{A boolean that tells whether to modify the database at \code{conn}.
 Default is \code{FALSE}, which is helpful if you want to chain
 several requests.}
+
+\item{code_fks}{A boolean that tells whether to code foreign keys in \code{.df}.
+Default is \code{TRUE}.}
 
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
 Default is \code{dm::dm_from_con(conn, learn_keys = TRUE)}.

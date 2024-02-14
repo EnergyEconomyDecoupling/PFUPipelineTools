@@ -378,6 +378,8 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #' @param in_place A boolean that tells whether to modify the database at `conn`.
 #'                 Default is `FALSE`, which is helpful if you want to chain
 #'                 several requests.
+#' @param code_fks A boolean that tells whether to code foreign keys in `.df`.
+#'                 Default is `TRUE`.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               Default is `dm::dm_from_con(conn, learn_keys = TRUE)`.
 #'               See details.
@@ -395,6 +397,7 @@ pl_upsert <- function(.df,
                       db_table_name,
                       conn,
                       in_place = FALSE,
+                      code_fks = TRUE,
                       schema = dm::dm_from_con(conn, learn_keys = TRUE),
                       fk_parent_tables = PFUPipelineTools::get_all_fk_tables(conn = conn, schema = schema)) {
 
@@ -413,13 +416,15 @@ pl_upsert <- function(.df,
     magrittr::extract2(1)
 
   # Replace fk column values in .df with integer keys, if needed.
-  recoded_df <- .df |>
-    code_fks(db_table_name = db_table_name,
-             schema = schema,
-             fk_parent_tables = fk_parent_tables)
+  if (code_fks) {
+    .df <- .df |>
+      code_fks(db_table_name = db_table_name,
+               schema = schema,
+               fk_parent_tables = fk_parent_tables)
+  }
 
   dplyr::tbl(conn, db_table_name) |>
-    dplyr::rows_upsert(recoded_df,
+    dplyr::rows_upsert(.df,
                        by = pk_str,
                        copy = TRUE,
                        in_place = in_place)
