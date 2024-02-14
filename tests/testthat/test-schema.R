@@ -75,3 +75,23 @@ test_that("pl_upload_schema_and_simple_tables() works as expected", {
 })
 
 
+test_that("pl_upsert() works with auto-incrementing columns", {
+  skip_on_ci()
+  skip_on_cran()
+  conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
+                         dbname = "unit_testing",
+                         host = "eviz.cs.calvin.edu",
+                         port = 5432,
+                         user = "postgres")
+  on.exit(DBI::dbDisconnect(conn))
+
+  # Build the data model remotely
+  PFUPipelineTools:::upload_beatles(conn)
+
+  # Try to add Stu Sutcliff without a MemberID value
+  # This should work, because the MemberID column is
+  # a sequencing integer.
+  stu_sutcliff_member <- data.frame(Member = "Stu Sutcliff")
+  pl_upsert(stu_sutcliff_member, "Member", conn, in_place = TRUE)
+})
+
