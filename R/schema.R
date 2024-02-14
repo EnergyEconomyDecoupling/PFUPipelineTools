@@ -374,9 +374,9 @@ pl_upsert <- function(.df,
 
   # Replace fk column values in .df with integer keys, if needed.
   recoded_df <- .df |>
-    recode_fks(db_table_name = db_table_name,
-               schema = schema,
-               fk_parent_tables = fk_parent_tables)
+    code_fks(db_table_name = db_table_name,
+             schema = schema,
+             fk_parent_tables = fk_parent_tables)
 
   dplyr::tbl(conn, db_table_name) |>
     dplyr::rows_upsert(recoded_df,
@@ -425,10 +425,10 @@ pl_upsert <- function(.df,
 #'         replaced by fk keys (integers).
 #'
 #' @export
-recode_fks <- function(.df,
-                       db_table_name,
-                       schema,
-                       fk_parent_tables) {
+code_fks <- function(.df,
+                     db_table_name,
+                     schema,
+                     fk_parent_tables) {
 
   # Get details of all foreign keys in .df
   fk_details_for_db_table <- schema |>
@@ -461,7 +461,7 @@ recode_fks <- function(.df,
     # Get the parent levels
     fk_levels <- fk_parent_tables[[this_fk_col_in_df]] |>
       dplyr::arrange(.data[[paste0(this_fk_col_in_df, "ID")]]) |>
-      dplyr::select(this_fk_col_in_df) |>
+      dplyr::select(dplyr::all_of(this_fk_col_in_df)) |>
       unlist() |>
       unname()
     .df <- .df |>

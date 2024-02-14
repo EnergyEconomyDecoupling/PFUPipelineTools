@@ -1,7 +1,8 @@
 test_that("load_schema_table() works as expected", {
   # There are too many path dependencies to work on CI.
   skip_on_ci()
-  st <- load_schema_table(version = "v1.4")
+  skip_on_cran()
+  st <- load_schema_table(version = "v2.0")
   expect_true("Table" %in% colnames(st))
   expect_true("colname" %in% colnames(st))
   expect_true("coldatatype" %in% colnames(st))
@@ -13,7 +14,8 @@ test_that("load_schema_table() works as expected", {
 test_that("schema_dm() works as expected", {
   # There are too many path dependencies to work on CI.
   skip_on_ci()
-  clpfu_dm <- load_schema_table(version = "v1.4") |>
+  skip_on_cran()
+  clpfu_dm <- load_schema_table(version = "v2.0") |>
     schema_dm()
   clpfu_dm |>
     dm::dm_get_all_fks() |>
@@ -39,7 +41,8 @@ test_that("schema_dm() fails with unknown data type", {
 
 test_that("load_simple_tables() works as expected", {
   skip_on_ci()
-  simple_tables <- load_simple_tables(version = "v1.4")
+  skip_on_cran()
+  simple_tables <- load_simple_tables(version = "v2.0")
   expect_true("Year" %in% names(simple_tables))
   expect_true("Method" %in% names(simple_tables))
 })
@@ -47,6 +50,7 @@ test_that("load_simple_tables() works as expected", {
 
 test_that("pl_upload_schema_and_simple_tables() works as expected", {
   skip_on_ci()
+  skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
                          dbname = "unit_testing",
                          host = "eviz.cs.calvin.edu",
