@@ -136,21 +136,31 @@ schema_dm <- function(schema_table,
     }) |>
     dm::as_dm()
 
-  # Set primary key according to the convention
-  # that the primary key column name is
-  # the the table name with pk_suffix.
-  dm_table_names <- names(dm_tables)
-  primary_key_colnames <- paste0(dm_table_names, pk_suffix)
-
-  for (itbl in 1:length(dm_table_names)) {
-    this_table_name <- dm_table_names[[itbl]]
-    this_primary_key_colname <- primary_key_colnames[[itbl]]
-    if (this_primary_key_colname %in% colnames(dm_tables[[this_table_name]])) {
-      dm_tables <- dm_tables |>
-        dm::dm_add_pk(table = {{this_table_name}},
-                      columns = {{this_primary_key_colname}},
-                      autoincrement = TRUE)
-    }
+  # Set primary key according to the the IsPK column
+  # in schema_table.
+  # Note, there could be multiple primary keys for a table.
+  # Get the primary key info for all tables.
+  pk_info <- schema_table |>
+    dplyr::filter(IsPK) |>
+    dplyr::select(Table, colname) |>
+    dplyr::rename(pk_cols = colname)
+  # Get a list of all tables in the schema
+  tables <- schema_table |>
+    dplyr::select(Table) |>
+    unlist() |>
+    unname() |>
+    unique()
+  # Cycle through each table, setting primary keys
+  # in the data model (dm_tables)
+  for (this_table in tables) {
+    pk_cols <- pk_info |>
+      dplyr::filter(Table == this_table) |>
+      dplyr::select(pk_cols) |>
+      unlist() |>
+      unname()
+    dm_tables <- dm_tables |>
+      dm::dm_add_pk(table = {{this_table}},
+                    columns = {{pk_cols}})
   }
 
   # Set foreign keys according to the schema_table

@@ -61,6 +61,45 @@ test_that("pl_upload_schema_and_simple_tables() works as expected", {
   # Build the data model remotely
   PFUPipelineTools:::upload_beatles(conn)
 
+  # Try to upload more data for the fifth Beatle.
+  george_martin_member <- data.frame(MemberID = as.integer(5),
+                                     Member = "George Martin")
+  george_martin_memberrole <- data.frame(Member = as.integer(5),
+                                         Role = as.integer(5))
+  producer_role <- data.frame(RoleID = as.integer(5),
+                              Role = "Producer")
+  # Add George Martin as a member, the fifth Beatle
+  pl_upsert(george_martin_member, "Member", in_place = TRUE, conn = conn)
+  # Now try to add George Martin to the MemberRole table.
+  # This should fail due to a bad primary key.
+  # There is no RoleID = 5 in the Role table.
+  pl_upsert(george_martin_memberrole, "MemberRole", in_place = TRUE, conn = conn) |>
+    expect_error('insert or update on table "Roles" violates foreign key constraint')
+  # Instead, add George Martin to the Members table so that his primary key will be available.
+  pl_upsert(george_martin_member, "Members", in_place = TRUE, conn = conn)
+  # Then Now add to the Roles table
+  pl_upsert(george_martin_role, "Roles", in_place = TRUE, conn)
+  roles_tbl <- dplyr::tbl(conn, "Roles") |>
+    dplyr::collect()
+  expect_equal(nrow(roles_tbl), 5)
+  expect_equal(roles_tbl$Role, c("Lead singer", "Bassist", "Guitarist", "Drummer", "Producer"))
+
+  # Try to upsert with "George Martin" in the Member column.
+  # This should decode "George Martin" into the Member_ID of 5 during the upsert.
+  # Then change the Role to "Producer Extraordinaire"
+  george_martin_role_name <- data.frame(Member_ID = "George Martin",
+                                        Role = "Producer Extraordinaire")
+  pl_upsert(george_martin_role_name, "Roles", in_place = TRUE, conn = conn)
+  # Check that George Martin is now Producer Extraordinaire
+  # and in the Roles table has Member_ID of 5.
+  new_roles <- dplyr::tbl(conn, "Roles") |>
+    dplyr::collect()
+  new_roles |>
+    dplyr::filter(Member_ID == 5) |>
+    magrittr::extract2("Role") |>
+    expect_equal("Producer Extraordinaire")
+})
+
   # Get the tables from the database
   tables <- DBI::dbListTables(conn)
   for (table_name in c("Member", "Role")) {
