@@ -565,6 +565,10 @@ code_fks <- function(.df,
 #' @param fk_parent_tables A named list of all parent tables
 #'                         for the foreign keys in `db_table_name`.
 #'                         See details.
+#' @param .child_table,.child_fk_cols,.parent_key_cols See `PFUPipelineTools::dm_fk_colnames`.
+#' @param .pk_suffix See `PFUPipelineTools::key_col_info`.
+#' @param .y_joining_suffix The y column name suffix for `left_join()`.
+#'                          Default is ".y".
 #'
 #' @return A version of `.df` with integer keys replaced by key values.
 #'
@@ -572,16 +576,21 @@ code_fks <- function(.df,
 decode_keys <- function(.df,
                         db_table_name,
                         schema,
-                        fk_parent_tables) {
+                        fk_parent_tables,
+                        .child_table = PFUPipelineTools::dm_fk_colnames$child_table,
+                        .child_fk_cols = PFUPipelineTools::dm_fk_colnames$child_fk_cols,
+                        .parent_key_cols = PFUPipelineTools::dm_fk_colnames$parent_key_cols,
+                        .pk_suffix = PFUPipelineTools::key_col_info$pk_suffix,
+                        .y_joining_suffix = ".y") {
 
   # Get details of all foreign keys in .df
   fk_details_for_db_table <- schema |>
     dm::dm_get_all_fks() |>
-    dplyr::filter(.data[["child_table"]] == db_table_name) |>
+    dplyr::filter(.data[[.child_table]] == db_table_name) |>
     dplyr::mutate(
       # Remove the <keys> class on child_fk_cols and parent_key_cols.
-      child_fk_cols = unlist(child_fk_cols),
-      parent_key_cols = unlist(parent_key_cols)
+      "{.child_fk_cols}" := unlist(.data[[.child_fk_cols]]),
+      "{.parent_key_cols}" := unlist(.data[[.parent_key_cols]])
     )
 
   if (nrow(fk_details_for_db_table) == 0) {
@@ -592,13 +601,13 @@ decode_keys <- function(.df,
 
   # Get a vector of string names of foreign key columns in .df
   fk_cols_in_df <- fk_details_for_db_table |>
-    dplyr::select(child_fk_cols) |>
+    dplyr::select(dplyr::all_of(.child_fk_cols)) |>
     unlist() |>
     unname()
 
   for (this_fk_col_in_df in fk_cols_in_df) {
-    joined_colname <- paste0(this_fk_col_in_df, ".y")
-    tablenameID <- paste0(this_fk_col_in_df, "ID")
+    joined_colname <- paste0(this_fk_col_in_df, .y_joining_suffix)
+    tablenameID <- paste0(this_fk_col_in_df, .pk_suffix)
     .df <- .df |>
       dplyr::left_join(fk_parent_tables[[this_fk_col_in_df]],
                        by = dplyr::join_by({{this_fk_col_in_df}} == {{tablenameID}})) |>
