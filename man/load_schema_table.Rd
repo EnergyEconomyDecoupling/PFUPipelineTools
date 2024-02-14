@@ -32,6 +32,6 @@ This function reads the schema table from the SchemaAndSimpleTables.xlsx file.
 }
 \examples{
 \dontrun{
-load_schema_table(version = "v1.4")
+load_schema_table(version = "v2.0")
 }
 }

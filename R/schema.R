@@ -19,7 +19,7 @@
 #'
 #' @examples
 #' \dontrun{
-#' load_schema_table(version = "v1.4")
+#' load_schema_table(version = "v2.0")
 #' }
 load_schema_table <- function(version,
                               schema_path = PFUSetup::get_abs_paths(version = version)[["schema_path"]],
@@ -77,17 +77,20 @@ load_simple_tables <- function(version,
 #'
 #' `schema_table` is assumed to be a data frame with the following columns:
 #'
-#'   * Table: gives table names in the database
-#'   * colname: gives column names in each table; if suffixed with `pk_suffix`,
-#'              interpreted as a primary key column
-#'   * coldatatype: gives the data type for the column,
-#'                  one of "int", "boolean", "text", or "double precision"
+#'   * `.table`: gives table names in the database.
+#'   * `.colname`: gives column names in each table; if suffixed with `pk_suffix`,
+#'                 interpreted as a primary key column.
+#'   * `.is_pk`: tells if `.colname` is a primary key for `.table`.
+#'   * `.coldatatype`: gives the data type for the column,
+#'                     one of "int", "boolean", "text", or "double precision".
 #'   * fk.table: gives a table in which the foreign key can be found
 #'   * fk.colname: gives the column name in fk.table where the foreign key can be found
 #'
 #' @param schema_table A schema table, typically the output of `load_schema_table()`.
 #' @param pk_suffix The suffix for primary keys.
-#'                  Default is "_ID"
+#'                  Default is "_ID".
+#' @param .table,.colname,.is_pk,.coldatatype See `PFUPipelineTools::schema_table_colnames`.
+#' @param .pk_cols Column names used internally.
 #'
 #' @return A `dm` object created from `schema_table`.
 #'
@@ -100,15 +103,22 @@ load_simple_tables <- function(version,
 #'                       "Country", "Description", "text", "NA", "NA")
 #' schema_dm(st)
 schema_dm <- function(schema_table,
-                      pk_suffix = PFUPipelineTools::key_col_info$pk_suffix) {
+                      pk_suffix = PFUPipelineTools::key_col_info$pk_suffix,
+                      .table = PFUPipelineTools::schema_table_colnames$table,
+                      .colname = PFUPipelineTools::schema_table_colnames$colname,
+                      .is_pk = PFUPipelineTools::schema_table_colnames$is_pk,
+                      .coldatatype = PFUPipelineTools::schema_table_colnames$coldatatype,
+                      .fk_table = PFUPipelineTools::schema_table_colnames$fk_table,
+                      .fk_colname = PFUPipelineTools::schema_table_colnames$fk_colname,
+                      .pk_cols = ".pk_cols") {
 
-  dm_tables <- schema_table[["Table"]] |>
+  dm_tables <- schema_table[[.table]] |>
     unique() |>
     self_name() |>
     lapply(FUN = function(this_table_name) {
       colnames <- schema_table |>
-        dplyr::filter(.data[["Table"]] == this_table_name) |>
-        magrittr::extract2("colname")
+        dplyr::filter(.data[[.table]] == this_table_name) |>
+        magrittr::extract2(.colname)
       # Convert to a data frame
       this_mat <- matrix(nrow = 0, ncol = length(colnames), dimnames = list(NULL, colnames))
       this_dm_table <- this_mat |>
@@ -116,8 +126,8 @@ schema_dm <- function(schema_table,
         tibble::as_tibble()
       # Set data types
       coldatatypes <- schema_table |>
-        dplyr::filter(.data[["Table"]] == this_table_name) |>
-        magrittr::extract2("coldatatype")
+        dplyr::filter(.data[[.table]] == this_table_name) |>
+        magrittr::extract2(.coldatatype)
       for (icol in 1:length(coldatatypes)) {
         this_data_type <- coldatatypes[[icol]]
         if (this_data_type == "int") {
@@ -141,38 +151,39 @@ schema_dm <- function(schema_table,
   # Note, there could be multiple primary keys for a table.
   # Get the primary key info for all tables.
   pk_info <- schema_table |>
-    dplyr::filter(IsPK) |>
-    dplyr::select(Table, colname) |>
-    dplyr::rename(pk_cols = colname)
+    dplyr::filter(.data[[.is_pk]]) |>
+    dplyr::select(dplyr::all_of(c(.table, .colname))) |>
+    # dplyr::rename(.pk_cols = .data[[.colname]])
+    dplyr::rename(.pk_cols = dplyr::all_of(.colname))
   # Get a list of all tables in the schema
   tables <- schema_table |>
-    dplyr::select(Table) |>
+    dplyr::select(dplyr::all_of(.table)) |>
     unlist() |>
     unname() |>
     unique()
   # Cycle through each table, setting primary keys
   # in the data model (dm_tables)
   for (this_table in tables) {
-    pk_cols <- pk_info |>
-      dplyr::filter(Table == this_table) |>
-      dplyr::select(pk_cols) |>
+    these_pk_cols <- pk_info |>
+      dplyr::filter(.data[[.table]] == this_table) |>
+      dplyr::select(dplyr::all_of(.pk_cols)) |>
       unlist() |>
       unname()
     dm_tables <- dm_tables |>
       dm::dm_add_pk(table = {{this_table}},
-                    columns = {{pk_cols}})
+                    columns = {{these_pk_cols}})
   }
 
   # Set foreign keys according to the schema_table
   fk_info <- schema_table |>
-    dplyr::filter(.data[["fk.colname"]] != "NA")
+    dplyr::filter(.data[[.fk_colname]] != "NA")
 
   if (nrow(fk_info) > 0) {
     for (irow in 1:nrow(fk_info)) {
-      this_table_name <- fk_info[["Table"]][[irow]]
-      colname <- fk_info[["colname"]][[irow]]
-      fk_table <- fk_info[["fk.table"]][[irow]]
-      fk_colname <- fk_info[["fk.colname"]][[irow]]
+      this_table_name <- fk_info[[.table]][[irow]]
+      colname <- fk_info[[.colname]][[irow]]
+      fk_table <- fk_info[[.fk_table]][[irow]]
+      fk_colname <- fk_info[[.fk_colname]][[irow]]
       dm_tables <- dm_tables |>
         dm::dm_add_fk(table = {{this_table_name}},
                       columns = {{colname}},

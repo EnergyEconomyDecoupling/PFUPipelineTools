@@ -37,6 +37,25 @@
 "canonical_countries"
 
 
+#' Column names in schema tables
+#'
+#' A string list names of columns in schema tables.
+#'
+#' @format A string list with `r length(schema_table_colnames)` entries.
+#' \describe{
+#' \item{table}{The name of a string column that tells the database table name.}
+#' \item{colname}{The name of a string column that identifies a column in `table`.}
+#' \item{is_pk}{The name of a boolean column that tells whether `column` is a primary key.}
+#' \item{coldatatype}{The name of a string column that tells the data type of `column`, such as "int", "text", "boolean", or "double precision".}
+#' \item{fk_table}{The name of a string column that identifies the table in which a foreign key can be found. "NA" is a valid value for `fk_table`, meaning that `colname` does not have a foreign key.}
+#' \item{fk_colname}{The name of a string column that identifies the name of a column in `fk_table` that contains values for the foreign key. "NA" is a valid value for `fk_colname`, meaning that `colname` does not have a foreign key.}
+#' }
+#'
+#' @examples
+#' schema_table_colnames
+"schema_table_colnames"
+
+
 #' Key column info
 #'
 #' A string list containing information about database table keys.

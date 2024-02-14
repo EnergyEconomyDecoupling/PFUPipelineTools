@@ -223,6 +223,22 @@ usethis::use_data(key_col_info, overwrite = TRUE)
 
 
 #
+# schema_table_colnames
+#
+
+schema_table_colnames <- list(
+  table = "Table",
+  colname = "Colname",
+  is_pk = "IsPK",
+  coldatatype = "ColDataType",
+  fk_table = "FKTable",
+  fk_colname = "FKColname"
+)
+
+usethis::use_data(schema_table_colnames, overwrite = TRUE)
+
+
+#
 # Beatles tables
 #
 

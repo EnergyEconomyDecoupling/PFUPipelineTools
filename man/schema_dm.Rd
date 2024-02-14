@@ -4,13 +4,27 @@
 \alias{schema_dm}
 \title{Create a data model from an Excel schema table}
 \usage{
-schema_dm(schema_table, pk_suffix = PFUPipelineTools::key_col_info$pk_suffix)
+schema_dm(
+  schema_table,
+  pk_suffix = PFUPipelineTools::key_col_info$pk_suffix,
+  .table = PFUPipelineTools::schema_table_colnames$table,
+  .colname = PFUPipelineTools::schema_table_colnames$colname,
+  .is_pk = PFUPipelineTools::schema_table_colnames$is_pk,
+  .coldatatype = PFUPipelineTools::schema_table_colnames$coldatatype,
+  .fk_table = PFUPipelineTools::schema_table_colnames$fk_table,
+  .fk_colname = PFUPipelineTools::schema_table_colnames$fk_colname,
+  .pk_cols = ".pk_cols"
+)
 }
 \arguments{
 \item{schema_table}{A schema table, typically the output of \code{load_schema_table()}.}
 
 \item{pk_suffix}{The suffix for primary keys.
-Default is "_ID"}
+Default is "_ID".}
+
+\item{.table, .colname, .is_pk, .coldatatype}{See \code{PFUPipelineTools::schema_table_colnames}.}
+
+\item{.pk_cols}{Column names used internally.}
 }
 \value{
 A \code{dm} object created from \code{schema_table}.
@@ -22,11 +36,12 @@ future uploading to a DBMS.
 \details{
 \code{schema_table} is assumed to be a data frame with the following columns:
 \itemize{
-\item Table: gives table names in the database
-\item colname: gives column names in each table; if suffixed with \code{pk_suffix},
-interpreted as a primary key column
-\item coldatatype: gives the data type for the column,
-one of "int", "boolean", "text", or "double precision"
+\item \code{.table}: gives table names in the database.
+\item \code{.colname}: gives column names in each table; if suffixed with \code{pk_suffix},
+interpreted as a primary key column.
+\item \code{.is_pk}: tells if \code{.colname} is a primary key for \code{.table}.
+\item \code{.coldatatype}: gives the data type for the column,
+one of "int", "boolean", "text", or "double precision".
 \item fk.table: gives a table in which the foreign key can be found
 \item fk.colname: gives the column name in fk.table where the foreign key can be found
 }
