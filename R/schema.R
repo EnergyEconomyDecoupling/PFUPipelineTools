@@ -145,10 +145,12 @@ schema_dm <- function(schema_table,
   for (itbl in 1:length(dm_table_names)) {
     this_table_name <- dm_table_names[[itbl]]
     this_primary_key_colname <- primary_key_colnames[[itbl]]
-    dm_tables <- dm_tables |>
-      dm::dm_add_pk(table = {{this_table_name}},
-                    columns = {{this_primary_key_colname}},
-                    autoincrement = TRUE)
+    if (this_primary_key_colname %in% colnames(dm_tables[[this_table_name]])) {
+      dm_tables <- dm_tables |>
+        dm::dm_add_pk(table = {{this_table_name}},
+                      columns = {{this_primary_key_colname}},
+                      autoincrement = TRUE)
+    }
   }
 
   # Set foreign keys according to the schema_table
