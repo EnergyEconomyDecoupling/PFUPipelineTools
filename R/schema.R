@@ -398,12 +398,13 @@ pl_upsert <- function(.df,
 }
 
 
-#' Recode foreign keys in a data frame to be uploaded
+#' Code foreign keys in a data frame to be uploaded
 #'
 #' In the CL-PFU pipeline,
 #' we allow data frames about to be uploaded
 #' to the database
 #' to have foreign key values (usually strings)
+#' instead of foreign keys (integers)
 #' in foreign key columns.
 #' This function translates the fk values
 #' to fk keys.
@@ -419,7 +420,7 @@ pl_upsert <- function(.df,
 #' for `db_table_name`.
 #' `fk_parent_tables` is treated as a store from which foreign key tables
 #' are retrieved by name when needed.
-#' An appropriate value for `parent_tables` can be obtained
+#' An appropriate value for `fk_parent_tables` can be obtained
 #' from `get_all_fk_tables()`.
 #'
 #' If `.df` contains no foreign key columns,
@@ -432,6 +433,9 @@ pl_upsert <- function(.df,
 #' @param fk_parent_tables A named list of all parent tables
 #'                        for the foreign keys in `db_table_name`.
 #'                        See details.
+#'
+#' @seealso [decode_keys()] for the inverse operation,
+#'          albeit for all keys, primary and foreign.
 #'
 #' @return A version of `.df` with fk values (often strings)
 #'         replaced by fk keys (integers).
@@ -485,6 +489,15 @@ code_fks <- function(.df,
 
   return(.df)
 }
+
+
+# decode_keys <- function(.df,
+#                         db_table_name,
+#                         schema,
+#
+#                         ) {
+#
+# }
 
 
 #' Upload a small database of Beatles information

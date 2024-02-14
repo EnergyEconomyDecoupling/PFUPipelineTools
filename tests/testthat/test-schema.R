@@ -25,6 +25,14 @@ test_that("schema_dm() works as expected", {
     dm::dm_get_all_pks() |>
     nrow() |>
     expect_gt(5)
+  # Test that we can have multiple primary keys
+  clpfu_dm |>
+    dm::dm_get_all_pks() |>
+    dplyr::filter(table == "PSUT") |>
+    magrittr::extract2("pk_col") |>
+    unlist() |>
+    length() |>
+    expect_equal(11)
 })
 
 
@@ -61,6 +69,23 @@ test_that("pl_upload_schema_and_simple_tables() works as expected", {
   # Build the data model remotely
   PFUPipelineTools:::upload_beatles(conn)
 
+  # Get the tables from the database
+  tables <- DBI::dbListTables(conn)
+  for (table_name in c("Member", "Role")) {
+    expect_true(table_name %in% tables)
+  }
+  members <- data.frame(MemberID = 1:4,
+                        Member = c("John Lennon", "Paul McCartney", "George Harrison", "Ringo Starr"))
+  roles <- data.frame(RoleID = 1:4,
+                      Role = c("Lead singer", "Bassist", "Guitarist", "Drummer"))
+  expect_equal(DBI::dbReadTable(conn, "Member"), members)
+  expect_equal(DBI::dbReadTable(conn, "Role"), roles)
+
+  # Create the MemberRole table
+  memberrole <- data.frame(Member = as.integer(1:4),
+                           Role = as.integer(1:4))
+  pl_upsert(memberrole, "MemberRole", conn, in_place = TRUE)
+
   # Try to upload more data for the fifth Beatle.
   george_martin_member <- data.frame(MemberID = as.integer(5),
                                      Member = "George Martin")
@@ -74,43 +99,35 @@ test_that("pl_upload_schema_and_simple_tables() works as expected", {
   # This should fail due to a bad primary key.
   # There is no RoleID = 5 in the Role table.
   pl_upsert(george_martin_memberrole, "MemberRole", in_place = TRUE, conn = conn) |>
-    expect_error('insert or update on table "Roles" violates foreign key constraint')
-  # Instead, add George Martin to the Members table so that his primary key will be available.
-  pl_upsert(george_martin_member, "Members", in_place = TRUE, conn = conn)
-  # Then Now add to the Roles table
-  pl_upsert(george_martin_role, "Roles", in_place = TRUE, conn)
-  roles_tbl <- dplyr::tbl(conn, "Roles") |>
+    expect_error('insert or update on table "MemberRole" violates foreign key constraint "MemberRole_Role_fkey"')
+  # Instead, add the Producer role to the Role table, so that the Producer role pk will be available
+  pl_upsert(producer_role, "Role", in_place = TRUE, conn = conn)
+  # Now add George Martin to the MemberRole table
+  pl_upsert(george_martin_memberrole, "MemberRole", in_place = TRUE, conn)
+  memberrole_tbl <- dplyr::tbl(conn, "MemberRole") |>
     dplyr::collect()
-  expect_equal(nrow(roles_tbl), 5)
-  expect_equal(roles_tbl$Role, c("Lead singer", "Bassist", "Guitarist", "Drummer", "Producer"))
+  expect_equal(nrow(memberrole_tbl), 5)
+  expect_equal(memberrole_tbl$Role, 1:5)
+
+  # Add a sixth role, Producer Extraordinaire
+  prodext <- data.frame(RoleID = as.integer(6),
+                        Role = "Producer Extraordinaire")
+  pl_upsert(prodext, "Role", conn, in_place = TRUE)
 
   # Try to upsert with "George Martin" in the Member column.
   # This should decode "George Martin" into the Member_ID of 5 during the upsert.
   # Then change the Role to "Producer Extraordinaire"
-  george_martin_role_name <- data.frame(Member_ID = "George Martin",
+  george_martin_role_name <- data.frame(Member = "George Martin",
                                         Role = "Producer Extraordinaire")
-  pl_upsert(george_martin_role_name, "Roles", in_place = TRUE, conn = conn)
+  pl_upsert(george_martin_role_name, "MemberRole", in_place = TRUE, conn = conn)
   # Check that George Martin is now Producer Extraordinaire
   # and in the Roles table has Member_ID of 5.
-  new_roles <- dplyr::tbl(conn, "Roles") |>
+  new_memberrole <- dplyr::tbl(conn, "MemberRole") |>
     dplyr::collect()
-  new_roles |>
-    dplyr::filter(Member_ID == 5) |>
+  new_memberrole |>
+    dplyr::filter(Member == 5) |>
     magrittr::extract2("Role") |>
-    expect_equal("Producer Extraordinaire")
-})
-
-  # Get the tables from the database
-  tables <- DBI::dbListTables(conn)
-  for (table_name in c("Member", "Role")) {
-    expect_true(table_name %in% tables)
-  }
-  members <- data.frame(MemberID = 1:4,
-                        Member = c("John Lennon", "Paul McCartney", "George Harrison", "Ringo Starr"))
-  roles <- data.frame(RoleID = 1:4,
-                      Role = c("Lead singer", "Bassist", "Guitarist", "Drummer"))
-  expect_equal(DBI::dbReadTable(conn, "Member"), members)
-  expect_equal(DBI::dbReadTable(conn, "Role"), roles)
+    expect_equal(6)
 })
 
 

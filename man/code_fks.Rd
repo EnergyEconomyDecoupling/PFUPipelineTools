@@ -2,7 +2,7 @@
 % Please edit documentation in R/schema.R
 \name{code_fks}
 \alias{code_fks}
-\title{Recode foreign keys in a data frame to be uploaded}
+\title{Code foreign keys in a data frame to be uploaded}
 \usage{
 code_fks(.df, db_table_name, schema, fk_parent_tables)
 }
@@ -27,6 +27,7 @@ In the CL-PFU pipeline,
 we allow data frames about to be uploaded
 to the database
 to have foreign key values (usually strings)
+instead of foreign keys (integers)
 in foreign key columns.
 This function translates the fk values
 to fk keys.
@@ -48,4 +49,7 @@ from \code{get_all_fk_tables()}.
 
 If \code{.df} contains no foreign key columns,
 \code{.df} is returned unmodified.
+}
+\seealso{
+\code{\link[=decode_fks]{decode_fks()}} for the inverse operation.
 }
