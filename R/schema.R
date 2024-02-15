@@ -554,14 +554,31 @@ code_fks <- function(.df,
       # presumably no need to recode
       next
     }
-    # Get the parent levels
-    fk_levels <- fk_parent_tables[[this_fk_col_in_df]] |>
-      # Arrange by parent key values
-      dplyr::arrange(.data[[paste0(this_fk_col_in_df, .pk_suffix)]]) |>
-      # Grab the string columns
-      dplyr::select(dplyr::all_of(this_fk_col_in_df)) |>
+    # Get the parent table name for this column
+    parent_table_name <- fk_details_for_db_table |>
+      dplyr::filter(.data[[.child_fk_cols]] == this_fk_col_in_df) |>
+      dplyr::select(dplyr::all_of(.parent_table)) |>
       unlist() |>
       unname()
+    # Get the parent table's column
+    parent_table_fk_colname <- fk_details_for_db_table |>
+      dplyr::filter(.data[[.child_fk_cols]] == this_fk_col_in_df) |>
+      dplyr::select(dplyr::all_of(.parent_key_cols)) |>
+      unlist() |>
+      unname()
+    parent_table_fk_value_colname <- gsub(pattern = paste0(.pk_suffix, "$"),
+                                          replacement = "",
+                                          x = parent_table_fk_colname)
+
+    # Get the parent levels
+    fk_levels <- fk_parent_tables[[parent_table_name]] |>
+      # Arrange by parent key values
+      dplyr::arrange(.data[[parent_table_fk_colname]]) |>
+      # Grab the string columns
+      dplyr::select(dplyr::all_of(parent_table_fk_value_colname)) |>
+      unlist() |>
+      unname()
+    # Redo the table
     .df <- .df |>
       dplyr::mutate(
         "{this_fk_col_in_df}" := factor(.data[[this_fk_col_in_df]], levels = fk_levels),
