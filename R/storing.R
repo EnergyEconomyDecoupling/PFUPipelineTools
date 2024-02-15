@@ -64,8 +64,9 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 #' This function calculates the appropriate hash.
 #'
 #' The hash has two requirements:
-#'     * values change when content changes and
-#'     * provides sufficient information to retrieve the real data frame.
+#'
+#'   - values change when content changes and
+#'   - provides sufficient information to retrieve the real data frame.
 #'
 #' The uploaded data frames may be created by
 #' grouped calculations,
@@ -76,13 +77,14 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 #' To meet those requirements,
 #' the return value from this function
 #' has the following characteristics:
-#'     * The first column (named `.table_name_col`)
-#'       contains the value of `table_name`, the name
-#'       of the database table where `.df` is stored.
-#'     * The second through N-1 columns are others with only one unique value.
-#'     * The Nth column (named `.nested_col`)
-#'       contains a hash of a data frame created by nesting
-#'       all columns with more than one unique value.
+#'
+#'   - The first column (named with the value of `.table_name_col`)
+#'     contains the value of `table_name`, the name
+#'     of the database table where `.df` is stored.
+#'   - The second through N-1 columns are others with only one unique value.
+#'   - The Nth column (named with the value of `.nested_col`)
+#'     contains a hash of a data frame created by nesting
+#'     all columns with more than one unique value.
 #'
 #' When data are withdrawn from the database at a later time,
 #' the first column can be removed, and

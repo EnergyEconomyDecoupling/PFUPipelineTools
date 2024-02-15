@@ -8,6 +8,15 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+* New functions for interacting with databases, including
+    - `load_schema_table()`
+    - `load_fk_tables()`
+    - `schema_dm()`
+    - `pl_upload_schema_and_simple_tables()`
+    - `set_not_null_constraints_on_fk_cols()`
+    - `pl_upsert()`
+    - `encode_fks()`
+    - `decode_fks()`
 * Removed `stash_cache()` and associated tests.
   We no longer save the pipeline cache.
   It seemed like a good idea at the time, but

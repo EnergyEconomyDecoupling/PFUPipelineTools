@@ -288,7 +288,7 @@ beatles_schema_table <- load_schema_table(schema_path = beatles_file_path,
 
 usethis::use_data(beatles_schema_table, overwrite = TRUE)
 
-beatles_fk_tables <- load_simple_tables(simple_tables_path = beatles_file_path,
+beatles_fk_tables <- load_fk_tables(simple_tables_path = beatles_file_path,
                                         readme_sheet = "README",
                                         schema_sheet = "Schema")
 

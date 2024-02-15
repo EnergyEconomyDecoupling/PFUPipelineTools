@@ -29,18 +29,19 @@ load_schema_table <- function(version,
 }
 
 
-#' Load simple tables for the CL-PFU database from a spreadsheet
+#' Load foreign key tables for the CL-PFU database from a spreadsheet
 #'
 #' The SchemaAndSimpleTables.xlsx file contains a sheet that
 #' represents the schema for the CL-PFU database.
 #' The sheet is designed to enable easy changes to the CL-PFU database schema
 #' for successive versions of the database.
-#' This function reads all simple tables from the SchemaAndSimpleTables.xlsx file
-#' and returns a named list of those tables in data frame format.
+#' All other tabs (besides `readme_sheet`) are foreign key tables.
+#' This function reads all foreign key tables from the SchemaAndSimpleTables.xlsx file
+#' and returns a named list of those tables, each in data frame format.
 #'
 #' `readme_sheet` and `schema_sheet` are ignored.
 #' All other sheets in the file at `schema_path` are assumed to be
-#' simple tables that are meant to be loaded into the database.
+#' foreign key tables that are meant to be uploaded to the database.
 #'
 #' @param version The database version for input information.
 #' @param simple_tables_path The path to the file containing simple tables.
@@ -52,17 +53,17 @@ load_schema_table <- function(version,
 #'                     that contains schema information.`
 #'                     Default is "Schema".
 #'
-#' @return A named list of data frames, each containing a simple table
-#'         of information for the CL-PFU database.
+#' @return A named list of data frames, each containing a foreign key table
+#'         for the CL-PFU database.
 #'
 #' @export
-load_simple_tables <- function(version,
-                               simple_tables_path = PFUSetup::get_abs_paths(version = version)[["schema_path"]],
-                               readme_sheet = "README",
-                               schema_sheet = "Schema",
-                               .table = PFUPipelineTools::schema_table_colnames$table,
-                               .colname = PFUPipelineTools::schema_table_colnames$colname,
-                               .coldatatype = PFUPipelineTools::schema_table_colnames$coldatatype) {
+load_fk_tables <- function(version,
+                           simple_tables_path = PFUSetup::get_abs_paths(version = version)[["schema_path"]],
+                           readme_sheet = "README",
+                           schema_sheet = "Schema",
+                           .table = PFUPipelineTools::schema_table_colnames$table,
+                           .colname = PFUPipelineTools::schema_table_colnames$colname,
+                           .coldatatype = PFUPipelineTools::schema_table_colnames$coldatatype) {
   # Read schema_table for data types
   schema_table <- simple_tables_path |>
     readxl::read_excel(sheet = schema_sheet)
@@ -98,7 +99,7 @@ load_simple_tables <- function(version,
         } else if (this_data_type == "double precision") {
           this_table[[this_colname]] <- as.double(this_table[[this_colname]])
         } else {
-          stop(paste0("Unknown data type: '", this_data_type, "' in load_simple_tables()"))
+          stop(paste0("Unknown data type: '", this_data_type, "' in load_fk_tables()"))
         }
       }
       return(this_table)
@@ -109,18 +110,18 @@ load_simple_tables <- function(version,
 #' Create a data model from an Excel schema table
 #'
 #' This function returns a `dm` object suitable for
-#' future uploading to a DBMS.
+#' future uploading to a database.
 #'
 #' `schema_table` is assumed to be a data frame with the following columns:
 #'
-#'   * `.table`: gives table names in the database.
-#'   * `.colname`: gives column names in each table; if suffixed with `pk_suffix`,
+#'   - `.table`: gives table names in the database.
+#'   - `.colname`: gives column names in each table; if suffixed with `pk_suffix`,
 #'                 interpreted as a primary key column.
-#'   * `.is_pk`: tells if `.colname` is a primary key for `.table`.
-#'   * `.coldatatype`: gives the data type for the column,
+#'   - `.is_pk`: tells if `.colname` is a primary key for `.table`.
+#'   - `.coldatatype`: gives the data type for the column,
 #'                     one of "int", "boolean", "text", or "double precision".
-#'   * `.fk_table`: gives a table in which the foreign key can be found
-#'   * `.fk_colname`: gives the column name in fk.table where the foreign key can be found
+#'   - `.fk_table`: gives a table in which the foreign key can be found
+#'   - `.fk_colname`: gives the column name in fk.table where the foreign key can be found
 #'
 #' @param schema_table A schema table, typically the output of `load_schema_table()`.
 #' @param pk_suffix The suffix for primary keys.
@@ -415,8 +416,8 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #' @param in_place A boolean that tells whether to modify the database at `conn`.
 #'                 Default is `FALSE`, which is helpful if you want to chain
 #'                 several requests.
-#' @param code_fks A boolean that tells whether to code foreign keys in `.df`.
-#'                 Default is `TRUE`.
+#' @param encode_fks A boolean that tells whether to code foreign keys in `.df`.
+#'                   Default is `TRUE`.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               Default is `dm::dm_from_con(conn, learn_keys = TRUE)`.
 #'               See details.
@@ -438,7 +439,7 @@ pl_upsert <- function(.df,
                       db_table_name,
                       conn,
                       in_place = FALSE,
-                      code_fks = TRUE,
+                      encode_fks = TRUE,
                       schema = dm::dm_from_con(conn, learn_keys = TRUE),
                       fk_parent_tables = PFUPipelineTools::get_all_fk_tables(conn = conn, schema = schema),
                       .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col,
@@ -459,11 +460,11 @@ pl_upsert <- function(.df,
     magrittr::extract2(1)
 
   # Replace fk column values in .df with integer keys, if needed.
-  if (code_fks) {
+  if (encode_fks) {
     .df <- .df |>
-      code_fks(db_table_name = db_table_name,
-               schema = schema,
-               fk_parent_tables = fk_parent_tables)
+      encode_fks(db_table_name = db_table_name,
+                 schema = schema,
+                 fk_parent_tables = fk_parent_tables)
   }
 
   dplyr::tbl(conn, db_table_name) |>
@@ -477,7 +478,7 @@ pl_upsert <- function(.df,
 }
 
 
-#' Code foreign keys in a data frame to be uploaded
+#' Encode foreign keys in a data frame to be uploaded
 #'
 #' In the CL-PFU pipeline,
 #' we allow data frames about to be uploaded
@@ -515,22 +516,22 @@ pl_upsert <- function(.df,
 #' @param .child_table,.child_fk_cols,.parent_table,.parent_key_cols See `PFUPipelineTools::dm_fk_colnames`.
 #' @param .pk_suffix See `PFUPipelineTools::key_col_info`.
 #'
-#' @seealso [decode_keys()] for the inverse operation,
+#' @seealso [decode_fks()] for the inverse operation,
 #'          albeit for all keys, primary and foreign.
 #'
 #' @return A version of `.df` with fk values (often strings)
 #'         replaced by fk keys (integers).
 #'
 #' @export
-code_fks <- function(.df,
-                     db_table_name,
-                     schema,
-                     fk_parent_tables,
-                     .child_table = PFUPipelineTools::dm_fk_colnames$child_table,
-                     .child_fk_cols = PFUPipelineTools::dm_fk_colnames$child_fk_cols,
-                     .parent_table = PFUPipelineTools::dm_fk_colnames$parent_table,
-                     .parent_key_cols = PFUPipelineTools::dm_fk_colnames$parent_key_cols,
-                     .pk_suffix = PFUPipelineTools::key_col_info$pk_suffix) {
+encode_fks <- function(.df,
+                       db_table_name,
+                       schema,
+                       fk_parent_tables,
+                       .child_table = PFUPipelineTools::dm_fk_colnames$child_table,
+                       .child_fk_cols = PFUPipelineTools::dm_fk_colnames$child_fk_cols,
+                       .parent_table = PFUPipelineTools::dm_fk_colnames$parent_table,
+                       .parent_key_cols = PFUPipelineTools::dm_fk_colnames$parent_key_cols,
+                       .pk_suffix = PFUPipelineTools::key_col_info$pk_suffix) {
 
   # Get details of all foreign keys in .df
   fk_details_for_db_table <- schema |>
@@ -633,15 +634,15 @@ code_fks <- function(.df,
 #' @return A version of `.df` with integer keys replaced by key values.
 #'
 #' @export
-decode_keys <- function(.df,
-                        db_table_name,
-                        schema,
-                        fk_parent_tables,
-                        .child_table = PFUPipelineTools::dm_fk_colnames$child_table,
-                        .child_fk_cols = PFUPipelineTools::dm_fk_colnames$child_fk_cols,
-                        .parent_key_cols = PFUPipelineTools::dm_fk_colnames$parent_key_cols,
-                        .pk_suffix = PFUPipelineTools::key_col_info$pk_suffix,
-                        .y_joining_suffix = ".y") {
+decode_fks <- function(.df,
+                       db_table_name,
+                       schema,
+                       fk_parent_tables,
+                       .child_table = PFUPipelineTools::dm_fk_colnames$child_table,
+                       .child_fk_cols = PFUPipelineTools::dm_fk_colnames$child_fk_cols,
+                       .parent_key_cols = PFUPipelineTools::dm_fk_colnames$parent_key_cols,
+                       .pk_suffix = PFUPipelineTools::key_col_info$pk_suffix,
+                       .y_joining_suffix = ".y") {
 
   # Get details of all foreign keys in .df
   fk_details_for_db_table <- schema |>

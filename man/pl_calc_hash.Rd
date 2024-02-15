@@ -39,8 +39,10 @@ This function calculates the appropriate hash.
 }
 \details{
 The hash has two requirements:
-* values change when content changes and
-* provides sufficient information to retrieve the real data frame.
+\itemize{
+\item values change when content changes and
+\item provides sufficient information to retrieve the real data frame.
+}
 
 The uploaded data frames may be created by
 grouped calculations,
@@ -51,13 +53,15 @@ as well as the name of the database table.
 To meet those requirements,
 the return value from this function
 has the following characteristics:
-* The first column (named \code{.table_name_col})
+\itemize{
+\item The first column (named with the value of \code{.table_name_col})
 contains the value of \code{table_name}, the name
 of the database table where \code{.df} is stored.
-* The second through N-1 columns are others with only one unique value.
-* The Nth column (named \code{.nested_col})
+\item The second through N-1 columns are others with only one unique value.
+\item The Nth column (named with the value of \code{.nested_col})
 contains a hash of a data frame created by nesting
 all columns with more than one unique value.
+}
 
 When data are withdrawn from the database at a later time,
 the first column can be removed, and

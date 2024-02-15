@@ -31,7 +31,7 @@ A \code{dm} object created from \code{schema_table}.
 }
 \description{
 This function returns a \code{dm} object suitable for
-future uploading to a DBMS.
+future uploading to a database.
 }
 \details{
 \code{schema_table} is assumed to be a data frame with the following columns:

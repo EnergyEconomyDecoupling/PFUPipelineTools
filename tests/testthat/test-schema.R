@@ -47,10 +47,10 @@ test_that("schema_dm() fails with unknown data type", {
 })
 
 
-test_that("load_simple_tables() works as expected", {
+test_that("load_fk_tables() works as expected", {
   skip_on_ci()
   skip_on_cran()
-  simple_tables <- load_simple_tables(version = "v2.0")
+  simple_tables <- load_fk_tables(version = "v2.0")
   expect_true("Year" %in% names(simple_tables))
   expect_true("Method" %in% names(simple_tables))
 
@@ -139,7 +139,7 @@ test_that("pl_upload_schema_and_simple_tables() works as expected", {
 })
 
 
-test_that("decode_keys() works as expected", {
+test_that("decode_fks() works as expected", {
   skip_on_ci()
   skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
@@ -170,9 +170,9 @@ test_that("decode_keys() works as expected", {
   schema <- dm::dm_from_con(con = conn, learn_keys = TRUE)
   fk_parent_tables <- get_all_fk_tables(conn = conn, schema = schema)
   memberrole_tbl |>
-    decode_keys(db_table_name = "MemberRole",
-                schema = schema,
-                fk_parent_tables = fk_parent_tables) |>
+    decode_fks(db_table_name = "MemberRole",
+               schema = schema,
+               fk_parent_tables = fk_parent_tables) |>
     expect_equal(data.frame(Member = "Stu Sutcliff",
                             Role = "Bassist"))
 })
