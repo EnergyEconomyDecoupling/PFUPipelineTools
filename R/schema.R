@@ -59,13 +59,49 @@ load_schema_table <- function(version,
 load_simple_tables <- function(version,
                                simple_tables_path = PFUSetup::get_abs_paths(version = version)[["schema_path"]],
                                readme_sheet = "README",
-                               schema_sheet = "Schema") {
+                               schema_sheet = "Schema",
+                               .table = PFUPipelineTools::schema_table_colnames$table,
+                               .colname = PFUPipelineTools::schema_table_colnames$colname,
+                               .coldatatype = PFUPipelineTools::schema_table_colnames$coldatatype) {
+  # Read schema_table for data types
+  schema_table <- simple_tables_path |>
+    readxl::read_excel(sheet = schema_sheet)
+
   simple_tables_path |>
     readxl::excel_sheets() |>
     setdiff(c(readme_sheet, schema_sheet)) |>
     self_name() |>
     lapply(FUN = function(this_sheet_name) {
-      readxl::read_excel(simple_tables_path, sheet = this_sheet_name)
+      # Get the data types for this simple table
+      dtypes <- schema_table |>
+        dplyr::filter(.data[[.table]] == this_sheet_name) |>
+        dplyr::select(dplyr::all_of(c(.colname, .coldatatype)))
+
+      # Get the table
+      this_table <- simple_tables_path |>
+        readxl::read_excel(sheet = this_sheet_name)
+
+      # Cycle through each column in the table and set its data type
+      for (this_colname in colnames(this_table)) {
+        # Get the data type
+        this_data_type <- dtypes |>
+          dplyr::filter(.data[[.colname]] == this_colname) |>
+          dplyr::select(dplyr::all_of(.coldatatype)) |>
+          unlist() |>
+          unname()
+        if (this_data_type == "int") {
+          this_table[[this_colname]] <- as.integer(this_table[[this_colname]])
+        } else if (this_data_type == "text") {
+          this_table[[this_colname]] <- as.character(this_table[[this_colname]])
+        } else if (this_data_type == "boolean") {
+          this_table[[this_colname]] <- as.logical(this_table[[this_colname]])
+        } else if (this_data_type == "double precision") {
+          this_table[[this_colname]] <- as.double(this_table[[this_colname]])
+        } else {
+          stop(paste0("Unknown data type: '", this_data_type, "' in load_simple_tables()"))
+        }
+      }
+      return(this_table)
     })
 }
 
@@ -139,7 +175,7 @@ schema_dm <- function(schema_table,
         } else if (this_data_type == "double precision") {
           this_dm_table[[icol]] <- as.double(this_dm_table[[icol]])
         } else {
-          stop(paste0("Unknown data type: '", this_data_type, "' in schema_dm"))
+          stop(paste0("Unknown data type: '", this_data_type, "' in schema_dm()"))
         }
       }
       return(this_dm_table)

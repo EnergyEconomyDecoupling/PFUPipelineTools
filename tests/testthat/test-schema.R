@@ -53,6 +53,14 @@ test_that("load_simple_tables() works as expected", {
   simple_tables <- load_simple_tables(version = "v2.0")
   expect_true("Year" %in% names(simple_tables))
   expect_true("Method" %in% names(simple_tables))
+
+  # Check that data types are correct
+  expect_true(is.integer(simple_tables$Country$CountryID))
+  expect_true(is.character(simple_tables$Country$Country))
+  expect_true(is.integer(simple_tables$Year$YearID))
+  expect_true(is.integer(simple_tables$Year$Year))
+  expect_true(is.integer(simple_tables$IncludesNEU$IncludesNEUID))
+  expect_true(is.logical(simple_tables$IncludesNEU$IncludesNEU))
 })
 
 

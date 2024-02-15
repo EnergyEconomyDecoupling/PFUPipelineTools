@@ -8,7 +8,10 @@ load_simple_tables(
   version,
   simple_tables_path = PFUSetup::get_abs_paths(version = version)[["schema_path"]],
   readme_sheet = "README",
-  schema_sheet = "Schema"
+  schema_sheet = "Schema",
+  .table = PFUPipelineTools::schema_table_colnames$table,
+  .colname = PFUPipelineTools::schema_table_colnames$colname,
+  .coldatatype = PFUPipelineTools::schema_table_colnames$coldatatype
 )
 }
 \arguments{
