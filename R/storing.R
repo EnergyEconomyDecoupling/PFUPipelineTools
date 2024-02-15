@@ -55,59 +55,67 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 }
 
 
-#' Save the cache to a zip file, then to `pipeline_caches_folder`
+#' Calculation pipeline hash
 #'
-#' Saves a pipeline cache to a zip file into the `pipeline_caches_folder`.
+#' In the CL-PFU database pipeline,
+#' we need the ability to download a
+#' data frame from a hash of the data.
+#' This function calculates the appropriate hash.
 #'
-#' Note that the `dependency` argument is not used internally.
-#' Rather, `dependency` exists to ensure that the pipeline
-#' executes the right targets before saving the cache.
+#' The hash has two requirements:
+#'     * value changes when the content changes
+#'     * provide enough information to retrieve the real data frame
 #'
-#' @param pipeline_caches_folder The folder into which the pipeline cache will be saved as a .zip file.
-#' @param cache_folder The cache folder that is to be zipped and saved.
-#'                     This path is interpreted relative to the working directory.
-#' @param file_prefix The prefix for the output file name.
-#' @param dependency The last target that should be executed before saving the cache.
-#'                   Not used internally.
-#' @param release A boolean telling whether to do a release. The cache is stored only for releases.
-#'                Default is `FALSE`.
+#' To meet those requirements,
+#' the return value has the following characteristics:
+#'     * The first column contains `table_name`, the name
+#'       of the database table where `.df` is stored.
+#'     * The second through N-1 columns are invariate columns of `.df`.
+#'     * The Nth column is a hash of nested data.
 #'
-#' @return If the cache was saved, the file name is returned.
-#'         If `release = FALSE`, the string "Release not requested." is returned.
+#' This approach enables filtering of `table_name` before withdrawing
+#' data at a later time.
+#'
+#' @param .df The data frame to be stored in the database.
+#' @param table_name The name of the table in which `.df` will be stored.
+#' @param .table_name_col The name of the column of the output that contains `table_name` on output.
+#'                        Default is `PFUPipelineTools::hashed_table_colnames$db_table_name`.
+#' @param .nested_col The name of the column of the output that contains
+#'                    the has of nested columns.
+#'                    Default is `PFUPipelineTools::hashed_table_colnames$nested_col_name`.
+#' @param .algo The algorithm for hashing.
+#'              Default is "md5".
+#'
+#' @return A modified version of `.df`. See details.
 #'
 #' @export
-# stash_cache <- function(pipeline_caches_folder, cache_folder, file_prefix, dependency, release = FALSE) {
-#   if (!release) {
-#     return("Release not requested.")
-#   }
-#   # Zip the drake cache
-#   zipped_cache_filename <- paste0(file_prefix, parsedate::format_iso_8601(Sys.time()), ".zip") |>
-#     # Change file name format to be equivalent to the pins file format.
-#     # Eliminate "-" characters
-#     gsub(pattern = "-", replacement = "") |>
-#     # Eliminate ":" characters, because they cause problems on some OSes.
-#     gsub(pattern = ":", replacement = "") |>
-#     # Change "+0000" to "Z", where "Z" means Zulu time (GMT offset of 00:00)
-#     gsub(pattern = "\\+0000", replacement = "Z")
-#   invisible(utils::zip(zipfile = zipped_cache_filename, files = cache_folder, flags = "--quiet"))
-#   # Calculate the folder structure for the output
-#   year <- lubridate::year(Sys.Date())
-#   month <- lubridate::month(Sys.Date())
-#   month <- sprintf("%02d", month)
-#   output_year_dir <- file.path(pipeline_caches_folder, year)
-#   dir.create(output_year_dir, showWarnings = FALSE)
-#   output_month_dir <- file.path(output_year_dir, month)
-#   dir.create(output_month_dir, showWarnings = FALSE)
-#   # Copy the file to the workflow output folder
-#   copy_successful <- file.copy(from = zipped_cache_filename,
-#                                to = output_month_dir)
-#   if (!copy_successful) {
-#     stop(paste("copying of pipeline cache unsuccessful in stach_cache():",
-#                zipped_cache_filename))
-#   }
-#   if (file.exists(zipped_cache_filename)) {
-#     # To keep things clean
-#     file.remove(zipped_cache_filename)
-#   }
-#   return(file_prefix)
-# }
+pl_calc_hash <- function(.df,
+                         table_name,
+                         .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
+                         .nested_col = PFUPipelineTools::hashed_table_colnames$nested_col_name,
+                         .algo = "md5") {
+  # Set the table name
+  out <- .df |>
+    dplyr::mutate(
+      "{.table_name_col}" := table_name,
+    ) |>
+    # Move the table name column to the left of the data frame
+    dplyr::relocate(dplyr::any_of(.table_name_col))
+
+  # Figure out names of columns that have only 1 unique value.
+  single_value_cols <- out |>
+    sapply(function(this_col) {
+      length(unique(this_col)) == 1
+    })
+  single_value_col_names <- names(single_value_cols[single_value_cols])
+
+  out |>
+    # Group by single_value_cols
+    dplyr::group_by(dplyr::across(dplyr::all_of(single_value_col_names))) |>
+    # Nest
+    tidyr::nest(.key = .nested_col) |>
+    # Calculate hash
+    dplyr::mutate(
+      "{.nested_col}" := digest::digest(.data[[.nested_col]], algo = .algo)
+    )
+}

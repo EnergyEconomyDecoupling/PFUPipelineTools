@@ -12,7 +12,8 @@ pl_upsert(
   code_fks = TRUE,
   schema = dm::dm_from_con(conn, learn_keys = TRUE),
   fk_parent_tables = PFUPipelineTools::get_all_fk_tables(conn = conn, schema = schema),
-  .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col
+  .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col,
+  .algo = "md5"
 )
 }
 \arguments{
@@ -40,9 +41,12 @@ See details.}
 
 \item{.pk_col}{The name of the primary key column in a primary key table.
 See \code{PFUPipelineTools::dm_pk_colnames}.}
+
+\item{.algo}{The hashing algorithm.
+Default is "md5".}
 }
 \value{
-A special hash of \code{.df}. See details.
+A hash of \code{.df} according to \code{.algo}.
 }
 \description{
 Upserts

@@ -125,6 +125,21 @@
 "beatles_schema_table"
 
 
+#' Column names in hashed tables
+#'
+#' A hashed table includes a column that contains
+#' a string identifying the database table
+#' in which the data are stored.
+#' This object stores the name of that column.
+#'
+#' @format A named list with `r length(hashed_table_colnames)`
+#'         entries of hashed table column names.
+#'
+#' @examples
+#' hashed_table_colnames
+"hashed_table_colnames"
+
+
 #' Example simple database tables
 #'
 #' A named list of data frames, each of which
@@ -139,4 +154,5 @@
 #' @examples
 #' beatles_fk_tables
 "beatles_fk_tables"
+
 

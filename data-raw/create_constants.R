@@ -267,6 +267,18 @@ usethis::use_data(dm_fk_colnames, overwrite = TRUE)
 
 
 #
+# Hashed table colnames
+#
+
+hashed_table_colnames <- list(
+  db_table_name = "DBTableName",
+  nested_col_name = "NestedData"
+)
+
+usethis::use_data(hashed_table_colnames, overwrite = TRUE)
+
+
+#
 # Beatles tables
 #
 

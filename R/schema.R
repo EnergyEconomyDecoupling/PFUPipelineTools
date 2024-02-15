@@ -425,8 +425,10 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #'                         See details.
 #' @param .pk_col The name of the primary key column in a primary key table.
 #'                See `PFUPipelineTools::dm_pk_colnames`.
+#' @param .algo The hashing algorithm.
+#'              Default is "md5".
 #'
-#' @return A special hash of `.df`. See details.
+#' @return A hash of `.df` according to `.algo`.
 #'
 #' @seealso `pl_download()` for the reverse operation.
 #'          `pl_upload_schema_and_simple_tables()` for a way to establish the database schema.
@@ -439,7 +441,8 @@ pl_upsert <- function(.df,
                       code_fks = TRUE,
                       schema = dm::dm_from_con(conn, learn_keys = TRUE),
                       fk_parent_tables = PFUPipelineTools::get_all_fk_tables(conn = conn, schema = schema),
-                      .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col) {
+                      .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col,
+                      .algo = "md5") {
 
   pk_table <- dm::dm_get_all_pks(schema, table = {{db_table_name}})
   # Make sure we have one and only one primary key column
@@ -468,6 +471,9 @@ pl_upsert <- function(.df,
                        by = pk_str,
                        copy = TRUE,
                        in_place = in_place)
+  # Return a hash of .df
+  .df |>
+    digest::digest(algo = .algo)
 }
 
 
