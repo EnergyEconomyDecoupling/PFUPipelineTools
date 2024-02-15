@@ -11,6 +11,7 @@ code_fks(
   fk_parent_tables,
   .child_table = PFUPipelineTools::dm_fk_colnames$child_table,
   .child_fk_cols = PFUPipelineTools::dm_fk_colnames$child_fk_cols,
+  .parent_table = PFUPipelineTools::dm_fk_colnames$parent_table,
   .parent_key_cols = PFUPipelineTools::dm_fk_colnames$parent_key_cols,
   .pk_suffix = PFUPipelineTools::key_col_info$pk_suffix
 )
@@ -27,7 +28,7 @@ See details.}
 for the foreign keys in \code{db_table_name}.
 See details.}
 
-\item{.child_table, .child_fk_cols, .parent_key_cols}{See \code{PFUPipelineTools::dm_fk_colnames}.}
+\item{.child_table, .child_fk_cols, .parent_table, .parent_key_cols}{See \code{PFUPipelineTools::dm_fk_colnames}.}
 
 \item{.pk_suffix}{See \code{PFUPipelineTools::key_col_info}.}
 }

@@ -506,7 +506,7 @@ pl_upsert <- function(.df,
 #' @param fk_parent_tables A named list of all parent tables
 #'                         for the foreign keys in `db_table_name`.
 #'                         See details.
-#' @param .child_table,.child_fk_cols,.parent_key_cols See `PFUPipelineTools::dm_fk_colnames`.
+#' @param .child_table,.child_fk_cols,.parent_table,.parent_key_cols See `PFUPipelineTools::dm_fk_colnames`.
 #' @param .pk_suffix See `PFUPipelineTools::key_col_info`.
 #'
 #' @seealso [decode_keys()] for the inverse operation,
@@ -522,6 +522,7 @@ code_fks <- function(.df,
                      fk_parent_tables,
                      .child_table = PFUPipelineTools::dm_fk_colnames$child_table,
                      .child_fk_cols = PFUPipelineTools::dm_fk_colnames$child_fk_cols,
+                     .parent_table = PFUPipelineTools::dm_fk_colnames$parent_table,
                      .parent_key_cols = PFUPipelineTools::dm_fk_colnames$parent_key_cols,
                      .pk_suffix = PFUPipelineTools::key_col_info$pk_suffix) {
 
