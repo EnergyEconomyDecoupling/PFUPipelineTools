@@ -55,26 +55,39 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 }
 
 
-#' Calculation pipeline hash
+#' Calculate has of pipeline data
 #'
 #' In the CL-PFU database pipeline,
 #' we need the ability to download a
-#' data frame from a hash of the data.
+#' data frame from the database
+#' based on a hash of the data.
 #' This function calculates the appropriate hash.
 #'
 #' The hash has two requirements:
-#'     * value changes when the content changes
-#'     * provide enough information to retrieve the real data frame
+#'     * values change when content changes and
+#'     * provides sufficient information to retrieve the real data frame.
+#'
+#' The uploaded data frames may be created by
+#' grouped calculations,
+#' so some columns are likely to have only one unique value.
+#' We need to know retain data of those single-valued columns
+#' as well as the name of the database table.
 #'
 #' To meet those requirements,
-#' the return value has the following characteristics:
-#'     * The first column contains `table_name`, the name
+#' the return value from this function
+#' has the following characteristics:
+#'     * The first column (named `.table_name_col`)
+#'       contains the value of `table_name`, the name
 #'       of the database table where `.df` is stored.
-#'     * The second through N-1 columns are invariate columns of `.df`.
-#'     * The Nth column is a hash of nested data.
+#'     * The second through N-1 columns are others with only one unique value.
+#'     * The Nth column (named `.nested_col`)
+#'       contains a hash of a data frame created by nesting
+#'       all columns with more than one unique value.
 #'
-#' This approach enables filtering of `table_name` before withdrawing
-#' data at a later time.
+#' When data are withdrawn from the database at a later time,
+#' the first column can be removed, and
+#' the other columns with one unique
+#' value can be filtered.
 #'
 #' @param .df The data frame to be stored in the database.
 #' @param table_name The name of the table in which `.df` will be stored.

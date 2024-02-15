@@ -29,6 +29,11 @@ test_that("pl_calc_hash() works as expected", {
   DF <- tibble::tribble(~Country, ~Year, ~Value,
                         "USA", 1967, 42,
                         "ZAF", 1967, 43)
-  DF |>
+  the_hash <- DF |>
     pl_calc_hash(table_name = "MyTable")
+
+  expect_equal(names(the_hash), c(PFUPipelineTools::hashed_table_colnames$db_table_name,
+                                  "Year",
+                                  PFUPipelineTools::hashed_table_colnames$nested_col_name))
+  expect_equal(nrow(the_hash), 1)
 })
