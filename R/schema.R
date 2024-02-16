@@ -447,7 +447,7 @@ pl_upsert <- function(.df,
                       .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col,
                       .algo = "md5") {
 
-  pk_table <- dm::dm_get_all_pks(schema, table = {{db_table_name}})
+  pk_table <- dm::dm_get_all_pks(schema, table = dplyr::all_of({{db_table_name}}))
   # Make sure we have one and only one primary key column
   assertthat::assert_that(nrow(pk_table) == 1,
                           msg = paste0("Table '",

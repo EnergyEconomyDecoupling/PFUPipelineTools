@@ -25,7 +25,7 @@
 #'                    If a character vector, tells which tables to drop.
 #'                    Default is `FALSE`, meaning that no tables will be dropped.
 #'
-#' @return The names of tables dropped (if any) or `FALSE` when no tables are dropped.
+#' @return The names of tables dropped (if any) or an empty character vector when no tables are dropped.
 #'
 #' @export
 pl_destroy <- function(conn,
@@ -40,18 +40,19 @@ pl_destroy <- function(conn,
 
   if (is.logical(drop_tables)) {
     if (!drop_tables) {
-      return(drop_tables)
+      return(character())
     }
     if (drop_tables) {
       # drop_tables to the names of all tables
       drop_tables <- DBI::dbListTables(conn)
     }
+
   }
 
   # Only drop tables that exist
   drop_tables <- drop_tables[which(DBI::dbListTables(conn) %in% drop_tables)]
   if (length(drop_tables) == 0) {
-    return(FALSE)
+    return(character())
   }
 
   if (inherits(conn, "PqConnection")) {

@@ -26,7 +26,7 @@ If a character vector, tells which tables to drop.
 Default is \code{FALSE}, meaning that no tables will be dropped.}
 }
 \value{
-The names of tables dropped (if any) or \code{FALSE} when no tables are dropped.
+The names of tables dropped (if any) or an empty character vector when no tables are dropped.
 }
 \description{
 Sometimes, you just need to start over from scratch.
