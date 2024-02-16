@@ -47,7 +47,7 @@ test_that("pl_collect() works as expected", {
     unname() |>
     expect_equal("e4c5198aa04c376d9096111092794069")
 
-  # Did we round-trip successfully?
+  # Do we round-trip successfully?
   result1 <- pl_collect(hash1, conn)
   expect_equal(result1, tibble::as_tibble(test_table1))
   result2 <- pl_collect(hash2, conn)
