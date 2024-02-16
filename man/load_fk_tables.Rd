@@ -27,6 +27,8 @@ Default is "README".}
 \item{schema_sheet}{The name of the sheet in the in the file at \code{simple_tables_path}
 that contains schema information.`
 Default is "Schema".}
+
+\item{.table, .colname, .coldatatype}{See \code{PFUPipelineTools::schema_table_colnames}.}
 }
 \value{
 A named list of data frames, each containing a foreign key table

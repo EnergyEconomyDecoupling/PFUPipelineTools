@@ -52,6 +52,7 @@ load_schema_table <- function(version,
 #' @param schema_sheet The name of the sheet in the in the file at `simple_tables_path`
 #'                     that contains schema information.`
 #'                     Default is "Schema".
+#' @param .table,.colname,.coldatatype See `PFUPipelineTools::schema_table_colnames`.
 #'
 #' @return A named list of data frames, each containing a foreign key table
 #'         for the CL-PFU database.
