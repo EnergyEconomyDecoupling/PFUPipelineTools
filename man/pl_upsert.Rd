@@ -10,7 +10,7 @@ pl_upsert(
   conn,
   in_place = FALSE,
   encode_fks = TRUE,
-  schema = dm::dm_from_con(conn, learn_keys = TRUE),
+  schema = schema_from_conn(conn),
   fk_parent_tables = PFUPipelineTools::get_all_fk_tables(conn = conn, schema = schema),
   .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col,
   .algo = "md5"
@@ -32,7 +32,7 @@ several requests.}
 Default is \code{TRUE}.}
 
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
-Default is \code{dm::dm_from_con(conn, learn_keys = TRUE)}.
+Default is \code{dm_from_con(conn, learn_keys = TRUE)}.
 See details.}
 
 \item{fk_parent_tables}{A named list of all parent tables
@@ -77,7 +77,7 @@ contains the following columns:
 }\if{html}{\out{</div>}}
 
 \code{schema} is a data model (\code{dm} object) for the database in \code{conn}.
-Its default value (\code{dm::dm_from_con(conn, learn_keys = TRUE)})
+Its default value (\code{dm_from_con(conn, learn_keys = TRUE)})
 extracts the data model for the database at \code{conn} automatically.
 However, if the caller already has the data model,
 supplying it in the \code{schema} argument will save time.

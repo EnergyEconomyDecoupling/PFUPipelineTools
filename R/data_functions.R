@@ -2,7 +2,7 @@
 #'
 #' Data is extracted according to the `countries` and `years` objects
 #' in a way that is amenable to drake subtargets.
-#' `dplyr::filter()` does the subsetting.
+#' `dplyr:` `:filter()` does the subsetting.
 #'
 #' @param .df A data frame containing cleaned data with lots of countries and years.
 #' @param countries A list of country codes for countries to be analyzed.

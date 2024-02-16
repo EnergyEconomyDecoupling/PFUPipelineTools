@@ -16,7 +16,8 @@ A string list with 3 entries.
 dm_pk_colnames
 }
 \description{
-\code{dm::dm_get_all_pks()} returns a data frame with several columns.
+\code{dm_get_all_pks()} from the package \code{dm}
+returns a data frame with several columns.
 This constant gives those names as a string list
 to document their meaning and
 to guard against future changes.

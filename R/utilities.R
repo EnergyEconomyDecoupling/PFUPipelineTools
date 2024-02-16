@@ -38,14 +38,14 @@ self_name <- function(x) {
 #' by the names of the tables in the database at `conn`.
 #'
 #' `schema` is a data model (`dm` object) for the database in `conn`.
-#' Its default value (`dm::dm_from_con(conn, learn_keys = TRUE)`)
+#' Its default value (which calls `schema_fom_conn()`)
 #' extracts the data model for the database at `conn` automatically.
 #' However, if the caller already has the data model,
 #' supplying it in the `schema` argument will save some time.
 #'
 #' @param conn A connection to a database.
 #' @param schema The data model (`dm` object) for the database in `conn`.
-#'               Default is `dm::dm_from_con(conn, learn_keys = TRUE)`.
+#'               Default calls `schema_from_conn()`.
 #'               See details.
 #'
 #' @return A named list of data frames,
@@ -53,8 +53,7 @@ self_name <- function(x) {
 #'         is a table in `conn` that contains
 #'         foreign keys and their values.
 #' @export
-get_all_fk_tables <- function(conn,
-                              schema = dm::dm_from_con(conn, learn_keys = TRUE)) {
+get_all_fk_tables <- function(conn, schema = schema_from_conn(conn)) {
   schema |>
     dm::dm_get_all_fks() |>
     magrittr::extract2("parent_table") |>
@@ -64,4 +63,78 @@ get_all_fk_tables <- function(conn,
       dplyr::tbl(conn, this_parent_table) |>
         dplyr::collect()
     })
+}
+
+
+#' Get the database schema (a `dm` object) from a connection
+#'
+#' It is helpful to know the actual schema
+#' in use by a database at a connection.
+#' This function provides this information.
+#' It is a thin wrapper around
+#' `dm_from_con()` from the package `dm`
+#' that enables building the documentation website.
+#'
+#' @param conn A `DBI::DBIConnection`.
+#' @param table_names A character vector of the names of the tables to include.
+#'                    `NULL` (the default) means return all tables in `conn`.
+#' @param learn_keys A boolean that tells whether to include the definition of primary and final keys
+#'                   in the return value.
+#'                   Default is `TRUE`.
+#' @param .names See documentation for `dm_from_con()` in the `dm` package.
+#'               Default is `NULL`.
+#' @param table_type Gives the type of table to return.
+#'                   Default is "BASE TABLE", which means to return persistent tables,
+#'                   the normal table type.
+#'
+#' @return A `dm` object.
+#'
+#' @export
+schema_from_conn <- function(conn = NULL,
+                             table_names = NULL,
+                             learn_keys = TRUE,
+                             .names = NULL,
+                             table_type = "BASE TABLE") {
+  dm::dm_from_con(conn, table_names = table_names, learn_keys = TRUE)
+}
+
+
+#' Upload a small database of Beatles information
+#'
+#' Used only for testing.
+#'
+#' @param conn The connection to a Postgres database.
+#'             The user must have write permission.
+#'
+#' @return A list of tables containing Beatles information
+upload_beatles <- function(conn) {
+  PFUPipelineTools::beatles_schema_table |>
+    schema_dm() |>
+    pl_upload_schema_and_simple_tables(simple_tables = PFUPipelineTools::beatles_fk_tables,
+                                       conn = conn,
+                                       drop_db_tables = c("MemberRole", "Member", "Role"))
+}
+
+
+#' Clean up Beatles tables
+#'
+#' Used only for testing.
+#'
+#' @param conn The connection to a Postgres database.
+#'             The user must have write permission.
+#'
+#' @return A list of tables deleted
+clean_up_beatles <- function(conn) {
+
+  beatles_tables <- c("MemberRole", "Member", "Role")
+  # Only drop tables that exist
+  db_tables <- DBI::dbListTables(conn)
+  db_tables_in_beatles_tables <- which(db_tables %in% beatles_tables)
+  to_drop <- db_tables[db_tables_in_beatles_tables]
+
+  to_drop |>
+    purrr::map(function(this_table_name) {
+      DBI::dbExecute(conn, paste0('DROP TABLE "', this_table_name, '" CASCADE;'))
+    })
+  return(to_drop)
 }

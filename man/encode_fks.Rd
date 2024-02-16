@@ -48,8 +48,7 @@ to fk keys.
 }
 \details{
 \code{schema} is a data model (\code{dm} object) for the CL-PFU database.
-It can be obtained from code such as
-\verb{dm::dm_from_con(con = << a database connection >>, learn_keys = TRUE)}.
+It can be obtained from calling \code{schema_from_conn()}.
 
 \code{fk_parent_tables} is a named list of tables,
 some of which are fk parent tables containing

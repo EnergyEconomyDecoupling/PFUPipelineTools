@@ -4,13 +4,13 @@
 \alias{get_all_fk_tables}
 \title{Get a named list of foreign key tables}
 \usage{
-get_all_fk_tables(conn, schema = dm::dm_from_con(conn, learn_keys = TRUE))
+get_all_fk_tables(conn, schema = schema_from_conn(conn))
 }
 \arguments{
 \item{conn}{A connection to a database.}
 
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
-Default is \code{dm::dm_from_con(conn, learn_keys = TRUE)}.
+Default calls \code{schema_from_conn()}.
 See details.}
 }
 \value{
@@ -32,7 +32,7 @@ by the names of the tables in the database at \code{conn}.
 }
 \details{
 \code{schema} is a data model (\code{dm} object) for the database in \code{conn}.
-Its default value (\code{dm::dm_from_con(conn, learn_keys = TRUE)})
+Its default value (which calls \code{schema_fom_conn()})
 extracts the data model for the database at \code{conn} automatically.
 However, if the caller already has the data model,
 supplying it in the \code{schema} argument will save some time.
