@@ -29,6 +29,7 @@ test_that("pl_collect() works as expected", {
   dm::copy_dm_to(dest = conn, dm = DM, temporary = FALSE)
   hash1 <- test_table1 |>
     PFUPipelineTools::pl_upsert(db_table_name, conn, in_place = TRUE)
+
   # Add some additional data
   test_table2 <- data.frame(key1 = as.integer(c(2, 2, 2)),
                             key2 = as.integer(c(1, 2, 3)),
@@ -41,7 +42,7 @@ test_that("pl_collect() works as expected", {
                  "key1",
                  PFUPipelineTools::hashed_table_colnames$nested_col_name))
   hash1 |>
-    dplyr::select(PFUPipelineTools::hashed_table_colnames$nested_col_name) |>
+    dplyr::select(dplyr::all_of(PFUPipelineTools::hashed_table_colnames$nested_col_name)) |>
     unlist() |>
     unname() |>
     expect_equal("e4c5198aa04c376d9096111092794069")

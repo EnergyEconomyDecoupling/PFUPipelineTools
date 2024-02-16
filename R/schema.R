@@ -266,7 +266,9 @@ schema_dm <- function(schema_table,
 #'                                 `NOT NULL` constraints are set on
 #'                                 foreign key columns in `schema`.
 #'                                 Default is `TRUE`.
-#' @param drop_db_tables A boolean that tells whether to delete
+#' @param drop_db_tables If `TRUE`, all tables in conn are dropped.
+#'                       If a character vector, the names of tables to be dropped.
+#'                       If `FALSE` (the default), no tables are dropped.
 #'                       existing tables before uploading the new schema.
 #' @param .pk_col See `PFUPipelineTools::dm_pk_colnames`.
 #'
@@ -474,7 +476,6 @@ pl_upsert <- function(.df,
                        in_place = in_place)
   # Return a hash of .df
   .df |>
-    # digest::digest(algo = .algo)
     pl_hash(table_name = db_table_name)
 }
 
@@ -552,7 +553,6 @@ encode_fks <- function(.df,
 
   # Get a vector of string names of foreign key columns in .df
   fk_cols_in_df <- fk_details_for_db_table |>
-    # dplyr::select(child_fk_cols) |>
     dplyr::select(dplyr::all_of(.child_fk_cols)) |>
     unlist() |>
     unname()
@@ -695,5 +695,29 @@ upload_beatles <- function(conn) {
     schema_dm() |>
     pl_upload_schema_and_simple_tables(simple_tables = PFUPipelineTools::beatles_fk_tables,
                                        conn = conn,
-                                       drop_db_tables = TRUE)
+                                       drop_db_tables = c("MemberRole", "Member", "Role"))
+}
+
+
+#' Clean up Beatles tables
+#'
+#' Used only for testing.
+#'
+#' @param conn The connection to a Postgres database.
+#'             The user must have write permission.
+#'
+#' @return A list of tables deleted
+clean_up_beatles <- function(conn) {
+
+  beatles_tables <- c("MemberRole", "Member", "Role")
+  # Only drop tables that exist
+  db_tables <- DBI::dbListTables(conn)
+  db_tables_in_beatles_tables <- which(db_tables %in% beatles_tables)
+  to_drop <- db_tables[db_tables_in_beatles_tables]
+
+  to_drop |>
+    purrr::map(function(this_table_name) {
+      DBI::dbExecute(conn, paste0('DROP TABLE "', this_table_name, '" CASCADE;'))
+    })
+  return(to_drop)
 }

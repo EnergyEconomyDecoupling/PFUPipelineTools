@@ -21,12 +21,12 @@ which is normally \verb{_targets}.}
 \item{destroy_cache}{A boolean that tells whether to destroy the local \code{targets} cache.
 Default is \code{FALSE}.}
 
-\item{drop_tables}{A boolean that tells whether to delete all tables in \code{conn}.
-Default is \code{FALSE}.}
+\item{drop_tables}{If \code{TRUE}, all tables in conn are dropped.
+If a character vector, tells which tables to drop.
+Default is \code{FALSE}, meaning that no tables will be dropped.}
 }
 \value{
-If successful, \code{TRUE} (invisibly);
-otherwise, an error is thrown.
+The names of tables dropped (if any) or \code{FALSE} when no tables are dropped.
 }
 \description{
 Sometimes, you just need to start over from scratch.
