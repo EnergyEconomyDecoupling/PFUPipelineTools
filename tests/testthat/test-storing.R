@@ -24,13 +24,13 @@ test_that("release_target() works as expected", {
 })
 
 
-test_that("pl_calc_hash() works as expected", {
+test_that("pl_hash() works as expected", {
   # Example data frame
   DF <- tibble::tribble(~Country, ~Year, ~Value,
                         "USA", 1967, 42,
                         "ZAF", 1967, 43)
   the_hash <- DF |>
-    pl_calc_hash(table_name = "MyTable")
+    pl_hash(table_name = "MyTable")
 
   expect_equal(names(the_hash), c(PFUPipelineTools::hashed_table_colnames$db_table_name,
                                   "Year",

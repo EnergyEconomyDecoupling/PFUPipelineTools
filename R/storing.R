@@ -101,10 +101,10 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 #' @param .algo The algorithm for hashing.
 #'              Default is "md5".
 #'
-#' @return A modified version of `.df`. See details.
+#' @return A modified version of `.df` without groups. See details.
 #'
 #' @export
-pl_calc_hash <- function(.df,
+pl_hash <- function(.df,
                          table_name,
                          .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
                          .nested_col = PFUPipelineTools::hashed_table_colnames$nested_col_name,
@@ -132,5 +132,6 @@ pl_calc_hash <- function(.df,
     # Calculate hash
     dplyr::mutate(
       "{.nested_col}" := digest::digest(.data[[.nested_col]], algo = .algo)
-    )
+    ) |>
+    dplyr::ungroup()
 }

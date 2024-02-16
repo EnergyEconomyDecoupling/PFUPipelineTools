@@ -474,7 +474,8 @@ pl_upsert <- function(.df,
                        in_place = in_place)
   # Return a hash of .df
   .df |>
-    digest::digest(algo = .algo)
+    # digest::digest(algo = .algo)
+    pl_hash(table_name = db_table_name)
 }
 
 
