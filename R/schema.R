@@ -52,6 +52,7 @@ load_schema_table <- function(version,
 #' @param schema_sheet The name of the sheet in the in the file at `simple_tables_path`
 #'                     that contains schema information.`
 #'                     Default is "Schema".
+#' @param .table,.colname,.coldatatype See `PFUPipelineTools::schema_table_colnames`.
 #'
 #' @return A named list of data frames, each containing a foreign key table
 #'         for the CL-PFU database.
@@ -266,7 +267,9 @@ schema_dm <- function(schema_table,
 #'                                 `NOT NULL` constraints are set on
 #'                                 foreign key columns in `schema`.
 #'                                 Default is `TRUE`.
-#' @param drop_db_tables A boolean that tells whether to delete
+#' @param drop_db_tables If `TRUE`, all tables in conn are dropped.
+#'                       If a character vector, the names of tables to be dropped.
+#'                       If `FALSE` (the default), no tables are dropped.
 #'                       existing tables before uploading the new schema.
 #' @param .pk_col See `PFUPipelineTools::dm_pk_colnames`.
 #'
@@ -390,7 +393,7 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #'     * Hash: A column with a hash of all non-foreign-key columns.
 #'
 #' `schema` is a data model (`dm` object) for the database in `conn`.
-#' Its default value (`dm::dm_from_con(conn, learn_keys = TRUE)`)
+#' Its default value (`dm_from_con(conn, learn_keys = TRUE)`)
 #' extracts the data model for the database at `conn` automatically.
 #' However, if the caller already has the data model,
 #' supplying it in the `schema` argument will save time.
@@ -419,7 +422,7 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #' @param encode_fks A boolean that tells whether to code foreign keys in `.df`.
 #'                   Default is `TRUE`.
 #' @param schema The data model (`dm` object) for the database in `conn`.
-#'               Default is `dm::dm_from_con(conn, learn_keys = TRUE)`.
+#'               Default is `dm_from_con(conn, learn_keys = TRUE)`.
 #'               See details.
 #' @param fk_parent_tables A named list of all parent tables
 #'                         for the foreign keys in `db_table_name`.
@@ -440,12 +443,12 @@ pl_upsert <- function(.df,
                       conn,
                       in_place = FALSE,
                       encode_fks = TRUE,
-                      schema = dm::dm_from_con(conn, learn_keys = TRUE),
+                      schema = schema_from_conn(conn),
                       fk_parent_tables = PFUPipelineTools::get_all_fk_tables(conn = conn, schema = schema),
                       .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col,
                       .algo = "md5") {
 
-  pk_table <- dm::dm_get_all_pks(schema, table = {{db_table_name}})
+  pk_table <- dm::dm_get_all_pks(schema, table = dplyr::all_of({{db_table_name}}))
   # Make sure we have one and only one primary key column
   assertthat::assert_that(nrow(pk_table) == 1,
                           msg = paste0("Table '",
@@ -474,7 +477,6 @@ pl_upsert <- function(.df,
                        in_place = in_place)
   # Return a hash of .df
   .df |>
-    # digest::digest(algo = .algo)
     pl_hash(table_name = db_table_name)
 }
 
@@ -491,8 +493,7 @@ pl_upsert <- function(.df,
 #' to fk keys.
 #'
 #' `schema` is a data model (`dm` object) for the CL-PFU database.
-#' It can be obtained from code such as
-#' `dm::dm_from_con(con = << a database connection >>, learn_keys = TRUE)`.
+#' It can be obtained from calling `schema_from_conn()`.
 #'
 #' `fk_parent_tables` is a named list of tables,
 #' some of which are fk parent tables containing
@@ -552,7 +553,6 @@ encode_fks <- function(.df,
 
   # Get a vector of string names of foreign key columns in .df
   fk_cols_in_df <- fk_details_for_db_table |>
-    # dplyr::select(child_fk_cols) |>
     dplyr::select(dplyr::all_of(.child_fk_cols)) |>
     unlist() |>
     unname()
@@ -607,8 +607,7 @@ encode_fks <- function(.df,
 #' This function provides that service.
 #'
 #' `schema` is a data model (`dm` object) for the CL-PFU database.
-#' It can be obtained from code such as
-#' `dm::dm_from_con(con = << a database connection >>, learn_keys = TRUE)`.
+#' It can be obtained from calling `schema_from_conn()`.
 #'
 #' `fk_parent_tables` is a named list of tables,
 #' some of which are fk parent tables containing
@@ -682,18 +681,3 @@ decode_fks <- function(.df,
 }
 
 
-#' Upload a small database of Beatles information
-#'
-#' Used only for testing.
-#'
-#' @param conn The connection to a Postgres database.
-#'             The user must have write permission.
-#'
-#' @return A list of tables containing Beatles information
-upload_beatles <- function(conn) {
-  PFUPipelineTools::beatles_schema_table |>
-    schema_dm() |>
-    pl_upload_schema_and_simple_tables(simple_tables = PFUPipelineTools::beatles_fk_tables,
-                                       conn = conn,
-                                       drop_db_tables = TRUE)
-}

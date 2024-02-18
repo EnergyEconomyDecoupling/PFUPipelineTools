@@ -26,7 +26,9 @@ tables in \code{conn}.}
 foreign key columns in \code{schema}.
 Default is \code{TRUE}.}
 
-\item{drop_db_tables}{A boolean that tells whether to delete
+\item{drop_db_tables}{If \code{TRUE}, all tables in conn are dropped.
+If a character vector, the names of tables to be dropped.
+If \code{FALSE} (the default), no tables are dropped.
 existing tables before uploading the new schema.}
 
 \item{.pk_col}{See \code{PFUPipelineTools::dm_pk_colnames}.}

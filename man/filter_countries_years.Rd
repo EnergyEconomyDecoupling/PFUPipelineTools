@@ -28,7 +28,7 @@ A data frame with the desired IEA data only.
 \description{
 Data is extracted according to the \code{countries} and \code{years} objects
 in a way that is amenable to drake subtargets.
-\code{dplyr::filter()} does the subsetting.
+\verb{dplyr:} \verb{:filter()} does the subsetting.
 }
 \examples{
 IEATools::sample_iea_data_path() |>

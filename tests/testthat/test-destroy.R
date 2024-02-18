@@ -5,7 +5,7 @@ test_that("pl_destroy() works as expected", {
   expect_true(inherits(conn, "SQLiteConnection"))
 
   # Try with no tables
-  expect_true(pl_destroy(conn, drop_tables = TRUE))
+  expect_equal(pl_destroy(conn, drop_tables = TRUE), character())
 
   # Add tables with foreign keys
   table1 <- tibble::tribble(~A, ~B1,
@@ -22,6 +22,6 @@ test_that("pl_destroy() works as expected", {
   expect_equal(length(DBI::dbListTables(conn)), 2)
   expect_equal(DBI::dbListTables(conn), c("table1", "table2"))
   # Check that we can eliminate all tables
-  expect_true(pl_destroy(conn, drop_tables = TRUE))
+  expect_equal(pl_destroy(conn, drop_tables = TRUE), c("table1", "table2"))
   expect_equal(length(DBI::dbListTables(conn)), 0)
 })

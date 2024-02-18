@@ -2,6 +2,7 @@
 #'
 #' @param hashed_table A table created by `pl_hash()`.
 #' @param conn The database connection.
+#' @param .table_name_col,.nested_col  See `PFUPipelineTools::hashed_table_colnames`.
 #'
 #' @return The downloaded data frame described by `hashed_table`.
 #'

@@ -136,6 +136,12 @@ test_that("pl_upload_schema_and_simple_tables() works as expected", {
     dplyr::filter(Member == 5) |>
     magrittr::extract2("Role") |>
     expect_equal(6)
+
+  # Clean up after ourselves
+  # Get rid of the MemberRole table first, because the other depend on it
+  DBI::dbRemoveTable(conn, "MemberRole")
+  DBI::dbRemoveTable(conn, "Member")
+  DBI::dbRemoveTable(conn, "Role")
 })
 
 
@@ -167,7 +173,7 @@ test_that("decode_fks() works as expected", {
     expect_equal(data.frame(Member = 5, Role = 2))
 
   # Check decoding
-  schema <- dm::dm_from_con(con = conn, learn_keys = TRUE)
+  schema <- schema_from_conn(conn)
   fk_parent_tables <- get_all_fk_tables(conn = conn, schema = schema)
   memberrole_tbl |>
     decode_fks(db_table_name = "MemberRole",
@@ -175,4 +181,7 @@ test_that("decode_fks() works as expected", {
                fk_parent_tables = fk_parent_tables) |>
     expect_equal(data.frame(Member = "Stu Sutcliff",
                             Role = "Bassist"))
+
+  # Clean up after ourselves
+  PFUPipelineTools:::clean_up_beatles(conn)
 })

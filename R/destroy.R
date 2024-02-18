@@ -21,11 +21,11 @@
 #'              which is normally `_targets`.
 #' @param destroy_cache A boolean that tells whether to destroy the local `targets` cache.
 #'                      Default is `FALSE`.
-#' @param drop_tables A boolean that tells whether to delete all tables in `conn`.
-#'                    Default is `FALSE`.
+#' @param drop_tables If `TRUE`, all tables in conn are dropped.
+#'                    If a character vector, tells which tables to drop.
+#'                    Default is `FALSE`, meaning that no tables will be dropped.
 #'
-#' @return If successful, `TRUE` (invisibly);
-#'         otherwise, an error is thrown.
+#' @return The names of tables dropped (if any) or an empty character vector when no tables are dropped.
 #'
 #' @export
 pl_destroy <- function(conn,
@@ -38,22 +38,37 @@ pl_destroy <- function(conn,
     unlink(store, recursive = TRUE)
   }
 
-  if (drop_tables) {
-    table_names <- DBI::dbListTables(conn)
-    if (inherits(conn, "PqConnection")) {
-      # Remove all tables in Postgres database
-      table_names |>
-        purrr::map(function(this_table_name) {
-          DBI::dbExecute(conn, paste0('DROP TABLE "', this_table_name, '" CASCADE;'))
-        })
-    } else {
-      # Remove all tables in a different type of database
-      table_names |>
-        purrr::map(function(this_table_name) {
-          DBI::dbRemoveTable(conn, name = this_table_name)
-        })
+  if (is.logical(drop_tables)) {
+    if (!drop_tables) {
+      return(character())
     }
+    if (drop_tables) {
+      # drop_tables to the names of all tables
+      drop_tables <- DBI::dbListTables(conn)
+    }
+
   }
-  return(invisible(TRUE))
+
+  # Only drop tables that exist
+  drop_tables <- drop_tables[which(DBI::dbListTables(conn) %in% drop_tables)]
+  if (length(drop_tables) == 0) {
+    return(character())
+  }
+
+  if (inherits(conn, "PqConnection")) {
+    # Remove all tables in Postgres database
+    drop_tables |>
+      purrr::map(function(this_table_name) {
+        DBI::dbExecute(conn, paste0('DROP TABLE "', this_table_name, '" CASCADE;'))
+      })
+  } else {
+    # Remove all tables in a different type of database
+    drop_tables |>
+      purrr::map(function(this_table_name) {
+        DBI::dbRemoveTable(conn, name = this_table_name)
+      })
+  }
+
+  return(drop_tables)
 }
 

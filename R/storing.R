@@ -116,7 +116,7 @@ pl_hash <- function(.df,
       "{.table_name_col}" := table_name,
     ) |>
     # Move the table name column to the left of the data frame
-    dplyr::relocate(dplyr::any_of(.table_name_col))
+    dplyr::relocate(dplyr::all_of(.table_name_col))
 
   # Figure out names of columns that have only 1 unique value.
   single_value_cols <- out |>

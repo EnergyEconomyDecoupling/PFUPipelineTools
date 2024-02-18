@@ -15,6 +15,8 @@ pl_collect(
 \item{hashed_table}{A table created by \code{pl_hash()}.}
 
 \item{conn}{The database connection.}
+
+\item{.table_name_col, .nested_col}{See \code{PFUPipelineTools::hashed_table_colnames}.}
 }
 \value{
 The downloaded data frame described by \code{hashed_table}.
