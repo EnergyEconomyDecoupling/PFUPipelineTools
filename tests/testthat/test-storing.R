@@ -34,6 +34,6 @@ test_that("pl_hash() works as expected", {
 
   expect_equal(names(the_hash), c(PFUPipelineTools::hashed_table_colnames$db_table_name,
                                   "Year",
-                                  PFUPipelineTools::hashed_table_colnames$nested_col_name))
+                                  PFUPipelineTools::hashed_table_colnames$nested_hash_col_name))
   expect_equal(nrow(the_hash), 1)
 })

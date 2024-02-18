@@ -39,9 +39,9 @@ test_that("pl_collect() works as expected", {
   expect_equal(colnames(hash1),
                c(PFUPipelineTools::hashed_table_colnames$db_table_name,
                  "key1",
-                 PFUPipelineTools::hashed_table_colnames$nested_col_name))
+                 PFUPipelineTools::hashed_table_colnames$nested_hash_col_name))
   hash1 |>
-    dplyr::select(PFUPipelineTools::hashed_table_colnames$nested_col_name) |>
+    dplyr::select(PFUPipelineTools::hashed_table_colnames$nested_hash_col_name) |>
     unlist() |>
     unname() |>
     expect_equal("e4c5198aa04c376d9096111092794069")

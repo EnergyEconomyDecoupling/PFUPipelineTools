@@ -105,10 +105,11 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 #'
 #' @export
 pl_hash <- function(.df,
-                         table_name,
-                         .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
-                         .nested_col = PFUPipelineTools::hashed_table_colnames$nested_col_name,
-                         .algo = "md5") {
+                    table_name,
+                    .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
+                    .nested_col = PFUPipelineTools::hashed_table_colnames$nested_col_name,
+                    .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_col_name,
+                    .algo = "md5") {
   # Set the table name
   out <- .df |>
     dplyr::mutate(
@@ -131,7 +132,8 @@ pl_hash <- function(.df,
     tidyr::nest(.key = .nested_col) |>
     # Calculate hash
     dplyr::mutate(
-      "{.nested_col}" := digest::digest(.data[[.nested_col]], algo = .algo)
+      "{.nested_hash_col}" := digest::digest(.data[[.nested_col]], algo = .algo),
+      "{.nested_col}" := NULL
     ) |>
     dplyr::ungroup()
 }

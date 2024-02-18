@@ -9,6 +9,7 @@ pl_hash(
   table_name,
   .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
   .nested_col = PFUPipelineTools::hashed_table_colnames$nested_col_name,
+  .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_col_name,
   .algo = "md5"
 )
 }

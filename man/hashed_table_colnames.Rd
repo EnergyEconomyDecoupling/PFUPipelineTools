@@ -5,7 +5,7 @@
 \alias{hashed_table_colnames}
 \title{Column names in hashed tables}
 \format{
-A named list with 2
+A named list with 3
 entries of hashed table column names.
 }
 \usage{
