@@ -6,7 +6,10 @@
 \usage{
 pl_collect(
   hashed_table,
+  decode_fks = TRUE,
   conn,
+  schema = schema_from_conn(conn = conn),
+  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
   .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
   .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_col_name
 )
@@ -14,7 +17,25 @@ pl_collect(
 \arguments{
 \item{hashed_table}{A table created by \code{pl_hash()}.}
 
+\item{decode_fks}{A boolean that tells whether to decode foreign keys
+before returning.
+Default is \code{TRUE}.}
+
 \item{conn}{The database connection.}
+
+\item{schema}{The database schema (a \code{dm} object).
+Default calls \code{schema_from_conn()}, but
+you can supply a pre-computed schema for speed.
+Needed only when \code{decode_fks = TRUE} (the default).
+If foreign keys are not being decoded,
+setting \code{NULL} may improve speed.}
+
+\item{fk_parent_tables}{Foreign key parent tables to assist decoding
+foreign keys (when \code{decode_fks = TRUE}, the default).
+Default calls \code{get_all_fk_tables()}.
+Needed only when \code{decode_fks = TRUE} (the default).
+If foreign keys are not being decoded,
+setting \code{NULL} may improve speed.}
 
 \item{.table_name_col, .nested_col}{See \code{PFUPipelineTools::hashed_table_colnames}.}
 }

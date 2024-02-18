@@ -49,9 +49,9 @@ test_that("pl_collect() works as expected", {
     expect_equal("e4c5198aa04c376d9096111092794069")
 
   # Do we round-trip successfully?
-  result1 <- pl_collect(hash1, conn)
+  result1 <- pl_collect(hash1, conn, decode_fks = FALSE)
   expect_equal(result1, tibble::as_tibble(test_table1))
-  result2 <- pl_collect(hash2, conn)
+  result2 <- pl_collect(hash2, conn, decode_fks = FALSE)
   expect_equal(result2, tibble::as_tibble(test_table2))
 
   DBI::dbRemoveTable(conn, db_table_name)

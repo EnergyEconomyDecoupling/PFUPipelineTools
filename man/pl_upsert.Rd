@@ -11,7 +11,7 @@ pl_upsert(
   in_place = FALSE,
   encode_fks = TRUE,
   schema = schema_from_conn(conn),
-  fk_parent_tables = PFUPipelineTools::get_all_fk_tables(conn = conn, schema = schema),
+  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
   .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col,
   .algo = "md5"
 )

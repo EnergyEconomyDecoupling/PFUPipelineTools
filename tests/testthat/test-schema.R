@@ -185,3 +185,34 @@ test_that("decode_fks() works as expected", {
   # Clean up after ourselves
   PFUPipelineTools:::clean_up_beatles(conn)
 })
+
+
+test_that("pl_collect() decodes correctly", {
+  skip_on_ci()
+  skip_on_cran()
+  conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
+                         dbname = "unit_testing",
+                         host = "eviz.cs.calvin.edu",
+                         port = 5432,
+                         user = "postgres")
+  on.exit(DBI::dbDisconnect(conn))
+
+  # Build the data model remotely
+  PFUPipelineTools:::upload_beatles(conn)
+
+  # Create the MemberRole table
+  memberrole <- data.frame(Member = as.integer(1:4),
+                           Role = as.integer(1:4))
+  mr <- pl_upsert(memberrole, "MemberRole", conn, in_place = TRUE)
+
+  res <- pl_collect(hashed_table = mr, conn = conn, decode_fks = TRUE)
+  expect_equal(res, tibble::tribble(~Member, ~Role,
+                                    "John Lennon", "Lead singer",
+                                    "Paul McCartney", "Bassist",
+                                    "George Harrison", "Guitarist",
+                                    "Ringo Starr", "Drummer"))
+
+
+  # Clean up after ourselves
+  PFUPipelineTools:::clean_up_beatles(conn)
+})
