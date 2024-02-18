@@ -17,7 +17,7 @@
 #'                         Needed only when `decode_fks = TRUE` (the default).
 #'                         If foreign keys are not being decoded,
 #'                         setting `NULL` may improve speed.
-#' @param .table_name_col,.nested_col  See `PFUPipelineTools::hashed_table_colnames`.
+#' @param .table_name_col,.nested_hash_col  See `PFUPipelineTools::hashed_table_colnames`.
 #'
 #' @return The downloaded data frame described by `hashed_table`.
 #'

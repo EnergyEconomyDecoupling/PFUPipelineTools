@@ -37,7 +37,7 @@ Needed only when \code{decode_fks = TRUE} (the default).
 If foreign keys are not being decoded,
 setting \code{NULL} may improve speed.}
 
-\item{.table_name_col, .nested_col}{See \code{PFUPipelineTools::hashed_table_colnames}.}
+\item{.table_name_col, .nested_hash_col}{See \code{PFUPipelineTools::hashed_table_colnames}.}
 }
 \value{
 The downloaded data frame described by \code{hashed_table}.

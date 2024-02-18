@@ -22,8 +22,12 @@ pl_hash(
 Default is \code{PFUPipelineTools::hashed_table_colnames$db_table_name}.}
 
 \item{.nested_col}{The name of the column of the output that contains
-the has of nested columns.
+nested data.
 Default is \code{PFUPipelineTools::hashed_table_colnames$nested_col_name}.}
+
+\item{.nested_hash_col}{The name of the column of the output that contains
+the hash of nested columns.
+Default is \code{PFUPipelineTools::hashed_table_colnames$nested_hash_col_name}.}
 
 \item{.algo}{The algorithm for hashing.
 Default is "md5".}
