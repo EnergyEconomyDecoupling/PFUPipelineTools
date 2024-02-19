@@ -68,8 +68,10 @@ contains a hash of a data frame created by nesting
 all columns with more than one unique value.
 }
 
-When data are withdrawn from the database at a later time,
+The return value serves as a "ticket" with which
+data can be retrieved from the database at a later time.
+When data are withdrawn from the database,
 the first column can be removed, and
-the other columns with one unique
-value can be filtered.
+the other columns with one unique value
+can be used to filter \code{table_name}.
 }
