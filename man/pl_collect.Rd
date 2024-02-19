@@ -6,8 +6,9 @@
 \usage{
 pl_collect(
   hashed_table,
-  decode_fks = TRUE,
   conn,
+  decode_fks = TRUE,
+  retain_table_name_col = FALSE,
   schema = schema_from_conn(conn = conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
   .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
@@ -17,11 +18,15 @@ pl_collect(
 \arguments{
 \item{hashed_table}{A table created by \code{pl_hash()}.}
 
+\item{conn}{The database connection.}
+
 \item{decode_fks}{A boolean that tells whether to decode foreign keys
 before returning.
 Default is \code{TRUE}.}
 
-\item{conn}{The database connection.}
+\item{retain_table_name_col}{A boolean that tells whether to retain the
+table name column (\code{.table_name_col}).
+Default is \code{FALSE}.}
 
 \item{schema}{The database schema (a \code{dm} object).
 Default calls \code{schema_from_conn()}, but

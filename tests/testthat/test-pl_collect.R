@@ -65,10 +65,20 @@ test_that("pl_collect() works as expected", {
     expect_equal(expected_hash)
 
   # Do we round-trip successfully?
-  result1 <- pl_collect(hash1, conn, decode_fks = FALSE)
+  result1 <- pl_collect(hash1, conn = conn, decode_fks = FALSE)
   expect_equal(result1, tibble::as_tibble(test_table1))
-  result2 <- pl_collect(hash2, conn, decode_fks = FALSE)
+  result2 <- pl_collect(hash2, conn = conn, decode_fks = FALSE)
   expect_equal(result2, tibble::as_tibble(test_table2))
+
+  # Can we retain the table name column?
+  result1r <- pl_collect(hash1,
+                         conn = conn,
+                         decode_fks = FALSE,
+                         retain_table_name_col = TRUE)
+  expect_true(PFUPipelineTools::hashed_table_colnames$db_table_name %in% colnames(result1r))
+  expect_equal(result1r[[PFUPipelineTools::hashed_table_colnames$db_table_name]] |>
+                 unique(),
+               db_table_name)
 
   DBI::dbRemoveTable(conn, db_table_name)
 })

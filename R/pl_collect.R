@@ -1,10 +1,13 @@
 #' Download a data frame based on its `pl_hash()`
 #'
 #' @param hashed_table A table created by `pl_hash()`.
+#' @param conn The database connection.
 #' @param decode_fks A boolean that tells whether to decode foreign keys
 #'                   before returning.
 #'                   Default is `TRUE`.
-#' @param conn The database connection.
+#' @param retain_table_name_col A boolean that tells whether to retain the
+#'                              table name column (`.table_name_col`).
+#'                              Default is `FALSE`.
 #' @param schema The database schema (a `dm` object).
 #'               Default calls `schema_from_conn()`, but
 #'               you can supply a pre-computed schema for speed.
@@ -23,8 +26,9 @@
 #'
 #' @export
 pl_collect <- function(hashed_table,
-                       decode_fks = TRUE,
                        conn,
+                       decode_fks = TRUE,
+                       retain_table_name_col = FALSE,
                        schema = schema_from_conn(conn = conn),
                        fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
                        .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
@@ -53,7 +57,14 @@ pl_collect <- function(hashed_table,
                  schema = schema,
                  fk_parent_tables = fk_parent_tables)
   }
-  return(out)
-}
+  if (retain_table_name_col) {
+    out <- out |>
+      dplyr::mutate(
+        "{.table_name_col}" := table_name
+      ) |>
+      # Move the table name column to the left
+      dplyr::relocate(dplyr::all_of(.table_name_col))
+  }
+  return(out)}
 
 
