@@ -689,9 +689,19 @@ decode_fks <- function(.df,
       replacement = "",
       x = parent_table_key_col_for_this_fk_col_in_df)
 
-    joined_colname <- paste0(parent_table_value_col_for_this_fk_col_in_df, .y_joining_suffix)
+    # Get the name of the joined column.
+    # There are two possible situations.
+    joined_colname <- ifelse(this_fk_col_in_df == parent_table_value_col_for_this_fk_col_in_df,
+                             # When the column in .df has the same name as the column in the parent table,
+                             # ".y" will be tacked onto the column name
+                             yes = paste0(this_fk_col_in_df, .y_joining_suffix),
+                             # When the column in .df has a different name as the column in the parent table,
+                             # we get simply the parent column name.
+                             no = parent_table_value_col_for_this_fk_col_in_df)
 
     .df <- .df |>
+      # Now do the join, which is the process by which we decode the integer
+      # in this_fk_col_in_df.
       dplyr::left_join(fk_parent_tables[[parent_table_for_this_fk_col_in_df]],
                        by = dplyr::join_by({{this_fk_col_in_df}} == {{parent_table_key_col_for_this_fk_col_in_df}})) |>
       dplyr::mutate(
