@@ -9,6 +9,7 @@ which always resolves to the latest release.
 
 
 * New functions for interacting with databases, including
+    - `pl_collect()`
     - `load_schema_table()`
     - `load_fk_tables()`
     - `schema_dm()`
