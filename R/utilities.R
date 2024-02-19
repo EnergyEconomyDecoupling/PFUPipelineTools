@@ -138,3 +138,64 @@ clean_up_beatles <- function(conn) {
     })
   return(to_drop)
 }
+
+
+#' Copy a country, year subset from one table to another
+#'
+#' Inboard copying of tables is much faster than round-tripping
+#' data from the database to the local machine and back.
+#' This function does an inboard filter and copy
+#' from `source` to `dest` in `conn`,
+#' optionally emptying `dest` first, and
+#' optionally adding a `tar_group` column.
+#'
+#' The `source` and `dest` tables should have identical columns.
+#'
+#' @param source A string identifying the source table.
+#' @param dest A string identifying the destination table.
+#' @param conn A database connection.
+#' @param countries Countries to keep.
+#' @param years Years to keep.
+#' @param empty_dest A boolean that tells whether to empty the destination table before copying.
+#' @param country The name of the country column in `source` and `dest`.
+#'                Default is `IEATools::iea_cols$country`.
+#' @param year The name of the year column in `source` and `dest`.
+#'             Default is `IEATools::iea_cols$year`.
+#'
+#' @return `TRUE` if successful. An error if not.
+#'
+#' @export
+inboard_filter_copy <- function(conn,
+                                source,
+                                dest,
+                                countries,
+                                years,
+                                empty_dest = FALSE,
+                                country = IEATools::iea_cols$country,
+                                year = IEATools::iea_cols$year) {
+
+  if (empty_dest) {
+    empty_table <- dplyr::tbl(conn, dest) |>
+      dplyr::filter(FALSE) |>
+      dplyr::collect()
+    # Overwrite the existing table with the empty one
+    DBI::dbWriteTable(conn, name = "dest", value = empty_table, overwrite = TRUE)
+  }
+
+  countries_string <- paste0(countries, collapse = ", ")
+  years_string <- paste0(years, collapse = ", ")
+
+  # Add the filtered rows from source into dest
+  insert_rows_stmt <- paste0('INSERT INTO "', dest, '" ',
+                             'SELECT * ',
+                             'FROM "', source, '" ',
+                             'WHERE ',
+                             country, ' IN (', countries_string, ') AND ',
+                             year, ' IN (', years_string, ');')
+
+  DBI::dbExecute(conn, insert_rows_stmt)
+
+  return(TRUE)
+}
+
+
