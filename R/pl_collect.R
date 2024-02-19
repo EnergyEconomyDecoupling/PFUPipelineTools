@@ -33,7 +33,8 @@ pl_collect <- function(hashed_table,
     dplyr::ungroup() |>
     dplyr::select(dplyr::all_of(.table_name_col)) |>
     unlist() |>
-    unname()
+    unname() |>
+    unique()
   assertthat::assert_that(length(table_name) == 1,
                           msg = "More than 1 table received in pl_collect()")
   filter_tbl <- hashed_table |>
