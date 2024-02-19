@@ -5,10 +5,11 @@
 \title{Decode keys in a downloaded data frame}
 \usage{
 decode_fks(
-  .df,
+  .df = NULL,
   db_table_name,
-  schema,
-  fk_parent_tables,
+  conn,
+  schema = schema_from_conn(conn),
+  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
   .child_table = PFUPipelineTools::dm_fk_colnames$child_table,
   .child_fk_cols = PFUPipelineTools::dm_fk_colnames$child_fk_cols,
   .parent_key_cols = PFUPipelineTools::dm_fk_colnames$parent_key_cols,
@@ -17,9 +18,15 @@ decode_fks(
 )
 }
 \arguments{
-\item{.df}{The data frame about to be uploaded.}
+\item{.df}{A data frame whose foreign keys are to be decoded.
+Default is \code{NULL}, meaning that
+\code{.df} should be downloaded from \code{db_table_name} at \code{conn}
+before decoding foreign keys.}
 
 \item{db_table_name}{The string name of the database table where \code{.df} is to be uploaded.}
+
+\item{conn}{An optional database connection.
+Necessary only for the default values of \code{schema} and \code{fk_parent_tables}.}
 
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
 See details.}

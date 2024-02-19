@@ -92,7 +92,10 @@ test_that("pl_upload_schema_and_simple_tables() works as expected", {
   # Create the MemberRole table
   memberrole <- data.frame(Member = as.integer(1:4),
                            Role = as.integer(1:4))
-  pl_upsert(memberrole, "MemberRole", conn, in_place = TRUE)
+  pl_upsert(memberrole,
+            conn = conn,
+            db_table_name = "MemberRole",
+            in_place = TRUE)
 
   # Try to upload more data for the fifth Beatle.
   george_martin_member <- data.frame(MemberID = as.integer(5),
@@ -102,16 +105,28 @@ test_that("pl_upload_schema_and_simple_tables() works as expected", {
   producer_role <- data.frame(RoleID = as.integer(5),
                               Role = "Producer")
   # Add George Martin as a member, the fifth Beatle
-  pl_upsert(george_martin_member, "Member", in_place = TRUE, conn = conn)
+  pl_upsert(george_martin_member,
+            conn = conn,
+            db_table_name = "Member",
+            in_place = TRUE)
   # Now try to add George Martin to the MemberRole table.
   # This should fail due to a bad primary key.
   # There is no RoleID = 5 in the Role table.
-  pl_upsert(george_martin_memberrole, "MemberRole", in_place = TRUE, conn = conn) |>
+  pl_upsert(george_martin_memberrole,
+            conn = conn,
+            db_table_name =  "MemberRole",
+            in_place = TRUE) |>
     expect_error('insert or update on table "MemberRole" violates foreign key constraint "MemberRole_Role_fkey"')
   # Instead, add the Producer role to the Role table, so that the Producer role pk will be available
-  pl_upsert(producer_role, "Role", in_place = TRUE, conn = conn)
+  pl_upsert(producer_role,
+            conn = conn,
+            db_table_name = "Role",
+            in_place = TRUE)
   # Now add George Martin to the MemberRole table
-  pl_upsert(george_martin_memberrole, "MemberRole", in_place = TRUE, conn)
+  pl_upsert(george_martin_memberrole,
+            conn = conn,
+            db_table_name = "MemberRole",
+            in_place = TRUE)
   memberrole_tbl <- dplyr::tbl(conn, "MemberRole") |>
     dplyr::collect()
   expect_equal(nrow(memberrole_tbl), 5)
@@ -120,14 +135,20 @@ test_that("pl_upload_schema_and_simple_tables() works as expected", {
   # Add a sixth role, Producer Extraordinaire
   prodext <- data.frame(RoleID = as.integer(6),
                         Role = "Producer Extraordinaire")
-  pl_upsert(prodext, "Role", conn, in_place = TRUE)
+  pl_upsert(prodext,
+            conn = conn,
+            db_table_name =  "Role",
+            in_place = TRUE)
 
   # Try to upsert with "George Martin" in the Member column.
   # This should decode "George Martin" into the Member_ID of 5 during the upsert.
   # Then change the Role to "Producer Extraordinaire"
   george_martin_role_name <- data.frame(Member = "George Martin",
                                         Role = "Producer Extraordinaire")
-  pl_upsert(george_martin_role_name, "MemberRole", in_place = TRUE, conn = conn)
+  pl_upsert(george_martin_role_name,
+            conn = conn,
+            db_table_name = "MemberRole",
+            in_place = TRUE)
   # Check that George Martin is now Producer Extraordinaire
   # and in the Roles table has Member_ID of 5.
   new_memberrole <- dplyr::tbl(conn, "MemberRole") |>
@@ -161,26 +182,38 @@ test_that("decode_fks() works as expected", {
   # Add Stu Sutcliff
   stu_sutcliff_member <- data.frame(MemberID = as.integer(5),
                                     Member = "Stu Sutcliff")
-  pl_upsert(stu_sutcliff_member, "Member", conn, in_place = TRUE)
+  pl_upsert(stu_sutcliff_member,
+            conn = conn,
+            db_table_name = "Member",
+            in_place = TRUE)
   # Now add to MemberRole table
   stu_sutcliff_memberrole <- data.frame(Member = "Stu Sutcliff",
                                         Role = "Bassist")
-  pl_upsert(stu_sutcliff_memberrole, "MemberRole", conn, in_place = TRUE)
+  pl_upsert(stu_sutcliff_memberrole,
+            conn = conn,
+            db_table_name = "MemberRole",
+            in_place = TRUE)
   memberrole_tbl <- dplyr::tbl(conn, "MemberRole") |>
     dplyr::collect() |>
     as.data.frame()
   memberrole_tbl |>
     expect_equal(data.frame(Member = 5, Role = 2))
 
-  # Check decoding
+  # Check decoding the old-fashioned way
+  expected <- data.frame(Member = "Stu Sutcliff",
+                         Role = "Bassist")
   schema <- schema_from_conn(conn)
   fk_parent_tables <- get_all_fk_tables(conn = conn, schema = schema)
   memberrole_tbl |>
     decode_fks(db_table_name = "MemberRole",
                schema = schema,
                fk_parent_tables = fk_parent_tables) |>
-    expect_equal(data.frame(Member = "Stu Sutcliff",
-                            Role = "Bassist"))
+    expect_equal(expected)
+
+
+  # Check that decoding works when .df is NULL, a much simpler way.
+  decoded <- decode_fks(db_table_name = "MemberRole", conn = conn)
+  expect_equal(decoded, expected)
 
   # Clean up after ourselves
   PFUPipelineTools:::clean_up_beatles(conn)
@@ -203,7 +236,10 @@ test_that("pl_collect() decodes correctly", {
   # Create the MemberRole table
   memberrole <- data.frame(Member = as.integer(1:4),
                            Role = as.integer(1:4))
-  mr <- pl_upsert(memberrole, "MemberRole", conn, in_place = TRUE)
+  mr <- pl_upsert(memberrole,
+                  conn = conn,
+                  db_table_name = "MemberRole",
+                  in_place = TRUE)
 
   res <- pl_collect(hashed_table = mr, conn = conn, decode_fks = TRUE)
   expect_equal(res, tibble::tribble(~Member, ~Role,

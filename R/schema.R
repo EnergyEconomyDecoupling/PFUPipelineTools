@@ -413,9 +413,11 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #' The user in `conn` must have write access to the database.
 #'
 #' @param .df The data frame to be upserted.
+#' @param conn A connection to the CL-PFU database.
 #' @param db_table_name A string identifying the destination for `.df`,
 #'                      the name of a remote database table in `conn`.
-#' @param conn A connection to the CL-PFU database.
+#'                      Default is `NULL`, meaning that the value for this argument
+#'                      will be taken from the `.db_table_name` column of `.df`.
 #' @param in_place A boolean that tells whether to modify the database at `conn`.
 #'                 Default is `FALSE`, which is helpful if you want to chain
 #'                 several requests.
@@ -427,6 +429,9 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #' @param fk_parent_tables A named list of all parent tables
 #'                         for the foreign keys in `db_table_name`.
 #'                         See details.
+#' @param .db_table_name The name of the table name column in the uploaded
+#'                       data frame.
+#'                       Default is `PFUPipelineTools::hashed_table_colnames$db_table_name`.
 #' @param .pk_col The name of the primary key column in a primary key table.
 #'                See `PFUPipelineTools::dm_pk_colnames`.
 #' @param .algo The hashing algorithm.
@@ -439,15 +444,30 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #'
 #' @export
 pl_upsert <- function(.df,
-                      db_table_name,
                       conn,
+                      db_table_name = NULL,
                       in_place = FALSE,
                       encode_fks = TRUE,
                       schema = schema_from_conn(conn),
                       fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+                      .db_table_name = PFUPipelineTools::hashed_table_colnames$db_table_name,
                       .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col,
                       .algo = "md5") {
 
+  if (is.null(db_table_name)) {
+    db_table_name <- .df[[.db_table_name]] |>
+      unique()
+  }
+
+  # Eliminate the .db_table_name column if it exists.
+  # We don't upload the table with that column.
+  .df <- .df |>
+    dplyr::mutate(
+      "{.db_table_name}" := NULL
+    )
+
+
+  # pk_table <- dm::dm_get_all_pks(schema, table = dplyr::all_of({{db_table_name}}))
   pk_table <- dm::dm_get_all_pks(schema, table = dplyr::all_of({{db_table_name}}))
   # Make sure we have one and only one primary key column
   assertthat::assert_that(nrow(pk_table) == 1,
@@ -510,6 +530,8 @@ pl_upsert <- function(.df,
 #'
 #' @param .df The data frame about to be uploaded.
 #' @param db_table_name The string name of the database table where `.df` is to be uploaded.
+#' @param conn An optional database connection.
+#'             Necessary only for the default values of `schema` and `fk_parent_tables`.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               See details.
 #' @param fk_parent_tables A named list of all parent tables
@@ -527,8 +549,9 @@ pl_upsert <- function(.df,
 #' @export
 encode_fks <- function(.df,
                        db_table_name,
-                       schema,
-                       fk_parent_tables,
+                       conn,
+                       schema = schema_from_conn(conn),
+                       fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
                        .child_table = PFUPipelineTools::dm_fk_colnames$child_table,
                        .child_fk_cols = PFUPipelineTools::dm_fk_colnames$child_fk_cols,
                        .parent_table = PFUPipelineTools::dm_fk_colnames$parent_table,
@@ -619,8 +642,13 @@ encode_fks <- function(.df,
 #' An appropriate value for `fk_parent_tables` can be obtained
 #' from `get_all_fk_tables()`.
 #'
-#' @param .df The data frame about to be uploaded.
+#' @param .df A data frame whose foreign keys are to be decoded.
+#'            Default is `NULL`, meaning that
+#'            `.df` should be downloaded from `db_table_name` at `conn`
+#'            before decoding foreign keys.
 #' @param db_table_name The string name of the database table where `.df` is to be uploaded.
+#' @param conn An optional database connection.
+#'             Necessary only for the default values of `schema` and `fk_parent_tables`.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               See details.
 #' @param fk_parent_tables A named list of all parent tables
@@ -634,15 +662,20 @@ encode_fks <- function(.df,
 #' @return A version of `.df` with integer keys replaced by key values.
 #'
 #' @export
-decode_fks <- function(.df,
+decode_fks <- function(.df = NULL,
                        db_table_name,
-                       schema,
-                       fk_parent_tables,
+                       conn,
+                       schema = schema_from_conn(conn),
+                       fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
                        .child_table = PFUPipelineTools::dm_fk_colnames$child_table,
                        .child_fk_cols = PFUPipelineTools::dm_fk_colnames$child_fk_cols,
                        .parent_key_cols = PFUPipelineTools::dm_fk_colnames$parent_key_cols,
                        .pk_suffix = PFUPipelineTools::key_col_info$pk_suffix,
                        .y_joining_suffix = ".y") {
+
+  if (is.null(.df)) {
+    .df <- DBI::dbReadTable(conn, db_table_name)
+  }
 
   # Get details of all foreign keys in .df
   fk_details_for_db_table <- schema |>
@@ -703,7 +736,8 @@ decode_fks <- function(.df,
       # Now do the join, which is the process by which we decode the integer
       # in this_fk_col_in_df.
       dplyr::left_join(fk_parent_tables[[parent_table_for_this_fk_col_in_df]],
-                       by = dplyr::join_by({{this_fk_col_in_df}} == {{parent_table_key_col_for_this_fk_col_in_df}})) |>
+                       by = dplyr::join_by({{this_fk_col_in_df}} == {{parent_table_key_col_for_this_fk_col_in_df}}),
+                       copy = TRUE) |>
       dplyr::mutate(
         "{this_fk_col_in_df}" := .data[[joined_colname]],
         "{joined_colname}" := NULL

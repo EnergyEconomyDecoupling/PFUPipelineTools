@@ -6,12 +6,13 @@
 \usage{
 pl_upsert(
   .df,
-  db_table_name,
   conn,
+  db_table_name = NULL,
   in_place = FALSE,
   encode_fks = TRUE,
   schema = schema_from_conn(conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+  .db_table_name = PFUPipelineTools::hashed_table_colnames$db_table_name,
   .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col,
   .algo = "md5"
 )
@@ -19,10 +20,12 @@ pl_upsert(
 \arguments{
 \item{.df}{The data frame to be upserted.}
 
-\item{db_table_name}{A string identifying the destination for \code{.df},
-the name of a remote database table in \code{conn}.}
-
 \item{conn}{A connection to the CL-PFU database.}
+
+\item{db_table_name}{A string identifying the destination for \code{.df},
+the name of a remote database table in \code{conn}.
+Default is \code{NULL}, meaning that the value for this argument
+will be taken from the \code{.db_table_name} column of \code{.df}.}
 
 \item{in_place}{A boolean that tells whether to modify the database at \code{conn}.
 Default is \code{FALSE}, which is helpful if you want to chain
@@ -38,6 +41,10 @@ See details.}
 \item{fk_parent_tables}{A named list of all parent tables
 for the foreign keys in \code{db_table_name}.
 See details.}
+
+\item{.db_table_name}{The name of the table name column in the uploaded
+data frame.
+Default is \code{PFUPipelineTools::hashed_table_colnames$db_table_name}.}
 
 \item{.pk_col}{The name of the primary key column in a primary key table.
 See \code{PFUPipelineTools::dm_pk_colnames}.}

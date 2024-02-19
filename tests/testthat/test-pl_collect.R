@@ -28,25 +28,41 @@ test_that("pl_collect() works as expected", {
 
   dm::copy_dm_to(dest = conn, dm = DM, temporary = FALSE)
   hash1 <- test_table1 |>
-    PFUPipelineTools::pl_upsert(db_table_name, conn, in_place = TRUE)
+    pl_upsert(db_table_name = db_table_name,
+              conn = conn,
+              in_place = TRUE)
 
   # Add some additional data
   test_table2 <- data.frame(key1 = as.integer(c(2, 2, 2)),
                             key2 = as.integer(c(1, 2, 3)),
                             val = c("D", "E", "F"))
   hash2 <- test_table2 |>
-    PFUPipelineTools::pl_upsert(db_table_name, conn, in_place = TRUE)
+    pl_upsert(db_table_name = db_table_name,
+              conn = conn,
+              in_place = TRUE)
 
   expect_equal(colnames(hash1),
                c(PFUPipelineTools::hashed_table_colnames$db_table_name,
                  "key1",
                  PFUPipelineTools::hashed_table_colnames$nested_hash_col_name))
+  expected_hash <- "e4c5198aa04c376d9096111092794069"
   hash1 |>
-    # dplyr::select(PFUPipelineTools::hashed_table_colnames$nested_hash_col_name) |>
     dplyr::select(dplyr::all_of(PFUPipelineTools::hashed_table_colnames$nested_hash_col_name)) |>
     unlist() |>
     unname() |>
-    expect_equal("e4c5198aa04c376d9096111092794069")
+    expect_equal(expected_hash)
+
+  # Try to upsert using a column name in the table
+  test_table_1_tbl_name_col <- test_table1 |>
+    dplyr::mutate(
+      "{PFUPipelineTools::hashed_table_colnames$db_table_name}" := db_table_name
+    )
+  test_table_1_tbl_name_col |>
+    pl_upsert(conn = conn, in_place = TRUE) |>
+    dplyr::select(dplyr::all_of(PFUPipelineTools::hashed_table_colnames$nested_hash_col_name)) |>
+    unlist() |>
+    unname() |>
+    expect_equal(expected_hash)
 
   # Do we round-trip successfully?
   result1 <- pl_collect(hash1, conn, decode_fks = FALSE)
