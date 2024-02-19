@@ -667,15 +667,6 @@ decode_fks <- function(.df,
     unname()
 
   for (this_fk_col_in_df in fk_cols_in_df) {
-    # joined_colname <- paste0(this_fk_col_in_df, .y_joining_suffix)
-    # tablenameID <- paste0(this_fk_col_in_df, .pk_suffix)
-    # .df <- .df |>
-    #   dplyr::left_join(fk_parent_tables[[this_fk_col_in_df]],
-    #                    by = dplyr::join_by({{this_fk_col_in_df}} == {{tablenameID}})) |>
-    #   dplyr::mutate(
-    #     "{this_fk_col_in_df}" := .data[[joined_colname]],
-    #     "{joined_colname}" := NULL
-    #   )
     parent_table_for_this_fk_col_in_df <- fk_details_for_db_table |>
       dplyr::filter(.data[[.child_fk_cols]] == this_fk_col_in_df) |>
       dplyr::select(dplyr::all_of("parent_table")) |>
