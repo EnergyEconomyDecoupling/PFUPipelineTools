@@ -242,12 +242,19 @@ test_that("pl_collect() decodes correctly", {
                   in_place = TRUE)
 
   res <- pl_collect(hashed_table = mr, conn = conn, decode_fks = TRUE)
-  expect_equal(res, tibble::tribble(~Member, ~Role,
-                                    "John Lennon", "Lead singer",
-                                    "Paul McCartney", "Bassist",
-                                    "George Harrison", "Guitarist",
-                                    "Ringo Starr", "Drummer"))
+  expectedMR <- tibble::tribble(~Member, ~Role,
+                                "John Lennon", "Lead singer",
+                                "Paul McCartney", "Bassist",
+                                "George Harrison", "Guitarist",
+                                "Ringo Starr", "Drummer")
+  expect_equal(res, expectedMR)
 
+  # Try to upsert when a role is incorrect
+  wrong_members <- tibble::tribble(~Member, ~Role,
+                                   "Pete Best", "Bassist",
+                                   "Stu Sutcliff", "Drummer")
+  pl_upsert(wrong_members, conn = conn, db_table_name = "MemberRole", in_place = TRUE) |>
+    expect_error(regexp = "Unable to encode the following foreign keys")
 
   # Clean up after ourselves
   PFUPipelineTools:::clean_up_beatles(conn)

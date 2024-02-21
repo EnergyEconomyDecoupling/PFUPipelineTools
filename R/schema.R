@@ -580,6 +580,8 @@ encode_fks <- function(.df,
     unlist() |>
     unname()
 
+  encoded_df <- .df
+
   for (this_fk_col_in_df in fk_cols_in_df) {
     if (is.integer(.df[[this_fk_col_in_df]])) {
       # This is already an integer, and
@@ -611,13 +613,35 @@ encode_fks <- function(.df,
       unlist() |>
       unname()
     # Redo the table
-    .df <- .df |>
+    encoded_df <- encoded_df |>
       dplyr::mutate(
         "{this_fk_col_in_df}" := factor(.data[[this_fk_col_in_df]], levels = fk_levels),
         "{this_fk_col_in_df}" := as.integer(.data[[this_fk_col_in_df]])
       )
+    # Check for errors and provide a nice message if there is a problem.
+    if (any(is.na(encoded_df[[this_fk_col_in_df]]))) {
+      # One of the levels didn't match.
+      # Catch this error here to give an intelligent error message.
+      # First create a list of strings we could not encode.
+      cant_encode <- which(is.na(encoded_df[[this_fk_col_in_df]]))
+      unmatched_names <- paste0("'", .df[[this_fk_col_in_df]][cant_encode], "'") |>
+        paste0(collapse = "\n")
+      err_msg <- paste0("Unable to encode the following foreign keys in the ",
+                        this_fk_col_in_df, " column of the ",
+                        db_table_name,
+                        " table:\n",
+                        unmatched_names,
+                        "\nIs something misspelled? Or should they be added to the ",
+                        parent_table_fk_colname,
+                        " and ",
+                        parent_table_fk_value_colname,
+                        " columns of the ",
+                        parent_table_name,
+                        " table?")
+      stop(err_msg)
+    }
   }
-  return(.df)
+  return(encoded_df)
 }
 
 
