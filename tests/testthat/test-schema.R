@@ -254,7 +254,7 @@ test_that("pl_collect() decodes correctly", {
                                    "Pete Best", "Bassist",
                                    "Stu Sutcliff", "Drummer")
   pl_upsert(wrong_members, conn = conn, db_table_name = "MemberRole", in_place = TRUE) |>
-    expect_error(regexp = "Unable to encode the following foreign keys")
+    expect_error(regexp = "unable to convert the following entries to foreign keys")
 
   # Clean up after ourselves
   PFUPipelineTools:::clean_up_beatles(conn)

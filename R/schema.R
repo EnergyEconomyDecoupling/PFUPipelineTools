@@ -625,8 +625,10 @@ encode_fks <- function(.df,
       # First create a list of strings we could not encode.
       cant_encode <- which(is.na(encoded_df[[this_fk_col_in_df]]))
       unmatched_names <- paste0("'", .df[[this_fk_col_in_df]][cant_encode], "'") |>
+        unique() |>
         paste0(collapse = "\n")
-      err_msg <- paste0("Unable to convert the following entries to foreign keys\n",
+      err_msg <- paste0("In PFUPipelineTools::encode_fks(),\n",
+                        "unable to convert the following entries to foreign keys\n",
                         "in the '",
                         this_fk_col_in_df, "' column ",
                         "of the '",
