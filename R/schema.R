@@ -626,18 +626,22 @@ encode_fks <- function(.df,
       cant_encode <- which(is.na(encoded_df[[this_fk_col_in_df]]))
       unmatched_names <- paste0("'", .df[[this_fk_col_in_df]][cant_encode], "'") |>
         paste0(collapse = "\n")
-      err_msg <- paste0("Unable to encode the following foreign keys in the ",
-                        this_fk_col_in_df, " column of the ",
+      err_msg <- paste0("Unable to convert the following entries to foreign keys\n",
+                        "in the '",
+                        this_fk_col_in_df, "' column ",
+                        "of the '",
                         db_table_name,
-                        " table:\n",
+                        "' table:\n",
                         unmatched_names,
-                        "\nIs something misspelled? Or should they be added to the ",
+                        "\nIs something misspelled?\n",
+                        "Or should they be added to the '",
                         parent_table_fk_colname,
-                        " and ",
+                        "' and '",
                         parent_table_fk_value_colname,
-                        " columns of the ",
+                        "'\n",
+                        "columns of the '",
                         parent_table_name,
-                        " table?")
+                        "' table?")
       stop(err_msg)
     }
   }
