@@ -48,27 +48,40 @@ pl_destroy <- function(conn,
     }
 
   }
-
-  # Only drop tables that exist
-  drop_tables <- drop_tables[which(DBI::dbListTables(conn) %in% drop_tables)]
   if (length(drop_tables) == 0) {
     return(character())
   }
 
+  all_tables_present <- DBI::dbListTables(conn)
+  if (length(all_tables_present) == 0) {
+    return(character())
+  }
+
+  # Only drop tables that exist
+  tables_to_drop <- sapply(all_tables_present, FUN = function(this_table) {
+    this_table %in% drop_tables
+  })
+  if (length(tables_to_drop) == 0) {
+    return(character())
+  }
+  tables_to_drop <- tables_to_drop |>
+    which() |>
+    names()
+
   if (inherits(conn, "PqConnection")) {
     # Remove all tables in Postgres database
-    drop_tables |>
+    tables_to_drop |>
       purrr::map(function(this_table_name) {
         DBI::dbExecute(conn, paste0('DROP TABLE "', this_table_name, '" CASCADE;'))
       })
   } else {
     # Remove all tables in a different type of database
-    drop_tables |>
+    tables_to_drop |>
       purrr::map(function(this_table_name) {
         DBI::dbRemoveTable(conn, name = this_table_name)
       })
   }
 
-  return(drop_tables)
+  return(tables_to_drop)
 }
 

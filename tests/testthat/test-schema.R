@@ -160,9 +160,7 @@ test_that("pl_upload_schema_and_simple_tables() works as expected", {
 
   # Clean up after ourselves
   # Get rid of the MemberRole table first, because the other depend on it
-  DBI::dbRemoveTable(conn, "MemberRole")
-  DBI::dbRemoveTable(conn, "Member")
-  DBI::dbRemoveTable(conn, "Role")
+  clean_up_beatles(conn)
 })
 
 
