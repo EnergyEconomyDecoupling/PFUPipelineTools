@@ -68,3 +68,46 @@ pl_collect <- function(hashed_table,
   return(out)}
 
 
+#' Collect a table from the database with natural filtering
+#'
+#' Often when collecting a table from the database,
+#' filtering is desired.
+#' But filtering based on foreign keys is impossible.
+#' This function translates natural filter commands using foreign key values to
+#' filter commands using foreign keys,
+#' thereby smoothing the download and filtering process.
+#'
+#' `schema` is a data model (`dm` object) for the CL-PFU database.
+#' It can be obtained from calling `schema_from_conn()`.
+#'
+#' `fk_parent_tables` is a named list of tables,
+#' some of which are fk parent tables containing
+#' the mapping between fk values (usually strings)
+#' and fk keys (usually integers)
+#' for `db_table_name`.
+#' `fk_parent_tables` is treated as a store from which foreign key tables
+#' are retrieved by name when needed.
+#' An appropriate value for `fk_parent_tables` can be obtained
+#' from `get_all_fk_tables()`.
+#'
+#' @param db_table_name The name of a database table.
+#' @param ... Natural filtering commands, such as would be applied in the `...` argument of `dplyr::filter`.
+#' @param conn The database connection.
+#' @param schema The data model (`dm` object) for the database in `conn`.
+#'               See details.
+#' @param fk_parent_tables A named list of all parent tables
+#'                         for the foreign keys in `db_table_name`.
+#'                         See details.
+#'
+#' @return A data frame downloaded from `conn`, a filtered version of `db_table_name`.
+#'
+#' @export
+collect <- function(db_table_name, ..., conn,
+                    schema = schema_from_conn(conn = conn),
+                    fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema)) {
+
+  tbl <- dplyr::tbl(conn, db_table_name) |>
+    dplyr::filter(...) |>
+    dplyr::collect()
+
+}

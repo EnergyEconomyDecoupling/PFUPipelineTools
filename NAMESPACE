@@ -3,6 +3,7 @@
 export("%>%")
 export(":=")
 export(.data)
+export(collect)
 export(decode_fks)
 export(encode_fks)
 export(filter_countries_years)
