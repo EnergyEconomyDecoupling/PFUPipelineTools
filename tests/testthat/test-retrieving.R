@@ -1,4 +1,4 @@
-test_that("pl_collect() works as expected", {
+test_that("pl_collect_from_hash() works as expected", {
 
   skip_on_ci()
   skip_on_cran()
@@ -13,7 +13,7 @@ test_that("pl_collect() works as expected", {
   # This data frame should have some columns with only 1 value
   # to test the hash returned by pl_upsert()
 
-  db_table_name <- "PLCollectTestTable"
+  db_table_name <- "PLCollectFromHashTestTable"
   if (db_table_name %in% DBI::dbListTables(conn)) {
     DBI::dbRemoveTable(conn, db_table_name)
   }
@@ -65,20 +65,62 @@ test_that("pl_collect() works as expected", {
     expect_equal(expected_hash)
 
   # Do we round-trip successfully?
-  result1 <- pl_collect(hash1, conn = conn, decode_fks = FALSE)
+  result1 <- pl_collect_from_hash(hash1, conn = conn, decode_fks = FALSE)
   expect_equal(result1, tibble::as_tibble(test_table1))
-  result2 <- pl_collect(hash2, conn = conn, decode_fks = FALSE)
+  result2 <- pl_collect_from_hash(hash2, conn = conn, decode_fks = FALSE)
   expect_equal(result2, tibble::as_tibble(test_table2))
 
   # Can we retain the table name column?
-  result1r <- pl_collect(hash1,
-                         conn = conn,
-                         decode_fks = FALSE,
-                         retain_table_name_col = TRUE)
+  result1r <- pl_collect_from_hash(hash1,
+                                   conn = conn,
+                                   decode_fks = FALSE,
+                                   retain_table_name_col = TRUE)
   expect_true(PFUPipelineTools::hashed_table_colnames$db_table_name %in% colnames(result1r))
   expect_equal(result1r[[PFUPipelineTools::hashed_table_colnames$db_table_name]] |>
                  unique(),
                db_table_name)
 
   DBI::dbRemoveTable(conn, db_table_name)
+})
+
+
+test_that("pl_filter_collect() works as expected", {
+  skip_on_ci()
+  skip_on_cran()
+  conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
+                         dbname = "unit_testing",
+                         host = "eviz.cs.calvin.edu",
+                         port = 5432,
+                         user = "postgres")
+  on.exit(DBI::dbDisconnect(conn))
+
+  db_table_name <- "PLFilterCollectTestTable"
+  db_country_name <- "PLFilterCollectTestCountry"
+  if (db_table_name %in% DBI::dbListTables(conn)) {
+    DBI::dbRemoveTable(conn, db_table_name)
+  }
+  if (db_country_name %in% DBI::dbListTables(conn)) {
+    DBI::dbRemoveTable(conn, db_country_name)
+  }
+
+  # Create a table to upload
+  PLFilterCollectTestTable <- data.frame(MyCountry = as.integer(c(1, 2, 3, 1)),
+                                         MyValue = c(3.1415, 2.71828, 42, 5.67e-8))
+  PLFilterCollectTestCountry <- data.frame(CountryID = as.integer(c(1, 2, 3)),
+                                           Country = c("USA", "ZAF", "GHA"))
+  DM <- dm::as_dm(list(PLFilterCollectTestTable = PLFilterCollectTestTable,
+                       PLFilterCollectTestCountry = PLFilterCollectTestCountry)) |>
+    dm::dm_add_fk(table = PLFilterCollectTestTable,
+                  columns = MyCountry,
+                  ref_table = PLFilterCollectTestCountry,
+                  ref_columns = CountryID)
+  dm::copy_dm_to(conn, DM, set_key_constraints = TRUE, temporary = FALSE)
+
+  expect_equal(DBI::dbReadTable(conn, "PLFilterCollectTestTable"), PLFilterCollectTestTable)
+  expect_equal(DBI::dbReadTable(conn, "PLFilterCollectTestCountry"), PLFilterCollectTestCountry)
+
+  pl_filter_collect("PLFilterCollectTestTable", MyCountry == "USA", conn = conn)
+
+
+
 })

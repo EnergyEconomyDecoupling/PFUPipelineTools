@@ -218,7 +218,7 @@ test_that("decode_fks() works as expected", {
 })
 
 
-test_that("pl_collect() decodes correctly", {
+test_that("pl_collect_from_hash() decodes correctly", {
   skip_on_ci()
   skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
@@ -239,7 +239,7 @@ test_that("pl_collect() decodes correctly", {
                   db_table_name = "MemberRole",
                   in_place = TRUE)
 
-  res <- pl_collect(hashed_table = mr, conn = conn, decode_fks = TRUE)
+  res <- pl_collect_from_hash(hashed_table = mr, conn = conn, decode_fks = TRUE)
   expectedMR <- tibble::tribble(~Member, ~Role,
                                 "John Lennon", "Lead singer",
                                 "Paul McCartney", "Bassist",

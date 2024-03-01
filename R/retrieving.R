@@ -25,14 +25,14 @@
 #' @return The downloaded data frame described by `hashed_table`.
 #'
 #' @export
-pl_collect <- function(hashed_table,
-                       conn,
-                       decode_fks = TRUE,
-                       retain_table_name_col = FALSE,
-                       schema = schema_from_conn(conn = conn),
-                       fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
-                       .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
-                       .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_col_name) {
+pl_collect_from_hash <- function(hashed_table,
+                                 conn,
+                                 decode_fks = TRUE,
+                                 retain_table_name_col = FALSE,
+                                 schema = schema_from_conn(conn = conn),
+                                 fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+                                 .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
+                                 .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_col_name) {
   table_name <- hashed_table |>
     dplyr::ungroup() |>
     dplyr::select(dplyr::all_of(.table_name_col)) |>
@@ -40,7 +40,7 @@ pl_collect <- function(hashed_table,
     unname() |>
     unique()
   assertthat::assert_that(length(table_name) == 1,
-                          msg = "More than 1 table received in pl_collect()")
+                          msg = "More than 1 table received in pl_collect_from_hash()")
   filter_tbl <- hashed_table |>
     dplyr::select(!dplyr::all_of(c(.table_name_col, .nested_hash_col)))
   out <- dplyr::tbl(conn, table_name)
@@ -65,14 +65,16 @@ pl_collect <- function(hashed_table,
       # Move the table name column to the left
       dplyr::relocate(dplyr::all_of(.table_name_col))
   }
-  return(out)}
+  return(out)
+}
 
 
 #' Collect a table from the database with natural filtering
 #'
-#' Often when collecting a table from the database,
+#' Often when collecting data from the database,
 #' filtering is desired.
-#' But filtering based on foreign keys is impossible.
+#' But filtering based on foreign keys is effectively impossible,
+#' because the foreign keys are encoded.
 #' This function translates natural filter commands using foreign key values to
 #' filter commands using foreign keys,
 #' thereby smoothing the download and filtering process.
@@ -91,7 +93,8 @@ pl_collect <- function(hashed_table,
 #' from `get_all_fk_tables()`.
 #'
 #' @param db_table_name The name of a database table.
-#' @param ... Natural filtering commands, such as would be applied in the `...` argument of `dplyr::filter`.
+#' @param ... Natural filtering commands, such as would be applied
+#'            in the `...` argument of `dplyr::filter()`.
 #' @param conn The database connection.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               See details.
@@ -102,9 +105,10 @@ pl_collect <- function(hashed_table,
 #' @return A data frame downloaded from `conn`, a filtered version of `db_table_name`.
 #'
 #' @export
-collect <- function(db_table_name, ..., conn,
-                    schema = schema_from_conn(conn = conn),
-                    fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema)) {
+pl_filter_collect <- function(db_table_name, ..., conn,
+                              schema = schema_from_conn(conn = conn),
+                              fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema)) {
+  filters <- list(...)
 
   tbl <- dplyr::tbl(conn, db_table_name) |>
     dplyr::filter(...) |>
