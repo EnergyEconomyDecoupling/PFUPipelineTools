@@ -84,6 +84,27 @@ test_that("pl_collect_from_hash() works as expected", {
 })
 
 
+test_that("passing filters in ... works as expected", {
+  # An example function that passes filter queries in ...
+  my_filter <- function(.df, ...) {
+    .df |>
+      dplyr::filter(!!!rlang::enquos(...))
+  }
+
+  data <- data.frame(
+    x = c(1, 2, 3, 4, 5),
+    y = c(10, 20, 30, 40, 50)
+  )
+
+  expect_equal(my_filter(data, x > 2, y < 40),
+               data.frame(x = 3, y = 30))
+
+  # Now try with a single criterion
+  expect_equal(my_filter(data, x > 2),
+               data.frame(x = c(3, 4, 5), y = c(30, 40, 50)))
+})
+
+
 test_that("pl_filter_collect() works as expected", {
   skip_on_ci()
   skip_on_cran()
