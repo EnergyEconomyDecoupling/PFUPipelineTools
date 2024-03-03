@@ -75,14 +75,20 @@ pl_collect_from_hash <- function(hashed_table,
 #' filtering is desired.
 #' But filtering based on foreign keys is effectively impossible,
 #' because of their encoding.
-#' This function filters based on foreign key values,
-#' not foreign key integers,
+#' This function filters based on fk values,
+#' not fk keys (typically integers),
 #' thereby simplifying the filtering process.
-#' A `tbl` is returned.
-#' Use `dplyr::collect()` to execute the query.
+#' By default, a `tbl` is returned.
+#' Use `dplyr::collect()` to execute the resulting SQL query
+#' and obtain an in-memory data frame.
+#' Or, set `collect = TRUE` to execute the SQL and
+#' return an in-memory data frame.
 #'
 #' `schema` is a data model (`dm` object) for the CL-PFU database.
 #' It can be obtained from calling `schema_from_conn()`.
+#' If minimal interaction with the database is desired,
+#' be sure to override the default value for `schema`
+#' by supplying a pre-computed `dm` object.
 #'
 #' `fk_parent_tables` is a named list of tables,
 #' some of which are fk parent tables containing
@@ -93,29 +99,53 @@ pl_collect_from_hash <- function(hashed_table,
 #' are retrieved by name when needed.
 #' An appropriate value for `fk_parent_tables` can be obtained
 #' from `get_all_fk_tables()`.
+#' If minimal interaction with the database is desired,
+#' be sure to override the default value for `fk_parent_tables`
+#' by supplying a pre-computed named list of
+#' foreign key tables.
 #'
-#' @param db_table_name The name of a database table.
+#' @param db_table_name The string name of a database table.
 #' @param ... Natural filtering commands, such as would be applied
 #'            in the `...` argument of `dplyr::filter()`.
 #' @param conn The database connection.
+#' @param collect A boolean that tells whether to download the result.
+#'                Default is `FALSE`.
 #' @param schema The data model (`dm` object) for the database in `conn`.
+#'               Default is `schema_from_conn(conn = conn)`.
 #'               See details.
 #' @param fk_parent_tables A named list of all parent tables
 #'                         for the foreign keys in `db_table_name`.
+#'                         Default is
+#'                         `get_all_fk_tables(conn = conn, schema = schema)`.
 #'                         See details.
 #'
-#' @return A data frame downloaded from `conn`, a filtered version of `db_table_name`.
+#' @return A data frame downloaded from `conn`,
+#'         a filtered version of `db_table_name`.
 #'
 #' @export
-pl_nat_filter <- function(db_table_name, ..., conn,
-                              schema = schema_from_conn(conn = conn),
-                              fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema)) {
-  dplyr::tbl(conn, db_table_name) |>
+pl_nat_filter <- function(db_table_name,
+                          ...,
+                          conn,
+                          collect = FALSE,
+                          schema = schema_from_conn(conn = conn),
+                          fk_parent_tables = get_all_fk_tables(conn = conn,
+                                                               schema = schema)) {
+  out <- dplyr::tbl(src = conn, db_table_name) |>
+    # First, decode the foreign keys with
+    # collect = FALSE to ensure a tbl is returned.
     decode_fks(db_table_name = db_table_name,
                schema = schema,
-               fk_parent_tables = fk_parent_tables) |>
-    dplyr::filter(!!!rlang::enquos(...)) |>
-    dplyr::collect()
+               fk_parent_tables = fk_parent_tables,
+               collect = FALSE) |>
+    # Now do natural filtering,
+    # passing the expressions in ... .
+    dplyr::filter(!!!rlang::enquos(...))
+  if (collect) {
+    # Collect (execute the SQL), if desired.
+    out <- out |>
+      dplyr::collect()
+  }
+  return(out)
 }
 
 

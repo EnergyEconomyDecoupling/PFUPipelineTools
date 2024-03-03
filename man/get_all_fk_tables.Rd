@@ -10,7 +10,7 @@ get_all_fk_tables(conn, schema = schema_from_conn(conn), collect = FALSE)
 \item{conn}{A connection to a database.}
 
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
-Default calls \code{schema_from_conn()}.
+Default calls \code{schema_from_conn(conn)}.
 See details.}
 
 \item{collect}{A boolean that tells whether to

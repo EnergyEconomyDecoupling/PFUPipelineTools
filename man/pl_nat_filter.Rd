@@ -8,42 +8,56 @@ pl_nat_filter(
   db_table_name,
   ...,
   conn,
+  collect = FALSE,
   schema = schema_from_conn(conn = conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema)
 )
 }
 \arguments{
-\item{db_table_name}{The name of a database table.}
+\item{db_table_name}{The string name of a database table.}
 
 \item{...}{Natural filtering commands, such as would be applied
 in the \code{...} argument of \code{dplyr::filter()}.}
 
 \item{conn}{The database connection.}
 
+\item{collect}{A boolean that tells whether to download the result.
+Default is \code{FALSE}.}
+
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
+Default is \code{schema_from_conn(conn = conn)}.
 See details.}
 
 \item{fk_parent_tables}{A named list of all parent tables
 for the foreign keys in \code{db_table_name}.
+Default is
+\code{get_all_fk_tables(conn = conn, schema = schema)}.
 See details.}
 }
 \value{
-A data frame downloaded from \code{conn}, a filtered version of \code{db_table_name}.
+A data frame downloaded from \code{conn},
+a filtered version of \code{db_table_name}.
 }
 \description{
 Often when collecting data from the database,
 filtering is desired.
 But filtering based on foreign keys is effectively impossible,
 because of their encoding.
-This function filters based on foreign key values,
-not foreign key integers,
+This function filters based on fk values,
+not fk keys (typically integers),
 thereby simplifying the filtering process.
-A \code{tbl} is returned.
-Use \code{dplyr::collect()} to execute the query.
+By default, a \code{tbl} is returned.
+Use \code{dplyr::collect()} to execute the resulting SQL query
+and obtain an in-memory data frame.
+Or, set \code{collect = TRUE} to execute the SQL and
+return an in-memory data frame.
 }
 \details{
 \code{schema} is a data model (\code{dm} object) for the CL-PFU database.
 It can be obtained from calling \code{schema_from_conn()}.
+If minimal interaction with the database is desired,
+be sure to override the default value for \code{schema}
+by supplying a pre-computed \code{dm} object.
 
 \code{fk_parent_tables} is a named list of tables,
 some of which are fk parent tables containing
@@ -54,4 +68,8 @@ for \code{db_table_name}.
 are retrieved by name when needed.
 An appropriate value for \code{fk_parent_tables} can be obtained
 from \code{get_all_fk_tables()}.
+If minimal interaction with the database is desired,
+be sure to override the default value for \code{fk_parent_tables}
+by supplying a pre-computed named list of
+foreign key tables.
 }

@@ -49,7 +49,7 @@ self_name <- function(x) {
 #'
 #' @param conn A connection to a database.
 #' @param schema The data model (`dm` object) for the database in `conn`.
-#'               Default calls `schema_from_conn()`.
+#'               Default calls `schema_from_conn(conn)`.
 #'               See details.
 #' @param collect A boolean that tells whether to
 #'                download the foreign key tables.

@@ -89,7 +89,6 @@ test_that("passing filters in ... works as expected", {
   my_filter <- function(.df, ...) {
 
     args <- rlang::enquos(...)
-print(as.character(args))
 
     .df |>
       dplyr::filter(!!!args)
@@ -111,7 +110,7 @@ print(as.character(args))
 })
 
 
-test_that("pl_filter_collect() works as expected", {
+test_that("pl_nat_filter() works as expected", {
   skip_on_ci()
   skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
@@ -147,19 +146,47 @@ test_that("pl_filter_collect() works as expected", {
   expect_equal(DBI::dbReadTable(conn, "PLFilterCollectTestCountry"), PLFilterCollectTestCountry)
 
   pl_nat_filter("PLFilterCollectTestTable",
-                    MyCountry == "USA",
-                    conn = conn) |>
+                MyCountry == "USA",
+                conn = conn,
+                collect = TRUE) |>
+    expect_equal(tibble::tribble(~MyCountry, ~MyValue,
+                                 "USA", 3.1415,
+                                 "USA", 5.67e-8))
+
+  # Now try with the schema and fk tables pre-supplied
+  fk_tables <- get_all_fk_tables(conn = conn, schema = DM)
+  pl_nat_filter("PLFilterCollectTestTable",
+                MyCountry == "USA",
+                conn = conn,
+                collect = TRUE,
+                schema = DM,
+                fk_parent_tables = fk_tables) |>
     expect_equal(tibble::tribble(~MyCountry, ~MyValue,
                                  "USA", 3.1415,
                                  "USA", 5.67e-8))
 
   pl_nat_filter("PLFilterCollectTestTable",
-                    MyCountry %in% c("USA", "ZAF"),
-                    conn = conn) |>
+                MyCountry %in% c("USA", "ZAF"),
+                conn = conn,
+                collect = TRUE) |>
     expect_equal(tibble::tribble(~MyCountry, ~MyValue,
                                  "USA", 3.1415,
                                  "ZAF", 2.71828,
                                  "USA", 5.67e-8))
+
+  # Try without collecting
+  uncollected <- pl_nat_filter(db_table_name = "PLFilterCollectTestTable",
+                               MyCountry == "USA",
+                               conn = conn,
+                               schema = DM,
+                               fk_parent_tables = fk_tables)
+  expect_true(dplyr::is.tbl(uncollected))
+  uncollected |>
+    dplyr::collect() |>
+    expect_equal(tibble::tribble(~MyCountry, ~MyValue,
+                                 "USA", 3.1415,
+                                 "USA", 5.67e-8))
+
   DBI::dbRemoveTable(conn = conn, name = db_table_name)
   DBI::dbRemoveTable(conn = conn, name = db_country_name)
 })

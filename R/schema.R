@@ -666,7 +666,10 @@ encode_fks <- function(.df,
 #'
 #' `schema` is a data model (`dm` object) for the CL-PFU database.
 #' It can be obtained from calling `schema_from_conn()`.
-#' The default is `schema_from_conn(conn = conn)`.
+#' The default is `schema_from_conn(conn = conn)`,
+#' which dowloads the `dm` object from `conn`.
+#' To save time, precompute the `dm` object and
+#' supply in the `schema` argument.
 #'
 #' `fk_parent_tables` is a named list of tables,
 #' some of which are foreign key (fk) parent tables for `db_table_name`
@@ -682,6 +685,17 @@ encode_fks <- function(.df,
 #'            `.df` should be downloaded from `db_table_name` at `conn`
 #'            before decoding foreign keys.
 #' @param db_table_name The string name of the database table where `.df` is to be uploaded.
+#' @param collect A boolean that tells whether to download the decoded table
+#'                (returning an in-memory data frame produced by calling
+#'                `dplyr::collect()`) or
+#'                a `tbl` (a reference to a database query to be executed
+#'                by `dplyr::collect()`).
+#'                Default is `FALSE`.
+#'                Applies only when `.df` is `NULL`.
+#'                Note that to prevent downloads
+#'                from `conn`, supply a value for `schema`,
+#'                whose default value will download a `dm` object
+#'                from the database at `conn`.
 #' @param conn An optional database connection.
 #'             Necessary only for the default values of `schema` and `fk_parent_tables`.
 #' @param schema The data model (`dm` object) for the database in `conn`.
@@ -700,16 +714,27 @@ encode_fks <- function(.df,
 decode_fks <- function(.df = NULL,
                        db_table_name,
                        conn,
+                       collect = FALSE,
                        schema = schema_from_conn(conn),
-                       fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+                       fk_parent_tables = get_all_fk_tables(conn = conn,
+                                                            schema = schema),
                        .child_table = PFUPipelineTools::dm_fk_colnames$child_table,
                        .child_fk_cols = PFUPipelineTools::dm_fk_colnames$child_fk_cols,
                        .parent_key_cols = PFUPipelineTools::dm_fk_colnames$parent_key_cols,
                        .pk_suffix = PFUPipelineTools::key_col_info$pk_suffix,
                        .y_joining_suffix = ".y") {
 
+  # if (is.null(.df)) {
+  #   .df <- DBI::dbReadTable(conn, db_table_name)
+  # }
+
+
   if (is.null(.df)) {
-    .df <- DBI::dbReadTable(conn, db_table_name)
+    if (collect) {
+      .df <- DBI::dbReadTable(conn, db_table_name)
+    } else {
+      .df <- dplyr::tbl(src = conn, db_table_name)
+    }
   }
 
   # Get details of all foreign keys in .df

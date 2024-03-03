@@ -8,6 +8,7 @@ decode_fks(
   .df = NULL,
   db_table_name,
   conn,
+  collect = FALSE,
   schema = schema_from_conn(conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
   .child_table = PFUPipelineTools::dm_fk_colnames$child_table,
@@ -27,6 +28,18 @@ before decoding foreign keys.}
 
 \item{conn}{An optional database connection.
 Necessary only for the default values of \code{schema} and \code{fk_parent_tables}.}
+
+\item{collect}{A boolean that tells whether to download the decoded table
+(returning an in-memory data frame produced by calling
+\code{dplyr::collect()}) or
+a \code{tbl} (a reference to a database query to be executed
+by \code{dplyr::collect()}).
+Default is \code{FALSE}.
+Applies only when \code{.df} is \code{NULL}.
+Note that to prevent downloads
+from \code{conn}, supply a value for \code{schema},
+whose default value will download a \code{dm} object
+from the database at \code{conn}.}
 
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
 See details.}
@@ -55,7 +68,10 @@ This function provides that service.
 \details{
 \code{schema} is a data model (\code{dm} object) for the CL-PFU database.
 It can be obtained from calling \code{schema_from_conn()}.
-The default is \code{schema_from_conn(conn = conn)}.
+The default is \code{schema_from_conn(conn = conn)},
+which dowloads the \code{dm} object from \code{conn}.
+To save time, precompute the \code{dm} object and
+supply in the \code{schema} argument.
 
 \code{fk_parent_tables} is a named list of tables,
 some of which are foreign key (fk) parent tables for \code{db_table_name}
