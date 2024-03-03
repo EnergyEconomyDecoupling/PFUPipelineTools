@@ -87,8 +87,12 @@ test_that("pl_collect_from_hash() works as expected", {
 test_that("passing filters in ... works as expected", {
   # An example function that passes filter queries in ...
   my_filter <- function(.df, ...) {
+
+    args <- rlang::enquos(...)
+print(as.character(args))
+
     .df |>
-      dplyr::filter(!!!rlang::enquos(...))
+      dplyr::filter(!!!args)
   }
 
   data <- data.frame(
@@ -96,12 +100,14 @@ test_that("passing filters in ... works as expected", {
     y = c(10, 20, 30, 40, 50)
   )
 
-  expect_equal(my_filter(data, x > 2, y < 40),
-               data.frame(x = 3, y = 30))
-
-  # Now try with a single criterion
+  # Try with a single criterion in ...
   expect_equal(my_filter(data, x > 2),
                data.frame(x = c(3, 4, 5), y = c(30, 40, 50)))
+  expect_equal(my_filter(data, x == 5),
+               data.frame(x = 5, y = 50))
+  # Try with two criteria in ...
+  expect_equal(my_filter(data, x > 2, y < 40),
+               data.frame(x = 3, y = 30))
 })
 
 
@@ -140,8 +146,20 @@ test_that("pl_filter_collect() works as expected", {
   expect_equal(DBI::dbReadTable(conn, "PLFilterCollectTestTable"), PLFilterCollectTestTable)
   expect_equal(DBI::dbReadTable(conn, "PLFilterCollectTestCountry"), PLFilterCollectTestCountry)
 
-  pl_filter_collect("PLFilterCollectTestTable", MyCountry == "USA", conn = conn)
+  pl_filter_collect("PLFilterCollectTestTable",
+                    MyCountry == "USA",
+                    conn = conn) |>
+    expect_equal(tibble::tribble(~MyCountry, ~MyValue,
+                                 "USA", 3.1415,
+                                 "USA", 5.67e-8))
 
-
-
+  pl_filter_collect("PLFilterCollectTestTable",
+                    MyCountry %in% c("USA", "ZAF"),
+                    conn = conn) |>
+    expect_equal(tibble::tribble(~MyCountry, ~MyValue,
+                                 "USA", 3.1415,
+                                 "ZAF", 2.71828,
+                                 "USA", 5.67e-8))
+  DBI::dbRemoveTable(conn = conn, name = db_table_name)
+  DBI::dbRemoveTable(conn = conn, name = db_country_name)
 })

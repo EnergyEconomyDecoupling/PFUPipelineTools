@@ -28,6 +28,7 @@ Imports:
     purrr,
     readxl,
     rlang, 
+    stringr,
     tidyr,
     tibble
 Depends: 
