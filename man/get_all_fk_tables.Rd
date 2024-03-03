@@ -4,7 +4,7 @@
 \alias{get_all_fk_tables}
 \title{Get a named list of foreign key tables}
 \usage{
-get_all_fk_tables(conn, schema = schema_from_conn(conn))
+get_all_fk_tables(conn, schema = schema_from_conn(conn), collect = FALSE)
 }
 \arguments{
 \item{conn}{A connection to a database.}
@@ -12,6 +12,11 @@ get_all_fk_tables(conn, schema = schema_from_conn(conn))
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
 Default calls \code{schema_from_conn()}.
 See details.}
+
+\item{collect}{A boolean that tells whether to
+download the foreign key tables.
+Default is \code{FALSE} to enable
+inboard processing of queries.}
 }
 \value{
 A named list of data frames,
@@ -23,7 +28,7 @@ foreign keys and their values.
 For a database whose tables have many foreign keys
 that point to primary key tables,
 it is helpful to have a list of those foreign key tables
-for outboard processing purposes,
+for inboard and outboard processing purposes,
 especially when converting strings to integer keys.
 This function extracts a named list of data frames,
 where each data frame is a foreign key table in the database.
@@ -31,6 +36,10 @@ The data frame items in the list are named
 by the names of the tables in the database at \code{conn}.
 }
 \details{
+By default, the returned list contains \code{tbl} objects,
+with references to the actual tables in \code{conn}.
+To return the actual data frames, set \code{collect} to \code{TRUE}.
+
 \code{schema} is a data model (\code{dm} object) for the database in \code{conn}.
 Its default value (which calls \code{schema_fom_conn()})
 extracts the data model for the database at \code{conn} automatically.

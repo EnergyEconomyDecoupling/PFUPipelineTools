@@ -369,8 +369,10 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #'
 #' Upserts
 #' (inserts or updates,
-#' depending on whether the information already exists in `db_table_name`)
+#' depending on whether the private keys in `.df`
+#' already exist in `db_table_name`)
 #' `.df` into `db_table_name` at `conn`.
+#'
 #' This function decodes foreign keys, when possible,
 #' by assuming that all keys are integers.
 #' If non-integers are provided in foreign key columns of `.df`,
@@ -393,22 +395,25 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #'     * Hash: A column with a hash of all non-foreign-key columns.
 #'
 #' `schema` is a data model (`dm` object) for the database in `conn`.
-#' Its default value (`dm_from_con(conn, learn_keys = TRUE)`)
+#' Its default value (`schema_from_conn(conn)`)
 #' extracts the data model for the database at `conn` automatically.
 #' However, if the caller already has the data model,
 #' supplying it in the `schema` argument will save time.
 #'
-#' `parent_tables` is a named list of tables,
+#' `fk_parent_tables` is a named list of tables,
 #' one of which (the one named `db_table_name`)
 #' contains the foreign keys for `db_table_name`.
-#' `parent_tables` is treated as a store from which foreign key tables
+#' `fk_parent_tables` is treated as a store from which foreign key tables
 #' are retrieved by name when needed.
-#' The default value (which is several lines of code)
-#' retrieves all possible foreign key parent tables from conn,
+#' The default value (which calls `get_all_fk_tables()`
+#' with `collect = TRUE` because decoding of foreign keys
+#' is done outboard of the database)
+#' retrieves all possible foreign key parent tables from `conn`,
 #' potentially a time-consuming process.
 #' For speed, pre-compute all foreign key parent tables once
-#' and pass the list to the `parent_tables` argument
-#' of all similar functions.
+#' (via `get_all_fk_tables(collect = TRUE)`)
+#' and pass the list to the `fk_parent_tables` argument
+#' of this function.
 #'
 #' The user in `conn` must have write access to the database.
 #'
@@ -449,7 +454,9 @@ pl_upsert <- function(.df,
                       in_place = FALSE,
                       encode_fks = TRUE,
                       schema = schema_from_conn(conn),
-                      fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+                      fk_parent_tables = get_all_fk_tables(conn = conn,
+                                                           schema = schema,
+                                                           collect = TRUE),
                       .db_table_name = PFUPipelineTools::hashed_table_colnames$db_table_name,
                       .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col,
                       .algo = "md5") {
@@ -466,8 +473,6 @@ pl_upsert <- function(.df,
       "{.db_table_name}" := NULL
     )
 
-
-  # pk_table <- dm::dm_get_all_pks(schema, table = dplyr::all_of({{db_table_name}}))
   pk_table <- dm::dm_get_all_pks(schema, table = dplyr::all_of({{db_table_name}}))
   # Make sure we have one and only one primary key column
   assertthat::assert_that(nrow(pk_table) == 1,
@@ -651,9 +656,9 @@ encode_fks <- function(.df,
 }
 
 
-#' Decode keys in a downloaded data frame
+#' Decode keys in a database table
 #'
-#' When downloading a data frame from a database,
+#' When querying a table from a database,
 #' it is helpful to decode the primary and foreign keys
 #' in the data frame,
 #' i.e. to translate from keys to values.
@@ -661,12 +666,12 @@ encode_fks <- function(.df,
 #'
 #' `schema` is a data model (`dm` object) for the CL-PFU database.
 #' It can be obtained from calling `schema_from_conn()`.
+#' The default is `schema_from_conn(conn = conn)`.
 #'
 #' `fk_parent_tables` is a named list of tables,
-#' some of which are fk parent tables containing
-#' the mapping between fk values (usually strings)
-#' and fk keys (usually integers)
-#' for `db_table_name`.
+#' some of which are foreign key (fk) parent tables for `db_table_name`
+#' containing the mapping between fk values (usually strings)
+#' and fk keys (usually integers).
 #' `fk_parent_tables` is treated as a store from which foreign key tables
 #' are retrieved by name when needed.
 #' An appropriate value for `fk_parent_tables` can be obtained

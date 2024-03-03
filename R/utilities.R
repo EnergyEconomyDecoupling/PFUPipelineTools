@@ -30,12 +30,16 @@ self_name <- function(x) {
 #' For a database whose tables have many foreign keys
 #' that point to primary key tables,
 #' it is helpful to have a list of those foreign key tables
-#' for outboard processing purposes,
+#' for inboard and outboard processing purposes,
 #' especially when converting strings to integer keys.
 #' This function extracts a named list of data frames,
 #' where each data frame is a foreign key table in the database.
 #' The data frame items in the list are named
 #' by the names of the tables in the database at `conn`.
+#'
+#' By default, the returned list contains `tbl` objects,
+#' with references to the actual tables in `conn`.
+#' To return the actual data frames, set `collect` to `TRUE`.
 #'
 #' `schema` is a data model (`dm` object) for the database in `conn`.
 #' Its default value (which calls `schema_fom_conn()`)
@@ -47,21 +51,32 @@ self_name <- function(x) {
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               Default calls `schema_from_conn()`.
 #'               See details.
+#' @param collect A boolean that tells whether to
+#'                download the foreign key tables.
+#'                Default is `FALSE` to enable
+#'                inboard processing of queries.
 #'
 #' @return A named list of data frames,
 #'         where each data frame
 #'         is a table in `conn` that contains
 #'         foreign keys and their values.
+#'
 #' @export
-get_all_fk_tables <- function(conn, schema = schema_from_conn(conn)) {
+get_all_fk_tables <- function(conn,
+                              schema = schema_from_conn(conn),
+                              collect = FALSE) {
   schema |>
     dm::dm_get_all_fks() |>
     magrittr::extract2("parent_table") |>
     unique() |>
     self_name() |>
     lapply(FUN = function(this_parent_table) {
-      dplyr::tbl(conn, this_parent_table) |>
-        dplyr::collect()
+      out <- dplyr::tbl(conn, this_parent_table)
+      if (collect) {
+        out <- out |>
+          dplyr::collect()
+      }
+      return(out)
     })
 }
 

@@ -11,7 +11,7 @@ pl_upsert(
   in_place = FALSE,
   encode_fks = TRUE,
   schema = schema_from_conn(conn),
-  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema, collect = TRUE),
   .db_table_name = PFUPipelineTools::hashed_table_colnames$db_table_name,
   .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col,
   .algo = "md5"
@@ -58,16 +58,18 @@ A hash of \code{.df} according to \code{.algo}.
 \description{
 Upserts
 (inserts or updates,
-depending on whether the information already exists in \code{db_table_name})
+depending on whether the private keys in \code{.df}
+already exist in \code{db_table_name})
 \code{.df} into \code{db_table_name} at \code{conn}.
+}
+\details{
 This function decodes foreign keys, when possible,
 by assuming that all keys are integers.
 If non-integers are provided in foreign key columns of \code{.df},
 the non-integers will be recoded to the integer key values.
 Thus, this function assumes that the data model and schema
 already exists in \code{conn}.
-}
-\details{
+
 This function knows about CL-PFU database tables that contain
 matrix information.
 In particular, if \code{.df} contains matrices,
@@ -84,22 +86,25 @@ contains the following columns:
 }\if{html}{\out{</div>}}
 
 \code{schema} is a data model (\code{dm} object) for the database in \code{conn}.
-Its default value (\code{dm_from_con(conn, learn_keys = TRUE)})
+Its default value (\code{schema_from_conn(conn)})
 extracts the data model for the database at \code{conn} automatically.
 However, if the caller already has the data model,
 supplying it in the \code{schema} argument will save time.
 
-\code{parent_tables} is a named list of tables,
+\code{fk_parent_tables} is a named list of tables,
 one of which (the one named \code{db_table_name})
 contains the foreign keys for \code{db_table_name}.
-\code{parent_tables} is treated as a store from which foreign key tables
+\code{fk_parent_tables} is treated as a store from which foreign key tables
 are retrieved by name when needed.
-The default value (which is several lines of code)
-retrieves all possible foreign key parent tables from conn,
+The default value (which calls \code{get_all_fk_tables()}
+with \code{collect = TRUE} because decoding of foreign keys
+is done outboard of the database)
+retrieves all possible foreign key parent tables from \code{conn},
 potentially a time-consuming process.
 For speed, pre-compute all foreign key parent tables once
-and pass the list to the \code{parent_tables} argument
-of all similar functions.
+(via \code{get_all_fk_tables(collect = TRUE)})
+and pass the list to the \code{fk_parent_tables} argument
+of this function.
 
 The user in \code{conn} must have write access to the database.
 }

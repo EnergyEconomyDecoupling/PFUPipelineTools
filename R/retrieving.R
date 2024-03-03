@@ -69,15 +69,17 @@ pl_collect_from_hash <- function(hashed_table,
 }
 
 
-#' Collect a table from the database with natural filtering
+#' Filter a table from the database with natural expressions
 #'
 #' Often when collecting data from the database,
 #' filtering is desired.
 #' But filtering based on foreign keys is effectively impossible,
-#' because the foreign keys are encoded.
-#' This function translates natural filter commands using foreign key values to
-#' filter commands using foreign keys,
-#' thereby smoothing the download and filtering process.
+#' because of their encoding.
+#' This function filters based on foreign key values,
+#' not foreign key integers,
+#' thereby simplifying the filtering process.
+#' A `tbl` is returned.
+#' Use `dplyr::collect()` to execute the query.
 #'
 #' `schema` is a data model (`dm` object) for the CL-PFU database.
 #' It can be obtained from calling `schema_from_conn()`.
@@ -105,7 +107,7 @@ pl_collect_from_hash <- function(hashed_table,
 #' @return A data frame downloaded from `conn`, a filtered version of `db_table_name`.
 #'
 #' @export
-pl_filter_collect <- function(db_table_name, ..., conn,
+pl_nat_filter <- function(db_table_name, ..., conn,
                               schema = schema_from_conn(conn = conn),
                               fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema)) {
   dplyr::tbl(conn, db_table_name) |>

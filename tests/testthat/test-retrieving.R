@@ -146,14 +146,14 @@ test_that("pl_filter_collect() works as expected", {
   expect_equal(DBI::dbReadTable(conn, "PLFilterCollectTestTable"), PLFilterCollectTestTable)
   expect_equal(DBI::dbReadTable(conn, "PLFilterCollectTestCountry"), PLFilterCollectTestCountry)
 
-  pl_filter_collect("PLFilterCollectTestTable",
+  pl_nat_filter("PLFilterCollectTestTable",
                     MyCountry == "USA",
                     conn = conn) |>
     expect_equal(tibble::tribble(~MyCountry, ~MyValue,
                                  "USA", 3.1415,
                                  "USA", 5.67e-8))
 
-  pl_filter_collect("PLFilterCollectTestTable",
+  pl_nat_filter("PLFilterCollectTestTable",
                     MyCountry %in% c("USA", "ZAF"),
                     conn = conn) |>
     expect_equal(tibble::tribble(~MyCountry, ~MyValue,

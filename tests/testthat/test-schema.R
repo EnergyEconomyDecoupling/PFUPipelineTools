@@ -218,6 +218,11 @@ test_that("decode_fks() works as expected", {
 })
 
 
+test_that("decode_fks() works with tbls", {
+
+})
+
+
 test_that("pl_collect_from_hash() decodes correctly", {
   skip_on_ci()
   skip_on_cran()

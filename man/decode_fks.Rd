@@ -2,7 +2,7 @@
 % Please edit documentation in R/schema.R
 \name{decode_fks}
 \alias{decode_fks}
-\title{Decode keys in a downloaded data frame}
+\title{Decode keys in a database table}
 \usage{
 decode_fks(
   .df = NULL,
@@ -46,7 +46,7 @@ Default is ".y".}
 A version of \code{.df} with integer keys replaced by key values.
 }
 \description{
-When downloading a data frame from a database,
+When querying a table from a database,
 it is helpful to decode the primary and foreign keys
 in the data frame,
 i.e. to translate from keys to values.
@@ -55,12 +55,12 @@ This function provides that service.
 \details{
 \code{schema} is a data model (\code{dm} object) for the CL-PFU database.
 It can be obtained from calling \code{schema_from_conn()}.
+The default is \code{schema_from_conn(conn = conn)}.
 
 \code{fk_parent_tables} is a named list of tables,
-some of which are fk parent tables containing
-the mapping between fk values (usually strings)
-and fk keys (usually integers)
-for \code{db_table_name}.
+some of which are foreign key (fk) parent tables for \code{db_table_name}
+containing the mapping between fk values (usually strings)
+and fk keys (usually integers).
 \code{fk_parent_tables} is treated as a store from which foreign key tables
 are retrieved by name when needed.
 An appropriate value for \code{fk_parent_tables} can be obtained
