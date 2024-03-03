@@ -667,8 +667,8 @@ encode_fks <- function(.df,
 #' `schema` is a data model (`dm` object) for the CL-PFU database.
 #' It can be obtained from calling `schema_from_conn()`.
 #' The default is `schema_from_conn(conn = conn)`,
-#' which dowloads the `dm` object from `conn`.
-#' To save time, precompute the `dm` object and
+#' which downloads the `dm` object from `conn`.
+#' To save time, pre-compute the `dm` object and
 #' supply in the `schema` argument.
 #'
 #' `fk_parent_tables` is a named list of tables,

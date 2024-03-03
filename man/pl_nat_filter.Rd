@@ -2,7 +2,7 @@
 % Please edit documentation in R/retrieving.R
 \name{pl_nat_filter}
 \alias{pl_nat_filter}
-\title{Filter a table from the database with natural expressions}
+\title{Filter a table from the database using natural expressions}
 \usage{
 pl_nat_filter(
   db_table_name,
@@ -14,15 +14,19 @@ pl_nat_filter(
 )
 }
 \arguments{
-\item{db_table_name}{The string name of a database table.}
+\item{db_table_name}{The string name of the database table to be filtered.}
 
 \item{...}{Natural filtering commands, such as would be applied
-in the \code{...} argument of \code{dplyr::filter()}.}
+in the \code{...} argument of \code{dplyr::filter()}.
+For example \code{Country == "USA"} or
+\code{Country \%in\% c("USA", "GHA")}.
+\code{...} is passed directly to \code{dplyr::filter()}.}
 
 \item{conn}{The database connection.}
 
 \item{collect}{A boolean that tells whether to download the result.
-Default is \code{FALSE}.}
+Default is \code{FALSE}.
+See details.}
 
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
 Default is \code{schema_from_conn(conn = conn)}.
@@ -41,18 +45,26 @@ a filtered version of \code{db_table_name}.
 \description{
 Often when collecting data from the database,
 filtering is desired.
-But filtering based on foreign keys is effectively impossible,
-because of their encoding.
-This function filters based on fk values,
+But filtering based on foreign keys (as stored in the database)
+is effectively impossible, because of foreign key encoding.
+This function filters based on
+fk values (typically strings),
 not fk keys (typically integers),
-thereby simplifying the filtering process.
-By default, a \code{tbl} is returned.
+thereby simplifying the filtering process,
+with optional downloading thereafter.
+By default, a \code{tbl} is returned
+(and data are not downloaded from the database).
 Use \code{dplyr::collect()} to execute the resulting SQL query
 and obtain an in-memory data frame.
 Or, set \code{collect = TRUE} to execute the SQL and
 return an in-memory data frame.
 }
 \details{
+To obtain \code{db_table_name} \emph{without} filtering
+but with fk keys (typically integers)
+decoded to fk values (typically strings),
+call this function with nothing in the \code{...} argument.
+
 \code{schema} is a data model (\code{dm} object) for the CL-PFU database.
 It can be obtained from calling \code{schema_from_conn()}.
 If minimal interaction with the database is desired,

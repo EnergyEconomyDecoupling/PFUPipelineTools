@@ -69,8 +69,8 @@ This function provides that service.
 \code{schema} is a data model (\code{dm} object) for the CL-PFU database.
 It can be obtained from calling \code{schema_from_conn()}.
 The default is \code{schema_from_conn(conn = conn)},
-which dowloads the \code{dm} object from \code{conn}.
-To save time, precompute the \code{dm} object and
+which downloads the \code{dm} object from \code{conn}.
+To save time, pre-compute the \code{dm} object and
 supply in the \code{schema} argument.
 
 \code{fk_parent_tables} is a named list of tables,

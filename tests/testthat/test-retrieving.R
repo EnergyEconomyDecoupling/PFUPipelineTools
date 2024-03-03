@@ -187,6 +187,16 @@ test_that("pl_nat_filter() works as expected", {
                                  "USA", 3.1415,
                                  "USA", 5.67e-8))
 
+  # Try without a filter expression
+  pl_nat_filter("PLFilterCollectTestTable",
+                conn = conn,
+                collect = TRUE) |>
+    expect_equal(tibble::tribble(~MyCountry, ~MyValue,
+                                 "USA", 3.1415,
+                                 "ZAF", 2.71828,
+                                 "GHA", 42,
+                                 "USA", 5.67e-8))
+
   DBI::dbRemoveTable(conn = conn, name = db_table_name)
   DBI::dbRemoveTable(conn = conn, name = db_country_name)
 })

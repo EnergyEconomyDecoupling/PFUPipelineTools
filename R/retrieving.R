@@ -69,20 +69,28 @@ pl_collect_from_hash <- function(hashed_table,
 }
 
 
-#' Filter a table from the database with natural expressions
+#' Filter a table from the database using natural expressions
 #'
 #' Often when collecting data from the database,
 #' filtering is desired.
-#' But filtering based on foreign keys is effectively impossible,
-#' because of their encoding.
-#' This function filters based on fk values,
+#' But filtering based on foreign keys (as stored in the database)
+#' is effectively impossible, because of foreign key encoding.
+#' This function filters based on
+#' fk values (typically strings),
 #' not fk keys (typically integers),
-#' thereby simplifying the filtering process.
-#' By default, a `tbl` is returned.
+#' thereby simplifying the filtering process,
+#' with optional downloading thereafter.
+#' By default, a `tbl` is returned
+#' (and data are not downloaded from the database).
 #' Use `dplyr::collect()` to execute the resulting SQL query
 #' and obtain an in-memory data frame.
 #' Or, set `collect = TRUE` to execute the SQL and
 #' return an in-memory data frame.
+#'
+#' To obtain `db_table_name` _without_ filtering
+#' but with fk keys (typically integers)
+#' decoded to fk values (typically strings),
+#' call this function with nothing in the `...` argument.
 #'
 #' `schema` is a data model (`dm` object) for the CL-PFU database.
 #' It can be obtained from calling `schema_from_conn()`.
@@ -104,12 +112,16 @@ pl_collect_from_hash <- function(hashed_table,
 #' by supplying a pre-computed named list of
 #' foreign key tables.
 #'
-#' @param db_table_name The string name of a database table.
+#' @param db_table_name The string name of the database table to be filtered.
 #' @param ... Natural filtering commands, such as would be applied
 #'            in the `...` argument of `dplyr::filter()`.
+#'            For example `Country == "USA"` or
+#'            `Country %in% c("USA", "GHA")`.
+#'            `...` is passed directly to `dplyr::filter()`.
 #' @param conn The database connection.
 #' @param collect A boolean that tells whether to download the result.
 #'                Default is `FALSE`.
+#'                See details.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               Default is `schema_from_conn(conn = conn)`.
 #'               See details.
