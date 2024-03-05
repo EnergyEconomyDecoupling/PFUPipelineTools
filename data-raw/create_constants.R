@@ -294,3 +294,63 @@ beatles_fk_tables <- load_fk_tables(simple_tables_path = beatles_file_path,
                                         schema_sheet = "Schema")
 
 usethis::use_data(beatles_fk_tables, overwrite = TRUE)
+
+
+#
+# Tab name for machine efficiencies
+#
+
+machine_constants <- list(efficiency_tab_name = "FIN_ETA")
+usethis::use_data(machine_constants, overwrite = TRUE)
+
+
+#
+# Column names in PSUT data frames
+#
+
+ieamw_cols <- list(ieamw = "IEAMW",
+                   iea = "IEA",
+                   mw = "MW",
+                   both = "Both")
+usethis::use_data(ieamw_cols, overwrite = TRUE)
+
+
+#
+# Names and constants associated with exemplar tables.
+#
+
+exemplar_names <- list(exemplar_tab_name = "exemplar_table",
+                       prev_names = "PrevNames",
+                       exemplars = "Exemplars",
+                       exemplar_country = "ExemplarCountry",
+                       exemplar_countries = "ExemplarCountries",
+                       exemplar_tables = "ExemplarTables",
+                       iea_data = "IEAData",
+                       alloc_data = "AllocData",
+                       incomplete_alloc_table = "IncompleteAllocTable",
+                       complete_alloc_table = "CompleteAllocTable",
+                       incomplete_eta_table = "IncompleteEtaTable",
+                       complete_eta_table = "CompleteEtaTable",
+                       region_code = "RegionCode",
+                       country_name = "CountryName",
+                       agg_code_col = "AggCode",
+                       world = "WRLD")
+usethis::use_data(exemplar_names, overwrite = TRUE)
+
+
+#
+# phi.sources
+#
+
+phi_sources <- list(eta_fu_tables = "etafuTables",
+                    temperature_data = "TemperatureData",
+                    phi_constants = "phiConstants")
+usethis::use_data(phi_sources, overwrite = TRUE)
+
+
+#
+# Dataset colname
+#
+
+dataset_info <- list(dataset_colname = "Dataset")
+usethis::use_data(dataset_info)
