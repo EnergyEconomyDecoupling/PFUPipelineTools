@@ -7,11 +7,12 @@
 tar_ungroup(.df, tar_group_colname = "tar_group", ungroup = TRUE)
 }
 \arguments{
-\item{.df}{The data frame to be ungrouped.}
+\item{.df}{The data frame to have its \code{targets} grouping removed.}
 
 \item{tar_group_colname}{The name of the grouping column. Default is "tar_group".}
 
-\item{ungroup}{A boolean that tells whether to ungroup \code{.df}. Default is \code{TRUE}.}
+\item{ungroup}{A boolean that tells whether to ungroup
+(in the \code{dplyr} sense, not the \code{targets} sense) \code{.df}. Default is \code{TRUE}.}
 }
 \value{
 A modified version of \code{.df}.
@@ -19,5 +20,6 @@ A modified version of \code{.df}.
 \description{
 The \code{\link[tarchetypes:tar_group_by]{tarchetypes::tar_group_by()}} function
 adds a column named "tar_group".
-This function ungroups and removes the special column.
+This function ungroups and removes the special column
+and optionally removes \code{dplyr} groups, too.
 }
