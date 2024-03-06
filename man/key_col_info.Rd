@@ -3,15 +3,18 @@
 \docType{data}
 \name{key_col_info}
 \alias{key_col_info}
-\title{Key column info}
+\title{Metadata about table keys}
 \format{
 A string list with 1 entries.
+\describe{
+\item{pk_suffix}{The string suffix for names of key columns, "ID".}
+}
 }
 \usage{
 key_col_info
 }
 \description{
-A string list containing information about database table keys.
+A string list containing information about key columns.
 }
 \examples{
 key_col_info
