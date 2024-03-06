@@ -353,4 +353,4 @@ usethis::use_data(phi_sources, overwrite = TRUE)
 #
 
 dataset_info <- list(dataset_colname = "Dataset")
-usethis::use_data(dataset_info)
+usethis::use_data(dataset_info, overwrite = TRUE)
