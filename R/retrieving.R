@@ -113,11 +113,12 @@ pl_collect_from_hash <- function(hashed_table,
 #' foreign key tables.
 #'
 #' @param db_table_name The string name of the database table to be filtered.
-#' @param ... Natural filtering commands, such as would be applied
-#'            in the `...` argument of `dplyr::filter()`.
-#'            For example `Country == "USA"` or
-#'            `Country %in% c("USA", "GHA")`.
-#'            `...` is passed directly to `dplyr::filter()`.
+#' @param countries,years,methods,last_stages,energy_types Vectors of strings to be kept from
+#'                                                         the respective columns.
+#'                                                         Default values are `NULL`, meaning
+#'                                                         that no filters should be applied.
+#' @param country,year,method,last_stage,energy_type Columns that are likely to be in db_table_name
+#'                                                   and may be filtered with `%in%`-style subsetting.
 #' @param conn The database connection.
 #' @param collect A boolean that tells whether to download the result.
 #'                Default is `FALSE`.
@@ -135,23 +136,50 @@ pl_collect_from_hash <- function(hashed_table,
 #'         a filtered version of `db_table_name`.
 #'
 #' @export
-pl_nat_filter <- function(db_table_name,
-                          ...,
-                          conn,
-                          collect = FALSE,
-                          schema = schema_from_conn(conn = conn),
-                          fk_parent_tables = get_all_fk_tables(conn = conn,
-                                                               schema = schema)) {
+pl_filter_collect <- function(db_table_name,
+                              countries = NULL,
+                              years = NULL,
+                              methods = NULL,
+                              last_stages = NULL,
+                              energy_types = NULL,
+                              country = IEATools::iea_cols$country,
+                              year = IEATools::iea_cols$year,
+                              method = IEATools::iea_cols$method,
+                              last_stage = IEATools::iea_cols$last_stage,
+                              energy_type = IEATools::iea_cols$energy_type,
+                              conn,
+                              collect = FALSE,
+                              schema = schema_from_conn(conn = conn),
+                              fk_parent_tables = get_all_fk_tables(conn = conn,
+                                                                   schema = schema)) {
   out <- dplyr::tbl(src = conn, db_table_name) |>
     # First, decode the foreign keys with
     # collect = FALSE to ensure a tbl is returned.
     decode_fks(db_table_name = db_table_name,
                schema = schema,
                fk_parent_tables = fk_parent_tables,
-               collect = FALSE) |>
-    # Now do natural filtering,
-    # passing the expressions in ... .
-    dplyr::filter(!!!rlang::enquos(...))
+               collect = FALSE)
+  cnames <- colnames(out)
+  if (!is.null(countries) & country %in% cnames) {
+    out <- out |>
+      dplyr::filter(.data[[country]] %in% countries)
+  }
+  if (!is.null(years) & year %in% cnames) {
+    out <- out |>
+      dplyr::filter(.data[[year]] %in% years)
+  }
+  if (!is.null(methods) & method %in% cnames) {
+    out <- out |>
+      dplyr::filter(.data[[method]] %in% methods)
+  }
+  if (!is.null(last_stages) & last_stage %in% cnames) {
+    out <- out |>
+      dplyr::filter(.data[[last_stage]] %in% last_stages)
+  }
+  if (!is.null(energy_types) & energy_type %in% cnames) {
+    out <- out |>
+      dplyr::filter(.data[[energy_type]] %in% energy_types)
+  }
   if (collect) {
     # Collect (execute the SQL), if desired.
     out <- out |>

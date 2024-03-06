@@ -110,7 +110,7 @@ test_that("passing filters in ... works as expected", {
 })
 
 
-test_that("pl_nat_filter() works as expected", {
+test_that("pl_filter_collect() works as expected", {
   skip_on_ci()
   skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
@@ -130,14 +130,14 @@ test_that("pl_nat_filter() works as expected", {
   }
 
   # Create a table to upload
-  PLFilterCollectTestTable <- data.frame(MyCountry = as.integer(c(1, 2, 3, 1)),
+  PLFilterCollectTestTable <- data.frame(Country = as.integer(c(1, 2, 3, 1)),
                                          MyValue = c(3.1415, 2.71828, 42, 5.67e-8))
   PLFilterCollectTestCountry <- data.frame(CountryID = as.integer(c(1, 2, 3)),
                                            Country = c("USA", "ZAF", "GHA"))
   DM <- dm::as_dm(list(PLFilterCollectTestTable = PLFilterCollectTestTable,
                        PLFilterCollectTestCountry = PLFilterCollectTestCountry)) |>
     dm::dm_add_fk(table = PLFilterCollectTestTable,
-                  columns = MyCountry,
+                  columns = Country,
                   ref_table = PLFilterCollectTestCountry,
                   ref_columns = CountryID)
   dm::copy_dm_to(conn, DM, set_key_constraints = TRUE, temporary = FALSE)
@@ -145,53 +145,53 @@ test_that("pl_nat_filter() works as expected", {
   expect_equal(DBI::dbReadTable(conn, "PLFilterCollectTestTable"), PLFilterCollectTestTable)
   expect_equal(DBI::dbReadTable(conn, "PLFilterCollectTestCountry"), PLFilterCollectTestCountry)
 
-  pl_nat_filter("PLFilterCollectTestTable",
-                MyCountry == "USA",
-                conn = conn,
-                collect = TRUE) |>
-    expect_equal(tibble::tribble(~MyCountry, ~MyValue,
+  pl_filter_collect("PLFilterCollectTestTable",
+                    countries = "USA",
+                    conn = conn,
+                    collect = TRUE) |>
+    expect_equal(tibble::tribble(~Country, ~MyValue,
                                  "USA", 3.1415,
                                  "USA", 5.67e-8))
 
   # Now try with the schema and fk tables pre-supplied
   fk_tables <- get_all_fk_tables(conn = conn, schema = DM)
-  pl_nat_filter("PLFilterCollectTestTable",
-                MyCountry == "USA",
-                conn = conn,
-                collect = TRUE,
-                schema = DM,
-                fk_parent_tables = fk_tables) |>
-    expect_equal(tibble::tribble(~MyCountry, ~MyValue,
+  pl_filter_collect("PLFilterCollectTestTable",
+                    countries = "USA",
+                    conn = conn,
+                    collect = TRUE,
+                    schema = DM,
+                    fk_parent_tables = fk_tables) |>
+    expect_equal(tibble::tribble(~Country, ~MyValue,
                                  "USA", 3.1415,
                                  "USA", 5.67e-8))
 
-  pl_nat_filter("PLFilterCollectTestTable",
-                MyCountry %in% c("USA", "ZAF"),
-                conn = conn,
-                collect = TRUE) |>
-    expect_equal(tibble::tribble(~MyCountry, ~MyValue,
+  pl_filter_collect("PLFilterCollectTestTable",
+                    countries = c("USA", "ZAF"),
+                    conn = conn,
+                    collect = TRUE) |>
+    expect_equal(tibble::tribble(~Country, ~MyValue,
                                  "USA", 3.1415,
                                  "ZAF", 2.71828,
                                  "USA", 5.67e-8))
 
   # Try without collecting
-  uncollected <- pl_nat_filter(db_table_name = "PLFilterCollectTestTable",
-                               MyCountry == "USA",
-                               conn = conn,
-                               schema = DM,
-                               fk_parent_tables = fk_tables)
+  uncollected <- pl_filter_collect(db_table_name = "PLFilterCollectTestTable",
+                                   countries = "USA",
+                                   conn = conn,
+                                   schema = DM,
+                                   fk_parent_tables = fk_tables)
   expect_true(dplyr::is.tbl(uncollected))
   uncollected |>
     dplyr::collect() |>
-    expect_equal(tibble::tribble(~MyCountry, ~MyValue,
+    expect_equal(tibble::tribble(~Country, ~MyValue,
                                  "USA", 3.1415,
                                  "USA", 5.67e-8))
 
-  # Try without a filter expression
-  pl_nat_filter("PLFilterCollectTestTable",
-                conn = conn,
-                collect = TRUE) |>
-    expect_equal(tibble::tribble(~MyCountry, ~MyValue,
+  # Try without a filter specification. Should get everything back.
+  pl_filter_collect("PLFilterCollectTestTable",
+                    conn = conn,
+                    collect = TRUE) |>
+    expect_equal(tibble::tribble(~Country, ~MyValue,
                                  "USA", 3.1415,
                                  "ZAF", 2.71828,
                                  "GHA", 42,
