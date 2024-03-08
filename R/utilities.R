@@ -250,6 +250,11 @@ inboard_filter_copy <- function(source,
                      in_place = in_place,
                      conflict = "ignore")
 
+  # Download a hashtable of the result
+  #
+  # Change name to pl_inboard_filter_copy, because the function
+  # is quite specific to the pipeline.
+
   return(TRUE)
 }
 
