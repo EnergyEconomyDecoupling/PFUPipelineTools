@@ -161,8 +161,7 @@ clean_up_beatles <- function(conn) {
 #' data from the database to the local machine and back.
 #' This function does an inboard filter and copy
 #' from `source` to `dest` in `conn`,
-#' optionally emptying `dest` first, and
-#' optionally adding a `tar_group` column.
+#' optionally emptying `dest` first.
 #'
 #' The `source` and `dest` tables should have identical columns.
 #'
@@ -204,12 +203,14 @@ inboard_filter_copy <- function(conn,
   insert_rows_stmt <- paste0('INSERT INTO "', dest, '" ',
                              'SELECT * ',
                              'FROM "', source, '" ',
-                             'WHERE ',
-                             country, ' IN (', countries_string, ') AND ',
-                             year, ' IN (', years_string, ');')
+                             'WHERE "',
+                             country, '" IN (', countries_string, ') AND "',
+                             year, '" IN (', years_string, ');')
 
   DBI::dbExecute(conn, insert_rows_stmt)
 
   return(TRUE)
 }
+
+
 
