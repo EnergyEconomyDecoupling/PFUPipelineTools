@@ -7,7 +7,7 @@
 pl_hash(
   .df,
   table_name,
-  hash_group_cols = NULL,
+  additional_hash_group_cols = NULL,
   .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
   .nested_col = PFUPipelineTools::hashed_table_colnames$nested_col_name,
   .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_col_name,
@@ -19,8 +19,8 @@ pl_hash(
 
 \item{table_name}{The name of the table in which \code{.df} will be stored.}
 
-\item{hash_group_cols}{The columns by which \code{.df} will be grouped
-before making the hash column.
+\item{additional_hash_group_cols}{The additional columns by which \code{.df} will be grouped
+before making the \code{.nested_hash_col} hash column.
 Default is \code{NULL}, meaning that grouping will be
 done on all columns that contain only 1 unique value.
 See details.}
@@ -69,15 +69,16 @@ has the following characteristics:
 \item The first column (named with the value of \code{.table_name_col})
 contains the value of \code{table_name}, the name
 of the database table where \code{.df} is stored.
-\item The second through N-1 columns are those specified by
-\code{hash_group_cols} when \code{hash_group_cols} is not \code{NULL} (the default) or
-or columns with only one unique value
-(when \code{hash_group_cols} is \code{NULL}, the default).
+\item The second through N-1 columns are
+all columns with only one unique value AND those columns specified by
+\code{additional_hash_group_cols}.
+If \code{additional_hash_group_cols} is \code{NULL} (the default),
+grouping is done on only those columns with one unique value.
 \item The Nth column (named with the value of \code{.nested_col})
 contains a hash of a data frame created by nesting
-by \code{hash_group_cols} or by
-all columns with more than one unique value
-(when \code{hash_group_cols} is \code{NULL}).
+by all columns with more than one unique value and
+\code{additional_hash_group_cols} (when \code{additional_hash_group_cols}
+is not \code{NULL}).
 }
 
 The return value serves as a "ticket" with which

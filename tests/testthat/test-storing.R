@@ -39,13 +39,15 @@ test_that("pl_hash() works as expected", {
 
   # Now try with non-NULL hash_group_cols
   the_hash2 <- DF |>
-    pl_hash(table_name = "MyTable", hash_group_cols = c("Country", "Year"))
+    pl_hash(table_name = "MyTable",
+            additional_hash_group_cols = c("Country", "Year"))
   # Both Country and Year will be preserved
   expect_equal(nrow(the_hash2), 2)
 
   # Try with too many grouping variables
   the_hash3 <- DF |>
-    pl_hash(table_name = "MyTable", hash_group_cols = PFUPipelineTools::hash_group_cols)
+    pl_hash(table_name = "MyTable",
+            additional_hash_group_cols = PFUPipelineTools::hash_group_cols)
   # Should also preserve Country and Year
   expect_equal(nrow(the_hash3), 2)
 })

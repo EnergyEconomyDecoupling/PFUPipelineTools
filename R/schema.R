@@ -421,9 +421,12 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #'                      i.e. the name of a remote database table.
 #'                      Default is `NULL`, meaning that the value for this argument
 #'                      will be taken from the `.db_table_name` column of `.df`.
-#' @param hash_group_cols A vector or list of columns by which `.df` will be grouped
-#'                        before hashing.
-#'                        Default is `PFUPipelineTools::hash_group_cols`.
+#' @param additional_hash_group_cols A vector or list of additional columns
+#'                                   by which `.df` will be grouped
+#'                                   before hashing.
+#'                                   Default is `PFUPipelineTools::hash_group_cols`.
+#'                                   Set to `NULL` to group by all columns
+#'                                   with only 1 unique value.
 #' @param in_place A boolean that tells whether to modify the database at `conn`.
 #'                 Default is `FALSE`, which is helpful if you want to chain
 #'                 several requests.
@@ -451,7 +454,7 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 pl_upsert <- function(.df,
                       conn,
                       db_table_name = NULL,
-                      hash_group_cols = PFUPipelineTools::hash_group_cols,
+                      additional_hash_group_cols = PFUPipelineTools::hash_group_cols,
                       in_place = FALSE,
                       encode_fks = TRUE,
                       schema = schema_from_conn(conn),
@@ -506,7 +509,8 @@ pl_upsert <- function(.df,
                        in_place = in_place)
   # Return a hash of .df
   .df |>
-    pl_hash(table_name = db_table_name)
+    pl_hash(table_name = db_table_name,
+            additional_hash_group_cols = hash_group_cols)
 }
 
 
