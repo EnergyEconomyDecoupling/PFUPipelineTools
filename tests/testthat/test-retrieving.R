@@ -80,6 +80,45 @@ test_that("pl_collect_from_hash() works as expected", {
                  unique(),
                db_table_name)
 
+  # Include key1 in the hash group cols,
+  # to no effect, because key1 has only 1 unique value.
+  hash3 <- pl_hash(test_table1,
+                   table_name = db_table_name,
+                   additional_hash_group_cols = "key1")
+  expect_equal(nrow(hash3), 1)
+  expect_equal(hash3$key1[[1]], 1)
+  # Now try to retrieve the table with the hash
+  result3 <- pl_collect_from_hash(hash3,
+                                  conn = conn,
+                                  decode_fks = TRUE,
+                                  retain_table_name_col = FALSE)
+  expect_equal(result3, test_table1, ignore_attr = TRUE)
+
+  # Now include key2 in the hash group cols.
+  # This will cause all rows to be hashed.
+  hash4 <- pl_hash(test_table1,
+                   table_name = db_table_name,
+                   additional_hash_group_cols = "key2")
+  expect_equal(nrow(hash4), 3)
+  expect_equal(hash4$key2, c(1, 2, 3))
+  # Now try to retrieve the table with the hash
+  result4 <- pl_collect_from_hash(hash4,
+                                  conn = conn,
+                                  decode_fks = TRUE,
+                                  retain_table_name_col = FALSE) |>
+    dplyr::arrange(key2)
+  expect_equal(result4, test_table1, ignore_attr = TRUE)
+
+  # Now filter hash4 and retrieve.
+  hash5 <- hash4 |>
+    dplyr::filter(key2 %in% c(2,3))
+  result5 <- pl_collect_from_hash(hash5,
+                                  conn = conn,
+                                  decode_fks = TRUE,
+                                  retain_table_name_col = FALSE) |>
+    dplyr::arrange(key2)
+  expect_equal(result5, test_table1 |> dplyr::filter(key2 != 1), ignore_attr = TRUE)
+
   DBI::dbRemoveTable(conn, db_table_name)
 })
 
