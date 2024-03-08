@@ -39,6 +39,15 @@ test_that("inboard_filter_copy() works as expected", {
                       in_place = TRUE,
                       conn = conn,
                       schema = DM,
+
+
+
+                      # Need to write a test that can check these tables.
+                      # Which probably means a real test.
+
+
+
+
                       fk_parent_tables = NULL)
 
 
