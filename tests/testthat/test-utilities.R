@@ -31,12 +31,15 @@ test_that("inboard_filter_copy() works as expected", {
   DBI::dbWriteTable(conn, "dest", source_table, overwrite = TRUE)
   dest_tbl <- dplyr::tbl(conn, "dest")
 
-  inboard_filter_copy(conn,
-                      source = "source",
+  inboard_filter_copy(source = "source",
                       dest = "dest",
                       countries = c(1, 2),
                       years = c(1970, 1972),
-                      empty_dest = TRUE)
+                      empty_dest = TRUE,
+                      in_place = TRUE,
+                      conn = conn,
+                      schema = DM,
+                      fk_parent_tables = NULL)
 
 
   # Get the new table

@@ -171,6 +171,9 @@ clean_up_beatles <- function(conn) {
 #' @param countries Countries to keep.
 #' @param years Years to keep.
 #' @param empty_dest A boolean that tells whether to empty the destination table before copying.
+#'                   Default is `TRUE`.
+#' @param in_place A boolean that tells whether to make the changes in the remote
+#'                 database at `conn`.
 #' @param country The name of the country column in `source` and `dest`.
 #'                Default is `IEATools::iea_cols$country`.
 #' @param year The name of the year column in `source` and `dest`.
@@ -179,16 +182,21 @@ clean_up_beatles <- function(conn) {
 #' @return `TRUE` if successful. An error if not.
 #'
 #' @export
-inboard_filter_copy <- function(conn,
-                                source,
+inboard_filter_copy <- function(source,
                                 dest,
                                 countries,
                                 years,
-                                empty_dest = FALSE,
+                                empty_dest = TRUE,
+                                in_place = FALSE,
+                                conn,
+                                schema = schema_from_conn(conn),
+                                fk_parent_tables = get_all_fk_tables(conn = conn,
+                                                                     schema = schema),
                                 country = IEATools::iea_cols$country,
-                                year = IEATools::iea_cols$year) {
+                                year = IEATools::iea_cols$year,
+                                pk_suffix = PFUPipelineTools::key_col_info$pk_suffix) {
 
-  if (empty_dest) {
+  if (empty_dest & in_place) {
     empty_table <- dplyr::tbl(conn, dest) |>
       dplyr::filter(FALSE) |>
       dplyr::collect()
@@ -199,15 +207,48 @@ inboard_filter_copy <- function(conn,
   countries_string <- paste0(countries, collapse = ", ")
   years_string <- paste0(years, collapse = ", ")
 
-  # Add the filtered rows from source into dest
-  insert_rows_stmt <- paste0('INSERT INTO "', dest, '" ',
-                             'SELECT * ',
-                             'FROM "', source, '" ',
-                             'WHERE "',
-                             country, '" IN (', countries_string, ') AND "',
-                             year, '" IN (', years_string, ');')
+  # # Add the filtered rows from source into dest
+  # insert_rows_stmt <- paste0('INSERT INTO "', dest, '" ',
+  #                            'SELECT * ',
+  #                            'FROM "', source, '" ',
+  #                            'WHERE "',
+  #                            country, '" IN (', countries_string, ') AND "',
+  #                            year, '" IN (', years_string, ');')
+  #
+  # DBI::dbExecute(conn, insert_rows_stmt)
 
-  DBI::dbExecute(conn, insert_rows_stmt)
+  source_tbl <- dplyr::tbl(conn, source)
+  dest_tbl <- dplyr::tbl(conn, dest)
+  cnames_source <- colnames(source_tbl)
+  cnames_dest <- colnames(dest_tbl)
+  stopifnot(all(cnames_source %in% cnames_dest))
+
+  # Get the fk parent tables for Country and Year
+  fk_table_country <- fk_parent_tables[[country]]
+  fk_table_year <- fk_parent_tables[[year]]
+  # Filter each
+  countryID_keep <- fk_table_country |>
+    dplyr::filter(.data[[country]] %in% countries)
+  yearID_keep <- fk_table_year |>
+    dplyr::filter(.data[[year]] %in% years)
+
+  filtered_source <- source_tbl |>
+    dplyr::semi_join(countryID_keep, by = country) |>
+    dplyr::semi_join(yearID_keep, by = year) |>
+    dplyr::mutate(
+      "{country}" := NULL,
+      "{year}" := NULL
+    ) |>
+    dplyr::rename(
+      "{country}" := paste0(country, pk_suffix),
+      "{year}" := paste0(year, pk_suffix)
+    )
+
+  dplyr::rows_insert(x = dest_tbl,
+                     y = filtered_source,
+                     by = cnames_source,
+                     in_place = in_place,
+                     conflict = "ignore")
 
   return(TRUE)
 }
