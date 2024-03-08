@@ -8,6 +8,7 @@ pl_upsert(
   .df,
   conn,
   db_table_name = NULL,
+  hash_group_cols = PFUPipelineTools::hash_group_cols,
   in_place = FALSE,
   encode_fks = TRUE,
   schema = schema_from_conn(conn),
@@ -22,10 +23,14 @@ pl_upsert(
 
 \item{conn}{A connection to the CL-PFU database.}
 
-\item{db_table_name}{A string identifying the destination for \code{.df},
-the name of a remote database table in \code{conn}.
+\item{db_table_name}{A string identifying the destination for \code{.df} in \code{conn},
+i.e. the name of a remote database table.
 Default is \code{NULL}, meaning that the value for this argument
 will be taken from the \code{.db_table_name} column of \code{.df}.}
+
+\item{hash_group_cols}{A vector or list of columns by which \code{.df} will be grouped
+before hashing.
+Default is \code{PFUPipelineTools::hash_group_cols}.}
 
 \item{in_place}{A boolean that tells whether to modify the database at \code{conn}.
 Default is \code{FALSE}, which is helpful if you want to chain
@@ -42,8 +47,7 @@ See details.}
 for the foreign keys in \code{db_table_name}.
 See details.}
 
-\item{.db_table_name}{The name of the table name column in the uploaded
-data frame.
+\item{.db_table_name}{The name of the table name column in \code{.df}.
 Default is \code{PFUPipelineTools::hashed_table_colnames$db_table_name}.}
 
 \item{.pk_col}{The name of the primary key column in a primary key table.
@@ -63,12 +67,11 @@ already exist in \code{db_table_name})
 \code{.df} into \code{db_table_name} at \code{conn}.
 }
 \details{
-This function decodes foreign keys, when possible,
-by assuming that all keys are integers.
-If non-integers are provided in foreign key columns of \code{.df},
-the non-integers will be recoded to the integer key values.
-Thus, this function assumes that the data model and schema
-already exists in \code{conn}.
+This function decodes foreign keys (fks), when possible,
+assuming that all fks are integers.
+If non-integers (typically, character strings)
+are provided in fk columns of \code{.df},
+the non-integers will be recoded to their appropriate integer key values.
 
 This function knows about CL-PFU database tables that contain
 matrix information.
@@ -78,12 +81,11 @@ before uploading.
 
 The output of this function is a special data frame that
 contains the following columns:
-
-\if{html}{\out{<div class="sourceCode">}}\preformatted{* CLPFUDBTable: A column of character strings,
-                all with the value of `db_table_name`.
-* All foreign key columns: With their integer values (to save space).
-* Hash: A column with a hash of all non-foreign-key columns.
-}\if{html}{\out{</div>}}
+\itemize{
+\item All columns in \code{.df} also given in \code{hash_group_cols}
+(default \code{PFUPipelineTools::hash_group_cols}).
+\item Hash: A column with a hash of all non-foreign-key columns.
+}
 
 \code{schema} is a data model (\code{dm} object) for the database in \code{conn}.
 Its default value (\code{schema_from_conn(conn)})

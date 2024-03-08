@@ -373,12 +373,11 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #' already exist in `db_table_name`)
 #' `.df` into `db_table_name` at `conn`.
 #'
-#' This function decodes foreign keys, when possible,
-#' by assuming that all keys are integers.
-#' If non-integers are provided in foreign key columns of `.df`,
-#' the non-integers will be recoded to the integer key values.
-#' Thus, this function assumes that the data model and schema
-#' already exists in `conn`.
+#' This function decodes foreign keys (fks), when possible,
+#' assuming that all fks are integers.
+#' If non-integers (typically, character strings)
+#' are provided in fk columns of `.df`,
+#' the non-integers will be recoded to their appropriate integer key values.
 #'
 #' This function knows about CL-PFU database tables that contain
 #' matrix information.
@@ -389,10 +388,9 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #' The output of this function is a special data frame that
 #' contains the following columns:
 #'
-#'     * CLPFUDBTable: A column of character strings,
-#'                     all with the value of `db_table_name`.
-#'     * All foreign key columns: With their integer values (to save space).
-#'     * Hash: A column with a hash of all non-foreign-key columns.
+#'   * All columns in `.df` also given in `hash_group_cols`
+#'     (default `PFUPipelineTools::hash_group_cols`).
+#'   * Hash: A column with a hash of all non-foreign-key columns.
 #'
 #' `schema` is a data model (`dm` object) for the database in `conn`.
 #' Its default value (`schema_from_conn(conn)`)
@@ -419,10 +417,13 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #'
 #' @param .df The data frame to be upserted.
 #' @param conn A connection to the CL-PFU database.
-#' @param db_table_name A string identifying the destination for `.df`,
-#'                      the name of a remote database table in `conn`.
+#' @param db_table_name A string identifying the destination for `.df` in `conn`,
+#'                      i.e. the name of a remote database table.
 #'                      Default is `NULL`, meaning that the value for this argument
 #'                      will be taken from the `.db_table_name` column of `.df`.
+#' @param hash_group_cols A vector or list of columns by which `.df` will be grouped
+#'                        before hashing.
+#'                        Default is `PFUPipelineTools::hash_group_cols`.
 #' @param in_place A boolean that tells whether to modify the database at `conn`.
 #'                 Default is `FALSE`, which is helpful if you want to chain
 #'                 several requests.
@@ -434,8 +435,7 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #' @param fk_parent_tables A named list of all parent tables
 #'                         for the foreign keys in `db_table_name`.
 #'                         See details.
-#' @param .db_table_name The name of the table name column in the uploaded
-#'                       data frame.
+#' @param .db_table_name The name of the table name column in `.df`.
 #'                       Default is `PFUPipelineTools::hashed_table_colnames$db_table_name`.
 #' @param .pk_col The name of the primary key column in a primary key table.
 #'                See `PFUPipelineTools::dm_pk_colnames`.
@@ -451,6 +451,7 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 pl_upsert <- function(.df,
                       conn,
                       db_table_name = NULL,
+                      hash_group_cols = PFUPipelineTools::hash_group_cols,
                       in_place = FALSE,
                       encode_fks = TRUE,
                       schema = schema_from_conn(conn),
@@ -464,6 +465,9 @@ pl_upsert <- function(.df,
   if (is.null(db_table_name)) {
     db_table_name <- .df[[.db_table_name]] |>
       unique()
+    if (length(db_table_name) != 1) {
+      stop("length(db_table_name) must be 1 in pl_upsert()")
+    }
   }
 
   # Eliminate the .db_table_name column if it exists.
@@ -480,14 +484,14 @@ pl_upsert <- function(.df,
                                        db_table_name,
                                        "' has ", nrow(pk_table),
                                        " primary keys. 1 is required."))
-  # Get the primary key name as a string
+  # Get the primary key name as a string for later use in the upsert command
   pk_str <- pk_table |>
     # .pk_col is the name of the column of primary key names
     # in the tibble returned by dm::dm_get_all_pks()
     magrittr::extract2(.pk_col) |>
     magrittr::extract2(1)
 
-  # Replace fk column values in .df with integer keys, if needed.
+  # Encode fk column values in .df with integer keys, if requested.
   if (encode_fks) {
     .df <- .df |>
       encode_fks(db_table_name = db_table_name,

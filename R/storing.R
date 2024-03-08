@@ -55,7 +55,7 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 }
 
 
-#' Calculate has of pipeline data
+#' Calculate hash of pipeline data
 #'
 #' In the CL-PFU database pipeline,
 #' we need the ability to download a
@@ -71,7 +71,7 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 #' The uploaded data frames may be created by
 #' grouped calculations,
 #' so some columns are likely to have only one unique value.
-#' We need to know retain data of those single-valued columns
+#' We need to retain data of those single-valued columns
 #' as well as the name of the database table.
 #'
 #' To meet those requirements,
@@ -81,10 +81,15 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 #'   - The first column (named with the value of `.table_name_col`)
 #'     contains the value of `table_name`, the name
 #'     of the database table where `.df` is stored.
-#'   - The second through N-1 columns are others with only one unique value.
+#'   - The second through N-1 columns are those specified by
+#'     `hash_group_cols` when `hash_group_cols` is not `NULL` (the default) or
+#'     or columns with only one unique value
+#'     (when `hash_group_cols` is `NULL`, the default).
 #'   - The Nth column (named with the value of `.nested_col`)
 #'     contains a hash of a data frame created by nesting
-#'     all columns with more than one unique value.
+#'     by `hash_group_cols` or by
+#'     all columns with more than one unique value
+#'     (when `hash_group_cols` is `NULL`).
 #'
 #' The return value serves as a "ticket" with which
 #' data can be retrieved from the database at a later time.
@@ -95,11 +100,16 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 #'
 #' @param .df The data frame to be stored in the database.
 #' @param table_name The name of the table in which `.df` will be stored.
+#' @param hash_group_cols The columns by which `.df` will be grouped
+#'                        before making the hash column.
+#'                        Default is `NULL`, meaning that grouping will be
+#'                        done on all columns that contain only 1 unique value.
+#'                        See details.
 #' @param .table_name_col The name of the column of the output that contains `table_name` on output.
 #'                        Default is `PFUPipelineTools::hashed_table_colnames$db_table_name`.
 #' @param .nested_col The name of the column of the output that contains
-#'                         nested data.
-#'                         Default is `PFUPipelineTools::hashed_table_colnames$nested_col_name`.
+#'                     nested data.
+#'                     Default is `PFUPipelineTools::hashed_table_colnames$nested_col_name`.
 #' @param .nested_hash_col The name of the column of the output that contains
 #'                         the hash of nested columns.
 #'                         Default is `PFUPipelineTools::hashed_table_colnames$nested_hash_col_name`.
@@ -111,6 +121,7 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 #' @export
 pl_hash <- function(.df,
                     table_name,
+                    hash_group_cols = NULL,
                     .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
                     .nested_col = PFUPipelineTools::hashed_table_colnames$nested_col_name,
                     .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_col_name,
@@ -123,16 +134,18 @@ pl_hash <- function(.df,
     # Move the table name column to the left of the data frame
     dplyr::relocate(dplyr::all_of(.table_name_col))
 
-  # Figure out names of columns that have only 1 unique value.
-  single_value_cols <- out |>
-    sapply(function(this_col) {
-      length(unique(this_col)) == 1
-    })
-  single_value_col_names <- names(single_value_cols[single_value_cols])
+  if (is.null(hash_group_cols)) {
+    # Figure out names of columns that have only 1 unique value.
+    single_value_cols <- out |>
+      sapply(function(this_col) {
+        length(unique(this_col)) == 1
+      })
+    hash_group_cols <- names(single_value_cols[single_value_cols])
+  }
 
   out |>
     # Group by single_value_cols
-    dplyr::group_by(dplyr::across(dplyr::all_of(single_value_col_names))) |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(hash_group_cols))) |>
     # Nest
     tidyr::nest(.key = .nested_col) |>
     # Calculate hash

@@ -2,11 +2,12 @@
 % Please edit documentation in R/storing.R
 \name{pl_hash}
 \alias{pl_hash}
-\title{Calculate has of pipeline data}
+\title{Calculate hash of pipeline data}
 \usage{
 pl_hash(
   .df,
   table_name,
+  hash_group_cols = NULL,
   .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
   .nested_col = PFUPipelineTools::hashed_table_colnames$nested_col_name,
   .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_col_name,
@@ -17,6 +18,12 @@ pl_hash(
 \item{.df}{The data frame to be stored in the database.}
 
 \item{table_name}{The name of the table in which \code{.df} will be stored.}
+
+\item{hash_group_cols}{The columns by which \code{.df} will be grouped
+before making the hash column.
+Default is \code{NULL}, meaning that grouping will be
+done on all columns that contain only 1 unique value.
+See details.}
 
 \item{.table_name_col}{The name of the column of the output that contains \code{table_name} on output.
 Default is \code{PFUPipelineTools::hashed_table_colnames$db_table_name}.}
@@ -52,7 +59,7 @@ The hash has two requirements:
 The uploaded data frames may be created by
 grouped calculations,
 so some columns are likely to have only one unique value.
-We need to know retain data of those single-valued columns
+We need to retain data of those single-valued columns
 as well as the name of the database table.
 
 To meet those requirements,
@@ -62,10 +69,15 @@ has the following characteristics:
 \item The first column (named with the value of \code{.table_name_col})
 contains the value of \code{table_name}, the name
 of the database table where \code{.df} is stored.
-\item The second through N-1 columns are others with only one unique value.
+\item The second through N-1 columns are those specified by
+\code{hash_group_cols} when \code{hash_group_cols} is not \code{NULL} (the default) or
+or columns with only one unique value
+(when \code{hash_group_cols} is \code{NULL}, the default).
 \item The Nth column (named with the value of \code{.nested_col})
 contains a hash of a data frame created by nesting
-all columns with more than one unique value.
+by \code{hash_group_cols} or by
+all columns with more than one unique value
+(when \code{hash_group_cols} is \code{NULL}).
 }
 
 The return value serves as a "ticket" with which

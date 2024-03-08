@@ -256,3 +256,22 @@
 "dataset_info"
 
 
+#' Columns to be preserved when hashing target uploads
+#'
+#' A string list containing names of columns to preserved on upload.
+#'
+#' @format A string list with `r length(hash_group_cols)` entries.
+#' \describe{
+#' \item{dataset}{The string name of the dataset column.}
+#' \item{country}{The string name of the country column.}
+#' \item{method}{The string name of the method column.}
+#' \item{year}{The string name of the year column.}
+#' \item{last_stage}{The string name of the last_stage column.}
+#' \item{energy_type}{The string name of the energy_type column.}
+#' }
+#'
+#' @examples
+#' hash_group_cols
+"hash_group_cols"
+
+
