@@ -468,9 +468,9 @@ pl_upsert <- function(.df,
   if (is.null(db_table_name)) {
     db_table_name <- .df[[.db_table_name]] |>
       unique()
-    if (length(db_table_name) != 1) {
-      stop("length(db_table_name) must be 1 in pl_upsert()")
-    }
+  }
+  if (length(db_table_name) != 1) {
+    stop("length(db_table_name) must be 1 in pl_upsert()")
   }
 
   # Eliminate the .db_table_name column if it exists.
