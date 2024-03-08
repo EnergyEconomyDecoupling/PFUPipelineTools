@@ -42,8 +42,7 @@ Inboard copying of tables is much faster than round-tripping
 data from the database to the local machine and back.
 This function does an inboard filter and copy
 from \code{source} to \code{dest} in \code{conn},
-optionally emptying \code{dest} first, and
-optionally adding a \code{tar_group} column.
+optionally emptying \code{dest} first.
 }
 \details{
 The \code{source} and \code{dest} tables should have identical columns.
