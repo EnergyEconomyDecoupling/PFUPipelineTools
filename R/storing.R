@@ -141,6 +141,10 @@ pl_hash <- function(.df,
         length(unique(this_col)) == 1
       })
     hash_group_cols <- names(single_value_cols[single_value_cols])
+  } else {
+    # Eliminate any strings that don't have a corresponding column in .df
+    cols_not_present <- setdiff(colnames(.df), hash_group_cols)
+    hash_group_cols <- setdiff(colnames(.df), cols_not_present)
   }
 
   out |>

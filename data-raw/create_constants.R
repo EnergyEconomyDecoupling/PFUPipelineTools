@@ -362,11 +362,11 @@ usethis::use_data(dataset_info, overwrite = TRUE)
 
 # Decide hash groups -----------------------------------------------------------
 
-hash_group_cols <- list(dataset = dataset_info$dataset_colname,
-                        country = IEATools::iea_cols$country,
-                        method = IEATools::iea_cols$method,
-                        year = IEATools::iea_cols$year,
-                        last_stage = IEATools::iea_cols$last_stage,
-                        energy_type = IEATools::iea_cols$energy_type)
+hash_group_cols <- c(dataset = dataset_info$dataset_colname,
+                     country = IEATools::iea_cols$country,
+                     method = IEATools::iea_cols$method,
+                     year = IEATools::iea_cols$year,
+                     last_stage = IEATools::iea_cols$last_stage,
+                     energy_type = IEATools::iea_cols$energy_type)
 usethis::use_data(hash_group_cols, overwrite = TRUE)
 
