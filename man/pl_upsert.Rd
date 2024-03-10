@@ -8,7 +8,7 @@ pl_upsert(
   .df,
   conn,
   db_table_name = NULL,
-  additional_hash_group_cols = PFUPipelineTools::hash_group_cols,
+  additional_hash_group_cols = PFUPipelineTools::additional_hash_group_cols,
   in_place = FALSE,
   encode_fks = TRUE,
   schema = schema_from_conn(conn),

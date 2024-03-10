@@ -11,6 +11,7 @@ inboard_filter_copy(
   years,
   empty_dest = TRUE,
   in_place = FALSE,
+  additional_hash_group_cols = PFUPipelineTools::additional_hash_group_cols,
   conn,
   schema = schema_from_conn(conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
@@ -43,7 +44,8 @@ Default is \code{IEATools::iea_cols$country}.}
 Default is \code{IEATools::iea_cols$year}.}
 }
 \value{
-\code{TRUE} if successful. An error if not.
+A hash of the destination data frame
+created by \code{\link[=pl_upsert]{pl_upsert()}}.
 }
 \description{
 Inboard copying of tables is much faster than round-tripping

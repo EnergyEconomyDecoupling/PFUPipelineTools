@@ -82,3 +82,6 @@ are retrieved by name when needed.
 An appropriate value for \code{fk_parent_tables} can be obtained
 from \code{get_all_fk_tables()}.
 }
+\seealso{
+\code{\link[=encode_fks]{encode_fks()}} for the reverse operation.
+}

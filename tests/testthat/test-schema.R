@@ -220,7 +220,7 @@ test_that("decode_fks() works as expected", {
 })
 
 
-test_that("decode_fks() works with tbls", {
+test_that("decode_fks() and encode_fks() work with tbls", {
   skip_on_ci()
   skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
@@ -240,6 +240,9 @@ test_that("decode_fks() works with tbls", {
               db_table_name = "MemberRole",
               in_place = TRUE)
   schema <- schema_from_conn(conn)
+  # This next call should download MemberRole as a tbl, because
+  # (a) .df is not specified and
+  # (b) collect = FALSE (the default)
   decoded_tbl <- decode_fks(db_table_name = "MemberRole",
                             conn = conn,
                             schema = schema)
@@ -250,6 +253,17 @@ test_that("decode_fks() works with tbls", {
                                "Paul McCartney", "Bassist",
                                "George Harrison", "Guitarist",
                                "Ringo Starr", "Drummer"))
+
+  # At this point, decoded_tbl is a tbl.
+  # Try to encode it
+  re_encoded_tbl <- encode_fks(decoded_tbl,
+             db_table_name = "MemberRole",
+             conn = conn)
+  expect_true(dplyr::is.tbl(re_encoded_tbl))
+  expect_equal(dplyr::collect(re_encoded_tbl) |>
+                 dplyr::arrange(Member),
+               tibble::tibble(Member = as.integer(1:4),
+                              Role = as.integer(1:4)))
 
   # Clean up after ourselves
   PFUPipelineTools:::clean_up_beatles(conn)

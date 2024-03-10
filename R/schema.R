@@ -454,7 +454,7 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 pl_upsert <- function(.df,
                       conn,
                       db_table_name = NULL,
-                      additional_hash_group_cols = PFUPipelineTools::hash_group_cols,
+                      additional_hash_group_cols = PFUPipelineTools::additional_hash_group_cols,
                       in_place = FALSE,
                       encode_fks = TRUE,
                       schema = schema_from_conn(conn),
@@ -481,7 +481,7 @@ pl_upsert <- function(.df,
     )
 
   pk_table <- dm::dm_get_all_pks(schema, table = dplyr::all_of({{db_table_name}}))
-  # Make sure we have one and only one primary key column
+  # Make sure we have one and only one primary key row
   assertthat::assert_that(nrow(pk_table) == 1,
                           msg = paste0("Table '",
                                        db_table_name,
@@ -626,10 +626,22 @@ encode_fks <- function(.df,
       unlist() |>
       unname()
     # Redo the table
+    # encoded_df <- encoded_df |>
+    #   dplyr::mutate(
+    #     "{this_fk_col_in_df}" := factor(.data[[this_fk_col_in_df]], levels = fk_levels),
+    #     "{this_fk_col_in_df}" := as.integer(.data[[this_fk_col_in_df]])
+    #   )
+    # Get the parent foreign key table for this_fk_col_in_df
+    this_fk_col_parent_table <- fk_parent_tables[[parent_table_name]]
+    # Redo the table
     encoded_df <- encoded_df |>
+      dplyr::left_join(this_fk_col_parent_table,
+                       by = parent_table_fk_value_colname) |>
       dplyr::mutate(
-        "{this_fk_col_in_df}" := factor(.data[[this_fk_col_in_df]], levels = fk_levels),
-        "{this_fk_col_in_df}" := as.integer(.data[[this_fk_col_in_df]])
+        "{parent_table_fk_value_colname}" := NULL
+      ) |>
+      dplyr::rename(
+        "{parent_table_fk_value_colname}" := dplyr::all_of(parent_table_fk_colname)
       )
     # Check for errors and provide a nice message if there is a problem.
     if (any(is.na(encoded_df[[this_fk_col_in_df]]))) {
@@ -717,6 +729,8 @@ encode_fks <- function(.df,
 #'                          Default is ".y".
 #'
 #' @return A version of `.df` with integer keys replaced by key values.
+#'
+#' @seealso [encode_fks()] for the reverse operation.
 #'
 #' @export
 decode_fks <- function(.df = NULL,
