@@ -246,6 +246,12 @@ inboard_filter_copy <- function(source,
     # Filter by Year
     dplyr::semi_join(yearID_keep, by = year, copy = TRUE) |>
     # Now send to the database
+    #
+    #
+    # If we are lucky, this call will return a nice hash.
+    # Does it?
+    #
+    #
     pl_upsert(conn = conn,
               db_table_name = dest,
               additional_hash_group_cols = additional_hash_group_cols,
