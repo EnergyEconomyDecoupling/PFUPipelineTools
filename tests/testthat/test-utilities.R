@@ -102,3 +102,28 @@ test_that("encode_fk_values() works as expected", {
                                 fk_parent_tables = fk_parent_tables),
                regexp = "Unknown fk values in encode_fk_values")
 })
+
+
+test_that("decode_fk_keys() works as expected", {
+  fk_parent_tables <- list(Country = data.frame(CountryID = as.integer(c(1, 2, 3)),
+                                                Country = c("USA", "ZAF", "GHA")))
+  res <- decode_fk_keys(c(1, 1, 3),
+                        fk_table_name = "Country",
+                        fk_parent_tables = fk_parent_tables)
+  expect_equal(res, c("USA", "USA", "GHA"))
+  # Try with only one country
+  expect_equal(decode_fk_keys(2,
+                              fk_table_name = "Country",
+                              fk_parent_tables = fk_parent_tables),
+               "ZAF")
+  # Try with an unknown country
+  expect_error(decode_fk_keys(5,
+                              fk_table_name = "Country",
+                              fk_parent_tables = fk_parent_tables),
+               regexp = "Unknown fk keys in decode_fk_values")
+  # Try with unknown countries
+  expect_error(decode_fk_keys(c(42, 43),
+                              fk_table_name = "Country",
+                              fk_parent_tables = fk_parent_tables),
+               regexp = "Unknown fk keys in decode_fk_values")
+})

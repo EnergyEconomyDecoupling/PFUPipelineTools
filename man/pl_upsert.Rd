@@ -31,7 +31,7 @@ will be taken from the \code{.db_table_name} column of \code{.df}.}
 \item{additional_hash_group_cols}{A vector or list of additional columns
 by which \code{.df} will be grouped
 before hashing.
-Default is \code{PFUPipelineTools::hash_group_cols}.
+Default is \code{PFUPipelineTools::additional_hash_group_cols}.
 Set to \code{NULL} to group by all columns
 with only 1 unique value.}
 
@@ -85,8 +85,9 @@ before uploading.
 The output of this function is a special data frame that
 contains the following columns:
 \itemize{
-\item All columns in \code{.df} also given in \code{hash_group_cols}
-(default \code{PFUPipelineTools::hash_group_cols}).
+\item All single-valued columns columns in \code{.df} and
+columns given in \code{additional_hash_group_cols}
+(default \code{PFUPipelineTools::additional_hash_group_cols}).
 \item Hash: A column with a hash of all non-foreign-key columns.
 }
 

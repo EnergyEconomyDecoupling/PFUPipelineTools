@@ -388,8 +388,9 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #' The output of this function is a special data frame that
 #' contains the following columns:
 #'
-#'   * All columns in `.df` also given in `hash_group_cols`
-#'     (default `PFUPipelineTools::hash_group_cols`).
+#'   * All single-valued columns columns in `.df` and
+#'     columns given in `additional_hash_group_cols`
+#'     (default `PFUPipelineTools::additional_hash_group_cols`).
 #'   * Hash: A column with a hash of all non-foreign-key columns.
 #'
 #' `schema` is a data model (`dm` object) for the database in `conn`.
@@ -424,7 +425,7 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #' @param additional_hash_group_cols A vector or list of additional columns
 #'                                   by which `.df` will be grouped
 #'                                   before hashing.
-#'                                   Default is `PFUPipelineTools::hash_group_cols`.
+#'                                   Default is `PFUPipelineTools::additional_hash_group_cols`.
 #'                                   Set to `NULL` to group by all columns
 #'                                   with only 1 unique value.
 #' @param in_place A boolean that tells whether to modify the database at `conn`.
@@ -510,7 +511,7 @@ pl_upsert <- function(.df,
   # Return a hash of .df
   .df |>
     pl_hash(table_name = db_table_name,
-            additional_hash_group_cols = hash_group_cols)
+            additional_hash_group_cols = additional_hash_group_cols)
 }
 
 

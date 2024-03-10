@@ -3,6 +3,7 @@
 export("%>%")
 export(":=")
 export(.data)
+export(decode_fk_keys)
 export(decode_fks)
 export(encode_fk_values)
 export(encode_fks)

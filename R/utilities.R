@@ -228,6 +228,12 @@ inboard_filter_copy <- function(source,
   # Get the fk parent tables for Country and Year
   fk_table_country <- fk_parent_tables[[country]]
   fk_table_year <- fk_parent_tables[[year]]
+
+  # encode countries and years
+  # filter by encoded values in source_tbl
+  # pl_upsert
+
+
   # Filter each
   countryID_keep <- fk_table_country |>
     dplyr::filter(.data[[country]] %in% countries)
@@ -250,11 +256,11 @@ inboard_filter_copy <- function(source,
 }
 
 
-#' Encode a vector of strings according to foreign key parent tables
+#' Encode a vector of foreign key values according to a foreign key parent table
 #'
 #' In a database, there are foreign key tables
 #' containing fk values (usually strings) and fk keys (usually integers).
-#' This function converts a vector of fk values (strings, `v`)
+#' This function converts a vector of fk values (strings, `v_val`)
 #' into a vector fk keys (integers) according to the
 #' database at `conn`.
 #'
@@ -278,8 +284,8 @@ inboard_filter_copy <- function(source,
 #' and pass the list to the `fk_parent_tables` argument
 #' of this function.
 #'
-#' @param v A vector of fk values (typically strings) to be converted
-#'          to fk values.
+#' @param v_val A vector of fk values (typically strings) to be converted
+#'              to fk keys (typically integers).
 #' @param fk_table_name The name of the fordign key table in `conn`
 #'                      that contains the mapping from fk values
 #'                      to fk keys.
@@ -296,12 +302,20 @@ inboard_filter_copy <- function(source,
 #'                  primary key columns.
 #'                  Default is `PFUPipelineTools::key_col_info$pk_suffix`.
 #'
-#' @return `v` encoded according to
+#' @return `v_val` encoded according to `fk_parent_tables`.
 #'
 #' @export
 #'
 #' @examples
-encode_fk_values <- function(v,
+#' fk_parent_tables <- list(
+#'   Country = tibble::tribble(~CountryID, ~Country,
+#'                             1, "USA",
+#'                             2, "ZAF",
+#'                             3, "GHA"))
+#' encode_fk_values(c("USA", "USA", "GHA"),
+#'                  fk_table_name = "Country",
+#'                  fk_parent_tables = fk_parent_tables)
+encode_fk_values <- function(v_val,
                              fk_table_name,
                              conn,
                              schema = schema_from_conn(conn),
@@ -314,21 +328,114 @@ encode_fk_values <- function(v,
   fk_key_col_in_fk_table_name <- paste0(fk_value_col_in_fk_table_name, pk_suffix)
   # Get the foreign key parent table
   this_fk_parent_table <- fk_parent_tables[[fk_table_name]]
-  # Make a data frame from v
-  out <- data.frame(v) |>
+  # Make a data frame from v_val
+  out <- data.frame(v_val) |>
     # Set the colname to be the name of the fk value column.
     setNames(fk_value_col_in_fk_table_name) |>
     # Join with the fk parent table
-    dplyr::left_join(this_fk_parent_table, by = fk_table_name) |>
+    dplyr::left_join(this_fk_parent_table, by = fk_value_col_in_fk_table_name) |>
     # Extract the column that we want to return
     magrittr::extract2(fk_key_col_in_fk_table_name)
   # Check for errors
   errs <- which(is.na(out), arr.ind = TRUE)
   if (length(errs) != 0) {
-    bad_v <- v[errs]
+    bad_v_val <- v_val[errs]
 
     err_msg <- paste0("Unknown fk values in encode_fk_values():\n",
-                      paste0(bad_v, collapse = ", "))
+                      paste0(bad_v_val, collapse = ", "))
+    stop(err_msg)
+  }
+  out
+}
+
+
+#' Decode a vector of foreign keys according to foreign key parent table
+#'
+#' In a database, there are foreign key tables
+#' containing fk values (usually strings) and fk keys (usually integers).
+#' This function converts a vector of fk keys (integers, `v_key`)
+#' into a vector fk values (strings) according to the
+#' database at `conn`.
+#'
+#' `schema` is a data model (`dm` object) for the database in `conn`.
+#' Its default value (`schema_from_conn(conn)`)
+#' extracts the data model for the database at `conn` automatically.
+#' However, if the caller already has the data model,
+#' supplying it in the `schema` argument will save time.
+#'
+#' `fk_parent_tables` is a named list of tables,
+#' one of which (the one named `fk_table_name`)
+#' contains the foreign keys `v`.
+#' `fk_parent_tables` is treated as a store from which foreign key tables
+#' are retrieved by name when needed.
+#' The default value (which calls `get_all_fk_tables()`
+#' with `collect = TRUE`)
+#' retrieves all possible foreign key parent tables from `conn`,
+#' potentially a time-consuming process.
+#' For speed, pre-compute all foreign key parent tables once
+#' (via `get_all_fk_tables(collect = TRUE)`)
+#' and pass the list to the `fk_parent_tables` argument
+#' of this function.
+#'
+#' @param v_key A vector of fk keys (typically integers) to be converted
+#'          to fk values (typically strings).
+#' @param fk_table_name The name of the fordign key table in `conn`
+#'                      that contains the mapping from fk values
+#'                      to fk keys.
+#' @param conn A connection to the CL-PFU database.
+#'             Needed only if `fk_parent_tables` is not provided.
+#' @param schema The data model (`dm` object) for the database in `conn`.
+#'               Default is `dm_from_con(conn, learn_keys = TRUE)`.
+#'               Needed only if `fk_parent_tables` is not provided.
+#'               See details.
+#' @param fk_parent_tables A named list of all parent tables
+#'                         for the foreign keys in `db_table_name`.
+#'                         See details.
+#' @param pk_suffix A string that gives the suffix for
+#'                  primary key columns.
+#'                  Default is `PFUPipelineTools::key_col_info$pk_suffix`.
+#'
+#' @return `v_key` decoded according to `fk_parent_tables`.
+#'
+#' @export
+#'
+#' @examples
+#' fk_parent_tables <- list(
+#'   Country = tibble::tribble(~CountryID, ~Country,
+#'                             1, "USA",
+#'                             2, "ZAF",
+#'                             3, "GHA"))
+#' decode_fk_values(c(1, 1, 3),
+#'                  fk_table_name = "Country",
+#'                  fk_parent_tables = fk_parent_tables)
+decode_fk_keys <- function(v_key,
+                           fk_table_name,
+                           conn,
+                           schema = schema_from_conn(conn),
+                           fk_parent_tables = get_all_fk_tables(conn = conn,
+                                                                schema = schema,
+                                                                collect = TRUE),
+                           pk_suffix = PFUPipelineTools::key_col_info$pk_suffix) {
+  # Establish column names in the foreign key table (fk_table_name)
+  fk_value_col_in_fk_table_name <- fk_table_name
+  fk_key_col_in_fk_table_name <- paste0(fk_value_col_in_fk_table_name, pk_suffix)
+  # Get the foreign key parent table
+  this_fk_parent_table <- fk_parent_tables[[fk_table_name]]
+  # Make a data frame from v_key
+  out <- data.frame(v_key) |>
+    # Set the colname to be the name of the fk key column.
+    setNames(fk_key_col_in_fk_table_name) |>
+    # Join with the fk parent table
+    dplyr::left_join(this_fk_parent_table, by = fk_key_col_in_fk_table_name) |>
+    # Extract the column that we want to return
+    magrittr::extract2(fk_value_col_in_fk_table_name)
+  # Check for errors
+  errs <- which(is.na(out), arr.ind = TRUE)
+  if (length(errs) != 0) {
+    bad_v_key <- v_key[errs]
+
+    err_msg <- paste0("Unknown fk keys in decode_fk_values():\n",
+                      paste0(bad_v_key, collapse = ", "))
     stop(err_msg)
   }
   out
