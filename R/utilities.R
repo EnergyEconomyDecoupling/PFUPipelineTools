@@ -225,37 +225,26 @@ inboard_filter_copy <- function(source,
   cnames_dest <- colnames(dest_tbl)
   stopifnot(all(cnames_source %in% cnames_dest))
 
-  # Get the fk parent tables for Country and Year
-  fk_table_country <- fk_parent_tables[[country]]
-  fk_table_year <- fk_parent_tables[[year]]
-
-  # encode countries and years
-  # filter by encoded values in source_tbl
-  # pl_upsert
-
-
-  # Filter each
-  countryID_keep <- fk_table_country |>
-    dplyr::filter(.data[[country]] %in% countries)
-  yearID_keep <- fk_table_year |>
-    dplyr::filter(.data[[year]] %in% years)
+  # Work on countries
+  countries_encoded <- encode_fk_values(countries,
+                                        fk_table_name = country,
+                                        fk_parent_tables = fk_parent_tables)
+  years_encoded <- encode_fk_values(years,
+                                    fk_table_name = year,
+                                    fk_parent_tables = fk_parent_tables)
 
   source_tbl |>
-    # Filter by Country
-    dplyr::semi_join(countryID_keep, by = country, copy = TRUE) |>
-    # Filter by Year
-    dplyr::semi_join(yearID_keep, by = year, copy = TRUE) |>
+    # Filter by encoded countries
+    dplyr::filter(
+      .data[[country]] %in% countries_encoded,
+      .data[[year]] %in% years_encoded
+    ) |>
     # Now send to the database
-    #
-    #
-    # If we are lucky, this call will return a nice hash.
-    # Does it?
-    #
-    #
     pl_upsert(conn = conn,
               db_table_name = dest,
               additional_hash_group_cols = additional_hash_group_cols,
-              encode_fks = TRUE,
+              # Don't need to encode fks, because fks are already encoded.
+              encode_fks = FALSE,
               in_place = in_place,
               schema = schema,
               fk_parent_tables = fk_parent_tables)
