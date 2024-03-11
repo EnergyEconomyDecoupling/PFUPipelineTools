@@ -292,6 +292,17 @@ inboard_filter_copy <- function(source,
 
 
 
+  # SELECT
+  # "Country",
+  # md5(jsonb_build_object(
+  #   'Year', jsonb_agg("Year"),
+  #   'X', jsonb_agg("X")
+  # )::text) AS "NestedColumn"
+  # FROM
+  # "source"
+  # GROUP BY
+  # "Country";
+
 
 
 }
