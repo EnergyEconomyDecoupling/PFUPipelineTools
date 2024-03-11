@@ -302,6 +302,15 @@ inboard_filter_copy <- function(source,
   # "source"
   # GROUP BY
   # "Country";
+  #
+  # SELECT
+  # Country,
+  # array_agg(Year) AS Years,
+  # array_agg(Value) AS Values
+  # FROM
+  # source
+  # GROUP BY
+  # Country;
 
 
 
