@@ -7,8 +7,8 @@
 inboard_filter_copy(
   source,
   dest,
-  countries,
-  years,
+  countries = NULL,
+  years = NULL,
   empty_dest = TRUE,
   in_place = FALSE,
   additional_hash_group_cols = PFUPipelineTools::additional_hash_group_cols,

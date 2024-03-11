@@ -185,8 +185,8 @@ clean_up_beatles <- function(conn) {
 #' @export
 inboard_filter_copy <- function(source,
                                 dest,
-                                countries,
-                                years,
+                                countries = NULL,
+                                years = NULL,
                                 empty_dest = TRUE,
                                 in_place = FALSE,
                                 additional_hash_group_cols = PFUPipelineTools::additional_hash_group_cols,
@@ -219,35 +219,81 @@ inboard_filter_copy <- function(source,
   #
   # DBI::dbExecute(conn, insert_rows_stmt)
 
-  source_tbl <- dplyr::tbl(conn, source)
-  dest_tbl <- dplyr::tbl(conn, dest)
-  cnames_source <- colnames(source_tbl)
-  cnames_dest <- colnames(dest_tbl)
-  stopifnot(all(cnames_source %in% cnames_dest))
+  # source_tbl <- dplyr::tbl(conn, source)
+  # dest_tbl <- dplyr::tbl(conn, dest)
+  # cnames_source <- colnames(source_tbl)
+  # cnames_dest <- colnames(dest_tbl)
+  # stopifnot(all(cnames_source %in% cnames_dest))
+  #
+  # # Work on countries
+  # countries_encoded <- encode_fk_values(countries,
+  #                                       fk_table_name = country,
+  #                                       fk_parent_tables = fk_parent_tables)
+  # years_encoded <- encode_fk_values(years,
+  #                                   fk_table_name = year,
+  #                                   fk_parent_tables = fk_parent_tables)
+  #
+  # source_tbl |>
+  #   # Filter by encoded countries
+  #   dplyr::filter(
+  #     .data[[country]] %in% countries_encoded,
+  #     .data[[year]] %in% years_encoded
+  #   ) |>
+  #   # Now send to the database
+  #   pl_upsert(conn = conn,
+  #             db_table_name = dest,
+  #             additional_hash_group_cols = additional_hash_group_cols,
+  #             # Don't need to encode fks, because fks are already encoded.
+  #             encode_fks = FALSE,
+  #             in_place = in_place,
+  #             schema = schema,
+  #             fk_parent_tables = fk_parent_tables)
 
-  # Work on countries
-  countries_encoded <- encode_fk_values(countries,
-                                        fk_table_name = country,
-                                        fk_parent_tables = fk_parent_tables)
-  years_encoded <- encode_fk_values(years,
-                                    fk_table_name = year,
-                                    fk_parent_tables = fk_parent_tables)
 
-  source_tbl |>
-    # Filter by encoded countries
-    dplyr::filter(
-      .data[[country]] %in% countries_encoded,
-      .data[[year]] %in% years_encoded
-    ) |>
-    # Now send to the database
-    pl_upsert(conn = conn,
-              db_table_name = dest,
-              additional_hash_group_cols = additional_hash_group_cols,
-              # Don't need to encode fks, because fks are already encoded.
-              encode_fks = FALSE,
-              in_place = in_place,
-              schema = schema,
-              fk_parent_tables = fk_parent_tables)
+
+  # Here is an example SQL query that will successfully
+  # copy selected rows from source to dest.
+  # INSERT INTO dest
+  # SELECT *
+  # FROM source
+  # WHERE Country IN (1, 3) AND Year = 1972;
+
+  # Build clauses with code
+
+  insert_into <- paste0('INSERT INTO "', dest, '" ')
+  select <- 'SELECT * '
+  from_source <- paste0('FROM "', source, '" ')
+
+  country_clause <- NULL
+  if (!is.null(countries)) {
+    countries_encoded <- encode_fk_values(countries,
+                                          fk_table_name = country,
+                                          fk_parent_tables = fk_parent_tables)
+    countries_string <- paste0("(", paste0(countries_encoded, collapse = ", "), ")")
+
+    country_clause <- paste0('"', country, '" IN ', countries_string)
+  }
+  years_clause <- NULL
+  if (!is.null(years)) {
+    years_encoded <- encode_fk_values(years,
+                                      fk_table_name = year,
+                                      fk_parent_tables = fk_parent_tables)
+    years_string <- paste0("(", paste0(years_encoded, collapse = ", "), ")")
+    years_clause <- paste0('"', year, '" IN ', years_string)
+  }
+
+  where_clause <- paste0('WHERE ', paste0(c(country_clause, years_clause), collapse = ' AND '))
+
+  stmt <- paste0(insert_into, select, from_source, where_clause)
+
+  DBI::dbSendQuery(conn, stmt)
+
+  # Download a hash table of the dest table and return it.
+
+
+
+
+
 }
 
 
