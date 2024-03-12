@@ -6,8 +6,9 @@
 \usage{
 pl_hash(
   .df,
-  table_name,
+  table_name = NULL,
   additional_hash_group_cols = NULL,
+  conn,
   .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
   .nested_col = PFUPipelineTools::hashed_table_colnames$nested_col_name,
   .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_col_name,
@@ -15,15 +16,21 @@ pl_hash(
 )
 }
 \arguments{
-\item{.df}{The data frame to be stored in the database.}
+\item{.df}{A data frame to be stored in the database or
+a \code{tbl} for a table in a remote database.}
 
-\item{table_name}{The name of the table in which \code{.df} will be stored.}
+\item{table_name}{The name of the table in which \code{.df} will be stored.
+This argument can be \code{NULL} (the default)
+if \code{.table_name_col} is present in \code{.df}.}
 
 \item{additional_hash_group_cols}{The additional columns by which \code{.df} will be grouped
 before making the \code{.nested_hash_col} hash column.
 Default is \code{NULL}, meaning that grouping will be
 done on all columns that contain only 1 unique value.
 See details.}
+
+\item{conn}{A connection to a database.
+Necessary only if \code{.df} is a \code{.tbl}.}
 
 \item{.table_name_col}{The name of the column of the output that contains \code{table_name} on output.
 Default is \code{PFUPipelineTools::hashed_table_colnames$db_table_name}.}
@@ -87,4 +94,12 @@ When data are withdrawn from the database,
 the first column can be removed, and
 the other columns with one unique value
 can be used to filter \code{table_name}.
+
+Internally, this function switches on the result of \code{\link[dplyr:tbl]{dplyr::is.tbl()}}.
+When \code{TRUE}, a hashed version of the table is downloaded.
+When \code{FALSE}, a hashed version of the table is calculated.
+Both approaches use the \code{md5} hashing algorithm.
+
+If the \code{.table_name_column} is not present in \code{.df},
+it is added internally, filled with the value of \code{table_column}.
 }
