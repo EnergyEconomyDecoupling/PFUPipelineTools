@@ -313,7 +313,9 @@ inboard_filter_copy <- function(source,
   # Country;
 
 
-  # Probably want to use DBI::dbGetQuery() to fetch these results
+  # Probably want to use DBI::dbGetQuery() to fetch these results.
+  # Also, put this code in its own function, perhaps called
+  # pl_download_hash()
 
 }
 
