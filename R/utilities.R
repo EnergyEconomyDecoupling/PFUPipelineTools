@@ -313,6 +313,7 @@ inboard_filter_copy <- function(source,
   # Country;
 
 
+  # Probably want to use DBI::dbGetQuery() to fetch these results
 
 }
 
