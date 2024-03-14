@@ -369,14 +369,15 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #'
 #' Upserts
 #' (inserts or updates,
-#' depending on whether the information already exists in `db_table_name`)
+#' depending on whether the private keys in `.df`
+#' already exist in `db_table_name`)
 #' `.df` into `db_table_name` at `conn`.
-#' This function decodes foreign keys, when possible,
-#' by assuming that all keys are integers.
-#' If non-integers are provided in foreign key columns of `.df`,
-#' the non-integers will be recoded to the integer key values.
-#' Thus, this function assumes that the data model and schema
-#' already exists in `conn`.
+#'
+#' This function decodes foreign keys (fks), when possible,
+#' assuming that all fks are integers.
+#' If non-integers (typically, character strings)
+#' are provided in fk columns of `.df`,
+#' the non-integers will be recoded to their appropriate integer key values.
 #'
 #' This function knows about CL-PFU database tables that contain
 #' matrix information.
@@ -387,37 +388,46 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #' The output of this function is a special data frame that
 #' contains the following columns:
 #'
-#'     * CLPFUDBTable: A column of character strings,
-#'                     all with the value of `db_table_name`.
-#'     * All foreign key columns: With their integer values (to save space).
-#'     * Hash: A column with a hash of all non-foreign-key columns.
+#'   * All single-valued columns columns in `.df` and
+#'     columns given in `additional_hash_group_cols`
+#'     (default `PFUPipelineTools::additional_hash_group_cols`).
+#'   * Hash: A column with a hash of all non-foreign-key columns.
 #'
 #' `schema` is a data model (`dm` object) for the database in `conn`.
-#' Its default value (`dm_from_con(conn, learn_keys = TRUE)`)
+#' Its default value (`schema_from_conn(conn)`)
 #' extracts the data model for the database at `conn` automatically.
 #' However, if the caller already has the data model,
 #' supplying it in the `schema` argument will save time.
 #'
-#' `parent_tables` is a named list of tables,
+#' `fk_parent_tables` is a named list of tables,
 #' one of which (the one named `db_table_name`)
 #' contains the foreign keys for `db_table_name`.
-#' `parent_tables` is treated as a store from which foreign key tables
+#' `fk_parent_tables` is treated as a store from which foreign key tables
 #' are retrieved by name when needed.
-#' The default value (which is several lines of code)
-#' retrieves all possible foreign key parent tables from conn,
+#' The default value (which calls `get_all_fk_tables()`
+#' with `collect = TRUE` because decoding of foreign keys
+#' is done outboard of the database)
+#' retrieves all possible foreign key parent tables from `conn`,
 #' potentially a time-consuming process.
 #' For speed, pre-compute all foreign key parent tables once
-#' and pass the list to the `parent_tables` argument
-#' of all similar functions.
+#' (via `get_all_fk_tables(collect = TRUE)`)
+#' and pass the list to the `fk_parent_tables` argument
+#' of this function.
 #'
 #' The user in `conn` must have write access to the database.
 #'
 #' @param .df The data frame to be upserted.
 #' @param conn A connection to the CL-PFU database.
-#' @param db_table_name A string identifying the destination for `.df`,
-#'                      the name of a remote database table in `conn`.
+#' @param db_table_name A string identifying the destination for `.df` in `conn`,
+#'                      i.e. the name of a remote database table.
 #'                      Default is `NULL`, meaning that the value for this argument
 #'                      will be taken from the `.db_table_name` column of `.df`.
+#' @param additional_hash_group_cols A vector or list of additional columns
+#'                                   by which `.df` will be grouped
+#'                                   before hashing.
+#'                                   Default is `PFUPipelineTools::additional_hash_group_cols`.
+#'                                   Set to `NULL` to group by all columns
+#'                                   with only 1 unique value.
 #' @param in_place A boolean that tells whether to modify the database at `conn`.
 #'                 Default is `FALSE`, which is helpful if you want to chain
 #'                 several requests.
@@ -429,8 +439,7 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #' @param fk_parent_tables A named list of all parent tables
 #'                         for the foreign keys in `db_table_name`.
 #'                         See details.
-#' @param .db_table_name The name of the table name column in the uploaded
-#'                       data frame.
+#' @param .db_table_name The name of the table name column in `.df`.
 #'                       Default is `PFUPipelineTools::hashed_table_colnames$db_table_name`.
 #' @param .pk_col The name of the primary key column in a primary key table.
 #'                See `PFUPipelineTools::dm_pk_colnames`.
@@ -446,10 +455,13 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 pl_upsert <- function(.df,
                       conn,
                       db_table_name = NULL,
+                      additional_hash_group_cols = PFUPipelineTools::additional_hash_group_cols,
                       in_place = FALSE,
                       encode_fks = TRUE,
                       schema = schema_from_conn(conn),
-                      fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+                      fk_parent_tables = get_all_fk_tables(conn = conn,
+                                                           schema = schema,
+                                                           collect = TRUE),
                       .db_table_name = PFUPipelineTools::hashed_table_colnames$db_table_name,
                       .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col,
                       .algo = "md5") {
@@ -457,6 +469,9 @@ pl_upsert <- function(.df,
   if (is.null(db_table_name)) {
     db_table_name <- .df[[.db_table_name]] |>
       unique()
+  }
+  if (length(db_table_name) != 1) {
+    stop("length(db_table_name) must be 1 in pl_upsert()")
   }
 
   # Eliminate the .db_table_name column if it exists.
@@ -466,23 +481,21 @@ pl_upsert <- function(.df,
       "{.db_table_name}" := NULL
     )
 
-
-  # pk_table <- dm::dm_get_all_pks(schema, table = dplyr::all_of({{db_table_name}}))
   pk_table <- dm::dm_get_all_pks(schema, table = dplyr::all_of({{db_table_name}}))
-  # Make sure we have one and only one primary key column
+  # Make sure we have one and only one primary key row
   assertthat::assert_that(nrow(pk_table) == 1,
                           msg = paste0("Table '",
                                        db_table_name,
                                        "' has ", nrow(pk_table),
                                        " primary keys. 1 is required."))
-  # Get the primary key name as a string
+  # Get the primary key name as a string for later use in the upsert command
   pk_str <- pk_table |>
     # .pk_col is the name of the column of primary key names
     # in the tibble returned by dm::dm_get_all_pks()
     magrittr::extract2(.pk_col) |>
     magrittr::extract2(1)
 
-  # Replace fk column values in .df with integer keys, if needed.
+  # Encode fk column values in .df with integer keys, if requested.
   if (encode_fks) {
     .df <- .df |>
       encode_fks(db_table_name = db_table_name,
@@ -497,7 +510,8 @@ pl_upsert <- function(.df,
                        in_place = in_place)
   # Return a hash of .df
   .df |>
-    pl_hash(table_name = db_table_name)
+    pl_hash(table_name = db_table_name,
+            additional_hash_group_cols = additional_hash_group_cols)
 }
 
 
@@ -613,10 +627,22 @@ encode_fks <- function(.df,
       unlist() |>
       unname()
     # Redo the table
+    # encoded_df <- encoded_df |>
+    #   dplyr::mutate(
+    #     "{this_fk_col_in_df}" := factor(.data[[this_fk_col_in_df]], levels = fk_levels),
+    #     "{this_fk_col_in_df}" := as.integer(.data[[this_fk_col_in_df]])
+    #   )
+    # Get the parent foreign key table for this_fk_col_in_df
+    this_fk_col_parent_table <- fk_parent_tables[[parent_table_name]]
+    # Redo the table
     encoded_df <- encoded_df |>
+      dplyr::left_join(this_fk_col_parent_table,
+                       by = parent_table_fk_value_colname) |>
       dplyr::mutate(
-        "{this_fk_col_in_df}" := factor(.data[[this_fk_col_in_df]], levels = fk_levels),
-        "{this_fk_col_in_df}" := as.integer(.data[[this_fk_col_in_df]])
+        "{parent_table_fk_value_colname}" := NULL
+      ) |>
+      dplyr::rename(
+        "{parent_table_fk_value_colname}" := dplyr::all_of(parent_table_fk_colname)
       )
     # Check for errors and provide a nice message if there is a problem.
     if (any(is.na(encoded_df[[this_fk_col_in_df]]))) {
@@ -651,9 +677,9 @@ encode_fks <- function(.df,
 }
 
 
-#' Decode keys in a downloaded data frame
+#' Decode keys in a database table
 #'
-#' When downloading a data frame from a database,
+#' When querying a table from a database,
 #' it is helpful to decode the primary and foreign keys
 #' in the data frame,
 #' i.e. to translate from keys to values.
@@ -661,12 +687,15 @@ encode_fks <- function(.df,
 #'
 #' `schema` is a data model (`dm` object) for the CL-PFU database.
 #' It can be obtained from calling `schema_from_conn()`.
+#' The default is `schema_from_conn(conn = conn)`,
+#' which downloads the `dm` object from `conn`.
+#' To save time, pre-compute the `dm` object and
+#' supply in the `schema` argument.
 #'
 #' `fk_parent_tables` is a named list of tables,
-#' some of which are fk parent tables containing
-#' the mapping between fk values (usually strings)
-#' and fk keys (usually integers)
-#' for `db_table_name`.
+#' some of which are foreign key (fk) parent tables for `db_table_name`
+#' containing the mapping between fk values (usually strings)
+#' and fk keys (usually integers).
 #' `fk_parent_tables` is treated as a store from which foreign key tables
 #' are retrieved by name when needed.
 #' An appropriate value for `fk_parent_tables` can be obtained
@@ -677,6 +706,17 @@ encode_fks <- function(.df,
 #'            `.df` should be downloaded from `db_table_name` at `conn`
 #'            before decoding foreign keys.
 #' @param db_table_name The string name of the database table where `.df` is to be uploaded.
+#' @param collect A boolean that tells whether to download the decoded table
+#'                (returning an in-memory data frame produced by calling
+#'                `dplyr::collect()`) or
+#'                a `tbl` (a reference to a database query to be executed
+#'                by `dplyr::collect()`).
+#'                Default is `FALSE`.
+#'                Applies only when `.df` is `NULL`.
+#'                Note that to prevent downloads
+#'                from `conn`, supply a value for `schema`,
+#'                whose default value will download a `dm` object
+#'                from the database at `conn`.
 #' @param conn An optional database connection.
 #'             Necessary only for the default values of `schema` and `fk_parent_tables`.
 #' @param schema The data model (`dm` object) for the database in `conn`.
@@ -691,20 +731,33 @@ encode_fks <- function(.df,
 #'
 #' @return A version of `.df` with integer keys replaced by key values.
 #'
+#' @seealso [encode_fks()] for the reverse operation.
+#'
 #' @export
 decode_fks <- function(.df = NULL,
                        db_table_name,
                        conn,
+                       collect = FALSE,
                        schema = schema_from_conn(conn),
-                       fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+                       fk_parent_tables = get_all_fk_tables(conn = conn,
+                                                            schema = schema),
                        .child_table = PFUPipelineTools::dm_fk_colnames$child_table,
                        .child_fk_cols = PFUPipelineTools::dm_fk_colnames$child_fk_cols,
                        .parent_key_cols = PFUPipelineTools::dm_fk_colnames$parent_key_cols,
                        .pk_suffix = PFUPipelineTools::key_col_info$pk_suffix,
                        .y_joining_suffix = ".y") {
 
+  # if (is.null(.df)) {
+  #   .df <- DBI::dbReadTable(conn, db_table_name)
+  # }
+
+
   if (is.null(.df)) {
-    .df <- DBI::dbReadTable(conn, db_table_name)
+    if (collect) {
+      .df <- DBI::dbReadTable(conn, db_table_name)
+    } else {
+      .df <- dplyr::tbl(src = conn, db_table_name)
+    }
   }
 
   # Get details of all foreign keys in .df

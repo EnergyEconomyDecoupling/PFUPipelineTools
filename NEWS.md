@@ -18,10 +18,12 @@ which always resolves to the latest release.
     - `pl_upsert()`
     - `encode_fks()`
     - `decode_fks()`
+    - `encode_fk_values()`
+    - `encode_fk_keys()`
 * Removed `stash_cache()` and associated tests.
   We no longer save the pipeline cache.
   It seemed like a good idea at the time, but
-  we never looked at it.
+  we never looked at saved caches.
 * New function `self_name()` is helpful in many places.
 * Several new functions to assist with database schema, etc.
 

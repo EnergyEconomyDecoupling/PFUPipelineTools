@@ -2,38 +2,56 @@
 % Please edit documentation in R/storing.R
 \name{pl_hash}
 \alias{pl_hash}
-\title{Calculate has of pipeline data}
+\title{Calculate hash of pipeline data}
 \usage{
 pl_hash(
-  .df,
+  .df = NULL,
   table_name,
+  conn,
+  additional_hash_group_cols = NULL,
   .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
-  .nested_col = PFUPipelineTools::hashed_table_colnames$nested_col_name,
   .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_col_name,
+  .nested_col = PFUPipelineTools::hashed_table_colnames$nested_col_name,
   .algo = "md5"
 )
 }
 \arguments{
-\item{.df}{The data frame to be stored in the database.}
+\item{.df}{An in-memory data frame to be stored in the database or \code{NULL} if
+the has of a table in the database at \code{conn} is desired.}
 
-\item{table_name}{The name of the table in which \code{.df} will be stored.}
+\item{table_name}{The string name of the table in which \code{.df} will be stored
+or the name of a table in the database to be hashed.}
 
-\item{.table_name_col}{The name of the column of the output that contains \code{table_name} on output.
+\item{conn}{A connection to a database.
+Necessary only if \code{.df} is \code{NULL} (its default value).}
+
+\item{additional_hash_group_cols}{The string names of
+additional columns by which \code{.df} will be grouped
+before making the \code{.nested_hash_col} hash column.
+All \code{additional_hash_group_cols} that exist in the
+data frame or table being hashed
+will be present in the result.
+Default is \code{NULL}, meaning that grouping will be
+done on all columns that contain only 1 unique value.
+See details.}
+
+\item{.table_name_col}{The name of the column of the output that contains \code{table_name}.
 Default is \code{PFUPipelineTools::hashed_table_colnames$db_table_name}.}
-
-\item{.nested_col}{The name of the column of the output that contains
-nested data.
-Default is \code{PFUPipelineTools::hashed_table_colnames$nested_col_name}.}
 
 \item{.nested_hash_col}{The name of the column of the output that contains
 the hash of nested columns.
 Default is \code{PFUPipelineTools::hashed_table_colnames$nested_hash_col_name}.}
 
+\item{.nested_col}{The name of the column of the output that contains
+nested data.
+Used internally.
+Default is \code{PFUPipelineTools::hashed_table_colnames$nested_col_name}.}
+
 \item{.algo}{The algorithm for hashing.
 Default is "md5".}
 }
 \value{
-A modified version of \code{.df} without groups. See details.
+A data frame "ticket" for later retrieving data from the database.
 }
 \description{
 In the CL-PFU database pipeline,
@@ -46,32 +64,53 @@ This function calculates the appropriate hash.
 The hash has two requirements:
 \itemize{
 \item values change when content changes and
-\item provides sufficient information to retrieve the real data frame.
+\item provides sufficient information to retrieve the
+data frame from the database.
 }
 
-The uploaded data frames may be created by
-grouped calculations,
-so some columns are likely to have only one unique value.
-We need to know retain data of those single-valued columns
-as well as the name of the database table.
+The return value from this function
+(being a special hash of a database table)
+serves as a "ticket" with which
+data can be retrieved from the database at a later time using
+\code{\link[=pl_collect_from_hash]{pl_collect_from_hash()}}.
 
-To meet those requirements,
+To meet the requirements of the hash,
 the return value from this function
 has the following characteristics:
 \itemize{
 \item The first column (named with the value of \code{.table_name_col})
 contains the value of \code{table_name}, the name
-of the database table where \code{.df} is stored.
-\item The second through N-1 columns are others with only one unique value.
-\item The Nth column (named with the value of \code{.nested_col})
+of the database table where the actual data frame is stored.
+\item The last column (at the right and named with the value of \code{.nested_col})
 contains a hash of a data frame created by nesting
-all columns with more than one unique value.
+by all columns with more than one unique value and
+\code{additional_hash_group_cols}
+(when \code{additional_hash_group_cols} is not \code{NULL}).
+\item The second through N-1 columns are
+all columns with only one unique value AND those columns specified by
+\code{additional_hash_group_cols}.
+If \code{additional_hash_group_cols} is \code{NULL} (the default),
+grouping is done on only those columns with one unique value.
 }
 
-The return value serves as a "ticket" with which
-data can be retrieved from the database at a later time.
-When data are withdrawn from the database,
-the first column can be removed, and
-the other columns with one unique value
-can be used to filter \code{table_name}.
+Hashes can be created from data frames in memory,
+typically about to be uploaded to the database.
+To do so, supply \code{.df} as a data frame.
+If the \code{.table_name_column} is not present in \code{.df},
+it is added internally, filled with the value of \code{table_name}.
+
+Alternatively, hashes can be created from a table
+already existing in the database at \code{conn}.
+To do this, leave \code{.df} at its default value (\code{NULL}) and supply
+the \code{table_name} and \code{conn} arguments.
+In this case,
+an SQL query is generated and a hash of the entire table is provided
+as the return value.
+\code{.table_name_column} is added to the result after downloading.
+
+Both approaches use the \code{md5} hashing algorithm.
+
+That said, the two approaches do not give the same hashes
+for the same data frame, due to differences
+in the way that the database creates its hash vs. how R creates its hash.
 }

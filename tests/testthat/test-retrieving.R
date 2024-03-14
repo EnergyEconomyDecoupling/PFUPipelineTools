@@ -80,6 +80,45 @@ test_that("pl_collect_from_hash() works as expected", {
                  unique(),
                db_table_name)
 
+  # Include key1 in the hash group cols,
+  # to no effect, because key1 has only 1 unique value.
+  hash3 <- pl_hash(test_table1,
+                   table_name = db_table_name,
+                   additional_hash_group_cols = "key1")
+  expect_equal(nrow(hash3), 1)
+  expect_equal(hash3$key1[[1]], 1)
+  # Now try to retrieve the table with the hash
+  result3 <- pl_collect_from_hash(hash3,
+                                  conn = conn,
+                                  decode_fks = TRUE,
+                                  retain_table_name_col = FALSE)
+  expect_equal(result3, test_table1, ignore_attr = TRUE)
+
+  # Now include key2 in the hash group cols.
+  # This will cause all rows to be hashed.
+  hash4 <- pl_hash(test_table1,
+                   table_name = db_table_name,
+                   additional_hash_group_cols = "key2")
+  expect_equal(nrow(hash4), 3)
+  expect_equal(hash4$key2, c(1, 2, 3))
+  # Now try to retrieve the table with the hash
+  result4 <- pl_collect_from_hash(hash4,
+                                  conn = conn,
+                                  decode_fks = TRUE,
+                                  retain_table_name_col = FALSE) |>
+    dplyr::arrange(key2)
+  expect_equal(result4, test_table1, ignore_attr = TRUE)
+
+  # Now filter hash4 and retrieve.
+  hash5 <- hash4 |>
+    dplyr::filter(key2 %in% c(2,3))
+  result5 <- pl_collect_from_hash(hash5,
+                                  conn = conn,
+                                  decode_fks = TRUE,
+                                  retain_table_name_col = FALSE) |>
+    dplyr::arrange(key2)
+  expect_equal(result5, test_table1 |> dplyr::filter(key2 != 1), ignore_attr = TRUE)
+
   DBI::dbRemoveTable(conn, db_table_name)
 })
 
@@ -89,7 +128,6 @@ test_that("passing filters in ... works as expected", {
   my_filter <- function(.df, ...) {
 
     args <- rlang::enquos(...)
-print(as.character(args))
 
     .df |>
       dplyr::filter(!!!args)
@@ -131,14 +169,14 @@ test_that("pl_filter_collect() works as expected", {
   }
 
   # Create a table to upload
-  PLFilterCollectTestTable <- data.frame(MyCountry = as.integer(c(1, 2, 3, 1)),
+  PLFilterCollectTestTable <- data.frame(Country = as.integer(c(1, 2, 3, 1)),
                                          MyValue = c(3.1415, 2.71828, 42, 5.67e-8))
   PLFilterCollectTestCountry <- data.frame(CountryID = as.integer(c(1, 2, 3)),
                                            Country = c("USA", "ZAF", "GHA"))
   DM <- dm::as_dm(list(PLFilterCollectTestTable = PLFilterCollectTestTable,
                        PLFilterCollectTestCountry = PLFilterCollectTestCountry)) |>
     dm::dm_add_fk(table = PLFilterCollectTestTable,
-                  columns = MyCountry,
+                  columns = Country,
                   ref_table = PLFilterCollectTestCountry,
                   ref_columns = CountryID)
   dm::copy_dm_to(conn, DM, set_key_constraints = TRUE, temporary = FALSE)
@@ -147,19 +185,57 @@ test_that("pl_filter_collect() works as expected", {
   expect_equal(DBI::dbReadTable(conn, "PLFilterCollectTestCountry"), PLFilterCollectTestCountry)
 
   pl_filter_collect("PLFilterCollectTestTable",
-                    MyCountry == "USA",
-                    conn = conn) |>
-    expect_equal(tibble::tribble(~MyCountry, ~MyValue,
+                    countries = "USA",
+                    conn = conn,
+                    collect = TRUE) |>
+    expect_equal(tibble::tribble(~Country, ~MyValue,
+                                 "USA", 3.1415,
+                                 "USA", 5.67e-8))
+
+  # Now try with the schema and fk tables pre-supplied
+  fk_tables <- get_all_fk_tables(conn = conn, schema = DM)
+  pl_filter_collect("PLFilterCollectTestTable",
+                    countries = "USA",
+                    conn = conn,
+                    collect = TRUE,
+                    schema = DM,
+                    fk_parent_tables = fk_tables) |>
+    expect_equal(tibble::tribble(~Country, ~MyValue,
                                  "USA", 3.1415,
                                  "USA", 5.67e-8))
 
   pl_filter_collect("PLFilterCollectTestTable",
-                    MyCountry %in% c("USA", "ZAF"),
-                    conn = conn) |>
-    expect_equal(tibble::tribble(~MyCountry, ~MyValue,
+                    countries = c("USA", "ZAF"),
+                    conn = conn,
+                    collect = TRUE) |>
+    expect_equal(tibble::tribble(~Country, ~MyValue,
                                  "USA", 3.1415,
                                  "ZAF", 2.71828,
                                  "USA", 5.67e-8))
+
+  # Try without collecting
+  uncollected <- pl_filter_collect(db_table_name = "PLFilterCollectTestTable",
+                                   countries = "USA",
+                                   conn = conn,
+                                   schema = DM,
+                                   fk_parent_tables = fk_tables)
+  expect_true(dplyr::is.tbl(uncollected))
+  uncollected |>
+    dplyr::collect() |>
+    expect_equal(tibble::tribble(~Country, ~MyValue,
+                                 "USA", 3.1415,
+                                 "USA", 5.67e-8))
+
+  # Try without a filter specification. Should get everything back.
+  pl_filter_collect("PLFilterCollectTestTable",
+                    conn = conn,
+                    collect = TRUE) |>
+    expect_equal(tibble::tribble(~Country, ~MyValue,
+                                 "USA", 3.1415,
+                                 "ZAF", 2.71828,
+                                 "GHA", 42,
+                                 "USA", 5.67e-8))
+
   DBI::dbRemoveTable(conn = conn, name = db_table_name)
   DBI::dbRemoveTable(conn = conn, name = db_country_name)
 })

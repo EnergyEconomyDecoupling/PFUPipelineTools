@@ -2,12 +2,13 @@
 % Please edit documentation in R/schema.R
 \name{decode_fks}
 \alias{decode_fks}
-\title{Decode keys in a downloaded data frame}
+\title{Decode keys in a database table}
 \usage{
 decode_fks(
   .df = NULL,
   db_table_name,
   conn,
+  collect = FALSE,
   schema = schema_from_conn(conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
   .child_table = PFUPipelineTools::dm_fk_colnames$child_table,
@@ -28,6 +29,18 @@ before decoding foreign keys.}
 \item{conn}{An optional database connection.
 Necessary only for the default values of \code{schema} and \code{fk_parent_tables}.}
 
+\item{collect}{A boolean that tells whether to download the decoded table
+(returning an in-memory data frame produced by calling
+\code{dplyr::collect()}) or
+a \code{tbl} (a reference to a database query to be executed
+by \code{dplyr::collect()}).
+Default is \code{FALSE}.
+Applies only when \code{.df} is \code{NULL}.
+Note that to prevent downloads
+from \code{conn}, supply a value for \code{schema},
+whose default value will download a \code{dm} object
+from the database at \code{conn}.}
+
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
 See details.}
 
@@ -46,7 +59,7 @@ Default is ".y".}
 A version of \code{.df} with integer keys replaced by key values.
 }
 \description{
-When downloading a data frame from a database,
+When querying a table from a database,
 it is helpful to decode the primary and foreign keys
 in the data frame,
 i.e. to translate from keys to values.
@@ -55,14 +68,20 @@ This function provides that service.
 \details{
 \code{schema} is a data model (\code{dm} object) for the CL-PFU database.
 It can be obtained from calling \code{schema_from_conn()}.
+The default is \code{schema_from_conn(conn = conn)},
+which downloads the \code{dm} object from \code{conn}.
+To save time, pre-compute the \code{dm} object and
+supply in the \code{schema} argument.
 
 \code{fk_parent_tables} is a named list of tables,
-some of which are fk parent tables containing
-the mapping between fk values (usually strings)
-and fk keys (usually integers)
-for \code{db_table_name}.
+some of which are foreign key (fk) parent tables for \code{db_table_name}
+containing the mapping between fk values (usually strings)
+and fk keys (usually integers).
 \code{fk_parent_tables} is treated as a store from which foreign key tables
 are retrieved by name when needed.
 An appropriate value for \code{fk_parent_tables} can be obtained
 from \code{get_all_fk_tables()}.
+}
+\seealso{
+\code{\link[=encode_fks]{encode_fks()}} for the reverse operation.
 }

@@ -8,10 +8,11 @@ pl_upsert(
   .df,
   conn,
   db_table_name = NULL,
+  additional_hash_group_cols = PFUPipelineTools::additional_hash_group_cols,
   in_place = FALSE,
   encode_fks = TRUE,
   schema = schema_from_conn(conn),
-  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema, collect = TRUE),
   .db_table_name = PFUPipelineTools::hashed_table_colnames$db_table_name,
   .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col,
   .algo = "md5"
@@ -22,10 +23,17 @@ pl_upsert(
 
 \item{conn}{A connection to the CL-PFU database.}
 
-\item{db_table_name}{A string identifying the destination for \code{.df},
-the name of a remote database table in \code{conn}.
+\item{db_table_name}{A string identifying the destination for \code{.df} in \code{conn},
+i.e. the name of a remote database table.
 Default is \code{NULL}, meaning that the value for this argument
 will be taken from the \code{.db_table_name} column of \code{.df}.}
+
+\item{additional_hash_group_cols}{A vector or list of additional columns
+by which \code{.df} will be grouped
+before hashing.
+Default is \code{PFUPipelineTools::additional_hash_group_cols}.
+Set to \code{NULL} to group by all columns
+with only 1 unique value.}
 
 \item{in_place}{A boolean that tells whether to modify the database at \code{conn}.
 Default is \code{FALSE}, which is helpful if you want to chain
@@ -42,8 +50,7 @@ See details.}
 for the foreign keys in \code{db_table_name}.
 See details.}
 
-\item{.db_table_name}{The name of the table name column in the uploaded
-data frame.
+\item{.db_table_name}{The name of the table name column in \code{.df}.
 Default is \code{PFUPipelineTools::hashed_table_colnames$db_table_name}.}
 
 \item{.pk_col}{The name of the primary key column in a primary key table.
@@ -58,16 +65,17 @@ A hash of \code{.df} according to \code{.algo}.
 \description{
 Upserts
 (inserts or updates,
-depending on whether the information already exists in \code{db_table_name})
+depending on whether the private keys in \code{.df}
+already exist in \code{db_table_name})
 \code{.df} into \code{db_table_name} at \code{conn}.
-This function decodes foreign keys, when possible,
-by assuming that all keys are integers.
-If non-integers are provided in foreign key columns of \code{.df},
-the non-integers will be recoded to the integer key values.
-Thus, this function assumes that the data model and schema
-already exists in \code{conn}.
 }
 \details{
+This function decodes foreign keys (fks), when possible,
+assuming that all fks are integers.
+If non-integers (typically, character strings)
+are provided in fk columns of \code{.df},
+the non-integers will be recoded to their appropriate integer key values.
+
 This function knows about CL-PFU database tables that contain
 matrix information.
 In particular, if \code{.df} contains matrices,
@@ -76,30 +84,33 @@ before uploading.
 
 The output of this function is a special data frame that
 contains the following columns:
-
-\if{html}{\out{<div class="sourceCode">}}\preformatted{* CLPFUDBTable: A column of character strings,
-                all with the value of `db_table_name`.
-* All foreign key columns: With their integer values (to save space).
-* Hash: A column with a hash of all non-foreign-key columns.
-}\if{html}{\out{</div>}}
+\itemize{
+\item All single-valued columns columns in \code{.df} and
+columns given in \code{additional_hash_group_cols}
+(default \code{PFUPipelineTools::additional_hash_group_cols}).
+\item Hash: A column with a hash of all non-foreign-key columns.
+}
 
 \code{schema} is a data model (\code{dm} object) for the database in \code{conn}.
-Its default value (\code{dm_from_con(conn, learn_keys = TRUE)})
+Its default value (\code{schema_from_conn(conn)})
 extracts the data model for the database at \code{conn} automatically.
 However, if the caller already has the data model,
 supplying it in the \code{schema} argument will save time.
 
-\code{parent_tables} is a named list of tables,
+\code{fk_parent_tables} is a named list of tables,
 one of which (the one named \code{db_table_name})
 contains the foreign keys for \code{db_table_name}.
-\code{parent_tables} is treated as a store from which foreign key tables
+\code{fk_parent_tables} is treated as a store from which foreign key tables
 are retrieved by name when needed.
-The default value (which is several lines of code)
-retrieves all possible foreign key parent tables from conn,
+The default value (which calls \code{get_all_fk_tables()}
+with \code{collect = TRUE} because decoding of foreign keys
+is done outboard of the database)
+retrieves all possible foreign key parent tables from \code{conn},
 potentially a time-consuming process.
 For speed, pre-compute all foreign key parent tables once
-and pass the list to the \code{parent_tables} argument
-of all similar functions.
+(via \code{get_all_fk_tables(collect = TRUE)})
+and pass the list to the \code{fk_parent_tables} argument
+of this function.
 
 The user in \code{conn} must have write access to the database.
 }

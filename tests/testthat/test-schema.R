@@ -210,8 +210,60 @@ test_that("decode_fks() works as expected", {
 
 
   # Check that decoding works when .df is NULL, a much simpler way.
-  decoded <- decode_fks(db_table_name = "MemberRole", conn = conn)
+  decoded <- decode_fks(db_table_name = "MemberRole",
+                        conn = conn,
+                        collect = TRUE)
   expect_equal(decoded, expected)
+
+  # Clean up after ourselves
+  PFUPipelineTools:::clean_up_beatles(conn)
+})
+
+
+test_that("decode_fks() and encode_fks() work with tbls", {
+  skip_on_ci()
+  skip_on_cran()
+  conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
+                         dbname = "unit_testing",
+                         host = "eviz.cs.calvin.edu",
+                         port = 5432,
+                         user = "postgres")
+  on.exit(DBI::dbDisconnect(conn))
+
+  # Build the data model remotely
+  PFUPipelineTools:::upload_beatles(conn)
+
+  memberrole <- data.frame(Member = as.integer(1:4),
+                           Role = as.integer(1:4))
+  memberrole |>
+    pl_upsert(conn = conn,
+              db_table_name = "MemberRole",
+              in_place = TRUE)
+  schema <- schema_from_conn(conn)
+  # This next call should download MemberRole as a tbl, because
+  # (a) .df is not specified and
+  # (b) collect = FALSE (the default)
+  decoded_tbl <- decode_fks(db_table_name = "MemberRole",
+                            conn = conn,
+                            schema = schema)
+  expect_true(dplyr::is.tbl(decoded_tbl))
+  expect_equal(dplyr::collect(decoded_tbl),
+               tibble::tribble(~Member, ~Role,
+                               "John Lennon", "Lead singer",
+                               "Paul McCartney", "Bassist",
+                               "George Harrison", "Guitarist",
+                               "Ringo Starr", "Drummer"))
+
+  # At this point, decoded_tbl is a tbl.
+  # Try to encode it
+  re_encoded_tbl <- encode_fks(decoded_tbl,
+             db_table_name = "MemberRole",
+             conn = conn)
+  expect_true(dplyr::is.tbl(re_encoded_tbl))
+  expect_equal(dplyr::collect(re_encoded_tbl) |>
+                 dplyr::arrange(Member),
+               tibble::tibble(Member = as.integer(1:4),
+                              Role = as.integer(1:4)))
 
   # Clean up after ourselves
   PFUPipelineTools:::clean_up_beatles(conn)

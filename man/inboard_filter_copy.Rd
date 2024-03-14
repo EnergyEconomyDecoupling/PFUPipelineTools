@@ -5,19 +5,22 @@
 \title{Copy a country, year subset from one table to another}
 \usage{
 inboard_filter_copy(
-  conn,
   source,
   dest,
-  countries,
-  years,
-  empty_dest = FALSE,
+  countries = NULL,
+  years = NULL,
+  empty_dest = TRUE,
+  in_place = FALSE,
+  additional_hash_group_cols = PFUPipelineTools::additional_hash_group_cols,
+  conn,
+  schema = schema_from_conn(conn),
+  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
   country = IEATools::iea_cols$country,
-  year = IEATools::iea_cols$year
+  year = IEATools::iea_cols$year,
+  pk_suffix = PFUPipelineTools::key_col_info$pk_suffix
 )
 }
 \arguments{
-\item{conn}{A database connection.}
-
 \item{source}{A string identifying the source table.}
 
 \item{dest}{A string identifying the destination table.}
@@ -26,7 +29,13 @@ inboard_filter_copy(
 
 \item{years}{Years to keep.}
 
-\item{empty_dest}{A boolean that tells whether to empty the destination table before copying.}
+\item{empty_dest}{A boolean that tells whether to empty the destination table before copying.
+Default is \code{TRUE}.}
+
+\item{in_place}{A boolean that tells whether to make the changes in the remote
+database at \code{conn}.}
+
+\item{conn}{A database connection.}
 
 \item{country}{The name of the country column in \code{source} and \code{dest}.
 Default is \code{IEATools::iea_cols$country}.}
@@ -35,15 +44,15 @@ Default is \code{IEATools::iea_cols$country}.}
 Default is \code{IEATools::iea_cols$year}.}
 }
 \value{
-\code{TRUE} if successful. An error if not.
+A hash of the destination data frame
+created by \code{\link[=pl_upsert]{pl_upsert()}}.
 }
 \description{
 Inboard copying of tables is much faster than round-tripping
 data from the database to the local machine and back.
 This function does an inboard filter and copy
 from \code{source} to \code{dest} in \code{conn},
-optionally emptying \code{dest} first, and
-optionally adding a \code{tar_group} column.
+optionally emptying \code{dest} first.
 }
 \details{
 The \code{source} and \code{dest} tables should have identical columns.
