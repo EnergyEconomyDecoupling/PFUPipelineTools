@@ -66,80 +66,91 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 #' The hash has two requirements:
 #'
 #'   - values change when content changes and
-#'   - provides sufficient information to retrieve the real data frame.
+#'   - provides sufficient information to retrieve the
+#'     data frame from the database.
 #'
-#' The uploaded data frames may be created by
-#' grouped calculations,
-#' so some columns are likely to have only one unique value.
-#' We need to retain data of those single-valued columns
-#' as well as the name of the database table.
+#' The return value from this function
+#' (being a special hash of a database table)
+#' serves as a "ticket" with which
+#' data can be retrieved from the database at a later time using
+#' [pl_collect_from_hash()].
 #'
-#' To meet those requirements,
+#' To meet the requirements of the hash,
 #' the return value from this function
 #' has the following characteristics:
 #'
 #'   - The first column (named with the value of `.table_name_col`)
 #'     contains the value of `table_name`, the name
-#'     of the database table where `.df` is stored.
+#'     of the database table where the actual data frame is stored.
+#'   - The last column (at the right and named with the value of `.nested_col`)
+#'     contains a hash of a data frame created by nesting
+#'     by all columns with more than one unique value and
+#'     `additional_hash_group_cols`
+#'     (when `additional_hash_group_cols` is not `NULL`).
 #'   - The second through N-1 columns are
 #'     all columns with only one unique value AND those columns specified by
 #'     `additional_hash_group_cols`.
 #'     If `additional_hash_group_cols` is `NULL` (the default),
 #'     grouping is done on only those columns with one unique value.
-#'   - The Nth column (named with the value of `.nested_col`)
-#'     contains a hash of a data frame created by nesting
-#'     by all columns with more than one unique value and
-#'     `additional_hash_group_cols` (when `additional_hash_group_cols`
-#'     is not `NULL`).
 #'
-#' The return value serves as a "ticket" with which
-#' data can be retrieved from the database at a later time.
-#' When data are withdrawn from the database,
-#' the first column can be removed, and
-#' the other columns with one unique value
-#' can be used to filter `table_name`.
+#' Hashes can be created from data frames in memory,
+#' typically about to be uploaded to the database.
+#' To do so, supply `.df` as a data frame.
+#' If the `.table_name_column` is not present in `.df`,
+#' it is added internally, filled with the value of `table_name`.
 #'
-#' Internally, this function switches on the result of [dplyr::is.tbl()].
-#' When `TRUE`, a hashed version of the table is downloaded.
-#' When `FALSE`, a hashed version of the table is calculated.
+#' Alternatively, hashes can be created from a table
+#' already existing in the database at `conn`.
+#' To do this, leave `.df` at its default value (`NULL`) and supply
+#' the `table_name` and `conn` arguments.
+#' In this case,
+#' an SQL query is generated and a hash of the entire table is provided
+#' as the return value.
+#' `.table_name_column` is added to the result after downloading.
+#'
 #' Both approaches use the `md5` hashing algorithm.
 #'
-#' If the `.table_name_column` is not present in `.df`,
-#' it is added internally, filled with the value of `table_column`.
+#' That said, the two approaches do not give the same hashes
+#' for the same data frame, due to differences
+#' in the way that the database creates its hash vs. how R creates its hash.
 #'
-#' @param .df A data frame to be stored in the database or
-#'            a `tbl` for a table in a remote database.
-#' @param table_name The name of the table in which `.df` will be stored.
-#'                   This argument can be `NULL` (the default)
-#'                   if `.table_name_col` is present in `.df`.
-#' @param additional_hash_group_cols The additional columns by which `.df` will be grouped
+#' @param .df An in-memory data frame to be stored in the database or `NULL` if
+#'            the has of a table in the database at `conn` is desired.
+#' @param table_name The string name of the table in which `.df` will be stored
+#'                   or the name of a table in the database to be hashed.
+#' @param conn A connection to a database.
+#'             Necessary only if `.df` is `NULL` (its default value).
+#' @param additional_hash_group_cols The string names of
+#'                                   additional columns by which `.df` will be grouped
 #'                                   before making the `.nested_hash_col` hash column.
+#'                                   All `additional_hash_group_cols` that exist in the
+#'                                   data frame or table being hashed
+#'                                   will be present in the result.
 #'                                   Default is `NULL`, meaning that grouping will be
 #'                                   done on all columns that contain only 1 unique value.
 #'                                   See details.
-#' @param .table_name_col The name of the column of the output that contains `table_name` on output.
+#' @param .table_name_col The name of the column of the output that contains `table_name`.
 #'                        Default is `PFUPipelineTools::hashed_table_colnames$db_table_name`.
-#' @param conn A connection to a database.
-#'             Necessary only if `.df` is a `.tbl`.
-#' @param .nested_col The name of the column of the output that contains
-#'                     nested data.
-#'                     Default is `PFUPipelineTools::hashed_table_colnames$nested_col_name`.
 #' @param .nested_hash_col The name of the column of the output that contains
 #'                         the hash of nested columns.
 #'                         Default is `PFUPipelineTools::hashed_table_colnames$nested_hash_col_name`.
+#' @param .nested_col The name of the column of the output that contains
+#'                    nested data.
+#'                    Used internally.
+#'                    Default is `PFUPipelineTools::hashed_table_colnames$nested_col_name`.
 #' @param .algo The algorithm for hashing.
 #'              Default is "md5".
 #'
-#' @return A modified version of `.df` without groups. See details.
+#' @return A data frame "ticket" for later retrieving data from the database.
 #'
 #' @export
-pl_hash <- function(.df,
-                    table_name = NULL,
-                    additional_hash_group_cols = NULL,
+pl_hash <- function(.df = NULL,
+                    table_name,
                     conn,
+                    additional_hash_group_cols = NULL,
                     .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
-                    .nested_col = PFUPipelineTools::hashed_table_colnames$nested_col_name,
                     .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_col_name,
+                    .nested_col = PFUPipelineTools::hashed_table_colnames$nested_col_name,
                     .algo = "md5") {
   if (!is.null(table_name)) {
     # Make sure the table_name has length 1.
@@ -148,7 +159,7 @@ pl_hash <- function(.df,
     }
   }
 
-  if (!dplyr::is.tbl(.df)) {
+  if (!is.null(.df)) {
     # We have an in-memory data frame
     if (!(table_name %in% colnames(.df))) {
       # Set the table name column
@@ -177,7 +188,7 @@ pl_hash <- function(.df,
         unique()
     }
     out <- .df |>
-      # Group by single_value_cols
+      # Group by hash_group_cols
       dplyr::group_by(dplyr::across(dplyr::all_of(hash_group_cols))) |>
       # Nest
       tidyr::nest(.key = .nested_col) |>
@@ -187,8 +198,52 @@ pl_hash <- function(.df,
         "{.nested_col}" := NULL
       ) |>
       dplyr::ungroup()
+
+
+    # With the code above,
+    # The hashes for the same data frame done two different ways
+    # (one in memory and supplied in .df,
+    # the other calculated inboard from conn and table_name)
+    # are different.
+    # It may not be essential that the hashes are the same.
+    # Below is some alternative code to hash the in-memory data frame
+    # that is meant to mimic the way the inboard calculations work,
+    # namely, converting to strings before doing the hashing.
+    # But even the commented code below doesn't seem to work.
+    #
+    # convert_numeric_to_text <- function(df) {
+    #   df |>
+    #     dplyr::mutate(
+    #       dplyr::across(dplyr::where(is.numeric), as.character)
+    #     )
+    # }
+    #
+    # concatenate_columns <- function(df) {
+    #   # df |>
+    #   #   tidyr::unite("Concatenated_Columns", dplyr::everything(), sep = ", ")
+    #   df |>
+    #     as.list() |>
+    #     unname()
+    # }
+    #
+    # out <- .df |>
+    #   # Group by hash_group_cols
+    #   dplyr::group_by(dplyr::across(dplyr::all_of(hash_group_cols))) |>
+    #   # Nest
+    #   tidyr::nest(.key = .nested_col) |>
+    #   dplyr::mutate(
+    #     dplyr::across(.nested_col, ~ purrr::map(.x, convert_numeric_to_text))
+    #   ) |>
+    #   dplyr::mutate(
+    #     dplyr::across(.nested_col, ~ purrr::map(.x, concatenate_columns)),
+    #     "{.nested_col}" := digest::digest(.data[[.nested_col]], algo = .algo)
+    #   ) |>
+    #   tidyr::unnest(cols = .nested_col)
+
   } else {
-    # We have a tbl reference to a data frame in a database.
+    # We need to retrieve a tbl reference to a data frame in a database.
+    .df <- dplyr::tbl(conn, table_name)
+
     # Build the SQL statement that will pull down the hashed table
 
     # First find the columns with only 1 unique value.
@@ -196,51 +251,52 @@ pl_hash <- function(.df,
     # they are in additional_hash_group_cols.
     unique_cols <- unique_cols_in_tbl(table_name = table_name, conn = conn)
 
-    # All column names NOT in the additional hash group columns
-    # are columns to nest.
-    cols_to_nest <- setdiff(unique_cols, additional_hash_group_cols)
+    # We want to keep the cols with only one unique value AND
+    # the additional_hash_group_cols.
+    cols_to_keep <- c(unique_cols, additional_hash_group_cols)
+
+    # The columns to nest are everything else.
+    cols_to_nest <- setdiff(colnames(.df), cols_to_keep)
 
     # Build the query to return a hashed table
-    #
+
     # Here is an example query
 
     # SELECT
     # "Country",
-    # jsonb_build_object(
-    #   'Year', jsonb_agg("Year"),
-    #   'X', jsonb_agg("X")
-    # ) AS "NestedColumn"
-    # FROM
-    # "source"
-    # GROUP BY
-    # "Country";
-
-    # SELECT
-    # "Country",
-    # array_agg("Year") AS "Year",
-    # array_agg("Value") AS "Value"
+    # "EnergyType",
+    # md5(array_agg("Year")::text || array_agg("Value")::text) AS "NestedHashColumn"
     # FROM
     # "TestPLHash"
     # GROUP BY
-    # "Country";
+    # ("Country", "EnergyType");
 
-    # SELECT
-    # "Country",
-    # array_agg("Year")::text AS "Year",
-    # array_agg("Value")::text AS "Value"
-    # FROM
-    # "TestPLHash"
-    # GROUP BY
-    # "Country";
+    keep_cols_clause <- paste0('"', cols_to_keep, '"', collapse = ', ')
+    select_clause <- paste0('SELECT ', keep_cols_clause, ', ')
 
-    countries_string <- paste0("(", paste0(countries_encoded, collapse = ", "), ")")
+    nest_cols_clause_temp <- paste0('array_agg("', cols_to_nest, '")::text', collapse = ' || ')
 
-    cols_clause <- additional_hash_group_cols
+    nest_cols_clause <- paste0('md5(',
+                               nest_cols_clause_temp,
+                               ') AS "',
+                               .nested_hash_col,
+                               '" ')
 
-    select_clause <- 'SELECT '
+    from_clause <- paste0('FROM "', table_name, '" ')
 
+    group_clause <- paste0('GROUP BY (', keep_cols_clause, ');')
+
+    stmt <- paste0(select_clause, nest_cols_clause, from_clause, group_clause)
+
+    out <- DBI::dbGetQuery(conn, stmt) |>
+      tibble::as_tibble() |>
+      dplyr::mutate(
+        # Add the table name so we can retrieve later
+        "{.table_name_col}" := table_name,
+      )  |>
+      # Move the table name column to the left of the data frame
+      dplyr::relocate(dplyr::all_of(.table_name_col))
   }
-
 
   return(out)
 }

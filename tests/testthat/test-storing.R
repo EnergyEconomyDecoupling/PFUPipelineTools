@@ -81,21 +81,23 @@ test_that("pl_hash() works with remote table", {
   df <- data.frame(Country = as.integer(c(1, 1, 1, 1)),
                    Year = as.integer(c(1971, 1972, 1973, 1974)),
                    EnergyType = as.integer(c(1, 1, 2, 2)),
-                   Value = c(42, 43, 44, 45))
+                   Value = c(1/3, 43, 44, 45))
   pl_hash_df <- pl_hash(df,
                         table_name = "TestPLHash",
                         additional_hash_group_cols = c("Country", "EnergyType"))
+  expect_equal(nrow(pl_hash_df), 2)
+  expected_colnames <- c("DBTableName", "Country", "EnergyType", "NestedDataHash")
+  expect_equal(colnames(pl_hash_df), expected_colnames)
 
 
   # Upload to database
   DBI::dbWriteTable(conn, "TestPLHash", df, overwrite = TRUE)
 
-  db_tbl <- dplyr::tbl(conn, "TestPLHash")
-
-  pl_hash_tbl <- pl_hash(db_tbl,
-          table_name = "TestPLHash",
-          additional_hash_group_cols = c("EnergyType"),
-          conn = conn)
+  pl_hash_tbl <- pl_hash(table_name = "TestPLHash",
+                         conn = conn,
+                         additional_hash_group_cols = c("EnergyType"))
+  expect_equal(nrow(pl_hash_tbl), 2)
+  expect_equal(colnames(pl_hash_tbl), expected_colnames)
 
 
 
