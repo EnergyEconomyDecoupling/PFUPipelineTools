@@ -27,6 +27,7 @@ test_that("pl_collect_from_hash() works as expected", {
     dm::dm_add_pk({{db_table_name}}, c(key1, key2))
 
   dm::copy_dm_to(dest = conn, dm = DM, temporary = FALSE)
+  Sys.sleep(0.5) # Make sure the database has time to put everything in place.
   hash1 <- test_table1 |>
     pl_upsert(db_table_name = db_table_name,
               conn = conn,
@@ -180,6 +181,7 @@ test_that("pl_filter_collect() works as expected", {
                   ref_table = PLFilterCollectTestCountry,
                   ref_columns = CountryID)
   dm::copy_dm_to(conn, DM, set_key_constraints = TRUE, temporary = FALSE)
+  Sys.sleep(0.5) # Make sure the database has time to put everything in place.
 
   expect_equal(DBI::dbReadTable(conn, "PLFilterCollectTestTable"), PLFilterCollectTestTable)
   expect_equal(DBI::dbReadTable(conn, "PLFilterCollectTestCountry"), PLFilterCollectTestCountry)

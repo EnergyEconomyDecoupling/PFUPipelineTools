@@ -173,13 +173,23 @@ test_that("encode_fks() works with re-routed foreign keys", {
                          port = 5432,
                          user = "postgres")
   on.exit(DBI::dbDisconnect(conn))
+  # Get rid of tables before we start
+  if (DBI::dbExistsTable(conn, "TestUpsertTable")) {
+    DBI::dbRemoveTable(conn, "TestUpsertTable")
+  }
+  if (DBI::dbExistsTable(conn, "ECCStage")) {
+    DBI::dbRemoveTable(conn, "ECCStage")
+  }
 
   # Build the data model remotely
   TestUpsertTable <- data.frame(LastStage = as.integer(c(1, 2, 3)),
                                 Value = c(42, 43, 44))
+  TestUpsertTable2 <- data.frame(LastStage = c("Primary", "Final", "Useful"),
+                                 Value = c(42, 43, 44))
   ECCStage <- data.frame(ECCStageID = as.integer(c(1, 2, 3)),
                          ECCStage = c("Primary", "Final", "Useful"))
-  DM <- list(TestUpsertTable = TestUpsertTable[0, ], ECCStage = ECCStage) |>
+  DM <- list(TestUpsertTable = TestUpsertTable[0, ],
+             ECCStage = ECCStage) |>
     dm::as_dm() |>
     dm::dm_add_pk(TestUpsertTable, LastStage) |>
     dm::dm_add_pk(ECCStage, ECCStageID) |>
@@ -192,16 +202,20 @@ test_that("encode_fks() works with re-routed foreign keys", {
   # Get the table to make sure it worked
   retrieved <- DBI::dbReadTable(conn, "TestUpsertTable")
   expect_equal(retrieved, TestUpsertTable)
+  decoded <- pl_filter_collect("TestUpsertTable", conn = conn, collect = TRUE)
+  expect_equal(decoded, TestUpsertTable2, ignore_attr = TRUE)
   # Now try with decoding
-  TestUpsertTable2 <- data.frame(LastSTage = c("Primary", "Final", "Useful"),
-                                 Value = c(42, 43, 44))
   pl_upsert(TestUpsertTable2,
             conn = conn,
             db_table_name = "TestUpsertTable",
             in_place = TRUE,
             encode_fks = TRUE)
+  Sys.sleep(0.5) # Make sure the database has time to put everything in place.
   retrieved2 <- DBI::dbReadTable(conn, "TestUpsertTable")
   expect_equal(retrieved2, TestUpsertTable)
+  # Retrieve with decoding
+  decoded2 <- pl_filter_collect("TestUpsertTable", conn = conn, collect = TRUE)
+  expect_equal(decoded2, TestUpsertTable2, ignore_attr = TRUE)
 
   # Clean up after ourselves
   DBI::dbRemoveTable(conn, "TestUpsertTable")
@@ -246,6 +260,7 @@ test_that("decode_fks() works as expected", {
   expected <- data.frame(Member = "Stu Sutcliff",
                          Role = "Bassist")
   schema <- schema_from_conn(conn)
+  Sys.sleep(0.5) # Make sure the database has time to put everything in place.
   fk_parent_tables <- get_all_fk_tables(conn = conn, schema = schema)
   memberrole_tbl |>
     decode_fks(db_table_name = "MemberRole",

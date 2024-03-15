@@ -635,14 +635,24 @@ encode_fks <- function(.df,
     # Get the parent foreign key table for this_fk_col_in_df
     this_fk_col_parent_table <- fk_parent_tables[[parent_table_name]]
     # Redo the table
+    # encoded_df <- encoded_df |>
+    #   dplyr::left_join(this_fk_col_parent_table,
+    #                    by = parent_table_fk_value_colname) |>
+    #   dplyr::mutate(
+    #     "{parent_table_fk_value_colname}" := NULL
+    #   ) |>
+    #   dplyr::rename(
+    #     "{parent_table_fk_value_colname}" := dplyr::all_of(parent_table_fk_colname)
+    #   )
     encoded_df <- encoded_df |>
       dplyr::left_join(this_fk_col_parent_table,
-                       by = parent_table_fk_value_colname) |>
+                       # by = dplyr::join_by(LastStage == ECCStage))
+                       by = dplyr::join_by({{this_fk_col_in_df}} == {{parent_table_fk_value_colname}})) |>
       dplyr::mutate(
-        "{parent_table_fk_value_colname}" := NULL
+        "{this_fk_col_in_df}" := NULL
       ) |>
       dplyr::rename(
-        "{parent_table_fk_value_colname}" := dplyr::all_of(parent_table_fk_colname)
+        "{this_fk_col_in_df}" := dplyr::all_of(parent_table_fk_colname)
       )
     # Check for errors and provide a nice message if there is a problem.
     if (any(is.na(encoded_df[[this_fk_col_in_df]]))) {
