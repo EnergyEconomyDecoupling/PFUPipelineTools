@@ -206,63 +206,18 @@ inboard_filter_copy <- function(source,
     DBI::dbWriteTable(conn, name = "dest", value = empty_table, overwrite = TRUE)
   }
 
-  # countries_string <- paste0(countries, collapse = ", ")
-  # years_string <- paste0(years, collapse = ", ")
-  #
-  # # Add the filtered rows from source into dest
-  # insert_rows_stmt <- paste0('INSERT INTO "', dest, '" ',
-  #                            'SELECT * ',
-  #                            'FROM "', source, '" ',
-  #                            'WHERE "',
-  #                            country, '" IN (', countries_string, ') AND "',
-  #                            year, '" IN (', years_string, ');')
-  #
-  # DBI::dbExecute(conn, insert_rows_stmt)
-
-  # source_tbl <- dplyr::tbl(conn, source)
-  # dest_tbl <- dplyr::tbl(conn, dest)
-  # cnames_source <- colnames(source_tbl)
-  # cnames_dest <- colnames(dest_tbl)
-  # stopifnot(all(cnames_source %in% cnames_dest))
-  #
-  # # Work on countries
-  # countries_encoded <- encode_fk_values(countries,
-  #                                       fk_table_name = country,
-  #                                       fk_parent_tables = fk_parent_tables)
-  # years_encoded <- encode_fk_values(years,
-  #                                   fk_table_name = year,
-  #                                   fk_parent_tables = fk_parent_tables)
-  #
-  # source_tbl |>
-  #   # Filter by encoded countries
-  #   dplyr::filter(
-  #     .data[[country]] %in% countries_encoded,
-  #     .data[[year]] %in% years_encoded
-  #   ) |>
-  #   # Now send to the database
-  #   pl_upsert(conn = conn,
-  #             db_table_name = dest,
-  #             additional_hash_group_cols = additional_hash_group_cols,
-  #             # Don't need to encode fks, because fks are already encoded.
-  #             encode_fks = FALSE,
-  #             in_place = in_place,
-  #             schema = schema,
-  #             fk_parent_tables = fk_parent_tables)
-
-
-
   # Here is an example SQL query that will successfully
   # copy selected rows from source to dest.
-  # INSERT INTO dest
+  # INSERT INTO "dest"
   # SELECT *
-  # FROM source
-  # WHERE Country IN (1, 3) AND Year = 1972;
+  # FROM "source"
+  # WHERE "Country" IN (1, 3) AND "Year" IN (1971, 1971);
 
   # Build clauses with code
 
-  insert_into <- paste0('INSERT INTO "', dest, '" ')
-  select <- 'SELECT * '
-  from_source <- paste0('FROM "', source, '" ')
+  insert_into_clause <- paste0('INSERT INTO "', dest, '" ')
+  select_clause <- 'SELECT * '
+  from_source_clause <- paste0('FROM "', source, '" ')
 
   country_clause <- NULL
   if (!is.null(countries)) {
@@ -282,41 +237,20 @@ inboard_filter_copy <- function(source,
     years_clause <- paste0('"', year, '" IN ', years_string)
   }
 
-  where_clause <- paste0('WHERE ', paste0(c(country_clause, years_clause), collapse = ' AND '))
+  where_clause <- paste0('WHERE ',
+                         paste0(c(country_clause, years_clause), collapse = ' AND '))
 
-  query <- paste0(insert_into, select, from_source, where_clause)
+  query <- paste0(insert_into_clause,
+                  select_clause,
+                  from_source_clause,
+                  where_clause)
 
   DBI::dbExecute(conn, query)
 
   # Download a hash table of the dest table and return it.
-
-
-
-  # SELECT
-  # "Country",
-  # md5(jsonb_build_object(
-  #   'Year', jsonb_agg("Year"),
-  #   'X', jsonb_agg("X")
-  # )::text) AS "NestedColumn"
-  # FROM
-  # "source"
-  # GROUP BY
-  # "Country";
-  #
-  # SELECT
-  # Country,
-  # array_agg(Year) AS Years,
-  # array_agg(Value) AS Values
-  # FROM
-  # source
-  # GROUP BY
-  # Country;
-
-
-  # Probably want to use DBI::dbGetQuery() to fetch these results.
-  # Also, put this code in its own function, perhaps called
-  # pl_download_hash()
-
+  pl_hash(table_name = dest,
+          conn = conn,
+          additional_hash_group_cols = additional_hash_group_cols)
 }
 
 

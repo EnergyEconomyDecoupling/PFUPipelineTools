@@ -50,15 +50,23 @@ test_that("inboard_filter_copy() works as expected", {
   fk_parent_tables <- get_all_fk_tables(conn,
                                         schema = DM,
                                         collect = TRUE)
-  inboard_filter_copy(source = "source",
-                      dest = "dest",
-                      countries = c("USA", "ZAF"),
-                      years = c(1970, 1972),
-                      empty_dest = TRUE,
-                      in_place = TRUE,
-                      conn = conn,
-                      schema = DM,
-                      fk_parent_tables = fk_parent_tables)
+  the_hash <- inboard_filter_copy(source = "source",
+                                  dest = "dest",
+                                  countries = c("USA", "ZAF"),
+                                  years = c(1970, 1972),
+                                  empty_dest = TRUE,
+                                  in_place = TRUE,
+                                  conn = conn,
+                                  schema = DM,
+                                  fk_parent_tables = fk_parent_tables)
+  expect_equal(nrow(the_hash), 4)
+  expect_equal(colnames(the_hash),
+               c(PFUPipelineTools::hashed_table_colnames$db_table_name,
+                 IEATools::iea_cols$country,
+                 IEATools::iea_cols$year,
+                 PFUPipelineTools::hashed_table_colnames$nested_hash_col_name))
+  expect_equal(unique(the_hash[[PFUPipelineTools::hashed_table_colnames$db_table_name]]),
+               "dest")
 
 
   # Get the new table

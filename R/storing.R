@@ -252,8 +252,10 @@ pl_hash <- function(.df = NULL,
     unique_cols <- unique_cols_in_tbl(table_name = table_name, conn = conn)
 
     # We want to keep the cols with only one unique value AND
-    # the additional_hash_group_cols.
-    cols_to_keep <- c(unique_cols, additional_hash_group_cols)
+    # the additional_hash_group_cols but only if they are in colnames(.df).
+    possible_cols_to_keep <- unique(c(unique_cols, additional_hash_group_cols))
+    cols_to_keep_bool <- possible_cols_to_keep %in% colnames(.df)
+    cols_to_keep <- possible_cols_to_keep[cols_to_keep_bool]
 
     # The columns to nest are everything else.
     cols_to_nest <- setdiff(colnames(.df), cols_to_keep)
