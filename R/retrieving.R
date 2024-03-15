@@ -42,7 +42,13 @@ pl_collect_from_hash <- function(hashed_table,
   assertthat::assert_that(length(table_name) == 1,
                           msg = "More than 1 table received in pl_collect_from_hash()")
   filter_tbl <- hashed_table |>
-    dplyr::select(!dplyr::all_of(c(.table_name_col, .nested_hash_col)))
+    dplyr::select(!dplyr::all_of(c(.table_name_col, .nested_hash_col))) |>
+    # Need to encode foreign keys, because the table in the database has
+    # encoded foreign keys
+    encode_fks(db_table_name = table_name,
+               conn = conn,
+               schema = schema,
+               fk_parent_tables = fk_parent_tables)
   out <- dplyr::tbl(conn, table_name)
   if (ncol(filter_tbl) > 0) {
     out <- out |>

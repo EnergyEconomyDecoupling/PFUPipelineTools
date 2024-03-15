@@ -260,10 +260,15 @@ inboard_filter_copy <- function(source,
 
   DBI::dbExecute(conn, query)
 
-  # Download a hash table of the dest table and return it.
+  # Download a hashed table of the dest table
   pl_hash(table_name = dest,
           conn = conn,
-          additional_hash_group_cols = additional_hash_group_cols)
+          additional_hash_group_cols = additional_hash_group_cols) |>
+    # Decode the foreign keys, so they are human-readable.
+    decode_fks(db_table_name = dest,
+               conn = conn,
+               schema = schema,
+               fk_parent_tables = fk_parent_tables)
 }
 
 

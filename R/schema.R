@@ -431,7 +431,8 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #' @param in_place A boolean that tells whether to modify the database at `conn`.
 #'                 Default is `FALSE`, which is helpful if you want to chain
 #'                 several requests.
-#' @param encode_fks A boolean that tells whether to code foreign keys in `.df`.
+#' @param encode_fks A boolean that tells whether to code foreign keys in `.df`
+#'                   before upserting to `conn`.
 #'                   Default is `TRUE`.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               Default is `dm_from_con(conn, learn_keys = TRUE)`.
@@ -495,16 +496,18 @@ pl_upsert <- function(.df,
     magrittr::extract2(.pk_col) |>
     magrittr::extract2(1)
 
+  df_to_upsert <- .df
+
   # Encode fk column values in .df with integer keys, if requested.
   if (encode_fks) {
-    .df <- .df |>
+    df_to_upsert <- df_to_upsert |>
       encode_fks(db_table_name = db_table_name,
                  schema = schema,
                  fk_parent_tables = fk_parent_tables)
   }
 
   dplyr::tbl(conn, db_table_name) |>
-    dplyr::rows_upsert(.df,
+    dplyr::rows_upsert(df_to_upsert,
                        by = pk_str,
                        copy = TRUE,
                        in_place = in_place)

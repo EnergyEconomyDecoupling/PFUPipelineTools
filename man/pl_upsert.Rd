@@ -39,7 +39,8 @@ with only 1 unique value.}
 Default is \code{FALSE}, which is helpful if you want to chain
 several requests.}
 
-\item{encode_fks}{A boolean that tells whether to code foreign keys in \code{.df}.
+\item{encode_fks}{A boolean that tells whether to code foreign keys in \code{.df}
+before upserting to \code{conn}.
 Default is \code{TRUE}.}
 
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
