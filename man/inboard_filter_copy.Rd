@@ -11,6 +11,7 @@ inboard_filter_copy(
   years = NULL,
   empty_dest = TRUE,
   in_place = FALSE,
+  deps = NULL,
   additional_hash_group_cols = PFUPipelineTools::additional_hash_group_cols,
   conn,
   schema = schema_from_conn(conn),
@@ -42,6 +43,10 @@ Default is \code{IEATools::iea_cols$country}.}
 
 \item{year}{The name of the year column in \code{source} and \code{dest}.
 Default is \code{IEATools::iea_cols$year}.}
+
+\item{dependencies}{Other objects (often targets) upon which the inboard copy depends.
+The default is \code{NULL}.
+See details.}
 }
 \value{
 A hash of the destination data frame
@@ -56,4 +61,11 @@ optionally emptying \code{dest} first.
 }
 \details{
 The \code{source} and \code{dest} tables should have identical columns.
+
+The \code{dependencies} argument can be a vector of other objects
+upon which the desired inboard copy depends.
+Typically, the target that makes \code{source} should be given in \code{dependencies},
+for unless the target that makes \code{source} completes,
+the inboard filter copy will fail.
+\code{dependencies} is ignored internally.
 }

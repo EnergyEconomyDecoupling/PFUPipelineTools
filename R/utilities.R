@@ -165,6 +165,13 @@ clean_up_beatles <- function(conn) {
 #'
 #' The `source` and `dest` tables should have identical columns.
 #'
+#' The `dependencies` argument can be a vector of other objects
+#' upon which the desired inboard copy depends.
+#' Typically, the target that makes `source` should be given in `dependencies`,
+#' for unless the target that makes `source` completes,
+#' the inboard filter copy will fail.
+#' `dependencies` is ignored internally.
+#'
 #' @param source A string identifying the source table.
 #' @param dest A string identifying the destination table.
 #' @param conn A database connection.
@@ -174,6 +181,9 @@ clean_up_beatles <- function(conn) {
 #'                   Default is `TRUE`.
 #' @param in_place A boolean that tells whether to make the changes in the remote
 #'                 database at `conn`.
+#' @param dependencies Other objects (often targets) upon which the inboard copy depends.
+#'                     The default is `NULL`.
+#'                     See details.
 #' @param country The name of the country column in `source` and `dest`.
 #'                Default is `IEATools::iea_cols$country`.
 #' @param year The name of the year column in `source` and `dest`.
@@ -189,6 +199,7 @@ inboard_filter_copy <- function(source,
                                 years = NULL,
                                 empty_dest = TRUE,
                                 in_place = FALSE,
+                                deps = NULL,
                                 additional_hash_group_cols = PFUPipelineTools::additional_hash_group_cols,
                                 conn,
                                 schema = schema_from_conn(conn),

@@ -164,6 +164,51 @@ test_that("pl_upload_schema_and_simple_tables() works as expected", {
 })
 
 
+test_that("encode_fks() works with re-routed foreign keys", {
+  skip_on_ci()
+  skip_on_cran()
+  conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
+                         dbname = "unit_testing",
+                         host = "eviz.cs.calvin.edu",
+                         port = 5432,
+                         user = "postgres")
+  on.exit(DBI::dbDisconnect(conn))
+
+  # Build the data model remotely
+  TestUpsertTable <- data.frame(LastStage = as.integer(c(1, 2, 3)),
+                                Value = c(42, 43, 44))
+  ECCStage <- data.frame(ECCStageID = as.integer(c(1, 2, 3)),
+                         ECCStage = c("Primary", "Final", "Useful"))
+  DM <- list(TestUpsertTable = TestUpsertTable[0, ], ECCStage = ECCStage) |>
+    dm::as_dm() |>
+    dm::dm_add_pk(TestUpsertTable, LastStage) |>
+    dm::dm_add_pk(ECCStage, ECCStageID) |>
+    dm::dm_add_fk(TestUpsertTable, LastStage, ECCStage, ECCStageID)
+  dm::copy_dm_to(conn, DM, temporary = FALSE, set_key_constraints = TRUE)
+  pl_upsert(TestUpsertTable,
+            conn = conn,
+            db_table_name = "TestUpsertTable",
+            in_place = TRUE)
+  # Get the table to make sure it worked
+  retrieved <- DBI::dbReadTable(conn, "TestUpsertTable")
+  expect_equal(retrieved, TestUpsertTable)
+  # Now try with decoding
+  TestUpsertTable2 <- data.frame(LastSTage = c("Primary", "Final", "Useful"),
+                                 Value = c(42, 43, 44))
+  pl_upsert(TestUpsertTable2,
+            conn = conn,
+            db_table_name = "TestUpsertTable",
+            in_place = TRUE,
+            encode_fks = TRUE)
+  retrieved2 <- DBI::dbReadTable(conn, "TestUpsertTable")
+  expect_equal(retrieved2, TestUpsertTable)
+
+  # Clean up after ourselves
+  DBI::dbRemoveTable(conn, "TestUpsertTable")
+  DBI::dbRemoveTable(conn, "ECCStage")
+})
+
+
 test_that("decode_fks() works as expected", {
   skip_on_ci()
   skip_on_cran()

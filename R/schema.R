@@ -619,13 +619,13 @@ encode_fks <- function(.df,
                                           x = parent_table_fk_colname)
 
     # Get the parent levels
-    fk_levels <- fk_parent_tables[[parent_table_name]] |>
-      # Arrange by parent key values
-      dplyr::arrange(.data[[parent_table_fk_colname]]) |>
-      # Grab the string columns
-      dplyr::select(dplyr::all_of(parent_table_fk_value_colname)) |>
-      unlist() |>
-      unname()
+    # fk_levels <- fk_parent_tables[[parent_table_name]] |>
+    #   # Arrange by parent key values
+    #   dplyr::arrange(.data[[parent_table_fk_colname]]) |>
+    #   # Grab the string columns
+    #   dplyr::select(dplyr::all_of(parent_table_fk_value_colname)) |>
+    #   unlist() |>
+    #   unname()
     # Redo the table
     # encoded_df <- encoded_df |>
     #   dplyr::mutate(
