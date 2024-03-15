@@ -11,7 +11,7 @@ inboard_filter_copy(
   years = NULL,
   empty_dest = TRUE,
   in_place = FALSE,
-  deps = NULL,
+  dependencies = NULL,
   additional_hash_group_cols = PFUPipelineTools::additional_hash_group_cols,
   conn,
   schema = schema_from_conn(conn),
@@ -36,6 +36,10 @@ Default is \code{TRUE}.}
 \item{in_place}{A boolean that tells whether to make the changes in the remote
 database at \code{conn}.}
 
+\item{dependencies}{Other objects (often targets) upon which the inboard copy depends.
+The default is \code{NULL}.
+See details.}
+
 \item{conn}{A database connection.}
 
 \item{country}{The name of the country column in \code{source} and \code{dest}.
@@ -43,10 +47,6 @@ Default is \code{IEATools::iea_cols$country}.}
 
 \item{year}{The name of the year column in \code{source} and \code{dest}.
 Default is \code{IEATools::iea_cols$year}.}
-
-\item{dependencies}{Other objects (often targets) upon which the inboard copy depends.
-The default is \code{NULL}.
-See details.}
 }
 \value{
 A hash of the destination data frame

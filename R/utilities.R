@@ -199,7 +199,7 @@ inboard_filter_copy <- function(source,
                                 years = NULL,
                                 empty_dest = TRUE,
                                 in_place = FALSE,
-                                deps = NULL,
+                                dependencies = NULL,
                                 additional_hash_group_cols = PFUPipelineTools::additional_hash_group_cols,
                                 conn,
                                 schema = schema_from_conn(conn),
@@ -210,11 +210,13 @@ inboard_filter_copy <- function(source,
                                 pk_suffix = PFUPipelineTools::key_col_info$pk_suffix) {
 
   if (empty_dest & in_place) {
-    empty_table <- dplyr::tbl(conn, dest) |>
-      dplyr::filter(FALSE) |>
-      dplyr::collect()
-    # Overwrite the existing table with the empty one
-    DBI::dbWriteTable(conn, name = "dest", value = empty_table, overwrite = TRUE)
+    # empty_table <- dplyr::tbl(conn, dest) |>
+    #   dplyr::filter(FALSE) |>
+    #   dplyr::collect()
+    # # Overwrite the existing table with the empty one
+    # DBI::dbWriteTable(conn, name = "dest", value = empty_table, overwrite = TRUE)
+    stmt <- paste0('DELETE FROM "', dest, '";')
+    DBI::dbExecute(conn, stmt)
   }
 
   # Here is an example SQL query that will successfully
@@ -342,7 +344,9 @@ encode_fk_values <- function(v_val,
     # Set the colname to be the name of the fk value column.
     setNames(fk_value_col_in_fk_table_name) |>
     # Join with the fk parent table
-    dplyr::left_join(this_fk_parent_table, by = fk_value_col_in_fk_table_name) |>
+    dplyr::left_join(this_fk_parent_table,
+                     by = fk_value_col_in_fk_table_name,
+                     copy = TRUE) |>
     # Extract the column that we want to return
     magrittr::extract2(fk_key_col_in_fk_table_name)
   # Check for errors

@@ -614,9 +614,11 @@ encode_fks <- function(.df,
       dplyr::select(dplyr::all_of(.parent_key_cols)) |>
       unlist() |>
       unname()
+    # Get the parent foreign key table for this_fk_col_in_df
     parent_table_fk_value_colname <- gsub(pattern = paste0(.pk_suffix, "$"),
                                           replacement = "",
                                           x = parent_table_fk_colname)
+    this_fk_col_parent_table <- fk_parent_tables[[parent_table_name]]
     encoded_df <- encoded_df |>
       dplyr::left_join(this_fk_col_parent_table,
                        by = dplyr::join_by({{this_fk_col_in_df}} == {{parent_table_fk_value_colname}})) |>
