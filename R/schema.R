@@ -597,6 +597,10 @@ encode_fks <- function(.df,
   encoded_df <- .df
 
   for (this_fk_col_in_df in fk_cols_in_df) {
+    if (!(this_fk_col_in_df %in% colnames(encoded_df))) {
+      # If the column isn't present, don't try to decode it.
+      next
+    }
     if (is.integer(.df[[this_fk_col_in_df]])) {
       # This is already an integer, and
       # presumably no need to recode
@@ -621,7 +625,8 @@ encode_fks <- function(.df,
     this_fk_col_parent_table <- fk_parent_tables[[parent_table_name]]
     encoded_df <- encoded_df |>
       dplyr::left_join(this_fk_col_parent_table,
-                       by = dplyr::join_by({{this_fk_col_in_df}} == {{parent_table_fk_value_colname}})) |>
+                       by = dplyr::join_by({{this_fk_col_in_df}} == {{parent_table_fk_value_colname}}),
+                       copy = TRUE) |>
       dplyr::mutate(
         "{this_fk_col_in_df}" := NULL
       ) |>
@@ -767,6 +772,10 @@ decode_fks <- function(.df = NULL,
     unname()
 
   for (this_fk_col_in_df in fk_cols_in_df) {
+    if (!(this_fk_col_in_df %in% colnames(.df))) {
+      # Skip this iteration
+      next
+    }
     parent_table_for_this_fk_col_in_df <- fk_details_for_db_table |>
       dplyr::filter(.data[[.child_fk_cols]] == this_fk_col_in_df) |>
       dplyr::select(dplyr::all_of("parent_table")) |>
