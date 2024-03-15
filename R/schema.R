@@ -617,36 +617,8 @@ encode_fks <- function(.df,
     parent_table_fk_value_colname <- gsub(pattern = paste0(.pk_suffix, "$"),
                                           replacement = "",
                                           x = parent_table_fk_colname)
-
-    # Get the parent levels
-    # fk_levels <- fk_parent_tables[[parent_table_name]] |>
-    #   # Arrange by parent key values
-    #   dplyr::arrange(.data[[parent_table_fk_colname]]) |>
-    #   # Grab the string columns
-    #   dplyr::select(dplyr::all_of(parent_table_fk_value_colname)) |>
-    #   unlist() |>
-    #   unname()
-    # Redo the table
-    # encoded_df <- encoded_df |>
-    #   dplyr::mutate(
-    #     "{this_fk_col_in_df}" := factor(.data[[this_fk_col_in_df]], levels = fk_levels),
-    #     "{this_fk_col_in_df}" := as.integer(.data[[this_fk_col_in_df]])
-    #   )
-    # Get the parent foreign key table for this_fk_col_in_df
-    this_fk_col_parent_table <- fk_parent_tables[[parent_table_name]]
-    # Redo the table
-    # encoded_df <- encoded_df |>
-    #   dplyr::left_join(this_fk_col_parent_table,
-    #                    by = parent_table_fk_value_colname) |>
-    #   dplyr::mutate(
-    #     "{parent_table_fk_value_colname}" := NULL
-    #   ) |>
-    #   dplyr::rename(
-    #     "{parent_table_fk_value_colname}" := dplyr::all_of(parent_table_fk_colname)
-    #   )
     encoded_df <- encoded_df |>
       dplyr::left_join(this_fk_col_parent_table,
-                       # by = dplyr::join_by(LastStage == ECCStage))
                        by = dplyr::join_by({{this_fk_col_in_df}} == {{parent_table_fk_value_colname}})) |>
       dplyr::mutate(
         "{this_fk_col_in_df}" := NULL
