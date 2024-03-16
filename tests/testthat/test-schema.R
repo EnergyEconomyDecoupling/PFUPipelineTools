@@ -195,6 +195,7 @@ test_that("encode_fks() works with re-routed foreign keys", {
     dm::dm_add_pk(ECCStage, ECCStageID) |>
     dm::dm_add_fk(TestUpsertTable, LastStage, ECCStage, ECCStageID)
   dm::copy_dm_to(conn, DM, temporary = FALSE, set_key_constraints = TRUE)
+  Sys.sleep(0.5) # Make sure the database has time to put everything in place.
   pl_upsert(TestUpsertTable,
             conn = conn,
             db_table_name = "TestUpsertTable",
