@@ -74,7 +74,7 @@ fk_parent_tables <- list(
                             1, "USA",
                             2, "ZAF",
                             3, "GHA"))
-decode_fk_values(c(1, 1, 3),
-                 fk_table_name = "Country",
-                 fk_parent_tables = fk_parent_tables)
+decode_fk_keys(c(1, 1, 3),
+               fk_table_name = "Country",
+               fk_parent_tables = fk_parent_tables)
 }
