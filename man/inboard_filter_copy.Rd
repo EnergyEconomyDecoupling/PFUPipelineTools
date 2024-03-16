@@ -40,13 +40,27 @@ database at \code{conn}.}
 The default is \code{NULL}.
 See details.}
 
+\item{additional_hash_group_cols}{A vector of strings that gives names of additional
+columns that should \emph{not} be hashed.}
+
 \item{conn}{A database connection.}
+
+\item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
+Default is \code{dm_from_con(conn, learn_keys = TRUE)}.
+See details.}
+
+\item{fk_parent_tables}{A named list of all parent tables
+for the foreign keys in \code{db_table_name}.
+See details.}
 
 \item{country}{The name of the country column in \code{source} and \code{dest}.
 Default is \code{IEATools::iea_cols$country}.}
 
 \item{year}{The name of the year column in \code{source} and \code{dest}.
 Default is \code{IEATools::iea_cols$year}.}
+
+\item{pk_suffix}{The suffix for primary key columns.
+Default is \code{PFUPipelineTools::key_col_info$pk_suffix}.}
 }
 \value{
 A hash of the destination data frame
@@ -68,4 +82,25 @@ Typically, the target that makes \code{source} should be given in \code{dependen
 for unless the target that makes \code{source} completes,
 the inboard filter copy will fail.
 \code{dependencies} is ignored internally.
+
+\code{schema} is a data model (\code{dm} object) for the database in \code{conn}.
+Its default value (\code{schema_from_conn(conn)})
+extracts the data model for the database at \code{conn} automatically.
+However, if the caller already has the data model,
+supplying it in the \code{schema} argument will save time.
+
+\code{fk_parent_tables} is a named list of tables,
+one of which (the one named \code{db_table_name})
+contains the foreign keys for \code{db_table_name}.
+\code{fk_parent_tables} is treated as a store from which foreign key tables
+are retrieved by name when needed.
+The default value (which calls \code{get_all_fk_tables()}
+with \code{collect = TRUE} because decoding of foreign keys
+is done outboard of the database)
+retrieves all possible foreign key parent tables from \code{conn},
+potentially a time-consuming process.
+For speed, pre-compute all foreign key parent tables once
+(via \code{get_all_fk_tables(collect = TRUE)})
+and pass the list to the \code{fk_parent_tables} argument
+of this function.
 }

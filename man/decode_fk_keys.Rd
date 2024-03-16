@@ -17,7 +17,7 @@ decode_fk_keys(
 \item{v_key}{A vector of fk keys (typically integers) to be converted
 to fk values (typically strings).}
 
-\item{fk_table_name}{The name of the fordign key table in \code{conn}
+\item{fk_table_name}{The name of the foreign key table in \code{conn}
 that contains the mapping from fk values
 to fk keys.}
 

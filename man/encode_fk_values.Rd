@@ -17,7 +17,7 @@ encode_fk_values(
 \item{v_val}{A vector of fk values (typically strings) to be converted
 to fk keys (typically integers).}
 
-\item{fk_table_name}{The name of the fordign key table in \code{conn}
+\item{fk_table_name}{The name of the foreign key table in \code{conn}
 that contains the mapping from fk values
 to fk keys.}
 

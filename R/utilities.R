@@ -172,9 +172,29 @@ clean_up_beatles <- function(conn) {
 #' the inboard filter copy will fail.
 #' `dependencies` is ignored internally.
 #'
+#' `schema` is a data model (`dm` object) for the database in `conn`.
+#' Its default value (`schema_from_conn(conn)`)
+#' extracts the data model for the database at `conn` automatically.
+#' However, if the caller already has the data model,
+#' supplying it in the `schema` argument will save time.
+#'
+#' `fk_parent_tables` is a named list of tables,
+#' one of which (the one named `db_table_name`)
+#' contains the foreign keys for `db_table_name`.
+#' `fk_parent_tables` is treated as a store from which foreign key tables
+#' are retrieved by name when needed.
+#' The default value (which calls `get_all_fk_tables()`
+#' with `collect = TRUE` because decoding of foreign keys
+#' is done outboard of the database)
+#' retrieves all possible foreign key parent tables from `conn`,
+#' potentially a time-consuming process.
+#' For speed, pre-compute all foreign key parent tables once
+#' (via `get_all_fk_tables(collect = TRUE)`)
+#' and pass the list to the `fk_parent_tables` argument
+#' of this function.
+#'
 #' @param source A string identifying the source table.
 #' @param dest A string identifying the destination table.
-#' @param conn A database connection.
 #' @param countries Countries to keep.
 #' @param years Years to keep.
 #' @param empty_dest A boolean that tells whether to empty the destination table before copying.
@@ -184,10 +204,21 @@ clean_up_beatles <- function(conn) {
 #' @param dependencies Other objects (often targets) upon which the inboard copy depends.
 #'                     The default is `NULL`.
 #'                     See details.
+#' @param additional_hash_group_cols A vector of strings that gives names of additional
+#'                                   columns that should _not_ be hashed.
+#' @param conn A database connection.
+#' @param schema The data model (`dm` object) for the database in `conn`.
+#'               Default is `dm_from_con(conn, learn_keys = TRUE)`.
+#'               See details.
+#' @param fk_parent_tables A named list of all parent tables
+#'                         for the foreign keys in `db_table_name`.
+#'                         See details.
 #' @param country The name of the country column in `source` and `dest`.
 #'                Default is `IEATools::iea_cols$country`.
 #' @param year The name of the year column in `source` and `dest`.
 #'             Default is `IEATools::iea_cols$year`.
+#' @param pk_suffix The suffix for primary key columns.
+#'                  Default is `PFUPipelineTools::key_col_info$pk_suffix`.
 #'
 #' @return A hash of the destination data frame
 #'         created by [pl_upsert()].
@@ -302,7 +333,7 @@ inboard_filter_copy <- function(source,
 #'
 #' @param v_val A vector of fk values (typically strings) to be converted
 #'              to fk keys (typically integers).
-#' @param fk_table_name The name of the fordign key table in `conn`
+#' @param fk_table_name The name of the foreign key table in `conn`
 #'                      that contains the mapping from fk values
 #'                      to fk keys.
 #' @param conn A connection to the CL-PFU database.
@@ -347,7 +378,7 @@ encode_fk_values <- function(v_val,
   # Make a data frame from v_val
   out <- data.frame(v_val) |>
     # Set the colname to be the name of the fk value column.
-    setNames(fk_value_col_in_fk_table_name) |>
+    magrittr::set_names(fk_value_col_in_fk_table_name) |>
     # Join with the fk parent table
     dplyr::left_join(this_fk_parent_table,
                      by = fk_value_col_in_fk_table_name,
@@ -397,7 +428,7 @@ encode_fk_values <- function(v_val,
 #'
 #' @param v_key A vector of fk keys (typically integers) to be converted
 #'          to fk values (typically strings).
-#' @param fk_table_name The name of the fordign key table in `conn`
+#' @param fk_table_name The name of the foreign key table in `conn`
 #'                      that contains the mapping from fk values
 #'                      to fk keys.
 #' @param conn A connection to the CL-PFU database.
@@ -423,9 +454,9 @@ encode_fk_values <- function(v_val,
 #'                             1, "USA",
 #'                             2, "ZAF",
 #'                             3, "GHA"))
-#' decode_fk_values(c(1, 1, 3),
-#'                  fk_table_name = "Country",
-#'                  fk_parent_tables = fk_parent_tables)
+#' decode_fk_keys(c(1, 1, 3),
+#'                fk_table_name = "Country",
+#'                fk_parent_tables = fk_parent_tables)
 decode_fk_keys <- function(v_key,
                            fk_table_name,
                            conn,
@@ -442,7 +473,7 @@ decode_fk_keys <- function(v_key,
   # Make a data frame from v_key
   out <- data.frame(v_key) |>
     # Set the colname to be the name of the fk key column.
-    setNames(fk_key_col_in_fk_table_name) |>
+    magrittr::set_names(fk_key_col_in_fk_table_name) |>
     # Join with the fk parent table
     dplyr::left_join(this_fk_parent_table, by = fk_key_col_in_fk_table_name) |>
     # Extract the column that we want to return

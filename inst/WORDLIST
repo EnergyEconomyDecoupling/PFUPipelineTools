@@ -1,9 +1,14 @@
+Agg
 CMD
 Codecov
 DOI
+ECC
+ECCs
 IEA
+IEAMW
 Lifecycle
 PFU
+PSUT
 Postgres
 README
 SchemaAndSimpleTables
@@ -16,7 +21,9 @@ colname
 conn
 csv
 doi
+exergy
 fk
+fks
 incrementing
 md
 pinboard
@@ -27,8 +34,8 @@ recoded
 recoding
 subtargets
 ungroup
-ungrouped
 ungroups
 upserted
+upserting
 xlsx
 zenodo
