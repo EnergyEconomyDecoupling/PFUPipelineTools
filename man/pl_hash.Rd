@@ -10,8 +10,8 @@ pl_hash(
   conn,
   additional_hash_group_cols = NULL,
   .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
-  .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_col_name,
-  .nested_col = PFUPipelineTools::hashed_table_colnames$nested_col_name,
+  .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_colname,
+  .nested_col = PFUPipelineTools::hashed_table_colnames$nested_colname,
   .algo = "md5"
 )
 }
@@ -40,12 +40,12 @@ Default is \code{PFUPipelineTools::hashed_table_colnames$db_table_name}.}
 
 \item{.nested_hash_col}{The name of the column of the output that contains
 the hash of nested columns.
-Default is \code{PFUPipelineTools::hashed_table_colnames$nested_hash_col_name}.}
+Default is \code{PFUPipelineTools::hashed_table_colnames$nested_hash_colname}.}
 
 \item{.nested_col}{The name of the column of the output that contains
 nested data.
 Used internally.
-Default is \code{PFUPipelineTools::hashed_table_colnames$nested_col_name}.}
+Default is \code{PFUPipelineTools::hashed_table_colnames$nested_colname}.}
 
 \item{.algo}{The algorithm for hashing.
 Default is "md5".}

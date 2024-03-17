@@ -34,7 +34,7 @@ test_that("pl_hash() works as expected with in-memory data frame", {
 
   expect_equal(names(the_hash), c(PFUPipelineTools::hashed_table_colnames$db_table_name,
                                   "Year",
-                                  PFUPipelineTools::hashed_table_colnames$nested_hash_col_name))
+                                  PFUPipelineTools::hashed_table_colnames$nested_hash_colname))
   expect_equal(nrow(the_hash), 1)
   expect_equal(the_hash[[PFUPipelineTools::hashed_table_colnames$db_table_name]],
                "MyTable")
@@ -58,9 +58,9 @@ test_that("pl_hash() works as expected with in-memory data frame", {
   expect_equal(the_hash3[[PFUPipelineTools::hashed_table_colnames$db_table_name]] |>
                  unique(),
                "MyTable")
-  expect_equal(the_hash3[[PFUPipelineTools::hashed_table_colnames$nested_hash_col_name]][[1]],
+  expect_equal(the_hash3[[PFUPipelineTools::hashed_table_colnames$nested_hash_colname]][[1]],
                "dfc3511d250aee5b3ac45c08cba8c2a3")
-  expect_equal(the_hash3[[PFUPipelineTools::hashed_table_colnames$nested_hash_col_name]][[2]],
+  expect_equal(the_hash3[[PFUPipelineTools::hashed_table_colnames$nested_hash_colname]][[2]],
                "d25bbeb674b4041524d283ff08fadc0c")
 })
 

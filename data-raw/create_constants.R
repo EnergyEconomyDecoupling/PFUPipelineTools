@@ -272,8 +272,9 @@ usethis::use_data(dm_fk_colnames, overwrite = TRUE)
 
 hashed_table_colnames <- list(
   db_table_name = "DBTableName",
-  nested_col_name = "NestedData",
-  nested_hash_col_name = "NestedDataHash"
+  nested_colname = "NestedData",
+  nested_hash_colname = "NestedDataHash",
+  tar_group_colname = "tar_group"
 )
 
 usethis::use_data(hashed_table_colnames, overwrite = TRUE)

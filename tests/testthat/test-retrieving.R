@@ -45,10 +45,10 @@ test_that("pl_collect_from_hash() works as expected", {
   expect_equal(colnames(hash1),
                c(PFUPipelineTools::hashed_table_colnames$db_table_name,
                  "key1",
-                 PFUPipelineTools::hashed_table_colnames$nested_hash_col_name))
+                 PFUPipelineTools::hashed_table_colnames$nested_hash_colname))
   expected_hash <- "e4c5198aa04c376d9096111092794069"
   hash1 |>
-    dplyr::select(dplyr::all_of(PFUPipelineTools::hashed_table_colnames$nested_hash_col_name)) |>
+    dplyr::select(dplyr::all_of(PFUPipelineTools::hashed_table_colnames$nested_hash_colname)) |>
     unlist() |>
     unname() |>
     expect_equal(expected_hash)
@@ -60,7 +60,7 @@ test_that("pl_collect_from_hash() works as expected", {
     )
   test_table_1_tbl_name_col |>
     pl_upsert(conn = conn, in_place = TRUE) |>
-    dplyr::select(dplyr::all_of(PFUPipelineTools::hashed_table_colnames$nested_hash_col_name)) |>
+    dplyr::select(dplyr::all_of(PFUPipelineTools::hashed_table_colnames$nested_hash_colname)) |>
     unlist() |>
     unname() |>
     expect_equal(expected_hash)

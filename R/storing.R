@@ -133,11 +133,11 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 #'                        Default is `PFUPipelineTools::hashed_table_colnames$db_table_name`.
 #' @param .nested_hash_col The name of the column of the output that contains
 #'                         the hash of nested columns.
-#'                         Default is `PFUPipelineTools::hashed_table_colnames$nested_hash_col_name`.
+#'                         Default is `PFUPipelineTools::hashed_table_colnames$nested_hash_colname`.
 #' @param .nested_col The name of the column of the output that contains
 #'                    nested data.
 #'                    Used internally.
-#'                    Default is `PFUPipelineTools::hashed_table_colnames$nested_col_name`.
+#'                    Default is `PFUPipelineTools::hashed_table_colnames$nested_colname`.
 #' @param .algo The algorithm for hashing.
 #'              Default is "md5".
 #'
@@ -149,8 +149,8 @@ pl_hash <- function(.df = NULL,
                     conn,
                     additional_hash_group_cols = NULL,
                     .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
-                    .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_col_name,
-                    .nested_col = PFUPipelineTools::hashed_table_colnames$nested_col_name,
+                    .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_colname,
+                    .nested_col = PFUPipelineTools::hashed_table_colnames$nested_colname,
                     .algo = "md5") {
   if (!is.null(table_name)) {
     # Make sure the table_name has length 1.

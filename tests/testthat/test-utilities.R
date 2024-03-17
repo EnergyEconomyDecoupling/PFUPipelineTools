@@ -64,7 +64,7 @@ test_that("inboard_filter_copy() works as expected", {
                c(PFUPipelineTools::hashed_table_colnames$db_table_name,
                  IEATools::iea_cols$country,
                  IEATools::iea_cols$year,
-                 PFUPipelineTools::hashed_table_colnames$nested_hash_col_name))
+                 PFUPipelineTools::hashed_table_colnames$nested_hash_colname))
   expect_equal(unique(the_hash[[PFUPipelineTools::hashed_table_colnames$db_table_name]]),
                "dest")
 

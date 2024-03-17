@@ -8,6 +8,14 @@
 #' @param retain_table_name_col A boolean that tells whether to retain the
 #'                              table name column (`.table_name_col`).
 #'                              Default is `FALSE`.
+#' @param set_tar_group A boolean that tells whether to set the
+#'                      `tar_group_colname` column of the output to
+#'                      the same value as the input.
+#'                      There can be only one unique value in `tar_group_colname`,
+#'                      otherwise an error is raised.
+#'                      Default is `TRUE`.
+#' @param tar_group_colname The name of the `tar_group` column.
+#'                          default is `PFUPipelineTools::hashed_table_colnames$tar_group_colname`.
 #' @param schema The database schema (a `dm` object).
 #'               Default calls `schema_from_conn()`, but
 #'               you can supply a pre-computed schema for speed.
@@ -29,10 +37,12 @@ pl_collect_from_hash <- function(hashed_table,
                                  conn,
                                  decode_fks = TRUE,
                                  retain_table_name_col = FALSE,
+                                 set_tar_group = TRUE,
+                                 tar_group_colname = PFUPipelineTools::hashed_table_colnames$tar_group_colname,
                                  schema = schema_from_conn(conn = conn),
                                  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
                                  .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
-                                 .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_col_name) {
+                                 .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_colname) {
   table_name <- hashed_table |>
     dplyr::ungroup() |>
     dplyr::select(dplyr::all_of(.table_name_col)) |>
@@ -71,6 +81,17 @@ pl_collect_from_hash <- function(hashed_table,
       ) |>
       # Move the table name column to the left
       dplyr::relocate(dplyr::all_of(.table_name_col))
+  }
+  if (set_tar_group & (tar_group_colname %in% colnames(hashed_table))) {
+    # Get the tar_group
+    this_tar_group <- hashed_table[[tar_group_colname]] |>
+      unique()
+    assertthat::assert_that(length(this_tar_group) == 1,
+                            msg = "You asked for the tar_group to be retained, but there is more than 1 tar_group in `hashed_table`")
+    out <- out |>
+      dplyr::mutate(
+        "{tar_group_colname}" := this_tar_group
+      )
   }
   return(out)
 }
