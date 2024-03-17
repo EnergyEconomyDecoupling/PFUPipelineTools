@@ -738,12 +738,6 @@ decode_fks <- function(.df = NULL,
                        .parent_key_cols = PFUPipelineTools::dm_fk_colnames$parent_key_cols,
                        .pk_suffix = PFUPipelineTools::key_col_info$pk_suffix,
                        .y_joining_suffix = ".y") {
-
-  # if (is.null(.df)) {
-  #   .df <- DBI::dbReadTable(conn, db_table_name)
-  # }
-
-
   if (is.null(.df)) {
     if (collect) {
       .df <- DBI::dbReadTable(conn, db_table_name)
