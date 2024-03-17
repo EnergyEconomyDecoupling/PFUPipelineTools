@@ -42,6 +42,7 @@ pl_collect_from_hash <- function(hashed_table,
   assertthat::assert_that(length(table_name) == 1,
                           msg = "More than 1 table received in pl_collect_from_hash()")
   filter_tbl <- hashed_table |>
+    PFUPipelineTools::tar_ungroup() |>
     dplyr::select(!dplyr::all_of(c(.table_name_col, .nested_hash_col))) |>
     # Need to encode foreign keys, because the table in the database has
     # encoded foreign keys
