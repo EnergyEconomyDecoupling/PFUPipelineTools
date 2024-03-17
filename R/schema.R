@@ -496,7 +496,10 @@ pl_upsert <- function(.df,
     magrittr::extract2(.pk_col) |>
     magrittr::extract2(1)
 
-  df_to_upsert <- .df
+  df_to_upsert <- .df |>
+    # The database shouldn't care about targets groups, so
+    # remove any targets grouping.
+    tar_ungroup()
 
   # Encode fk column values in .df with integer keys, if requested.
   if (encode_fks) {
