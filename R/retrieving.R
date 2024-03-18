@@ -1,5 +1,7 @@
 #' Download a data frame based on its `pl_hash()`
 #'
+#' If `hashed_table` has `0` rows, `NULL` is returned.
+#'
 #' @param hashed_table A table created by `pl_hash()`.
 #' @param conn The database connection.
 #' @param decode_fks A boolean that tells whether to decode foreign keys
@@ -43,6 +45,9 @@ pl_collect_from_hash <- function(hashed_table,
                                  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
                                  .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
                                  .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_colname) {
+  if (nrow(hashed_table) == 0) {
+    return(NULL)
+  }
   table_name <- hashed_table |>
     dplyr::ungroup() |>
     dplyr::select(dplyr::all_of(.table_name_col)) |>

@@ -60,5 +60,5 @@ setting \code{NULL} may improve speed.}
 The downloaded data frame described by \code{hashed_table}.
 }
 \description{
-Download a data frame based on its \code{pl_hash()}
+If \code{hashed_table} has \code{0} rows, \code{NULL} is returned.
 }
