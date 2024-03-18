@@ -284,12 +284,12 @@ inboard_filter_copy <- function(source,
   where_clause <- paste0('WHERE ',
                          paste0(c(country_clause, years_clause), collapse = ' AND '))
 
-  query <- paste0(insert_into_clause,
+  stmt <- paste0(insert_into_clause,
                   select_clause,
                   from_source_clause,
                   where_clause)
 
-  DBI::dbExecute(conn, query)
+  DBI::dbExecute(conn, stmt)
 
   # Download a hashed table of the dest table
   pl_hash(table_name = dest,
