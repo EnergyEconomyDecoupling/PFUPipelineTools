@@ -425,9 +425,14 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #' @param additional_hash_group_cols A vector or list of additional columns
 #'                                   by which `.df` will be grouped
 #'                                   before hashing.
-#'                                   Default is `PFUPipelineTools::additional_hash_group_cols`.
-#'                                   Set to `NULL` to group by all columns
-#'                                   with only 1 unique value.
+#'                                   Default is `PFUPipelineTools::additional_hash_group_cols`
+#'                                   but can be set to `NULL` to disable.
+#'                                   Passed to [pl_hash()].
+#' @param keep_single_unique_cols A boolean that tells whether to keep
+#'                                columns with a single unique value
+#'                                in the output.
+#'                                Default is `TRUE`.
+#'                                Passed to [pl_hash()].
 #' @param in_place A boolean that tells whether to modify the database at `conn`.
 #'                 Default is `FALSE`, which is helpful if you want to chain
 #'                 several requests.
@@ -457,6 +462,7 @@ pl_upsert <- function(.df,
                       conn,
                       db_table_name = NULL,
                       additional_hash_group_cols = PFUPipelineTools::additional_hash_group_cols,
+                      keep_single_unique_cols = TRUE,
                       in_place = FALSE,
                       encode_fks = TRUE,
                       schema = schema_from_conn(conn),
@@ -517,6 +523,7 @@ pl_upsert <- function(.df,
   # Return a hash of .df
   .df |>
     pl_hash(table_name = db_table_name,
+            keep_single_unique_cols = keep_single_unique_cols,
             additional_hash_group_cols = additional_hash_group_cols)
 }
 
@@ -798,21 +805,20 @@ decode_fks <- function(.df = NULL,
       replacement = "",
       x = parent_table_key_col_for_this_fk_col_in_df)
 
-    # Get the name of the joined column.
-    # There are two possible situations.
-    joined_colname <- ifelse(this_fk_col_in_df == parent_table_value_col_for_this_fk_col_in_df,
-                             # When the column in .df has the same name as the column in the parent table,
-                             # ".y" will be tacked onto the column name
-                             yes = paste0(this_fk_col_in_df, .y_joining_suffix),
-                             # When the column in .df has a different name as the column in the parent table,
-                             # we get simply the parent column name.
-                             no = parent_table_value_col_for_this_fk_col_in_df)
+    new_ID_colname <- paste0(this_fk_col_in_df, .pk_suffix)
+    right_df <- fk_parent_tables[[parent_table_for_this_fk_col_in_df]] |>
+      dplyr::rename(
+        "{new_ID_colname}" := parent_table_key_col_for_this_fk_col_in_df,
+        "{this_fk_col_in_df}" := parent_table_value_col_for_this_fk_col_in_df
+      )
+
+    joined_colname <- paste0(this_fk_col_in_df, .y_joining_suffix)
 
     .df <- .df |>
       # Now do the join, which is the process by which we decode the integer
       # in this_fk_col_in_df.
-      dplyr::left_join(fk_parent_tables[[parent_table_for_this_fk_col_in_df]],
-                       by = dplyr::join_by({{this_fk_col_in_df}} == {{parent_table_key_col_for_this_fk_col_in_df}}),
+      dplyr::left_join(right_df,
+                       by = dplyr::join_by({{this_fk_col_in_df}} == {{new_ID_colname}}),
                        copy = TRUE) |>
       dplyr::mutate(
         "{this_fk_col_in_df}" := .data[[joined_colname]],

@@ -9,6 +9,7 @@ pl_hash(
   table_name,
   conn,
   additional_hash_group_cols = NULL,
+  keep_single_unique_cols = TRUE,
   .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
   .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_colname,
   .nested_col = PFUPipelineTools::hashed_table_colnames$nested_colname,
@@ -34,6 +35,10 @@ will be present in the result.
 Default is \code{NULL}, meaning that grouping will be
 done on all columns that contain only 1 unique value.
 See details.}
+
+\item{keep_single_unique_cols}{A boolean that tells whether to keep columns
+that have a single unique value in the outgoing hash.
+Default is \code{TRUE}.}
 
 \item{.table_name_col}{The name of the column of the output that contains \code{table_name}.
 Default is \code{PFUPipelineTools::hashed_table_colnames$db_table_name}.}
@@ -87,11 +92,15 @@ by all columns with more than one unique value and
 \code{additional_hash_group_cols}
 (when \code{additional_hash_group_cols} is not \code{NULL}).
 \item The second through N-1 columns are
-all columns with only one unique value AND those columns specified by
-\code{additional_hash_group_cols}.
-If \code{additional_hash_group_cols} is \code{NULL} (the default),
-grouping is done on only those columns with one unique value.
+all columns with only one unique value
+(provided that \code{keep_single_unique_cols} is \code{TRUE} AND
+those columns specified by
+\code{additional_hash_group_cols}
+(provided that \code{additional_hash_group_cols} is not \code{NULL}, the default).
 }
+
+If \code{keep_single_unique_cols} is \code{FALSE} and \code{additional_hash_group_cols} is \code{NULL},
+an error is raised.
 
 Hashes can be created from data frames in memory,
 typically about to be uploaded to the database.

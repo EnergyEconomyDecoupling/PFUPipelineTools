@@ -9,6 +9,7 @@ pl_upsert(
   conn,
   db_table_name = NULL,
   additional_hash_group_cols = PFUPipelineTools::additional_hash_group_cols,
+  keep_single_unique_cols = TRUE,
   in_place = FALSE,
   encode_fks = TRUE,
   schema = schema_from_conn(conn),
@@ -31,9 +32,15 @@ will be taken from the \code{.db_table_name} column of \code{.df}.}
 \item{additional_hash_group_cols}{A vector or list of additional columns
 by which \code{.df} will be grouped
 before hashing.
-Default is \code{PFUPipelineTools::additional_hash_group_cols}.
-Set to \code{NULL} to group by all columns
-with only 1 unique value.}
+Default is \code{PFUPipelineTools::additional_hash_group_cols}
+but can be set to \code{NULL} to disable.
+Passed to \code{\link[=pl_hash]{pl_hash()}}.}
+
+\item{keep_single_unique_cols}{A boolean that tells whether to keep
+columns with a single unique value
+in the output.
+Default is \code{TRUE}.
+Passed to \code{\link[=pl_hash]{pl_hash()}}.}
 
 \item{in_place}{A boolean that tells whether to modify the database at \code{conn}.
 Default is \code{FALSE}, which is helpful if you want to chain

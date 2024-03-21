@@ -88,10 +88,14 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 #'     `additional_hash_group_cols`
 #'     (when `additional_hash_group_cols` is not `NULL`).
 #'   - The second through N-1 columns are
-#'     all columns with only one unique value AND those columns specified by
-#'     `additional_hash_group_cols`.
-#'     If `additional_hash_group_cols` is `NULL` (the default),
-#'     grouping is done on only those columns with one unique value.
+#'     all columns with only one unique value
+#'     (provided that `keep_single_unique_cols` is `TRUE` AND
+#'     those columns specified by
+#'     `additional_hash_group_cols`
+#'     (provided that `additional_hash_group_cols` is not `NULL`, the default).
+#'
+#' If `keep_single_unique_cols` is `FALSE` and `additional_hash_group_cols` is `NULL`,
+#' an error is raised.
 #'
 #' Hashes can be created from data frames in memory,
 #' typically about to be uploaded to the database.
@@ -129,6 +133,9 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 #'                                   Default is `NULL`, meaning that grouping will be
 #'                                   done on all columns that contain only 1 unique value.
 #'                                   See details.
+#' @param keep_single_unique_cols A boolean that tells whether to keep columns
+#'                                that have a single unique value in the outgoing hash.
+#'                                Default is `TRUE`.
 #' @param .table_name_col The name of the column of the output that contains `table_name`.
 #'                        Default is `PFUPipelineTools::hashed_table_colnames$db_table_name`.
 #' @param .nested_hash_col The name of the column of the output that contains
@@ -148,6 +155,7 @@ pl_hash <- function(.df = NULL,
                     table_name,
                     conn,
                     additional_hash_group_cols = NULL,
+                    keep_single_unique_cols = TRUE,
                     .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
                     .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_colname,
                     .nested_col = PFUPipelineTools::hashed_table_colnames$nested_colname,
@@ -157,6 +165,10 @@ pl_hash <- function(.df = NULL,
     if (length(table_name) != 1) {
       stop("length(table_name) must be 1 in pl_hash()")
     }
+  }
+
+  if (is.null(additional_hash_group_cols) & !keep_single_unique_cols) {
+    stop("additional_hash_group_cols was `NULL` and keep_single_unique_cols was `TRUE` in pl_hash(). Something must change!")
   }
 
   if (!is.null(.df)) {
@@ -170,13 +182,20 @@ pl_hash <- function(.df = NULL,
         # Move the table name column to the left of the data frame
         dplyr::relocate(dplyr::all_of(.table_name_col))
     }
-    # Figure out names of columns that have only 1 unique value.
-    # We will group by these columns before nesting and hashing.
-    single_value_cols <- .df |>
-      sapply(function(this_col) {
-        length(unique(this_col)) == 1
-      })
-    hash_group_cols <- names(single_value_cols[single_value_cols])
+
+    # Start with an empty character vector. Fill as we go along.
+    hash_group_cols <- character()
+
+    if (keep_single_unique_cols) {
+      # Figure out names of columns that have only 1 unique value.
+      # We will group by these columns before nesting and hashing.
+      single_value_cols <- .df |>
+        sapply(function(this_col) {
+          length(unique(this_col)) == 1
+        })
+      hash_group_cols <- hash_group_cols |>
+        append(names(single_value_cols[single_value_cols]))
+    }
 
     if (!is.null(additional_hash_group_cols)) {
       # Eliminate any strings that don't have a corresponding column in .df
@@ -246,16 +265,25 @@ pl_hash <- function(.df = NULL,
 
     # Build the SQL statement that will pull down the hashed table
 
-    # First find the columns with only 1 unique value.
-    # These are columns to nest, unless
-    # they are in additional_hash_group_cols.
-    unique_cols <- unique_cols_in_tbl(table_name = table_name, conn = conn)
+    # Start with an empty character vector for cols_to_nest
+    cols_to_keep <- character()
 
+    if (keep_single_unique_cols) {
+      # First find the columns with only 1 unique value.
+      # These are columns to nest, unless
+      # they are in additional_hash_group_cols.
+      single_unique_cols <- unique_cols_in_tbl(table_name = table_name, conn = conn)
+      cols_to_keep <- cols_to_keep |>
+        append(single_unique_cols)
+    }
+    if (!is.null(additional_hash_group_cols)) {
+      cols_to_keep <- cols_to_keep |>
+        append(additional_hash_group_cols) |>
+        unique()
+    }
     # We want to keep the cols with only one unique value AND
     # the additional_hash_group_cols but only if they are in colnames(.df).
-    possible_cols_to_keep <- unique(c(unique_cols, additional_hash_group_cols))
-    cols_to_keep_bool <- possible_cols_to_keep %in% colnames(.df)
-    cols_to_keep <- possible_cols_to_keep[cols_to_keep_bool]
+    cols_to_keep <- cols_to_keep[cols_to_keep %in% colnames(.df)]
 
     # The columns to nest are everything else.
     cols_to_nest <- setdiff(colnames(.df), cols_to_keep)
