@@ -487,5 +487,7 @@ decode_fk_keys <- function(v_key,
                       paste0(bad_v_key, collapse = ", "))
     stop(err_msg)
   }
-  out
+  return(out)
 }
+
+
