@@ -136,3 +136,8 @@ test_that("decode_fk_keys() works as expected", {
                               fk_parent_tables = fk_parent_tables),
                regexp = "Unknown fk keys in decode_fk_values")
 })
+
+
+test_that("encode_matsindf() works as expected", {
+
+})

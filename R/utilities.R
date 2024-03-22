@@ -491,3 +491,55 @@ decode_fk_keys <- function(v_key,
 }
 
 
+#' Encode a `matsindf` data frame for insertion into a database
+#'
+#' The CL-PFU database enables storage of `matsindf` data frames
+#' by encoding matrix values in an amenable format.
+#'
+#' If `i_parent_table` and `p_parent_table` are specified,
+#' row and column indices are set accordingly.
+#' Else, simple indices are used.
+#'
+#' `.df` can be
+#' (a) wide by matrices,
+#' with matrix names as column namesor or
+#' (b) tidy, with `matnames` and `matvals` columns.
+#'
+#' @param .matsindf
+#' @param ixp_mats
+#' @param pxi_mats
+#' @param ixi_mats
+#' @param pxp_mats
+#' @param i_parent_table,i_id_col,i_name_col
+#' @param p_parent_table,p_id_col,p_name_col
+#' @param i_col,j_col Names of industry and product
+#' @param matnames
+#' @param matvals
+#'
+#' @return
+#' @export
+#'
+#' @examples
+encode_matsindf <- function(.matsindf,
+                            ixp_mats = NULL,
+                            pxi_mats = NULL,
+                            ixi_mats = NULL,
+                            pxp_mats = NULL,
+                            i_parent_table = NULL,
+                            i_id_col = NULL,
+                            i_name_col = NULL,
+                            p_parent_table = NULL,
+                            p_id_col = NULL,
+                            p_name_col = NULL,
+                            # db_table_name,
+                            # conn,
+                            # schema = PFUPipelineTools::schema_from_conn(conn),
+                            # fk_parent_tables = PFUPipelineTools::get_all_fk_tables(conn = conn, schema = schema),
+                            matnames = "matnames",
+                            matvals = "matvals") {
+
+  # Find matrix columns
+  matcols <- matsindf::matrix_cols(.matsindf, .any = TRUE)
+  .matsindf |>
+    matsindf::expand_to_tidy()
+}
