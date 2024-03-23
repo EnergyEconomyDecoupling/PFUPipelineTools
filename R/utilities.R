@@ -502,7 +502,7 @@ decode_fk_keys <- function(v_key,
 #'
 #' `.df` can be
 #' (a) wide by matrices,
-#' with matrix names as column namesor or
+#' with matrix names as column names or
 #' (b) tidy, with `matnames` and `matvals` columns.
 #'
 #' @param .matsindf
@@ -536,10 +536,26 @@ encode_matsindf <- function(.matsindf,
                             # schema = PFUPipelineTools::schema_from_conn(conn),
                             # fk_parent_tables = PFUPipelineTools::get_all_fk_tables(conn = conn, schema = schema),
                             matnames = "matnames",
-                            matvals = "matvals") {
+                            matvals = "matvals",
+                            rownames = "rownames",
+                            colnames = "colnames"
+                            rowtypes = "rowtypes",
+                            coltypes = "coltypes") {
 
   # Find matrix columns
   matcols <- matsindf::matrix_cols(.matsindf, .any = TRUE)
-  .matsindf |>
+  if (length(matcols) != 1) {
+    # Pivot to a tidy data frame.
+    .matsindf <-   .matsindf |>
+      tidyr::pivot_longer(cols = dplyr::all_of(matcols),
+                          names_to = matnames,
+                          values_to = matvals)
+  }
+  tidy_mats <- .matsindf |>
     matsindf::expand_to_tidy()
+  # Encode row names to row indices
+
+  # Encode column names into column indices
+
+  # Delete rowtypes and coltypes columns
 }

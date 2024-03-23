@@ -139,5 +139,26 @@ test_that("decode_fk_keys() works as expected", {
 
 
 test_that("encode_matsindf() works as expected", {
+  ptype <- "Products"
+  itype <- "Industries"
+  tidy <- data.frame(Country  = c( "GH",  "GH",  "GH",  "GH",  "GH",  "GH",  "GH",  "US",  "US",  "US",  "US", "GH", "US"),
+                     Year     = c( 1971,  1971,  1971,  1971,  1971,  1971,  1971,  1980,  1980,  1980,  1980, 1971, 1980),
+                     matnames = c(   "U",   "U",   "Y",   "Y",   "Y",   "V",   "V",   "U",   "U",   "Y",   "Y", "eta", "eta"),
+                     row      = c(  "p1",  "p2",  "p1",  "p2",  "p2",  "i1",  "i2",  "p1",  "p1",  "p1",  "p2", NA, NA),
+                     col      = c(  "i1",  "i2",  "i1",  "i2",  "i3",  "p1",  "p2",  "i1",  "i2",  "i1",  "i2", NA, NA),
+                     rowtypes = c(ptype, ptype, ptype, ptype, ptype, itype, itype, ptype, ptype, ptype, ptype, NA, NA),
+                     coltypes = c(itype, itype, itype, itype, itype, ptype, ptype, itype, itype, itype, itype, NA, NA),
+                     matvals  = c(   11  ,  12,    13 ,   14 ,   15 ,   16 ,   17 ,   49 ,   50 ,   51 ,   52,   0.2, 0.3),
+                     stringsAsFactors = FALSE) |>
+    dplyr::group_by(Country, Year, matnames)
+  mats <- tidy |>
+    matsindf::collapse_to_matrices(matnames = "matrix", rownames = "row", colnames = "col",
+                                   rowtypes = "rowtypes", coltypes = "coltypes",
+                                   matvals = "matvals", matrix_class = "Matrix") |>
+    dplyr::ungroup()
+
+  mats |>
+    encode_matsindf()
+
 
 })
