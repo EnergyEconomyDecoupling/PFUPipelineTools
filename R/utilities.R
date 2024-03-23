@@ -506,31 +506,32 @@ decode_fk_keys <- function(v_key,
 #' (b) tidy, with `matnames` and `matvals` columns.
 #'
 #' @param .matsindf
-#' @param ixp_mats
-#' @param pxi_mats
-#' @param ixi_mats
-#' @param pxp_mats
-#' @param i_parent_table,i_id_col,i_name_col
-#' @param p_parent_table,p_id_col,p_name_col
-#' @param i_col,j_col Names of industry and product
 #' @param matnames
 #' @param matvals
+#' @param industry_table
+#' @param industry_id_col
+#' @param industry_name_col
+#' @param product_table
+#' @param product_id_col
+#' @param product_name_col
+#' @param rownames
+#' @param colnames
+#' @param rowtypes
+#' @param coltypes
+#' @param industry_type
+#' @param product_type
 #'
 #' @return
 #' @export
 #'
 #' @examples
 encode_matsindf <- function(.matsindf,
-                            ixp_mats = NULL,
-                            pxi_mats = NULL,
-                            ixi_mats = NULL,
-                            pxp_mats = NULL,
-                            i_parent_table = NULL,
-                            i_id_col = NULL,
-                            i_name_col = NULL,
-                            p_parent_table = NULL,
-                            p_id_col = NULL,
-                            p_name_col = NULL,
+                            industry_table = NULL,
+                            industry_id_col = NULL,
+                            industry_name_col = NULL,
+                            product_table = NULL,
+                            product_id_col = NULL,
+                            product_name_col = NULL,
                             # db_table_name,
                             # conn,
                             # schema = PFUPipelineTools::schema_from_conn(conn),
@@ -538,21 +539,33 @@ encode_matsindf <- function(.matsindf,
                             matnames = "matnames",
                             matvals = "matvals",
                             rownames = "rownames",
-                            colnames = "colnames"
+                            colnames = "colnames",
                             rowtypes = "rowtypes",
-                            coltypes = "coltypes") {
+                            coltypes = "coltypes",
+                            industry_type = IEATools::row_col_types$industry,
+                            product_type = IEATools::row_col_types$product) {
 
   # Find matrix columns
   matcols <- matsindf::matrix_cols(.matsindf, .any = TRUE)
   if (length(matcols) != 1) {
-    # Pivot to a tidy data frame.
+    # We have more than 1 column of matrices
+    # Pivot to a tidy data frame
     .matsindf <-   .matsindf |>
       tidyr::pivot_longer(cols = dplyr::all_of(matcols),
                           names_to = matnames,
                           values_to = matvals)
+  } else {
+    # Ensure that both the matnames and matvals column are present
   }
   tidy_mats <- .matsindf |>
     matsindf::expand_to_tidy()
+  # Ensure that all rowtypes for each matrix are same. Log them.
+  # There are four possibilities:
+  # ixp_mats, pxi_mats, ixi_mats, pxp_mats.
+  # Keep track of each.
+
+  # Ensure that all coltypes for each matrix are same. Log them.
+
   # Encode row names to row indices
 
   # Encode column names into column indices
