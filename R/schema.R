@@ -813,8 +813,8 @@ decode_fks <- function(.df = NULL,
     new_ID_colname <- paste0(this_fk_col_in_df, .pk_suffix)
     right_df <- fk_parent_tables[[parent_table_for_this_fk_col_in_df]] |>
       dplyr::rename(
-        "{new_ID_colname}" := parent_table_key_col_for_this_fk_col_in_df,
-        "{this_fk_col_in_df}" := parent_table_value_col_for_this_fk_col_in_df
+        "{new_ID_colname}" := dplyr::all_of(parent_table_key_col_for_this_fk_col_in_df),
+        "{this_fk_col_in_df}" := dplyr::all_of(parent_table_value_col_for_this_fk_col_in_df)
       )
 
     joined_colname <- paste0(this_fk_col_in_df, .y_joining_suffix)

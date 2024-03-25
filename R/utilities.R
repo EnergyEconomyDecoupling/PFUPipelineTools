@@ -394,7 +394,7 @@ encode_fk_values <- function(v_val,
                       paste0(bad_v_val, collapse = ", "))
     stop(err_msg)
   }
-  out
+  return(out)
 }
 
 
