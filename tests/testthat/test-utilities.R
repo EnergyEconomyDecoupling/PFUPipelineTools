@@ -169,6 +169,38 @@ test_that("encode_matsindf() works as expected", {
                  dplyr::filter(matnames == "U", Year == 1971) |>
                  nrow(),
                2)
+  expect_equal(res |>
+                 dplyr::filter(matnames == "V", Year == 1971) |>
+                 nrow(),
+               2)
+  expect_equal(res |>
+                 dplyr::filter(matnames == "Y", Year == 1971) |>
+                 nrow(),
+               3)
+  expect_equal(res |>
+                 dplyr::filter(matnames == "U", Year == 1980) |>
+                 nrow(),
+               2)
+  expect_equal(res |>
+                 dplyr::filter(matnames == "Y", Year == 1980) |>
+                 nrow(),
+               2)
 
-
+  # Check a few results
+  expect_equal(res |>
+                 dplyr::filter(matnames == "U", Year == 1971, i == 1, j == 1) |>
+                 magrittr::extract2("x"),
+               11)
+  expect_equal(res |>
+                 dplyr::filter(matnames == "Y", Year == 1971, i == 2, j == 3) |>
+                 magrittr::extract2("x"),
+               15)
+  expect_equal(res |>
+                 dplyr::filter(matnames == "U", Year == 1980, i == 1, j == 2) |>
+                 magrittr::extract2("x"),
+               50)
+  expect_equal(res |>
+                 dplyr::filter(matnames == "Y", Year == 1980, i == 2, j == 2) |>
+                 magrittr::extract2("x"),
+               52)
 })
