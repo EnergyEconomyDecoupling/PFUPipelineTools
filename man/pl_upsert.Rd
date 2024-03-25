@@ -12,6 +12,8 @@ pl_upsert(
   keep_single_unique_cols = TRUE,
   in_place = FALSE,
   encode_fks = TRUE,
+  industry_table_name = "Industry",
+  product_table_name = "Product",
   schema = schema_from_conn(conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema, collect = TRUE),
   .db_table_name = PFUPipelineTools::hashed_table_colnames$db_table_name,

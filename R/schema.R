@@ -465,6 +465,8 @@ pl_upsert <- function(.df,
                       keep_single_unique_cols = TRUE,
                       in_place = FALSE,
                       encode_fks = TRUE,
+                      industry_table_name = "Industry",
+                      product_table_name = "Product",
                       schema = schema_from_conn(conn),
                       fk_parent_tables = get_all_fk_tables(conn = conn,
                                                            schema = schema,
@@ -505,7 +507,10 @@ pl_upsert <- function(.df,
   df_to_upsert <- .df |>
     # The database shouldn't care about targets groups, so
     # remove any targets grouping.
-    tar_ungroup()
+    tar_ungroup() |>
+    # Later remove these hardcoded strings!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    encode_matsindf(industry_index_map = fk_parent_tables[["Industry"]],
+                    product_index_map = fk_parent_tables[["Product"]])
 
   # Encode fk column values in .df with integer keys, if requested.
   if (encode_fks) {

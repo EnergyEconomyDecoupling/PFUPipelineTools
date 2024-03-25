@@ -6,36 +6,80 @@
 \usage{
 encode_matsindf(
   .matsindf,
-  ixp_mats = NULL,
-  pxi_mats = NULL,
-  ixi_mats = NULL,
-  pxp_mats = NULL,
-  i_parent_table = NULL,
-  i_id_col = NULL,
-  i_name_col = NULL,
-  p_parent_table = NULL,
-  p_id_col = NULL,
-  p_name_col = NULL,
+  index_map = magrittr::set_names(list(industry_index_map, product_index_map),
+    c(IEATools::row_col_types$industry, IEATools::row_col_types$product)),
+  industry_index_map,
+  product_index_map,
   matnames = "matnames",
   matvals = "matvals"
 )
 }
 \arguments{
-\item{matvals}{}
+\item{.matsindf}{A matsindf data frame whose matrices are to be encoded.}
 
-\item{i_col, j_col}{Names of industry and product}
+\item{index_map}{A list of two or more index map data frames.
+Default is \code{list(Industry = industry_index_map, Product = product_index_map)}.}
+
+\item{industry_index_map, product_index_map}{Data frames with two columns providing the mapping
+between row and column indices and row and column names.
+See details.}
+
+\item{matnames}{The name of the column in \code{.matsindf} that contains matrix names.
+Default is "matnames".}
+
+\item{matvals}{The name of the column in \code{.matsindf} that contains matrix values.
+Default is "matvals".}
+}
+\value{
+A version of \code{.matsindf} with matrices in triplet form,
+appropriate for insertion into a database.
 }
 \description{
 The CL-PFU database enables storage of \code{matsindf} data frames
-by encoding matrix values in an amenable format.
+by encoding matrix values in triplet format.
+This function performs that encoding.
+A sister function, \code{\link[=decode_matsindf]{decode_matsindf()}},
+performs the operation in reverse.
 }
 \details{
-If \code{i_parent_table} and \code{p_parent_table} are specified,
-row and column indices are set accordingly.
-Else, simple indices are used.
+\code{index_map} must be
+an unnamed list of two data frames or
+a named list of two or more data frames.
+\itemize{
+\item If an unnamed list of exactly two data frames,
+each data frame must have only
+an integer column and a character column.
+The first data frame of \code{index_map}
+is interpreted as the mapping
+between row names and row indices
+and
+the second data frame of \code{index_map}
+is interpreted as the mapping
+between column names and column indices.
+\item If a named list of two or more data frames,
+the names of \code{index_map}
+are interpreted as row and column types,
+with named data frames applied as the mapping for the
+associated row or column type.
+For example the data frame named "Industry" would be applied
+to the dimension (row or column)
+with an "Industry" type.
+When both row and column have "Industry" type,
+the "Industry" mapping is applied to both.
+When sending named data frames in \code{index_map},
+\code{a} must have both a row type and a column type.
+If an appropriate mapping cannot be found in \code{index_map},
+an error is raised.
+Both matching data frames must have only
+an integer column and
+a character column.
+}
 
-\code{.df} can be
+\code{.matsindf} can be
 (a) wide by matrices,
 with matrix names as column names or
 (b) tidy, with \code{matnames} and \code{matvals} columns.
+
+If \code{.matsindf} does not contain any matrix columns,
+\code{.matsindf} is returned unchanged.
 }

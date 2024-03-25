@@ -494,81 +494,100 @@ decode_fk_keys <- function(v_key,
 #' Encode a `matsindf` data frame for insertion into a database
 #'
 #' The CL-PFU database enables storage of `matsindf` data frames
-#' by encoding matrix values in an amenable format.
+#' by encoding matrix values in triplet format.
+#' This function performs that encoding.
+#' A sister function, [decode_matsindf()],
+#' performs the operation in reverse.
 #'
-#' If `i_parent_table` and `p_parent_table` are specified,
-#' row and column indices are set accordingly.
-#' Else, simple indices are used.
+#' `index_map` must be
+#' an unnamed list of two data frames or
+#' a named list of two or more data frames.
+#' * If an unnamed list of exactly two data frames,
+#'   each data frame must have only
+#'   an integer column and a character column.
+#'   The first data frame of `index_map`
+#'   is interpreted as the mapping
+#'   between row names and row indices
+#'   and
+#'   the second data frame of `index_map`
+#'   is interpreted as the mapping
+#'   between column names and column indices.
+#' * If a named list of two or more data frames,
+#'   the names of `index_map`
+#'   are interpreted as row and column types,
+#'   with named data frames applied as the mapping for the
+#'   associated row or column type.
+#'   For example the data frame named "Industry" would be applied
+#'   to the dimension (row or column)
+#'   with an "Industry" type.
+#'   When both row and column have "Industry" type,
+#'   the "Industry" mapping is applied to both.
+#'   When sending named data frames in `index_map`,
+#'   `a` must have both a row type and a column type.
+#'   If an appropriate mapping cannot be found in `index_map`,
+#'   an error is raised.
+#'   Both matching data frames must have only
+#'   an integer column and
+#'   a character column.
 #'
-#' `.df` can be
+#' `.matsindf` can be
 #' (a) wide by matrices,
 #' with matrix names as column names or
 #' (b) tidy, with `matnames` and `matvals` columns.
 #'
-#' @param .matsindf
-#' @param matnames
-#' @param matvals
-#' @param industry_table
-#' @param industry_id_col
-#' @param industry_name_col
-#' @param product_table
-#' @param product_id_col
-#' @param product_name_col
-#' @param rownames
-#' @param colnames
-#' @param rowtypes
-#' @param coltypes
-#' @param industry_type
-#' @param product_type
+#' If `.matsindf` does not contain any matrix columns,
+#' `.matsindf` is returned unchanged.
 #'
-#' @return
+#' @param .matsindf A matsindf data frame whose matrices are to be encoded.
+#' @param index_map A list of two or more index map data frames.
+#'                  Default is `list(Industry = industry_index_map, Product = product_index_map)`.
+#' @param industry_index_map,product_index_map Data frames with two columns providing the mapping
+#'                                             between row and column indices and row and column names.
+#'                                             See details.
+#' @param matnames The name of the column in `.matsindf` that contains matrix names.
+#'                 Default is "matnames".
+#' @param matvals The name of the column in `.matsindf` that contains matrix values.
+#'                Default is "matvals".
+#'
+#' @return A version of `.matsindf` with matrices in triplet form,
+#'         appropriate for insertion into a database.
+#'
 #' @export
-#'
-#' @examples
 encode_matsindf <- function(.matsindf,
-                            industry_table = NULL,
-                            industry_id_col = NULL,
-                            industry_name_col = NULL,
-                            product_table = NULL,
-                            product_id_col = NULL,
-                            product_name_col = NULL,
-                            # db_table_name,
-                            # conn,
-                            # schema = PFUPipelineTools::schema_from_conn(conn),
-                            # fk_parent_tables = PFUPipelineTools::get_all_fk_tables(conn = conn, schema = schema),
+                            index_map = list(industry_index_map,
+                                             product_index_map) |>
+                              magrittr::set_names(c(IEATools::row_col_types$industry,
+                                                    IEATools::row_col_types$product)),
+                            industry_index_map,
+                            product_index_map,
                             matnames = "matnames",
-                            matvals = "matvals",
-                            rownames = "rownames",
-                            colnames = "colnames",
-                            rowtypes = "rowtypes",
-                            coltypes = "coltypes",
-                            industry_type = IEATools::row_col_types$industry,
-                            product_type = IEATools::row_col_types$product) {
+                            matvals = "matvals") {
 
-  # Find matrix columns
-  matcols <- matsindf::matrix_cols(.matsindf, .any = TRUE)
-  if (length(matcols) != 1) {
+  # Find matrix column names
+  matcols <- matsindf::matrix_cols(.matsindf, .any = TRUE) |>
+    names()
+  if (length(matcols) == 0) {
+    # These aren't the droids you are looking for.
+    return(.matsindf)
+  }
+  if (length(matcols) > 1) {
     # We have more than 1 column of matrices
     # Pivot to a tidy data frame
-    .matsindf <-   .matsindf |>
+    .matsindf <- .matsindf |>
       tidyr::pivot_longer(cols = dplyr::all_of(matcols),
                           names_to = matnames,
                           values_to = matvals)
-  } else {
-    # Ensure that both the matnames and matvals column are present
   }
-  tidy_mats <- .matsindf |>
-    matsindf::expand_to_tidy()
-  # Ensure that all rowtypes for each matrix are same. Log them.
-  # There are four possibilities:
-  # ixp_mats, pxi_mats, ixi_mats, pxp_mats.
-  # Keep track of each.
+  # Ensure that both matnames and matvals are present
+  assertthat::assert_that(matnames %in% colnames(.matsindf),
+                          msg = paste0("Matrix name column '", matnames, "' missing from .matsindf in encode_matsindf()"))
+  assertthat::assert_that(matvals %in% colnames(.matsindf),
+                          msg = paste0("Matrix value column '", matvals, "' missing from .matsindf in encode_matsindf()"))
 
-  # Ensure that all coltypes for each matrix are same. Log them.
-
-  # Encode row names to row indices
-
-  # Encode column names into column indices
-
-  # Delete rowtypes and coltypes columns
+  .matsindf |>
+    dplyr::mutate(
+      # Convert the matvals column triplet form
+      "{matvals}" := matsbyname::to_triplet(.data[[matvals]], index_map)
+    ) |>
+    tidyr::unnest(cols = dplyr::all_of(matvals))
 }
