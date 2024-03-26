@@ -54,6 +54,13 @@ several requests.}
 before upserting to \code{conn}.
 Default is \code{TRUE}.}
 
+\item{index_map}{A list of 2 or more data frames that represent the
+mappings from inboard row and column indices in the database
+to outboard row and column names in the memory
+of the local computer.
+See documentation for \code{\link[=encode_matsindf]{encode_matsindf()}} and
+\code{\link[matsbyname:to_named_triplet]{matsbyname::to_triplet()}}.}
+
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
 Default is \code{dm_from_con(conn, learn_keys = TRUE)}.
 See details.}

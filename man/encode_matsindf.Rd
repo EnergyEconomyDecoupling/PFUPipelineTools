@@ -20,7 +20,7 @@ encode_matsindf(
 \item{index_map}{A list of two or more index map data frames.
 Default is \code{list(Industry = industry_index_map, Product = product_index_map)}.}
 
-\item{industry_index_map, product_index_map}{Data frames with two columns providing the mapping
+\item{industry_index_map, product_index_map}{Optional data frames with two columns providing the mapping
 between row and column indices and row and column names.
 See details.}
 

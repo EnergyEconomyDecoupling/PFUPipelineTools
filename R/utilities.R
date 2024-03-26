@@ -541,7 +541,7 @@ decode_fk_keys <- function(v_key,
 #' @param .matsindf A matsindf data frame whose matrices are to be encoded.
 #' @param index_map A list of two or more index map data frames.
 #'                  Default is `list(Industry = industry_index_map, Product = product_index_map)`.
-#' @param industry_index_map,product_index_map Data frames with two columns providing the mapping
+#' @param industry_index_map,product_index_map Optional data frames with two columns providing the mapping
 #'                                             between row and column indices and row and column names.
 #'                                             See details.
 #' @param matnames The name of the column in `.matsindf` that contains matrix names.
