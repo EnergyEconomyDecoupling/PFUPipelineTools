@@ -465,8 +465,10 @@ pl_upsert <- function(.df,
                       keep_single_unique_cols = TRUE,
                       in_place = FALSE,
                       encode_fks = TRUE,
-                      industry_table_name = "Industry",
-                      product_table_name = "Product",
+                      index_map = list(fk_parent_tables[[IEATools::row_col_types$industry]],
+                                       fk_parent_tables[[IEATools::row_col_types$product]]) |>
+                        magrittr::set_names(c(IEATools::row_col_types$industry,
+                                              IEATools::row_col_types$product)),
                       schema = schema_from_conn(conn),
                       fk_parent_tables = get_all_fk_tables(conn = conn,
                                                            schema = schema,
@@ -508,9 +510,8 @@ pl_upsert <- function(.df,
     # The database shouldn't care about targets groups, so
     # remove any targets grouping.
     tar_ungroup() |>
-    # Later remove these hardcoded strings!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    encode_matsindf(industry_index_map = fk_parent_tables[["Industry"]],
-                    product_index_map = fk_parent_tables[["Product"]])
+    # Encode for upload using the index_map
+    encode_matsindf(index_map = index_map)
 
   # Encode fk column values in .df with integer keys, if requested.
   if (encode_fks) {
