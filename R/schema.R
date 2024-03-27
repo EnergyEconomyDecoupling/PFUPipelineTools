@@ -512,7 +512,7 @@ pl_upsert <- function(.df,
     magrittr::extract2(.pk_col) |>
     magrittr::extract2(1)
 
-  df_to_upsert <- .df |>
+  df_matsindf_encoded <- .df |>
     # The database shouldn't care about targets groups, so
     # remove any targets grouping.
     tar_ungroup() |>
@@ -520,6 +520,7 @@ pl_upsert <- function(.df,
     encode_matsindf(index_map = index_map)
 
   # Encode fk column values in .df with integer keys, if requested.
+  df_to_upsert <- df_matsindf_encoded
   if (encode_fks) {
     df_to_upsert <- df_to_upsert |>
       encode_fks(db_table_name = db_table_name,
@@ -532,8 +533,8 @@ pl_upsert <- function(.df,
                        by = pk_str,
                        copy = TRUE,
                        in_place = in_place)
-  # Return a hash of .df
-  .df |>
+  # Return a hash of df_matsindf_encoded
+  df_matsindf_encoded |>
     pl_hash(table_name = db_table_name,
             keep_single_unique_cols = keep_single_unique_cols,
             additional_hash_group_cols = additional_hash_group_cols)
