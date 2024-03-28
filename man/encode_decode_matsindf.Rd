@@ -9,10 +9,15 @@
 decode_matsindf(
   .encoded,
   index_map,
+  rctypes,
   matrix_class = c("matrix", "Matrix"),
+  matnames = "matnames",
+  matvals = "matvals",
   row_index_colname = "i",
   col_index_colname = "j",
-  val_colname = "x"
+  val_colname = "x",
+  rowtype_colname = "rowtype",
+  coltype_colname = "coltype"
 )
 
 encode_matsindf(
@@ -39,6 +44,12 @@ One of "matrix" (the default
 and \code{R}'s native matrix class) or
 "Matrix" (for sparse matrices).}
 
+\item{matnames}{The name of the column in \code{.matsindf} that contains matrix names.
+Default is "matnames".}
+
+\item{matvals}{The name of the column in \code{.matsindf} that contains matrix values.
+Default is "matvals".}
+
 \item{row_index_colname}{The name of the row index column in \code{.encoded}.
 Default is "i".}
 
@@ -53,12 +64,6 @@ Default is "x".}
 \item{industry_index_map, product_index_map}{Optional data frames with two columns providing the mapping
 between row and column indices and row and column names.
 See details.}
-
-\item{matnames}{The name of the column in \code{.matsindf} that contains matrix names.
-Default is "matnames".}
-
-\item{matvals}{The name of the column in \code{.matsindf} that contains matrix values.
-Default is "matvals".}
 }
 \value{
 For \code{\link[=encode_matsindf]{encode_matsindf()}},

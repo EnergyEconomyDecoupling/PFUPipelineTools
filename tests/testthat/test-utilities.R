@@ -232,11 +232,17 @@ test_that("decode_matsindf() works as expected", {
                                   name = c("p1", "p2"))
   index_map <- list(Industries = industry_index_map,
                     Products = product_index_map)
+
+  rctypes <- tibble::tribble(~matnames, ~rowtype, ~coltype,
+                             "U",       ptype,    itype,
+                             "V",       itype,    ptype,
+                             "Y",       ptype,    itype)
   encoded <- mats |>
     encode_matsindf(index_map = index_map)
 
   # Decode the encoded data frame
   encoded |>
-    decode_matsindf(index_map = index_map)
+    decode_matsindf(index_map = index_map,
+                    rctypes = rctypes)
 
 })

@@ -574,18 +574,33 @@ decode_fk_keys <- function(v_key,
 #' @export
 decode_matsindf <- function(.encoded,
                             index_map,
+                            rctypes,
                             matrix_class = c("matrix", "Matrix"),
+                            matnames = "matnames",
+                            matvals = "matvals",
                             row_index_colname = "i",
                             col_index_colname = "j",
-                            val_colname = "x") {
+                            val_colname = "x",
+                            rowtype_colname = "rowtype",
+                            coltype_colname = "coltype") {
   matrix_class <- match.arg(matrix_class)
   .encoded |>
-    matsbyname::to_named_matrix(index_map = index_map,
-                                matrix_class = matrix_class,
-                                row_index_colname = row_index_colname,
-                                col_index_colname = col_index_colname,
-                                val_colname = val_colname)
-
+    matsindf::group_by_everything_except(row_index_colname, col_index_colname, val_colname) |>
+    tidyr::nest(.key = matvals) |>
+    dplyr::ungroup() |>
+    dplyr::left_join(rctypes, by = matnames) |>
+    dplyr::mutate(
+      "{matvals}" := Map(f = matsbyname::setrowtype, a = .data[[matvals]], rowtype = .data[[rowtype_colname]]),
+      "{matvals}" := Map(f = matsbyname::setcoltype, a = .data[[matvals]], coltype = .data[[coltype_colname]]),
+      "{rowtype_colname}" := NULL,
+      "{coltype_colname}" := NULL,
+      "{matvals}" := .data[[matvals]] |>
+        matsbyname::to_named_matrix(index_map = index_map,
+                                    matrix_class = matrix_class,
+                                    row_index_colname = row_index_colname,
+                                    col_index_colname = col_index_colname,
+                                    val_colname = val_colname)
+    )
 }
 
 
