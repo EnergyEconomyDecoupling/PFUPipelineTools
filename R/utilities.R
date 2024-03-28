@@ -491,13 +491,13 @@ decode_fk_keys <- function(v_key,
 }
 
 
-#' Encode a `matsindf` data frame for insertion into a database
+#' Encode and decode `matsindf` data frames for storage in a database
 #'
 #' The CL-PFU database enables storage of `matsindf` data frames
 #' by encoding matrix values in triplet format.
-#' This function performs that encoding.
-#' A sister function, [decode_matsindf()],
-#' performs the operation in reverse.
+#' These functions perform encoding and decoding
+#' of `matsindf` data frames.
+#' [encode_matsindf()] and [decode_matsindf()] are inverses of each other.
 #'
 #' `index_map` must be
 #' an unnamed list of two data frames or
@@ -523,7 +523,7 @@ decode_fk_keys <- function(v_key,
 #'   When both row and column have "Industry" type,
 #'   the "Industry" mapping is applied to both.
 #'   When sending named data frames in `index_map`,
-#'   `a` must have both a row type and a column type.
+#'   matrices to be encoded must have both a row type and a column type.
 #'   If an appropriate mapping cannot be found in `index_map`,
 #'   an error is raised.
 #'   Both matching data frames must have only
@@ -539,19 +539,57 @@ decode_fk_keys <- function(v_key,
 #' `.matsindf` is returned unchanged.
 #'
 #' @param .matsindf A matsindf data frame whose matrices are to be encoded.
+#' @param .encoded A data frame of matrices in triplet form whose matrices are to be decoded.
 #' @param index_map A list of two or more index map data frames.
 #'                  Default is `list(Industry = industry_index_map, Product = product_index_map)`.
 #' @param industry_index_map,product_index_map Optional data frames with two columns providing the mapping
 #'                                             between row and column indices and row and column names.
 #'                                             See details.
+#' @param matrix_class The class of matrices to be created by [decode_matsindf()].
+#'                     One of "matrix" (the default
+#'                     and `R`'s native matrix class) or
+#'                     "Matrix" (for sparse matrices).
 #' @param matnames The name of the column in `.matsindf` that contains matrix names.
 #'                 Default is "matnames".
 #' @param matvals The name of the column in `.matsindf` that contains matrix values.
 #'                Default is "matvals".
+#' @param row_index_colname The name of the row index column in `.encoded`.
+#'                          Default is "i".
+#' @param col_index_colname The name of the column index column in `.encoded`.
+#'                          Default is "j".
+#' @param val_colname The name of the value column.
+#'                    Default is "x".
 #'
-#' @return A version of `.matsindf` with matrices in triplet form,
+#' @return For [encode_matsindf()],
+#'         a version of `.matsindf` with matrices in triplet form,
 #'         appropriate for insertion into a database.
+#'         For [decode_matsindf()],
+#'         a version of `.encoded` appropriate for in-memory
+#'         analysis and calculations.
 #'
+#' @name encode_decode_matsindf
+
+
+#' @rdname encode_decode_matsindf
+#' @export
+decode_matsindf <- function(.encoded,
+                            index_map,
+                            matrix_class = c("matrix", "Matrix"),
+                            row_index_colname = "i",
+                            col_index_colname = "j",
+                            val_colname = "x") {
+  matrix_class <- match.arg(matrix_class)
+  .encoded |>
+    matsbyname::to_named_matrix(index_map = index_map,
+                                matrix_class = matrix_class,
+                                row_index_colname = row_index_colname,
+                                col_index_colname = col_index_colname,
+                                val_colname = val_colname)
+
+}
+
+
+#' @rdname encode_decode_matsindf
 #' @export
 encode_matsindf <- function(.matsindf,
                             index_map = list(industry_index_map,
@@ -561,7 +599,10 @@ encode_matsindf <- function(.matsindf,
                             industry_index_map,
                             product_index_map,
                             matnames = "matnames",
-                            matvals = "matvals") {
+                            matvals = "matvals",
+                            row_index_colname = "i",
+                            col_index_colname = "j",
+                            val_colname = "x") {
 
   # Find matrix column names
   matcols <- matsindf::matrix_cols(.matsindf, .any = TRUE) |>
@@ -587,7 +628,13 @@ encode_matsindf <- function(.matsindf,
   .matsindf |>
     dplyr::mutate(
       # Convert the matvals column triplet form
-      "{matvals}" := matsbyname::to_triplet(.data[[matvals]], index_map)
+      "{matvals}" := matsbyname::to_triplet(.data[[matvals]],
+                                            index_map,
+                                            row_index_colname = row_index_colname,
+                                            col_index_colname = col_index_colname,
+                                            val_colname = val_colname)
     ) |>
     tidyr::unnest(cols = dplyr::all_of(matvals))
 }
+
+

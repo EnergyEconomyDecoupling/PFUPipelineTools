@@ -235,5 +235,8 @@ test_that("decode_matsindf() works as expected", {
   encoded <- mats |>
     encode_matsindf(index_map = index_map)
 
+  # Decode the encoded data frame
+  encoded |>
+    decode_matsindf(index_map = index_map)
 
 })
