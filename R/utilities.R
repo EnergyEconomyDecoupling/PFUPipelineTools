@@ -590,6 +590,9 @@ decode_matsindf <- function(.encoded,
     dplyr::ungroup() |>
     dplyr::left_join(rctypes, by = matnames) |>
     dplyr::mutate(
+      # Need to set row and column type differently,
+      # because setrowtype and setcoltype will apply rowtype and coltype
+      # to each column of the data frame.
       "{matvals}" := Map(f = matsbyname::setrowtype, a = .data[[matvals]], rowtype = .data[[rowtype_colname]]),
       "{matvals}" := Map(f = matsbyname::setcoltype, a = .data[[matvals]], coltype = .data[[coltype_colname]]),
       "{rowtype_colname}" := NULL,

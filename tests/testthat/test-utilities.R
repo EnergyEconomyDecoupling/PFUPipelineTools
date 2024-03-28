@@ -241,8 +241,19 @@ test_that("decode_matsindf() works as expected", {
     encode_matsindf(index_map = index_map)
 
   # Decode the encoded data frame
-  encoded |>
+  res <- encoded |>
     decode_matsindf(index_map = index_map,
-                    rctypes = rctypes)
+                    rctypes = rctypes,
+                    matrix_class = "Matrix")
+
+  # Check that things are the same
+  dplyr::full_join(mats, res, by = c("Country", "Year", "matnames")) |>
+    dplyr::mutate(
+      OK = matsbyname:::equal_byname(matvals.x, matvals.y)
+    ) |>
+    magrittr::extract2("OK") |>
+    unlist() |>
+    all() |>
+    expect_true()
 
 })
