@@ -611,8 +611,8 @@ encode_matsindf <- function(.matsindf,
     # These aren't the droids you are looking for.
     return(.matsindf)
   }
-  if (length(matcols) > 1) {
-    # We have more than 1 column of matrices
+  if (!(matvals %in% colnames(.matsindf)) & length(matcols) >= 1) {
+    # We have at least 1 column of matrices
     # Pivot to a tidy data frame
     .matsindf <- .matsindf |>
       tidyr::pivot_longer(cols = dplyr::all_of(matcols),
