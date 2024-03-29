@@ -121,4 +121,7 @@ with matrix names as column names or
 
 If \code{.matsindf} does not contain any matrix columns,
 \code{.matsindf} is returned unchanged.
+
+If \code{.encoded} does not contain a \code{matnames} column,
+\code{.encoded} is returned unchanged.
 }

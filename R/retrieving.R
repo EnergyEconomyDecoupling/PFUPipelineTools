@@ -3,7 +3,6 @@
 #' If `hashed_table` has `0` rows, `NULL` is returned.
 #'
 #' @param hashed_table A table created by `pl_hash()`.
-#' @param conn The database connection.
 #' @param decode_fks A boolean that tells whether to decode foreign keys
 #'                   before returning.
 #'                   Default is `TRUE`.
@@ -16,8 +15,22 @@
 #'                      There can be only one unique value in `tar_group_colname`,
 #'                      otherwise an error is raised.
 #'                      Default is `TRUE`.
+#' @param decode_matsindf A boolean that tells whether to decode the
+#'                        a matsindf data frame.
+#'                        Calls [decode_matsindf()] internally.
+#'                        Default is `TRUE`.
+#' @param index_map A list of data frames to assist with decoding matrices.
+#'                  Passed to [decode_matsindf()] when `decode_matsindf` is `TRUE`
+#'                  but otherwise not needed.
+#' @param rctypes A data frame of row and column types.
+#'                Passed to [decode_matsindf()] when `decode_matsindf` is `TRUE`
+#'                but otherwise not needed.
+#' @param matrix_class One of "Matrix" (the default for sparse matrices)
+#'                     or ("matrix") for the native matrix form in `R`.
+#'                     Default is "Matrix".
 #' @param tar_group_colname The name of the `tar_group` column.
 #'                          default is `PFUPipelineTools::hashed_table_colnames$tar_group_colname`.
+#' @param conn The database connection.
 #' @param schema The database schema (a `dm` object).
 #'               Default calls `schema_from_conn()`, but
 #'               you can supply a pre-computed schema for speed.
@@ -36,15 +49,20 @@
 #'
 #' @export
 pl_collect_from_hash <- function(hashed_table,
-                                 conn,
                                  decode_fks = TRUE,
                                  retain_table_name_col = FALSE,
                                  set_tar_group = TRUE,
+                                 decode_matsindf = TRUE,
+                                 index_map,
+                                 rctypes,
+                                 matrix_class = c("Matrix", "matrix"),
                                  tar_group_colname = PFUPipelineTools::hashed_table_colnames$tar_group_colname,
+                                 conn,
                                  schema = schema_from_conn(conn = conn),
                                  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
                                  .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
                                  .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_colname) {
+  matrix_class <- match.arg(matrix_class)
   if (nrow(hashed_table) == 0) {
     return(NULL)
   }
@@ -78,6 +96,12 @@ pl_collect_from_hash <- function(hashed_table,
       decode_fks(db_table_name = table_name,
                  schema = schema,
                  fk_parent_tables = fk_parent_tables)
+  }
+  if (decode_matsindf) {
+    out <- out |>
+      decode_matsindf(index_map = index_map,
+                      rctypes = rctypes,
+                      matrix_class = matrix_class)
   }
   if (retain_table_name_col) {
     out <- out |>

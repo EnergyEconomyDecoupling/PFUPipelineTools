@@ -543,6 +543,9 @@ decode_fk_keys <- function(v_key,
 #' If `.matsindf` does not contain any matrix columns,
 #' `.matsindf` is returned unchanged.
 #'
+#' If `.encoded` does not contain a `matnames` column,
+#' `.encoded` is returned unchanged.
+#'
 #' @param .matsindf A matsindf data frame whose matrices are to be encoded.
 #' @param .encoded A data frame of matrices in triplet form whose matrices are to be decoded.
 #' @param index_map A list of two or more index map data frames.
@@ -588,6 +591,9 @@ decode_matsindf <- function(.encoded,
                             val_colname = "x",
                             rowtype_colname = "rowtype",
                             coltype_colname = "coltype") {
+  if (!(matnames %in% colnames(.encoded))) {
+    return(.encoded)
+  }
   matrix_class <- match.arg(matrix_class)
   .encoded |>
     matsindf::group_by_everything_except(row_index_colname, col_index_colname, val_colname) |>
