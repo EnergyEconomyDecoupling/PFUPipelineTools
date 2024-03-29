@@ -11,15 +11,15 @@ pl_filter_collect(
   methods = NULL,
   last_stages = NULL,
   energy_types = NULL,
+  collect = FALSE,
+  conn,
+  schema = schema_from_conn(conn = conn),
+  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
   country = IEATools::iea_cols$country,
   year = IEATools::iea_cols$year,
   method = IEATools::iea_cols$method,
   last_stage = IEATools::iea_cols$last_stage,
-  energy_type = IEATools::iea_cols$energy_type,
-  conn,
-  collect = FALSE,
-  schema = schema_from_conn(conn = conn),
-  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema)
+  energy_type = IEATools::iea_cols$energy_type
 )
 }
 \arguments{
@@ -30,14 +30,11 @@ the respective columns.
 Default values are \code{NULL}, meaning
 that no filters should be applied.}
 
-\item{country, year, method, last_stage, energy_type}{Columns that are likely to be in db_table_name
-and may be filtered with \code{\%in\%}-style subsetting.}
-
-\item{conn}{The database connection.}
-
 \item{collect}{A boolean that tells whether to download the result.
 Default is \code{FALSE}.
 See details.}
+
+\item{conn}{The database connection.}
 
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
 Default is \code{schema_from_conn(conn = conn)}.
@@ -48,6 +45,9 @@ for the foreign keys in \code{db_table_name}.
 Default is
 \code{get_all_fk_tables(conn = conn, schema = schema)}.
 See details.}
+
+\item{country, year, method, last_stage, energy_type}{Columns that are likely to be in db_table_name
+and may be filtered with \code{\%in\%}-style subsetting.}
 }
 \value{
 A data frame downloaded from \code{conn},

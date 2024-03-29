@@ -174,12 +174,10 @@ pl_collect_from_hash <- function(hashed_table,
 #'                                                         the respective columns.
 #'                                                         Default values are `NULL`, meaning
 #'                                                         that no filters should be applied.
-#' @param country,year,method,last_stage,energy_type Columns that are likely to be in db_table_name
-#'                                                   and may be filtered with `%in%`-style subsetting.
-#' @param conn The database connection.
 #' @param collect A boolean that tells whether to download the result.
 #'                Default is `FALSE`.
 #'                See details.
+#' @param conn The database connection.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               Default is `schema_from_conn(conn = conn)`.
 #'               See details.
@@ -188,6 +186,8 @@ pl_collect_from_hash <- function(hashed_table,
 #'                         Default is
 #'                         `get_all_fk_tables(conn = conn, schema = schema)`.
 #'                         See details.
+#' @param country,year,method,last_stage,energy_type Columns that are likely to be in db_table_name
+#'                                                   and may be filtered with `%in%`-style subsetting.
 #'
 #' @return A data frame downloaded from `conn`,
 #'         a filtered version of `db_table_name`.
@@ -199,16 +199,15 @@ pl_filter_collect <- function(db_table_name,
                               methods = NULL,
                               last_stages = NULL,
                               energy_types = NULL,
+                              collect = FALSE,
+                              conn,
+                              schema = schema_from_conn(conn = conn),
+                              fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
                               country = IEATools::iea_cols$country,
                               year = IEATools::iea_cols$year,
                               method = IEATools::iea_cols$method,
                               last_stage = IEATools::iea_cols$last_stage,
-                              energy_type = IEATools::iea_cols$energy_type,
-                              conn,
-                              collect = FALSE,
-                              schema = schema_from_conn(conn = conn),
-                              fk_parent_tables = get_all_fk_tables(conn = conn,
-                                                                   schema = schema)) {
+                              energy_type = IEATools::iea_cols$energy_type) {
   out <- dplyr::tbl(src = conn, db_table_name) |>
     # First, decode the foreign keys with
     # collect = FALSE to ensure a tbl is returned.
@@ -216,6 +215,19 @@ pl_filter_collect <- function(db_table_name,
                schema = schema,
                fk_parent_tables = fk_parent_tables,
                collect = FALSE)
+
+  # Probably should have a switch for decode_fks
+  # Add code here to decode matsindf,
+  # similar to the code in pl_collect_from_hash
+  #   if (decode_matsindf) {
+  #   out <- out |>
+  #     decode_matsindf(index_map = index_map,
+  #                     rctypes = rctypes,
+  #                     matrix_class = matrix_class)
+  #   }
+
+
+
   cnames <- colnames(out)
   if (!is.null(countries) & country %in% cnames) {
     out <- out |>

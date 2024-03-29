@@ -5,7 +5,7 @@
 \alias{usual_hash_group_cols}
 \title{Usual columns to be preserved when hashing target uploads}
 \format{
-A string list with \verb{r length(additional_hash_group_cols)} entries.
+A string list with 7 entries.
 \describe{
 \item{dataset}{The string name of the dataset column.}
 \item{table_name}{The string name of the table name column.}
@@ -24,6 +24,6 @@ A string list containing names of the usual columns to preserve on upload,
 in addition to columns that contain only one unique value.
 }
 \examples{
-additional_hash_group_cols
+usual_hash_group_cols
 }
 \keyword{datasets}

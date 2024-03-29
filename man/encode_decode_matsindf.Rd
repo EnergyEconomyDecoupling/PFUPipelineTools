@@ -11,8 +11,8 @@ decode_matsindf(
   index_map,
   rctypes,
   matrix_class = c("matrix", "Matrix"),
-  matnames = "matnames",
-  matvals = "matvals",
+  matname = "matname",
+  matval = "matval",
   row_index_colname = "i",
   col_index_colname = "j",
   val_colname = "x",
@@ -26,8 +26,8 @@ encode_matsindf(
     c(IEATools::row_col_types$industry, IEATools::row_col_types$product)),
   industry_index_map,
   product_index_map,
-  matnames = "matnames",
-  matvals = "matvals",
+  matname = "matname",
+  matval = "matval",
   row_index_colname = "i",
   col_index_colname = "j",
   val_colname = "x"
@@ -44,11 +44,11 @@ One of "matrix" (the default
 and \code{R}'s native matrix class) or
 "Matrix" (for sparse matrices).}
 
-\item{matnames}{The name of the column in \code{.matsindf} that contains matrix names.
-Default is "matnames".}
+\item{matname}{The name of the column in \code{.matsindf} that contains matrix names.
+Default is "matname".}
 
-\item{matvals}{The name of the column in \code{.matsindf} that contains matrix values.
-Default is "matvals".}
+\item{matval}{The name of the column in \code{.matsindf} that contains matrix values.
+Default is "matval".}
 
 \item{row_index_colname}{The name of the row index column in \code{.encoded}.
 Default is "i".}
@@ -117,11 +117,11 @@ a character column.
 \code{.matsindf} can be
 (a) wide by matrices,
 with matrix names as column names or
-(b) tidy, with \code{matnames} and \code{matvals} columns.
+(b) tidy, with \code{matname} and \code{matval} columns.
 
 If \code{.matsindf} does not contain any matrix columns,
 \code{.matsindf} is returned unchanged.
 
-If \code{.encoded} does not contain a \code{matnames} column,
+If \code{.encoded} does not contain a \code{matname} column,
 \code{.encoded} is returned unchanged.
 }

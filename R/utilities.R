@@ -538,12 +538,12 @@ decode_fk_keys <- function(v_key,
 #' `.matsindf` can be
 #' (a) wide by matrices,
 #' with matrix names as column names or
-#' (b) tidy, with `matnames` and `matvals` columns.
+#' (b) tidy, with `matname` and `matval` columns.
 #'
 #' If `.matsindf` does not contain any matrix columns,
 #' `.matsindf` is returned unchanged.
 #'
-#' If `.encoded` does not contain a `matnames` column,
+#' If `.encoded` does not contain a `matname` column,
 #' `.encoded` is returned unchanged.
 #'
 #' @param .matsindf A matsindf data frame whose matrices are to be encoded.
@@ -557,10 +557,10 @@ decode_fk_keys <- function(v_key,
 #'                     One of "matrix" (the default
 #'                     and `R`'s native matrix class) or
 #'                     "Matrix" (for sparse matrices).
-#' @param matnames The name of the column in `.matsindf` that contains matrix names.
-#'                 Default is "matnames".
-#' @param matvals The name of the column in `.matsindf` that contains matrix values.
-#'                Default is "matvals".
+#' @param matname The name of the column in `.matsindf` that contains matrix names.
+#'                 Default is "matname".
+#' @param matval The name of the column in `.matsindf` that contains matrix values.
+#'                Default is "matval".
 #' @param row_index_colname The name of the row index column in `.encoded`.
 #'                          Default is "i".
 #' @param col_index_colname The name of the column index column in `.encoded`.
@@ -584,31 +584,31 @@ decode_matsindf <- function(.encoded,
                             index_map,
                             rctypes,
                             matrix_class = c("matrix", "Matrix"),
-                            matnames = "matnames",
-                            matvals = "matvals",
+                            matname = "matname",
+                            matval = "matval",
                             row_index_colname = "i",
                             col_index_colname = "j",
                             val_colname = "x",
                             rowtype_colname = "rowtype",
                             coltype_colname = "coltype") {
-  if (!(matnames %in% colnames(.encoded))) {
+  if (!(matname %in% colnames(.encoded))) {
     return(.encoded)
   }
   matrix_class <- match.arg(matrix_class)
   .encoded |>
     matsindf::group_by_everything_except(row_index_colname, col_index_colname, val_colname) |>
-    tidyr::nest(.key = matvals) |>
+    tidyr::nest(.key = matval) |>
     dplyr::ungroup() |>
-    dplyr::left_join(rctypes, by = matnames) |>
+    dplyr::left_join(rctypes, by = matname) |>
     dplyr::mutate(
       # Need to set row and column type differently,
       # because setrowtype and setcoltype will apply rowtype and coltype
       # to each column of the data frame.
-      "{matvals}" := Map(f = matsbyname::setrowtype, a = .data[[matvals]], rowtype = .data[[rowtype_colname]]),
-      "{matvals}" := Map(f = matsbyname::setcoltype, a = .data[[matvals]], coltype = .data[[coltype_colname]]),
+      "{matval}" := Map(f = matsbyname::setrowtype, a = .data[[matval]], rowtype = .data[[rowtype_colname]]),
+      "{matval}" := Map(f = matsbyname::setcoltype, a = .data[[matval]], coltype = .data[[coltype_colname]]),
       "{rowtype_colname}" := NULL,
       "{coltype_colname}" := NULL,
-      "{matvals}" := .data[[matvals]] |>
+      "{matval}" := .data[[matval]] |>
         matsbyname::to_named_matrix(index_map = index_map,
                                     matrix_class = matrix_class,
                                     row_index_colname = row_index_colname,
@@ -627,8 +627,8 @@ encode_matsindf <- function(.matsindf,
                                                     IEATools::row_col_types$product)),
                             industry_index_map,
                             product_index_map,
-                            matnames = "matnames",
-                            matvals = "matvals",
+                            matname = "matname",
+                            matval = "matval",
                             row_index_colname = "i",
                             col_index_colname = "j",
                             val_colname = "x") {
@@ -640,31 +640,31 @@ encode_matsindf <- function(.matsindf,
     # These aren't the droids you are looking for.
     return(.matsindf)
   }
-  if (!(matvals %in% colnames(.matsindf))) {
+  if (!(matval %in% colnames(.matsindf))) {
     # We have at least 1 column of matrices
-    # but not the matvals column.
+    # but not the matval column.
     # Pivot to a tidy data frame.
     .matsindf <- .matsindf |>
       tidyr::pivot_longer(cols = dplyr::all_of(matcols),
-                          names_to = matnames,
-                          values_to = matvals)
+                          names_to = matname,
+                          values_to = matval)
   }
-  # Ensure that both matnames and matvals are present
-  assertthat::assert_that(matnames %in% colnames(.matsindf),
-                          msg = paste0("Matrix name column '", matnames, "' missing from .matsindf in encode_matsindf()"))
-  assertthat::assert_that(matvals %in% colnames(.matsindf),
-                          msg = paste0("Matrix value column '", matvals, "' missing from .matsindf in encode_matsindf()"))
+  # Ensure that both matname and matval are present
+  assertthat::assert_that(matname %in% colnames(.matsindf),
+                          msg = paste0("Matrix name column '", matname, "' missing from .matsindf in encode_matsindf()"))
+  assertthat::assert_that(matval %in% colnames(.matsindf),
+                          msg = paste0("Matrix value column '", matval, "' missing from .matsindf in encode_matsindf()"))
 
   .matsindf |>
     dplyr::mutate(
-      # Convert the matvals column triplet form
-      "{matvals}" := matsbyname::to_triplet(.data[[matvals]],
+      # Convert the matval column triplet form
+      "{matval}" := matsbyname::to_triplet(.data[[matval]],
                                             index_map,
                                             row_index_colname = row_index_colname,
                                             col_index_colname = col_index_colname,
                                             val_colname = val_colname)
     ) |>
-    tidyr::unnest(cols = dplyr::all_of(matvals))
+    tidyr::unnest(cols = dplyr::all_of(matval))
 }
 
 

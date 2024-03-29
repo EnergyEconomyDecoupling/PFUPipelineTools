@@ -261,7 +261,7 @@
 #' A string list containing names of the usual columns to preserve on upload,
 #' in addition to columns that contain only one unique value.
 #'
-#' @format A string list with `r length(additional_hash_group_cols)` entries.
+#' @format A string list with `r length(usual_hash_group_cols)` entries.
 #' \describe{
 #' \item{dataset}{The string name of the dataset column.}
 #' \item{table_name}{The string name of the table name column.}
@@ -273,7 +273,7 @@
 #' }
 #'
 #' @examples
-#' additional_hash_group_cols
+#' usual_hash_group_cols
 "usual_hash_group_cols"
 
 
