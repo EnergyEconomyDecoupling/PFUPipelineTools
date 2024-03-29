@@ -206,6 +206,9 @@ clean_up_beatles <- function(conn) {
 #'                     See details.
 #' @param additional_hash_group_cols A vector of strings that gives names of additional
 #'                                   columns that should _not_ be hashed.
+#' @param usual_hash_group_cols A string vector that gives typical names of columns that should _not_
+#'                              be hashed.
+#'                              Default is `PFUPipelineTools::usual_hash_group_cols`.
 #' @param conn A database connection.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               Default is `dm_from_con(conn, learn_keys = TRUE)`.
@@ -231,7 +234,8 @@ inboard_filter_copy <- function(source,
                                 empty_dest = TRUE,
                                 in_place = FALSE,
                                 dependencies = NULL,
-                                additional_hash_group_cols = PFUPipelineTools::additional_hash_group_cols,
+                                additional_hash_group_cols = NULL,
+                                usual_hash_group_cols = PFUPipelineTools::usual_hash_group_cols,
                                 conn,
                                 schema = schema_from_conn(conn),
                                 fk_parent_tables = get_all_fk_tables(conn = conn,
@@ -294,7 +298,8 @@ inboard_filter_copy <- function(source,
   # Download a hashed table of the dest table
   pl_hash(table_name = dest,
           conn = conn,
-          additional_hash_group_cols = additional_hash_group_cols) |>
+          additional_hash_group_cols = additional_hash_group_cols,
+          usual_hash_group_cols = usual_hash_group_cols) |>
     # Decode the foreign keys, so they are human-readable.
     decode_fks(db_table_name = dest,
                conn = conn,
@@ -629,9 +634,10 @@ encode_matsindf <- function(.matsindf,
     # These aren't the droids you are looking for.
     return(.matsindf)
   }
-  if (!(matvals %in% colnames(.matsindf)) & length(matcols) >= 1) {
+  if (!(matvals %in% colnames(.matsindf))) {
     # We have at least 1 column of matrices
-    # Pivot to a tidy data frame
+    # but not the matvals column.
+    # Pivot to a tidy data frame.
     .matsindf <- .matsindf |>
       tidyr::pivot_longer(cols = dplyr::all_of(matcols),
                           names_to = matnames,

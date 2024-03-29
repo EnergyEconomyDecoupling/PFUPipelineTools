@@ -10,6 +10,7 @@ pl_hash(
   conn,
   additional_hash_group_cols = NULL,
   keep_single_unique_cols = TRUE,
+  usual_hash_group_cols = PFUPipelineTools::usual_hash_group_cols,
   .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
   .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_colname,
   .nested_col = PFUPipelineTools::hashed_table_colnames$nested_colname,
@@ -26,7 +27,7 @@ or the name of a table in the database to be hashed.}
 \item{conn}{A connection to a database.
 Necessary only if \code{.df} is \code{NULL} (its default value).}
 
-\item{additional_hash_group_cols}{The string names of
+\item{additional_hash_group_cols}{A string vector of names of
 additional columns by which \code{.df} will be grouped
 before making the \code{.nested_hash_col} hash column.
 All \code{additional_hash_group_cols} that exist in the
@@ -39,6 +40,10 @@ See details.}
 \item{keep_single_unique_cols}{A boolean that tells whether to keep columns
 that have a single unique value in the outgoing hash.
 Default is \code{TRUE}.}
+
+\item{usual_hash_group_cols}{The string vector of usual column names to be preserved
+in the hashed data frame.
+Default is \code{PFUPipelineTools::usual_hash_group_cols}.}
 
 \item{.table_name_col}{The name of the column of the output that contains \code{table_name}.
 Default is \code{PFUPipelineTools::hashed_table_colnames$db_table_name}.}

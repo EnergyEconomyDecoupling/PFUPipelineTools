@@ -358,14 +358,15 @@ usethis::use_data(dataset_info, overwrite = TRUE)
 
 
 #
-# Additinoal hash group columns
+# Additional hash group columns
 #
 
-additional_hash_group_cols <- c(dataset = dataset_info$dataset_colname,
-                                country = IEATools::iea_cols$country,
-                                method = IEATools::iea_cols$method,
-                                year = IEATools::iea_cols$year,
-                                last_stage = IEATools::iea_cols$last_stage,
-                                energy_type = IEATools::iea_cols$energy_type)
-usethis::use_data(additional_hash_group_cols, overwrite = TRUE)
+usual_hash_group_cols <- c(dataset = dataset_info$dataset_colname,
+                           table_name = hashed_table_colnames$db_table_name,
+                           country = IEATools::iea_cols$country,
+                           method = IEATools::iea_cols$method,
+                           year = IEATools::iea_cols$year,
+                           last_stage = IEATools::iea_cols$last_stage,
+                           energy_type = IEATools::iea_cols$energy_type)
+usethis::use_data(usual_hash_group_cols, overwrite = TRUE)
 

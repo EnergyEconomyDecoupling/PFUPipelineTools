@@ -256,14 +256,15 @@
 "dataset_info"
 
 
-#' Additional columns to be preserved when hashing target uploads
+#' Usual columns to be preserved when hashing target uploads
 #'
-#' A string list containing names of columns to preserved on upload
+#' A string list containing names of the usual columns to preserve on upload,
 #' in addition to columns that contain only one unique value.
 #'
 #' @format A string list with `r length(additional_hash_group_cols)` entries.
 #' \describe{
 #' \item{dataset}{The string name of the dataset column.}
+#' \item{table_name}{The string name of the table name column.}
 #' \item{country}{The string name of the country column.}
 #' \item{method}{The string name of the method column.}
 #' \item{year}{The string name of the year column.}
@@ -273,6 +274,6 @@
 #'
 #' @examples
 #' additional_hash_group_cols
-"additional_hash_group_cols"
+"usual_hash_group_cols"
 
 

@@ -12,7 +12,8 @@ inboard_filter_copy(
   empty_dest = TRUE,
   in_place = FALSE,
   dependencies = NULL,
-  additional_hash_group_cols = PFUPipelineTools::additional_hash_group_cols,
+  additional_hash_group_cols = NULL,
+  usual_hash_group_cols = PFUPipelineTools::usual_hash_group_cols,
   conn,
   schema = schema_from_conn(conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
@@ -42,6 +43,10 @@ See details.}
 
 \item{additional_hash_group_cols}{A vector of strings that gives names of additional
 columns that should \emph{not} be hashed.}
+
+\item{usual_hash_group_cols}{A string vector that gives typical names of columns that should \emph{not}
+be hashed.
+Default is \code{PFUPipelineTools::usual_hash_group_cols}.}
 
 \item{conn}{A database connection.}
 

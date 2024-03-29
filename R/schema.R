@@ -388,9 +388,11 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #' The output of this function is a special data frame that
 #' contains the following columns:
 #'
-#'   * All single-valued columns columns in `.df` and
+#'   * All single-valued columns columns in `.df`,
 #'     columns given in `additional_hash_group_cols`
-#'     (default `PFUPipelineTools::additional_hash_group_cols`).
+#'     (default `NULL`), and
+#'     columns given in `usual_hash_group_cols`
+#'     (default `PFUPipelineTools::usual_hash_group_cols`).
 #'   * Hash: A column with a hash of all non-foreign-key columns.
 #'
 #' `schema` is a data model (`dm` object) for the database in `conn`.
@@ -424,10 +426,14 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #'                      will be taken from the `.db_table_name` column of `.df`.
 #' @param additional_hash_group_cols A vector or list of additional columns
 #'                                   by which `.df` will be grouped
-#'                                   before hashing.
-#'                                   Default is `PFUPipelineTools::additional_hash_group_cols`
-#'                                   but can be set to `NULL` to disable.
+#'                                   before hashing and, therefore, appear in the output.
+#'                                   Default is `NULL`.
 #'                                   Passed to [pl_hash()].
+#' @param usual_hash_group_cols A vector of columns by which `.df` will be grouped
+#'                              before hashing and, therefore, appear in the output.
+#'                              Default is `PFUPipelineTools::additional_hash_group_cols`
+#'                              but can be set to `NULL` to disable.
+#'                              Passed to [pl_hash()].
 #' @param keep_single_unique_cols A boolean that tells whether to keep
 #'                                columns with a single unique value
 #'                                in the output.
@@ -445,6 +451,8 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #'                  of the local computer.
 #'                  See documentation for [encode_matsindf()] and
 #'                  [matsbyname::to_triplet()].
+#'                  Default is a `list` that contains the `industry`, `product`, and `other`
+#'                  members of `fk_parent_tables`.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               Default is `dm_from_con(conn, learn_keys = TRUE)`.
 #'               See details.
@@ -467,14 +475,17 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 pl_upsert <- function(.df,
                       conn,
                       db_table_name = NULL,
-                      additional_hash_group_cols = PFUPipelineTools::additional_hash_group_cols,
+                      additional_hash_group_cols = NULL,
+                      usual_hash_group_cols = PFUPipelineTools::usual_hash_group_cols,
                       keep_single_unique_cols = TRUE,
                       in_place = FALSE,
                       encode_fks = TRUE,
                       index_map = list(fk_parent_tables[[IEATools::row_col_types$industry]],
-                                       fk_parent_tables[[IEATools::row_col_types$product]]) |>
+                                       fk_parent_tables[[IEATools::row_col_types$product]],
+                                       fk_parent_tables[[IEATools::row_col_types$other]]) |>
                         magrittr::set_names(c(IEATools::row_col_types$industry,
-                                              IEATools::row_col_types$product)),
+                                              IEATools::row_col_types$product,
+                                              IEATools::row_col_types$other)),
                       schema = schema_from_conn(conn),
                       fk_parent_tables = get_all_fk_tables(conn = conn,
                                                            schema = schema,
@@ -537,7 +548,8 @@ pl_upsert <- function(.df,
   df_matsindf_encoded |>
     pl_hash(table_name = db_table_name,
             keep_single_unique_cols = keep_single_unique_cols,
-            additional_hash_group_cols = additional_hash_group_cols)
+            additional_hash_group_cols = additional_hash_group_cols,
+            usual_hash_group_cols = usual_hash_group_cols)
 }
 
 
