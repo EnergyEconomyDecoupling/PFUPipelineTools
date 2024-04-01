@@ -10,6 +10,7 @@ decode_matsindf(
   .encoded,
   index_map,
   rctypes,
+  wide_by_matrices = TRUE,
   matrix_class = c("matrix", "Matrix"),
   matname = "matname",
   matval = "matval",
@@ -38,6 +39,12 @@ encode_matsindf(
 
 \item{index_map}{A list of two or more index map data frames.
 Default is \code{list(Industry = industry_index_map, Product = product_index_map)}.}
+
+\item{rctypes}{A data frame of row and column types.}
+
+\item{wide_by_matrices}{A boolean that tells whether to
+\code{\link[tidyr:pivot_wider]{tidyr::pivot_wider()}} the results.
+Default is \code{TRUE}.}
 
 \item{matrix_class}{The class of matrices to be created by \code{\link[=decode_matsindf]{decode_matsindf()}}.
 One of "matrix" (the default

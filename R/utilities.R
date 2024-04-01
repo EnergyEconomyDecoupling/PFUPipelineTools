@@ -550,6 +550,10 @@ decode_fk_keys <- function(v_key,
 #' @param .encoded A data frame of matrices in triplet form whose matrices are to be decoded.
 #' @param index_map A list of two or more index map data frames.
 #'                  Default is `list(Industry = industry_index_map, Product = product_index_map)`.
+#' @param rctypes A data frame of row and column types.
+#' @param wide_by_matrices A boolean that tells whether to
+#'                         [tidyr::pivot_wider()] the results.
+#'                         Default is `TRUE`.
 #' @param industry_index_map,product_index_map Optional data frames with two columns providing the mapping
 #'                                             between row and column indices and row and column names.
 #'                                             See details.
@@ -583,6 +587,7 @@ decode_fk_keys <- function(v_key,
 decode_matsindf <- function(.encoded,
                             index_map,
                             rctypes,
+                            wide_by_matrices = TRUE,
                             matrix_class = c("matrix", "Matrix"),
                             matname = "matname",
                             matval = "matval",
@@ -595,7 +600,7 @@ decode_matsindf <- function(.encoded,
     return(.encoded)
   }
   matrix_class <- match.arg(matrix_class)
-  .encoded |>
+  out <- .encoded |>
     matsindf::group_by_everything_except(row_index_colname, col_index_colname, val_colname) |>
     tidyr::nest(.key = matval) |>
     dplyr::ungroup() |>
@@ -615,6 +620,12 @@ decode_matsindf <- function(.encoded,
                                     col_index_colname = col_index_colname,
                                     val_colname = val_colname)
     )
+  if (wide_by_matrices) {
+    out <- out |>
+      tidyr::pivot_wider(names_from = matname,
+                         values_from = matval)
+  }
+  return(out)
 }
 
 

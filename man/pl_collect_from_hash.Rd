@@ -14,6 +14,8 @@ pl_collect_from_hash(
   rctypes,
   matrix_class = c("Matrix", "matrix"),
   tar_group_colname = PFUPipelineTools::hashed_table_colnames$tar_group_colname,
+  matname_colname = "matname",
+  matval_colname = "matval",
   conn,
   schema = schema_from_conn(conn = conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
@@ -58,6 +60,9 @@ Default is "Matrix".}
 
 \item{tar_group_colname}{The name of the \code{tar_group} column.
 default is \code{PFUPipelineTools::hashed_table_colnames$tar_group_colname}.}
+
+\item{matname_colname, matval_colname}{Names used for matrix names and matrix values.
+Defaults are "matname" and "matval".}
 
 \item{conn}{The database connection.}
 

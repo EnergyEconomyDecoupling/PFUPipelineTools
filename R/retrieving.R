@@ -30,6 +30,8 @@
 #'                     Default is "Matrix".
 #' @param tar_group_colname The name of the `tar_group` column.
 #'                          default is `PFUPipelineTools::hashed_table_colnames$tar_group_colname`.
+#' @param matname_colname,matval_colname Names used for matrix names and matrix values.
+#'                                       Defaults are "matname" and "matval".
 #' @param conn The database connection.
 #' @param schema The database schema (a `dm` object).
 #'               Default calls `schema_from_conn()`, but
@@ -57,6 +59,8 @@ pl_collect_from_hash <- function(hashed_table,
                                  rctypes,
                                  matrix_class = c("Matrix", "matrix"),
                                  tar_group_colname = PFUPipelineTools::hashed_table_colnames$tar_group_colname,
+                                 matname_colname = "matname",
+                                 matval_colname = "matval",
                                  conn,
                                  schema = schema_from_conn(conn = conn),
                                  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
