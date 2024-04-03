@@ -148,6 +148,8 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 #'                    nested data.
 #'                    Used internally.
 #'                    Default is `PFUPipelineTools::hashed_table_colnames$nested_colname`.
+#' @param tar_group_col The name of the tar_group column.
+#'                      Default is "tar_group".
 #' @param .algo The algorithm for hashing.
 #'              Default is "md5".
 #'
@@ -157,12 +159,13 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 pl_hash <- function(.df = NULL,
                     table_name,
                     conn,
+                    usual_hash_group_cols = PFUPipelineTools::usual_hash_group_cols,
                     additional_hash_group_cols = NULL,
                     keep_single_unique_cols = TRUE,
-                    usual_hash_group_cols = PFUPipelineTools::usual_hash_group_cols,
                     .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
                     .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_colname,
                     .nested_col = PFUPipelineTools::hashed_table_colnames$nested_colname,
+                    tar_group_col = "tar_group",
                     .algo = "md5") {
   if (!is.null(table_name)) {
     # Make sure the table_name has length 1.

@@ -524,14 +524,14 @@ pl_upsert <- function(.df,
     magrittr::extract2(1)
 
   df_matsindf_encoded <- .df |>
-    # The database shouldn't care about targets groups, so
-    # remove any targets grouping.
-    tar_ungroup() |>
     # Encode for upload using the index_map
     encode_matsindf(index_map = index_map)
 
   # Encode fk column values in .df with integer keys, if requested.
-  df_to_upsert <- df_matsindf_encoded
+  df_to_upsert <- df_matsindf_encoded |>
+    # The database shouldn't care about targets groups, so
+    # remove any targets grouping.
+    tar_ungroup()
   if (encode_fks) {
     df_to_upsert <- df_to_upsert |>
       encode_fks(db_table_name = db_table_name,

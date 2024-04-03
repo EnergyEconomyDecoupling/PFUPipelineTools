@@ -270,6 +270,7 @@
 #' \item{year}{The string name of the year column.}
 #' \item{last_stage}{The string name of the last_stage column.}
 #' \item{energy_type}{The string name of the energy_type column.}
+#' \item{tar_group}{The string name of the tar_group column.}
 #' }
 #'
 #' @examples

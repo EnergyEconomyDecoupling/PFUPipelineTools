@@ -244,7 +244,8 @@ test_that("decode_matsindf() works as expected", {
   res <- encoded |>
     decode_matsindf(index_map = index_map,
                     rctypes = rctypes,
-                    matrix_class = "Matrix")
+                    matrix_class = "Matrix",
+                    wide_by_matrices = FALSE)
 
   # Check that things are the same
   dplyr::full_join(mats, res, by = c("Country", "Year", "matname")) |>
@@ -255,5 +256,4 @@ test_that("decode_matsindf() works as expected", {
     unlist() |>
     all() |>
     expect_true()
-
 })

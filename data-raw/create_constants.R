@@ -367,6 +367,7 @@ usual_hash_group_cols <- c(dataset = dataset_info$dataset_colname,
                            method = IEATools::iea_cols$method,
                            year = IEATools::iea_cols$year,
                            last_stage = IEATools::iea_cols$last_stage,
-                           energy_type = IEATools::iea_cols$energy_type)
+                           energy_type = IEATools::iea_cols$energy_type,
+                           tar_group = "tar_group")
 usethis::use_data(usual_hash_group_cols, overwrite = TRUE)
 
