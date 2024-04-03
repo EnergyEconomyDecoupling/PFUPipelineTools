@@ -120,7 +120,7 @@ pl_collect_from_hash <- function(hashed_table,
     this_tar_group <- hashed_table[[tar_group_colname]] |>
       unique()
     assertthat::assert_that(length(this_tar_group) == 1,
-                            msg = "You asked for the tar_group to be retained, but there is more than 1 tar_group in `hashed_table`")
+                            msg = "You asked for the tar_group column to be retained, but there is more than 1 tar_group in `hashed_table`")
     out <- out |>
       dplyr::mutate(
         "{tar_group_colname}" := this_tar_group
