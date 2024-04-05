@@ -257,3 +257,47 @@ test_that("decode_matsindf() works as expected", {
     all() |>
     expect_true()
 })
+
+
+test_that("encode_matsindf() works with a NULL matrix", {
+  # Create an example data frame.
+  ptype <- "Products"
+  itype <- "Industries"
+  tidy <- data.frame(Country  = c( "GH",  "GH",  "GH",  "GH",  "GH",  "GH",  "GH",  "US",  "US",  "US",  "US"),
+                     Year     = c( 1971,  1971,  1971,  1971,  1971,  1971,  1971,  1980,  1980,  1980,  1980),
+                     matname = c(   "U",   "U",   "Y",   "Y",   "Y",   "V",   "V",   "U",   "U",   "Y",   "Y"),
+                     row      = c(  "p1",  "p2",  "p1",  "p2",  "p2",  "i1",  "i2",  "p1",  "p1",  "p1",  "p2"),
+                     col      = c(  "i1",  "i2",  "i1",  "i2",  "i3",  "p1",  "p2",  "i1",  "i2",  "i1",  "i2"),
+                     rowtypes = c(ptype, ptype, ptype, ptype, ptype, itype, itype, ptype, ptype, ptype, ptype),
+                     coltypes = c(itype, itype, itype, itype, itype, ptype, ptype, itype, itype, itype, itype),
+                     matval  = c(   11  ,  12,    13 ,   14 ,   15 ,   16 ,   17 ,   49 ,   50 ,   51 ,   52),
+                     stringsAsFactors = FALSE) |>
+    dplyr::group_by(Country, Year, matname)
+  mats <- tidy |>
+    matsindf::collapse_to_matrices(matname = "matrix", rownames = "row", colnames = "col",
+                                   rowtypes = "rowtypes", coltypes = "coltypes",
+                                   matval = "matval", matrix_class = "Matrix") |>
+    dplyr::ungroup()
+
+  # Now set one of the matrices to NULL,
+  # the U matrix in 1971.
+  mats$matval[1] <- list(NULL)
+
+  industry_index_map <- data.frame(index = as.integer(c(1, 2, 3)),
+                                   name = c("i1", "i2", "i3"))
+  product_index_map <- data.frame(index = as.integer(c(1, 2)),
+                                  name = c("p1", "p2"))
+  index_map <- list(Industries = industry_index_map,
+                    Products = product_index_map)
+
+  rctypes <- tibble::tribble(~matname, ~rowtype, ~coltype,
+                             "U",       ptype,    itype,
+                             "V",       itype,    ptype,
+                             "Y",       ptype,    itype)
+  # Encode the data frame with a NULL position.
+  encoded <- mats |>
+    encode_matsindf(index_map = index_map)
+  expect_equal(encoded |>
+                 dplyr::filter(Year == 1971, matname == "U") |>
+                 nrow(), 0)
+})
