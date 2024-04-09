@@ -173,6 +173,9 @@ pl_collect_from_hash <- function(hashed_table,
 #' by supplying a pre-computed named list of
 #' foreign key tables.
 #'
+#' When `collect = TRUE`,
+#' [decode_matsindf()] is called on the downloaded data frame.
+#'
 #' @param db_table_name The string name of the database table to be filtered.
 #' @param countries,years,methods,last_stages,energy_types Vectors of strings to be kept from
 #'                                                         the respective columns.
@@ -195,7 +198,7 @@ pl_collect_from_hash <- function(hashed_table,
 #' @param index_table The index table for the matrices in the database at `conn`.
 #'                    Default is `fk_parent_tables[[index_table_name]]`.
 #' @param rctype_table_name The name of the table that contains row and column types.
-#'                          Default is "RCType".
+#'                          Default is "matnameRCType".
 #' @param rctypes The table of row and column types for the database at `conn`.
 #'                Default is `fk_parent_tables[[rctype_table_name]]`.
 #' @param matrix_class One of "Matrix" (the default) for sparse matrices or
@@ -209,8 +212,7 @@ pl_collect_from_hash <- function(hashed_table,
 #' @param country,year,method,last_stage,energy_type Columns that are likely to be in db_table_name
 #'                                                   and may be filtered with `%in%`-style subsetting.
 #'
-#' @return A data frame downloaded from `conn`,
-#'         a filtered version of `db_table_name`.
+#' @return A filtered version of `db_table_name` downloaded from `conn`.
 #'
 #' @export
 pl_filter_collect <- function(db_table_name,
@@ -225,8 +227,12 @@ pl_filter_collect <- function(db_table_name,
                               fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
                               index_table_name = "Index",
                               index_table = fk_parent_tables[[index_table_name]],
-                              rctype_table_name = "RCType",
-                              rctypes = fk_parent_tables[[rctype_table_name]],
+                              rctype_table_name = "matnameRCType",
+                              rctypes = decode_fks(db_table_name = rctype_table_name,
+                                                   collect = TRUE,
+                                                   conn = conn,
+                                                   schema = schema,
+                                                   fk_parent_tables = fk_parent_tables),
                               matrix_class = c("Matrix", "matrix"),
                               matname = "matname",
                               matval = "matval",
@@ -247,18 +253,6 @@ pl_filter_collect <- function(db_table_name,
                schema = schema,
                fk_parent_tables = fk_parent_tables,
                collect = FALSE)
-
-
-  # Probably should have a switch for decode_fks
-  # Add code here to decode matsindf,
-  # similar to the code in pl_collect_from_hash
-  #   if (decode_matsindf) {
-  #   out <- out |>
-  #     decode_matsindf(index_map = index_map,
-  #                     rctypes = rctypes,
-  #                     matrix_class = matrix_class)
-  #   }
-
 
   cnames <- colnames(out)
   if (!is.null(countries) & country %in% cnames) {
@@ -282,21 +276,20 @@ pl_filter_collect <- function(db_table_name,
       dplyr::filter(.data[[energy_type]] %in% energy_types)
   }
 
-  # Now decode the matsindf data frame
-  out <- out |>
-    decode_matsindf(index_map = index_map,
-                    rctypes = rctypes,
-                    matrix_class = matrix_class,
-                    matname = matname,
-                    matval = matval,
-                    rowtype_colname = rowtype_colname,
-                    coltype_colname = coltype_colname)
-
   if (collect) {
     # Collect (execute the SQL), if desired.
     out <- out |>
-      dplyr::collect()
+      dplyr::collect() |>
+      # Now decode the matsindf data frame
+      decode_matsindf(index_map = index_map,
+                      rctypes = rctypes,
+                      matrix_class = matrix_class,
+                      matname = matname,
+                      matval = matval,
+                      rowtype_colname = rowtype_colname,
+                      coltype_colname = coltype_colname)
   }
+
   return(out)
 }
 

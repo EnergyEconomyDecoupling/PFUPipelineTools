@@ -614,7 +614,7 @@ decode_matsindf <- function(.encoded,
     matsindf::group_by_everything_except(row_index_colname, col_index_colname, val_colname) |>
     tidyr::nest(.key = matval) |>
     dplyr::ungroup() |>
-    dplyr::left_join(rctypes, by = matname) |>
+    dplyr::left_join(rctypes, by = matname, copy = TRUE) |>
     dplyr::mutate(
       # Need to set row and column type differently,
       # because setrowtype and setcoltype will apply rowtype and coltype

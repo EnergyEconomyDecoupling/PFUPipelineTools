@@ -17,8 +17,9 @@ pl_filter_collect(
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
   index_table_name = "Index",
   index_table = fk_parent_tables[[index_table_name]],
-  rctype_table_name = "RCType",
-  rctypes = fk_parent_tables[[rctype_table_name]],
+  rctype_table_name = "matnameRCType",
+  rctypes = decode_fks(db_table_name = rctype_table_name, collect = TRUE, conn = conn,
+    schema = schema, fk_parent_tables = fk_parent_tables),
   matrix_class = c("Matrix", "matrix"),
   matname = "matname",
   matval = "matval",
@@ -62,7 +63,7 @@ Default is "Index".}
 Default is \code{fk_parent_tables[[index_table_name]]}.}
 
 \item{rctype_table_name}{The name of the table that contains row and column types.
-Default is "RCType".}
+Default is "matnameRCType".}
 
 \item{rctypes}{The table of row and column types for the database at \code{conn}.
 Default is \code{fk_parent_tables[[rctype_table_name]]}.}
@@ -83,8 +84,7 @@ Defaults are "rowtype" and "coltype", respectively.}
 and may be filtered with \code{\%in\%}-style subsetting.}
 }
 \value{
-A data frame downloaded from \code{conn},
-a filtered version of \code{db_table_name}.
+A filtered version of \code{db_table_name} downloaded from \code{conn}.
 }
 \description{
 Often when collecting data from the database,
@@ -128,4 +128,7 @@ If minimal interaction with the database is desired,
 be sure to override the default value for \code{fk_parent_tables}
 by supplying a pre-computed named list of
 foreign key tables.
+
+When \code{collect = TRUE},
+\code{\link[=decode_matsindf]{decode_matsindf()}} is called on the downloaded data frame.
 }
