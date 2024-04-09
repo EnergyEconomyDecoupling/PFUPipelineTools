@@ -27,6 +27,7 @@ encode_matsindf(
     c(IEATools::row_col_types$industry, IEATools::row_col_types$product)),
   industry_index_map,
   product_index_map,
+  retain_zero_structure = FALSE,
   matname = "matname",
   matval = "matval",
   row_index_colname = "i",
@@ -70,6 +71,11 @@ Default is "x".}
 
 \item{industry_index_map, product_index_map}{Optional data frames with two columns providing the mapping
 between row and column indices and row and column names.
+See details.}
+
+\item{retain_zero_structure}{A boolean that tells whether to retain
+the structure of zero matrices when creating triplets.
+Default is \code{FALSE}.
 See details.}
 }
 \value{
@@ -131,4 +137,10 @@ If \code{.matsindf} does not contain any matrix columns,
 
 If \code{.encoded} does not contain a \code{matname} column,
 \code{.encoded} is returned unchanged.
+
+By default, \code{\link[=encode_matsindf]{encode_matsindf()}} will return
+zero-row data frames when
+encoding zero matrices.
+Set \code{retain_zero_structure = TRUE}
+to return all entries in zero matrices.
 }
