@@ -190,6 +190,22 @@ pl_collect_from_hash <- function(hashed_table,
 #'                         Default is
 #'                         `get_all_fk_tables(conn = conn, schema = schema)`.
 #'                         See details.
+#' @param index_table_name The name of the table that serves as the index for row and column names.
+#'                         Default is "Index".
+#' @param index_table The index table for the matrices in the database at `conn`.
+#'                    Default is `fk_parent_tables[[index_table_name]]`.
+#' @param rctype_table_name The name of the table that contains row and column types.
+#'                          Default is "RCType".
+#' @param rctypes The table of row and column types for the database at `conn`.
+#'                Default is `fk_parent_tables[[rctype_table_name]]`.
+#' @param matrix_class One of "Matrix" (the default) for sparse matrices or
+#'                     "matrix" (the base matrix representation in `R`) for non-sparse matrices.
+#' @param matname The name of the matrix name column.
+#'                Default is "matname".
+#' @param matval The name of the matrix value column.
+#'               Default is "matval".
+#' @param rowtype_colname,coltype_colname The names for row and column type columns in data frames.
+#'                                        Defaults are "rowtype" and "coltype", respectively.
 #' @param country,year,method,last_stage,energy_type Columns that are likely to be in db_table_name
 #'                                                   and may be filtered with `%in%`-style subsetting.
 #'
@@ -207,11 +223,23 @@ pl_filter_collect <- function(db_table_name,
                               conn,
                               schema = schema_from_conn(conn = conn),
                               fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+                              index_table_name = "Index",
+                              index_table = fk_parent_tables[[index_table_name]],
+                              rctype_table_name = "RCType",
+                              rctypes = fk_parent_tables[[rctype_table_name]],
+                              matrix_class = c("Matrix", "matrix"),
+                              matname = "matname",
+                              matval = "matval",
+                              rowtype_colname = "rowtype",
+                              coltype_colname = "coltype",
                               country = IEATools::iea_cols$country,
                               year = IEATools::iea_cols$year,
                               method = IEATools::iea_cols$method,
                               last_stage = IEATools::iea_cols$last_stage,
                               energy_type = IEATools::iea_cols$energy_type) {
+
+  matrix_class <- match.arg(matrix_class)
+
   out <- dplyr::tbl(src = conn, db_table_name) |>
     # First, decode the foreign keys with
     # collect = FALSE to ensure a tbl is returned.
@@ -219,6 +247,7 @@ pl_filter_collect <- function(db_table_name,
                schema = schema,
                fk_parent_tables = fk_parent_tables,
                collect = FALSE)
+
 
   # Probably should have a switch for decode_fks
   # Add code here to decode matsindf,
@@ -229,7 +258,6 @@ pl_filter_collect <- function(db_table_name,
   #                     rctypes = rctypes,
   #                     matrix_class = matrix_class)
   #   }
-
 
 
   cnames <- colnames(out)
@@ -253,6 +281,17 @@ pl_filter_collect <- function(db_table_name,
     out <- out |>
       dplyr::filter(.data[[energy_type]] %in% energy_types)
   }
+
+  # Now decode the matsindf data frame
+  out <- out |>
+    decode_matsindf(index_map = index_map,
+                    rctypes = rctypes,
+                    matrix_class = matrix_class,
+                    matname = matname,
+                    matval = matval,
+                    rowtype_colname = rowtype_colname,
+                    coltype_colname = coltype_colname)
+
   if (collect) {
     # Collect (execute the SQL), if desired.
     out <- out |>

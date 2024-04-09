@@ -15,6 +15,15 @@ pl_filter_collect(
   conn,
   schema = schema_from_conn(conn = conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+  index_table_name = "Index",
+  index_table = fk_parent_tables[[index_table_name]],
+  rctype_table_name = "RCType",
+  rctypes = fk_parent_tables[[rctype_table_name]],
+  matrix_class = c("Matrix", "matrix"),
+  matname = "matname",
+  matval = "matval",
+  rowtype_colname = "rowtype",
+  coltype_colname = "coltype",
   country = IEATools::iea_cols$country,
   year = IEATools::iea_cols$year,
   method = IEATools::iea_cols$method,
@@ -45,6 +54,30 @@ for the foreign keys in \code{db_table_name}.
 Default is
 \code{get_all_fk_tables(conn = conn, schema = schema)}.
 See details.}
+
+\item{index_table_name}{The name of the table that serves as the index for row and column names.
+Default is "Index".}
+
+\item{index_table}{The index table for the matrices in the database at \code{conn}.
+Default is \code{fk_parent_tables[[index_table_name]]}.}
+
+\item{rctype_table_name}{The name of the table that contains row and column types.
+Default is "RCType".}
+
+\item{rctypes}{The table of row and column types for the database at \code{conn}.
+Default is \code{fk_parent_tables[[rctype_table_name]]}.}
+
+\item{matrix_class}{One of "Matrix" (the default) for sparse matrices or
+"matrix" (the base matrix representation in \code{R}) for non-sparse matrices.}
+
+\item{matname}{The name of the matrix name column.
+Default is "matname".}
+
+\item{matval}{The name of the matrix value column.
+Default is "matval".}
+
+\item{rowtype_colname, coltype_colname}{The names for row and column type columns in data frames.
+Defaults are "rowtype" and "coltype", respectively.}
 
 \item{country, year, method, last_stage, energy_type}{Columns that are likely to be in db_table_name
 and may be filtered with \code{\%in\%}-style subsetting.}

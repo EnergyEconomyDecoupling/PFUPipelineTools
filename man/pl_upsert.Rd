@@ -19,6 +19,7 @@ pl_upsert(
     fk_parent_tables[[IEATools::row_col_types$other]]),
     c(IEATools::row_col_types$industry, IEATools::row_col_types$product,
     IEATools::row_col_types$other)),
+  retain_zero_structure = FALSE,
   schema = schema_from_conn(conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema, collect = TRUE),
   .db_table_name = PFUPipelineTools::hashed_table_colnames$db_table_name,
@@ -70,6 +71,10 @@ See documentation for \code{\link[=encode_matsindf]{encode_matsindf()}} and
 \code{\link[matsbyname:to_named_triplet]{matsbyname::to_triplet()}}.
 Default is a \code{list} that contains the \code{industry}, \code{product}, and \code{other}
 members of \code{fk_parent_tables}.}
+
+\item{retain_zero_structure}{A boolean that tells whether to retain the stucture
+of zero matrices.
+See details.}
 
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
 Default is \code{dm_from_con(conn, learn_keys = TRUE)}.
@@ -144,6 +149,13 @@ and pass the list to the \code{fk_parent_tables} argument
 of this function.
 
 The user in \code{conn} must have write access to the database.
+
+By default, \code{\link[=pl_upsert]{pl_upsert()}} will delete all zero entries
+in matrices before upserting.
+But for some countries and years,
+that could result in missing matrices, such as \strong{U_EIOU}.
+Set \code{retain_zero_structure = TRUE}
+to preserve all entries in a zero matrix.
 }
 \seealso{
 \code{pl_download()} for the reverse operation.
