@@ -546,6 +546,12 @@ decode_fk_keys <- function(v_key,
 #' If `.encoded` does not contain a `matname` column,
 #' `.encoded` is returned unchanged.
 #'
+#' By default, [encode_matsindf()] will return
+#' zero-row data frames when
+#' encoding zero matrices.
+#' Set `retain_zero_structure = TRUE`
+#' to return all entries in zero matrices.
+#'
 #' @param .matsindf A matsindf data frame whose matrices are to be encoded.
 #' @param .encoded A data frame of matrices in triplet form whose matrices are to be decoded.
 #' @param index_map A list of two or more index map data frames.
@@ -561,6 +567,10 @@ decode_fk_keys <- function(v_key,
 #'                     One of "matrix" (the default
 #'                     and `R`'s native matrix class) or
 #'                     "Matrix" (for sparse matrices).
+#' @param retain_zero_structure A boolean that tells whether to retain
+#'                              the structure of zero matrices when creating triplets.
+#'                              Default is `FALSE`.
+#'                              See details.
 #' @param matname The name of the column in `.matsindf` that contains matrix names.
 #'                 Default is "matname".
 #' @param matval The name of the column in `.matsindf` that contains matrix values.
@@ -638,6 +648,7 @@ encode_matsindf <- function(.matsindf,
                                                     IEATools::row_col_types$product)),
                             industry_index_map,
                             product_index_map,
+                            retain_zero_structure = FALSE,
                             matname = "matname",
                             matval = "matval",
                             row_index_colname = "i",
@@ -670,10 +681,11 @@ encode_matsindf <- function(.matsindf,
     dplyr::mutate(
       # Convert the matval column triplet form
       "{matval}" := matsbyname::to_triplet(.data[[matval]],
-                                            index_map,
-                                            row_index_colname = row_index_colname,
-                                            col_index_colname = col_index_colname,
-                                            val_colname = val_colname)
+                                           index_map,
+                                           retain_zero_structure = retain_zero_structure,
+                                           row_index_colname = row_index_colname,
+                                           col_index_colname = col_index_colname,
+                                           val_colname = val_colname)
     ) |>
     tidyr::unnest(cols = dplyr::all_of(matval))
 }
