@@ -431,9 +431,31 @@ test_that("pl_upsert() works for zero matrices", {
               retain_zero_structure = TRUE)
   # The hash should come back with 1 row
   expect_equal(nrow(twelve_rows), 1)
-  # Check that there are six rows in the table
+  # Check that there are twelve rows in the table
   should_be_twelve_rows <- DBI::dbReadTable(conn, name = "testzeromatrix")
   expect_equal(nrow(should_be_twelve_rows), 12)
+
+  # Now try to use pl_filter_collect() to get the data.
+  rctypes <- tibble::tribble(~matname, ~rowtype, ~coltype,
+                             "zerom1", "row", "col",
+                             "zerom2", "row", "col")
+  filter_collected <- pl_filter_collect(db_table_name = "testzeromatrix",
+                                        conn = conn,
+                                        collect = TRUE,
+                                        index_table = index_map,
+                                        rctypes = rctypes)
+  expect_equal(nrow(filter_collected), 1)
+  expect_equal(colnames(filter_collected), c("zerom1", "zerom2"))
+  expect_equal(nrow(filter_collected$zerom1[[1]]), 3)
+  expect_equal(ncol(filter_collected$zerom1[[1]]), 2)
+  expect_equal(nrow(filter_collected$zerom2[[1]]), 3)
+  expect_equal(ncol(filter_collected$zerom2[[1]]), 2)
+  expect_true(matsbyname::iszero_byname(filter_collected$zerom1[[1]]))
+  expect_true(matsbyname::iszero_byname(filter_collected$zerom2[[1]]))
+  expect_equal(rownames(filter_collected$zerom1[[1]]), c("r1", "r2", "r3"))
+  expect_equal(colnames(filter_collected$zerom1[[1]]), c("c1", "c2"))
+  expect_equal(rownames(filter_collected$zerom2[[1]]), c("r1", "r2", "r3"))
+  expect_equal(colnames(filter_collected$zerom2[[1]]), c("c1", "c2"))
 
   # Clean up after ourselves
   DBI::dbRemoveTable(conn = conn, name = "testzeromatrix")
