@@ -371,3 +371,70 @@ test_that("pl_collect_from_hash() decodes correctly", {
   # Clean up after ourselves
   PFUPipelineTools:::clean_up_beatles(conn)
 })
+
+
+test_that("pl_upsert() works for zero matrices", {
+  skip_on_ci()
+  skip_on_cran()
+  conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
+                         dbname = "unit_testing",
+                         host = "eviz.cs.calvin.edu",
+                         port = 5432,
+                         user = "postgres")
+  on.exit(DBI::dbDisconnect(conn))
+
+  # Start with a fresh slate
+  if (DBI::dbExistsTable(conn = conn, name = "testzeromatrix")) {
+    DBI::dbRemoveTable(conn = conn, name = "testzeromatrix")
+  }
+
+  # Create data model
+  dm <- list(testzeromatrix = data.frame(matname = "zerom",
+                                         i = as.integer(1),
+                                         j = as.integer(1),
+                                         x = 3.1415926) |>
+               # Delete all rows, but keep names and column types
+               dplyr::filter(FALSE)) |>
+    dm::new_dm() |>
+    dm::dm_add_pk(testzeromatrix, columns = c(matname, i, j))
+  dm::copy_dm_to(conn, dm = dm, temporary = FALSE)
+  # Create index map
+  index_map <- list(row = data.frame(IndexID = as.integer(1:3),
+                                     Index = c("r1", "r2", "r3")),
+                    col = data.frame(IndexID = as.integer(1:2),
+                                     Index = c("c1", "c2")))
+
+  # Create a zero matrix
+  zerom <- matrix(c(0, 0,
+                    0, 0,
+                    0, 0), nrow = 3, dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
+    matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
+  # Create a matsindf data frame
+  midf <- tibble::tibble(matname = c("zerom1", "zerom2"),
+                         matval = list(zerom, zerom))
+  no_rows <- midf |>
+    pl_upsert(conn = conn,
+              db_table_name = "testzeromatrix",
+              index_map = index_map)
+  # Check that there are no rows in the hashed table
+  expect_equal(nrow(no_rows), 0)
+  # Check that there are no rows in the table
+  should_be_no_rows <- DBI::dbReadTable(conn, name = "testzeromatrix")
+  expect_equal(nrow(should_be_no_rows), 0)
+
+  # Now upsert zerom while preserving rows
+  twelve_rows <- midf |>
+    pl_upsert(conn = conn,
+              db_table_name = "testzeromatrix",
+              index_map = index_map,
+              in_place = TRUE,
+              retain_zero_structure = TRUE)
+  # The hash should come back with 1 row
+  expect_equal(nrow(twelve_rows), 1)
+  # Check that there are six rows in the table
+  should_be_twelve_rows <- DBI::dbReadTable(conn, name = "testzeromatrix")
+  expect_equal(nrow(should_be_twelve_rows), 12)
+
+  # Clean up after ourselves
+  DBI::dbRemoveTable(conn = conn, name = "testzeromatrix")
+})
