@@ -439,6 +439,10 @@ test_that("pl_upsert() works for zero matrices", {
   rctypes <- tibble::tribble(~matname, ~rowtype, ~coltype,
                              "zerom1", "row", "col",
                              "zerom2", "row", "col")
+
+
+
+  # The following gives 0x0 Matrix objects
   filter_collected <- pl_filter_collect(db_table_name = "testzeromatrix",
                                         conn = conn,
                                         collect = TRUE,
