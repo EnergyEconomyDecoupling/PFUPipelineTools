@@ -143,4 +143,9 @@ zero-row data frames when
 encoding zero matrices.
 Set \code{retain_zero_structure = TRUE}
 to return all entries in zero matrices.
+
+All of \code{matname}, \code{row_index_colname},
+\code{col_index_colname}, and \code{val_colname}
+must be present in \code{.encoded}.
+If not, \code{.encoded} is returned unmodified.
 }

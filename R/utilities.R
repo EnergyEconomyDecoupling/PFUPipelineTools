@@ -552,6 +552,11 @@ decode_fk_keys <- function(v_key,
 #' Set `retain_zero_structure = TRUE`
 #' to return all entries in zero matrices.
 #'
+#' All of `matname`, `row_index_colname`,
+#' `col_index_colname`, and `val_colname`
+#' must be present in `.encoded`.
+#' If not, `.encoded` is returned unmodified.
+#'
 #' @param .matsindf A matsindf data frame whose matrices are to be encoded.
 #' @param .encoded A data frame of matrices in triplet form whose matrices are to be decoded.
 #' @param index_map A list of two or more index map data frames.
@@ -606,7 +611,11 @@ decode_matsindf <- function(.encoded,
                             val_colname = "x",
                             rowtype_colname = "rowtype",
                             coltype_colname = "coltype") {
-  if (!(matname %in% colnames(.encoded))) {
+  # if (!(matname %in% colnames(.encoded))) {
+  #   return(.encoded)
+  # }
+  if (!all(c(matname, row_index_colname, col_index_colname, val_colname)
+           %in% colnames(.encoded))) {
     return(.encoded)
   }
   matrix_class <- match.arg(matrix_class)
