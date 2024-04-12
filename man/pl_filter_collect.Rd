@@ -15,8 +15,8 @@ pl_filter_collect(
   conn,
   schema = schema_from_conn(conn = conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
-  index_table_name = "Index",
-  index_table = fk_parent_tables[[index_table_name]],
+  index_map_name = "Index",
+  index_map = fk_parent_tables[[index_table_name]],
   rctype_table_name = "matnameRCType",
   rctypes = decode_fks(db_table_name = rctype_table_name, collect = TRUE, conn = conn,
     schema = schema, fk_parent_tables = fk_parent_tables),
@@ -56,10 +56,10 @@ Default is
 \code{get_all_fk_tables(conn = conn, schema = schema)}.
 See details.}
 
-\item{index_table_name}{The name of the table that serves as the index for row and column names.
+\item{index_map_name}{The name of the table that serves as the index for row and column names.
 Default is "Index".}
 
-\item{index_table}{The index table for the matrices in the database at \code{conn}.
+\item{index_map}{The index map for the matrices in the database at \code{conn}.
 Default is \code{fk_parent_tables[[index_table_name]]}.}
 
 \item{rctype_table_name}{The name of the table that contains row and column types.

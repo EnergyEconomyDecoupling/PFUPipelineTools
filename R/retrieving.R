@@ -193,10 +193,10 @@ pl_collect_from_hash <- function(hashed_table,
 #'                         Default is
 #'                         `get_all_fk_tables(conn = conn, schema = schema)`.
 #'                         See details.
-#' @param index_table_name The name of the table that serves as the index for row and column names.
-#'                         Default is "Index".
-#' @param index_table The index table for the matrices in the database at `conn`.
-#'                    Default is `fk_parent_tables[[index_table_name]]`.
+#' @param index_map_name The name of the table that serves as the index for row and column names.
+#'                       Default is "Index".
+#' @param index_map The index map for the matrices in the database at `conn`.
+#'                  Default is `fk_parent_tables[[index_table_name]]`.
 #' @param rctype_table_name The name of the table that contains row and column types.
 #'                          Default is "matnameRCType".
 #' @param rctypes The table of row and column types for the database at `conn`.
@@ -225,8 +225,8 @@ pl_filter_collect <- function(db_table_name,
                               conn,
                               schema = schema_from_conn(conn = conn),
                               fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
-                              index_table_name = "Index",
-                              index_table = fk_parent_tables[[index_table_name]],
+                              index_map_name = "Index",
+                              index_map = fk_parent_tables[[index_table_name]],
                               rctype_table_name = "matnameRCType",
                               rctypes = decode_fks(db_table_name = rctype_table_name,
                                                    collect = TRUE,
