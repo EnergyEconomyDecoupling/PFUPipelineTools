@@ -442,7 +442,8 @@ test_that("pl_upsert() works for zero matrices", {
 
 
 
-  # The following gives 0x0 Matrix objects
+  # The following should give zero matrices with
+  # row and column names
   filter_collected <- pl_filter_collect(db_table_name = "testzeromatrix",
                                         conn = conn,
                                         collect = TRUE,
