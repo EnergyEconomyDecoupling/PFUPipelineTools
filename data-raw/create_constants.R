@@ -371,3 +371,36 @@ usual_hash_group_cols <- c(dataset = dataset_info$dataset_colname,
                            tar_group = "tar_group")
 usethis::use_data(usual_hash_group_cols, overwrite = TRUE)
 
+
+#
+# Aggregation file information
+#
+
+aggregation_file_tab_names <- list(region_aggregation = "region_aggregation",
+                                   continent_aggregation = "continent_aggregation",
+                                   world_aggregation = "world_aggregation",
+                                   ef_product_aggregation = "ef_product_aggregation",
+                                   eu_product_aggregation = "eu_product_aggregation",
+                                   ef_sector_aggregation = "ef_sector_aggregation")
+usethis::use_data(aggregation_file_tab_names, overwrite = TRUE)
+
+
+aggregation_file_cols <- list(many_colname = "Many",
+                              few_colname = "Few")
+usethis::use_data(aggregation_file_cols, overwrite = TRUE)
+
+
+#
+# Aggregation data frame columns
+#
+
+aggregation_df_cols <- list(product_aggregation = "Product.aggregation",
+                            industry_aggregation = "Industry.aggregation",
+                            specified = "Specified",
+                            despecified = "Despecified",
+                            ungrouped = "Ungrouped",
+                            grouped = "Grouped",
+                            chopped_mat = "Chopped.mat",
+                            chopped_var = "Chopped.var",
+                            product_sector = Recca::aggregate_cols$product_sector)
+usethis::use_data(aggregation_df_cols, overwrite = TRUE)
