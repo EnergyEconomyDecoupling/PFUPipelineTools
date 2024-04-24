@@ -447,7 +447,7 @@ test_that("pl_upsert() works for zero matrices", {
   filter_collected <- pl_filter_collect(db_table_name = "testzeromatrix",
                                         conn = conn,
                                         collect = TRUE,
-                                        index_table = index_map,
+                                        index_map = index_map,
                                         rctypes = rctypes)
   expect_equal(nrow(filter_collected), 1)
   expect_equal(colnames(filter_collected), c("zerom1", "zerom2"))

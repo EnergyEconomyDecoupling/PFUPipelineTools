@@ -11,6 +11,7 @@ pl_filter_collect(
   methods = NULL,
   last_stages = NULL,
   energy_types = NULL,
+  includes_neu = NULL,
   collect = FALSE,
   conn,
   schema = schema_from_conn(conn = conn),
@@ -29,16 +30,41 @@ pl_filter_collect(
   year = IEATools::iea_cols$year,
   method = IEATools::iea_cols$method,
   last_stage = IEATools::iea_cols$last_stage,
-  energy_type = IEATools::iea_cols$energy_type
+  energy_type = IEATools::iea_cols$energy_type,
+  includes_neu_col = Recca::psut_cols$includes_neu
 )
 }
 \arguments{
 \item{db_table_name}{The string name of the database table to be filtered.}
 
-\item{countries, years, methods, last_stages, energy_types}{Vectors of strings to be kept from
-the respective columns.
-Default values are \code{NULL}, meaning
-that no filters should be applied.}
+\item{countries}{A vector of country strings to be retained in the output.
+Default is \code{NULL}, meaning that all countries present in \code{db_table_name}
+will be returned.}
+
+\item{years}{A vector of integers to be retained in the output.
+Default is \code{NULL}, meaning that all years present in \code{db_table_name}
+will be returned.}
+
+\item{methods}{A vector of method strings to be retained in the output.
+At present, only "PCM" (physical content method) is implemented.
+Default is \code{NULL}, meaning that all methods present in \code{db_table_name}
+will be returned.}
+
+\item{last_stages}{A vector of last stage strings to be retained in the output.
+At present, only "Final" and "Useful" are implemented.
+Default is \code{NULL}, meaning that all last stages present in \code{db_table_name}
+will be returned.}
+
+\item{energy_types}{A vector of energy type strings to be retained in the output.
+At present, only "E" (energy) and "X" (exergy) are implemented.
+Default is \code{NULL}, meaning that all energy types present in \code{db_table_name}
+will be returned.}
+
+\item{includes_neu}{A vector of booleans that indicates what to retain in output.
+\code{TRUE} means non-energy use is included in the ECCs.
+\code{FALSE} means non-energy use is excluded from the ECCs.
+Default is \code{NULL}, meaning that ECCs that both include and exclude
+non-energy use will be returned.}
 
 \item{collect}{A boolean that tells whether to download the result.
 Default is \code{FALSE}.
