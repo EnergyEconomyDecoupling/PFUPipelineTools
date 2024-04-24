@@ -177,10 +177,29 @@ pl_collect_from_hash <- function(hashed_table,
 #' [decode_matsindf()] is called on the downloaded data frame.
 #'
 #' @param db_table_name The string name of the database table to be filtered.
-#' @param countries,years,methods,last_stages,energy_types Vectors of strings to be kept from
-#'                                                         the respective columns.
-#'                                                         Default values are `NULL`, meaning
-#'                                                         that no filters should be applied.
+#' @param countries A vector of country strings to be retained in the output.
+#'                  Default is `NULL`, meaning that all countries present in `db_table_name`
+#'                  will be returned.
+#' @param years A vector of integers to be retained in the output.
+#'              Default is `NULL`, meaning that all years present in `db_table_name`
+#'              will be returned.
+#' @param methods A vector of method strings to be retained in the output.
+#'                At present, only "PCM" (physical content method) is implemented.
+#'                Default is `NULL`, meaning that all methods present in `db_table_name`
+#'                will be returned.
+#' @param last_stages A vector of last stage strings to be retained in the output.
+#'                    At present, only "Final" and "Useful" are implemented.
+#'                    Default is `NULL`, meaning that all last stages present in `db_table_name`
+#'                    will be returned.
+#' @param energy_types A vector of energy type strings to be retained in the output.
+#'                     At present, only "E" (energy) and "X" (exergy) are implemented.
+#'                     Default is `NULL`, meaning that all energy types present in `db_table_name`
+#'                     will be returned.
+#' @param includes_neu A vector of booleans that indicates what to retain in output.
+#'                     `TRUE` means non-energy use is included in the ECCs.
+#'                     `FALSE` means non-energy use is excluded from the ECCs.
+#'                     Default is `NULL`, meaning that ECCs that both include and exclude
+#'                     non-energy use will be returned.
 #' @param collect A boolean that tells whether to download the result.
 #'                Default is `FALSE`.
 #'                See details.
@@ -221,6 +240,7 @@ pl_filter_collect <- function(db_table_name,
                               methods = NULL,
                               last_stages = NULL,
                               energy_types = NULL,
+                              includes_neu = NULL,
                               collect = FALSE,
                               conn,
                               schema = schema_from_conn(conn = conn),
@@ -242,7 +262,8 @@ pl_filter_collect <- function(db_table_name,
                               year = IEATools::iea_cols$year,
                               method = IEATools::iea_cols$method,
                               last_stage = IEATools::iea_cols$last_stage,
-                              energy_type = IEATools::iea_cols$energy_type) {
+                              energy_type = IEATools::iea_cols$energy_type,
+                              includes_neu_col = Recca::psut_cols$includes_neu) {
 
   matrix_class <- match.arg(matrix_class)
 
@@ -274,6 +295,10 @@ pl_filter_collect <- function(db_table_name,
   if (!is.null(energy_types) & energy_type %in% cnames) {
     out <- out |>
       dplyr::filter(.data[[energy_type]] %in% energy_types)
+  }
+  if (!is.null(includes_neu) & includes_neu_col %in% cnames) {
+    out <- out |>
+      dplyr::filter(.data[[includes_neu_col]] %in% includes_neu)
   }
 
   if (collect) {
