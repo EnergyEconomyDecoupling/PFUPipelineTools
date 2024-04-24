@@ -173,33 +173,31 @@ pl_collect_from_hash <- function(hashed_table,
 #' by supplying a pre-computed named list of
 #' foreign key tables.
 #'
+#' Setting any of the filtering arguments
+#' (`countries`, `years`, `methods`, `last_stages`, `energy_types`, `includes_neu`)
+#' to `NULL` turns off filtering and returns all values.
+#'
 #' When `collect = TRUE`,
 #' [decode_matsindf()] is called on the downloaded data frame.
 #'
 #' @param db_table_name The string name of the database table to be filtered.
 #' @param countries A vector of country strings to be retained in the output.
-#'                  Default is `NULL`, meaning that all countries present in `db_table_name`
-#'                  will be returned.
+#'                  Default is `as.character(PFUPipelineTools::canonical_countries)`.
 #' @param years A vector of integers to be retained in the output.
-#'              Default is `NULL`, meaning that all years present in `db_table_name`
-#'              will be returned.
+#'              Default is `1960:2020`.
 #' @param methods A vector of method strings to be retained in the output.
 #'                At present, only "PCM" (physical content method) is implemented.
-#'                Default is `NULL`, meaning that all methods present in `db_table_name`
-#'                will be returned.
+#'                Default is "PCM" (physical content method).
 #' @param last_stages A vector of last stage strings to be retained in the output.
 #'                    At present, only "Final" and "Useful" are implemented.
-#'                    Default is `NULL`, meaning that all last stages present in `db_table_name`
-#'                    will be returned.
+#'                    Default is "Final". "Useful" is also a valid option.
 #' @param energy_types A vector of energy type strings to be retained in the output.
 #'                     At present, only "E" (energy) and "X" (exergy) are implemented.
-#'                     Default is `NULL`, meaning that all energy types present in `db_table_name`
-#'                     will be returned.
+#'                     Default is "E" but "X" is also valid.
 #' @param includes_neu A vector of booleans that indicates what to retain in output.
 #'                     `TRUE` means non-energy use is included in the ECCs.
 #'                     `FALSE` means non-energy use is excluded from the ECCs.
-#'                     Default is `NULL`, meaning that ECCs that both include and exclude
-#'                     non-energy use will be returned.
+#'                     Default is `TRUE`.
 #' @param collect A boolean that tells whether to download the result.
 #'                Default is `FALSE`.
 #'                See details.
@@ -235,12 +233,12 @@ pl_collect_from_hash <- function(hashed_table,
 #'
 #' @export
 pl_filter_collect <- function(db_table_name,
-                              countries = NULL,
-                              years = NULL,
-                              methods = NULL,
-                              last_stages = NULL,
-                              energy_types = NULL,
-                              includes_neu = NULL,
+                              countries = as.character(PFUPipelineTools::canonical_countries),
+                              years = 1960:2020,
+                              methods = "PCM",
+                              last_stages = c("Final", "Useful"),
+                              energy_types = c("E", "X"),
+                              includes_neu = TRUE,
                               collect = FALSE,
                               conn,
                               schema = schema_from_conn(conn = conn),
@@ -265,6 +263,16 @@ pl_filter_collect <- function(db_table_name,
                               energy_type = IEATools::iea_cols$energy_type,
                               includes_neu_col = Recca::psut_cols$includes_neu) {
 
+  # Protect the match.arg statements, because NULL has special meaning.
+  if (!is.null(methods)) {
+    methods <- match.arg(methods)
+  }
+  if (!is.null(last_stages)) {
+    last_stages <- match.arg(last_stages)
+  }
+  if (!is.null(energy_types)) {
+    energy_types <- match.arg(energy_types)
+  }
   matrix_class <- match.arg(matrix_class)
 
   out <- dplyr::tbl(src = conn, db_table_name) |>

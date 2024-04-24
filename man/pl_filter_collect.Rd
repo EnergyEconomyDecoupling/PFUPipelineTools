@@ -6,12 +6,12 @@
 \usage{
 pl_filter_collect(
   db_table_name,
-  countries = NULL,
-  years = NULL,
-  methods = NULL,
-  last_stages = NULL,
-  energy_types = NULL,
-  includes_neu = NULL,
+  countries = as.character(PFUPipelineTools::canonical_countries),
+  years = 1960:2020,
+  methods = "PCM",
+  last_stages = c("Final", "Useful"),
+  energy_types = c("E", "X"),
+  includes_neu = TRUE,
   collect = FALSE,
   conn,
   schema = schema_from_conn(conn = conn),
@@ -38,33 +38,27 @@ pl_filter_collect(
 \item{db_table_name}{The string name of the database table to be filtered.}
 
 \item{countries}{A vector of country strings to be retained in the output.
-Default is \code{NULL}, meaning that all countries present in \code{db_table_name}
-will be returned.}
+Default is \code{as.character(PFUPipelineTools::canonical_countries)}.}
 
 \item{years}{A vector of integers to be retained in the output.
-Default is \code{NULL}, meaning that all years present in \code{db_table_name}
-will be returned.}
+Default is \code{1960:2020}.}
 
 \item{methods}{A vector of method strings to be retained in the output.
 At present, only "PCM" (physical content method) is implemented.
-Default is \code{NULL}, meaning that all methods present in \code{db_table_name}
-will be returned.}
+Default is "PCM" (physical content method).}
 
 \item{last_stages}{A vector of last stage strings to be retained in the output.
 At present, only "Final" and "Useful" are implemented.
-Default is \code{NULL}, meaning that all last stages present in \code{db_table_name}
-will be returned.}
+Default is "Final". "Useful" is also a valid option.}
 
 \item{energy_types}{A vector of energy type strings to be retained in the output.
 At present, only "E" (energy) and "X" (exergy) are implemented.
-Default is \code{NULL}, meaning that all energy types present in \code{db_table_name}
-will be returned.}
+Default is "E" but "X" is also valid.}
 
 \item{includes_neu}{A vector of booleans that indicates what to retain in output.
 \code{TRUE} means non-energy use is included in the ECCs.
 \code{FALSE} means non-energy use is excluded from the ECCs.
-Default is \code{NULL}, meaning that ECCs that both include and exclude
-non-energy use will be returned.}
+Default is \code{TRUE}.}
 
 \item{collect}{A boolean that tells whether to download the result.
 Default is \code{FALSE}.
@@ -154,6 +148,10 @@ If minimal interaction with the database is desired,
 be sure to override the default value for \code{fk_parent_tables}
 by supplying a pre-computed named list of
 foreign key tables.
+
+Setting any of the filtering arguments
+(\code{countries}, \code{years}, \code{methods}, \code{last_stages}, \code{energy_types}, \code{includes_neu})
+to \code{NULL} turns off filtering and returns all values.
 
 When \code{collect = TRUE},
 \code{\link[=decode_matsindf]{decode_matsindf()}} is called on the downloaded data frame.
