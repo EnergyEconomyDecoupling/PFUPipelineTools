@@ -5,7 +5,7 @@
 \alias{usual_hash_group_cols}
 \title{Usual columns to be preserved when hashing target uploads}
 \format{
-A string list with 8 entries.
+A string list with 9 entries.
 \describe{
 \item{dataset}{The string name of the dataset column.}
 \item{table_name}{The string name of the table name column.}

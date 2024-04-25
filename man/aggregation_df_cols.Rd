@@ -7,14 +7,14 @@
 \format{
 A string list with 9 entries.
 \describe{
-\item{product_aggregation}{The name of the metadata column that tells about product aggregation. "Product.Aggregation"}
-\item{industry_aggregation}{The name of the metadata column that tells about industry aggregation. "Industry.Aggregation"}
+\item{product_aggregation}{The name of the metadata column that tells about product aggregation. "ProductAggregation"}
+\item{industry_aggregation}{The name of the metadata column that tells about industry aggregation. "IndustryAggregation"}
 \item{specified}{The value that indicates products or industries remain is specified. "Specified"}
 \item{despecified}{The value that indicates products or industries have been despecified and aggregated. "Despecified"}
 \item{ungrouped}{The value that indicates products or industries have not been grouped. "Ungrouped"}
 \item{grouped}{The value that indicates products or industries have been grouped. "Grouped"}
-\item{chopped_mat}{The value that indicates which matrix has been chopped. "Chopped.Mat"}
-\item{chopped_var}{The value that indicates the chopping product or industry. "Chop.Var"}
+\item{chopped_mat}{The value that indicates which matrix has been chopped. "ChoppedMat"}
+\item{chopped_var}{The value that indicates the chopping product or industry. "ChopVar"}
 \item{product_sector}{The column containing values for chopped_var. \code{Recca::aggregate_cols$product_sector}.}
 }
 }

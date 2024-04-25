@@ -368,6 +368,7 @@ usual_hash_group_cols <- c(dataset = dataset_info$dataset_colname,
                            year = IEATools::iea_cols$year,
                            last_stage = IEATools::iea_cols$last_stage,
                            energy_type = IEATools::iea_cols$energy_type,
+                           includes_neu = Recca::psut_cols$includes_neu,
                            tar_group = "tar_group")
 usethis::use_data(usual_hash_group_cols, overwrite = TRUE)
 
@@ -394,13 +395,13 @@ usethis::use_data(aggregation_file_cols, overwrite = TRUE)
 # Aggregation data frame columns
 #
 
-aggregation_df_cols <- list(product_aggregation = "Product.aggregation",
-                            industry_aggregation = "Industry.aggregation",
+aggregation_df_cols <- list(product_aggregation = "ProductAggregation",
+                            industry_aggregation = "IndustryAggregation",
                             specified = "Specified",
                             despecified = "Despecified",
                             ungrouped = "Ungrouped",
                             grouped = "Grouped",
-                            chopped_mat = "Chopped.mat",
-                            chopped_var = "Chopped.var",
+                            chopped_mat = "ChoppedMat",
+                            chopped_var = "ChoppedVar",
                             product_sector = Recca::aggregate_cols$product_sector)
 usethis::use_data(aggregation_df_cols, overwrite = TRUE)
