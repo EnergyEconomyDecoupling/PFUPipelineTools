@@ -106,18 +106,22 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 #' my_old_psut <- pinboard |>
 #'   pins::pin_read(name = "psut", version = "20220218T023112Z-1d9e1")
 #' }
-release_many_targets <- function(pipeline_releases_folder,
-                                 release_info,
-                                 release = FALSE,
-                                 targ_colname = "targ",
-                                 pin_name_colname = "pin_name",
-                                 targ_type_colname = "type") {
+release_many_pins <- function(pipeline_releases_folder,
+                              release_info,
+                              release = FALSE,
+                              targ_colname = "targ",
+                              pin_name_colname = "pin_name",
+                              targ_type_colname = "type") {
   if (release) {
     # Establish the pinboard
     board_folder <- pins::board_folder(pipeline_releases_folder, versioned = TRUE)
     # A function to write the pin
     save_pin_func <- function(targ, pin_name, targ_type) {
-      pins::pin_write(targ, name = pin_name, type = type, versioned = TRUE)
+      pins::pin_write(board = board_folder,
+                      x = targ,
+                      name = pin_name,
+                      type = type,
+                      versioned = TRUE)
     }
     # A list to gether the fully-qualified paths of the saved pins.
     out <- list()
