@@ -1,8 +1,8 @@
-#' Save a target to a pinboard.
+#' Save a single target to a pinboard.
 #'
 #' Releases (`release = TRUE`)
 #' or not (`release = FALSE`)
-#' a new version of `targ`
+#' a new version of the single target `targ`
 #' using the `pins` package.
 #'
 #' Released versions of the target can be obtained
@@ -20,6 +20,8 @@
 #'         If `release` is `FALSE`, the string "Release not requested."
 #'
 #' @export
+#'
+#' @seealso [release_many_targets()]
 #'
 #' @examples
 #' \dontrun{
@@ -48,6 +50,87 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
     out <- pins::board_folder(pipeline_releases_folder, versioned = TRUE) |>
       # Returns the fully-qualified name of the file written to the pinboard.
       pins::pin_write(targ, name = pin_name, type = type, versioned = TRUE)
+  } else {
+    out <- "Release not requested."
+  }
+  return(out)
+}
+
+
+
+#' Save many targets to a pinboard.
+#'
+#' Releases (`release = TRUE`)
+#' or not (`release = FALSE`)
+#' new versions of targets
+#' using the `pins` package.
+#'
+#' Released versions of the target can be obtained
+#' as shown in examples.
+#'
+#' `release_info` is a `tibble` with columns
+#' * `targ` (a list column containing the data to be released),
+#' * `pin_name` (the string pin names for each target), and
+#' * `targ_type` (the string target type, typically "csv" or "rds").
+#'
+#' @param pipeline_releases_folder The folder that contains the pinboard for releases from the pipeline.
+#' @param release_info A data frame information about these releases. See details.
+#' @param release A boolean telling whether to do a release.
+#'                Default is `FALSE`.
+#' @param targ_colname,pin_name_colname,targ_type_colname String names of columns in `release_info`.
+#'
+#' @return If `release` is `TRUE`,
+#'         a list of fully-qualified path names of the pinboard items.
+#'         If `release` is `FALSE`, the string "Release not requested."
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Establish the pinboard
+#' pinboard <- file.path("~",
+#'                       "Dropbox",
+#'                       "Fellowship 1960-2015 PFU database",
+#'                       "OutputData", "PipelineReleases") |>
+#'   pins::board_folder()
+#' # Get information about the `PSUT` target in the pinboard
+#' pinboard |>
+#'   pins::pin_meta(name = "psut")
+#' # Find versions of the `PSUT` target
+#' pinboard |>
+#'   pins::pin_versions(name = "psut")
+#' # Get the latest copy of the `PSUT` target.
+#' my_psut <- pinboard |>
+#'   pins::pin_read(name = "psut")
+#' # Retrieve a previous version of the `PSUT` target.
+#' my_old_psut <- pinboard |>
+#'   pins::pin_read(name = "psut", version = "20220218T023112Z-1d9e1")
+#' }
+release_many_targets <- function(pipeline_releases_folder,
+                                 release_info,
+                                 release = FALSE,
+                                 targ_colname = "targ",
+                                 pin_name_colname = "pin_name",
+                                 targ_type_colname = "type") {
+  if (release) {
+    # Establish the pinboard
+    board_folder <- pins::board_folder(pipeline_releases_folder, versioned = TRUE)
+    # A function to write the pin
+    save_pin_func <- function(targ, pin_name, targ_type) {
+      pins::pin_write(targ, name = pin_name, type = type, versioned = TRUE)
+    }
+    # A list to gether the fully-qualified paths of the saved pins.
+    out <- list()
+    # Cycle through each row of release_info
+    for (irow in 1:nrow(release_info)) {
+      # Save the pin
+      pin_path <- save_pin_func(targ = release_info[[targ_colname]][[irow]],
+                                pin_name = release_info[[pin_name_colname]][[irow]],
+                                targ_type = release_info[[targ_type_colname]][[irow]])
+      # Accumulate pin paths
+      out <- out |>
+        append(pin_path)
+    }
   } else {
     out <- "Release not requested."
   }

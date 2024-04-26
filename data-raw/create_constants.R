@@ -405,3 +405,16 @@ aggregation_df_cols <- list(product_aggregation = "ProductAggregation",
                             chopped_var = "ChoppedVar",
                             product_sector = Recca::aggregate_cols$product_sector)
 usethis::use_data(aggregation_df_cols, overwrite = TRUE)
+
+
+#
+# Metadata information for aggregation groups
+#
+
+agg_metadata <- list(total_value = "Total",
+                     all_value = "All",
+                     product_value = "Product",
+                     sector_value = "Sector",
+                     flow_value = "Flow",
+                     none = "None")
+usethis::use_data(agg_metadata, overwrite = TRUE)
