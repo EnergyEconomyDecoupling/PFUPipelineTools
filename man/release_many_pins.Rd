@@ -10,7 +10,7 @@ release_many_pins(
   release = FALSE,
   targ_colname = "targ",
   pin_name_colname = "pin_name",
-  targ_type_colname = "type"
+  pin_type_colname = "pin_type"
 )
 }
 \arguments{

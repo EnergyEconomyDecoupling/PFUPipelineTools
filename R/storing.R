@@ -80,7 +80,7 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 #' @param targ_colname,pin_name_colname,targ_type_colname String names of columns in `release_info`.
 #'
 #' @return If `release` is `TRUE`,
-#'         a list of fully-qualified path names of the pinboard items.
+#'         a list of names of items written to the the pinboard.
 #'         If `release` is `FALSE`, the string "Release not requested."
 #'
 #' @export
@@ -111,16 +111,16 @@ release_many_pins <- function(pipeline_releases_folder,
                               release = FALSE,
                               targ_colname = "targ",
                               pin_name_colname = "pin_name",
-                              targ_type_colname = "type") {
+                              pin_type_colname = "pin_type") {
   if (release) {
     # Establish the pinboard
     board_folder <- pins::board_folder(pipeline_releases_folder, versioned = TRUE)
     # A function to write the pin
-    save_pin_func <- function(targ, pin_name, targ_type) {
+    save_pin_func <- function(targ, pin_name, pin_type) {
       pins::pin_write(board = board_folder,
                       x = targ,
                       name = pin_name,
-                      type = type,
+                      type = pin_type,
                       versioned = TRUE)
     }
     # A list to gether the fully-qualified paths of the saved pins.
@@ -130,7 +130,7 @@ release_many_pins <- function(pipeline_releases_folder,
       # Save the pin
       pin_path <- save_pin_func(targ = release_info[[targ_colname]][[irow]],
                                 pin_name = release_info[[pin_name_colname]][[irow]],
-                                targ_type = release_info[[targ_type_colname]][[irow]])
+                                pin_type = release_info[[pin_type_colname]][[irow]])
       # Accumulate pin paths
       out <- out |>
         append(pin_path)
