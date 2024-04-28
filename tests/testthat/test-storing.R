@@ -75,7 +75,7 @@ test_that("pl_hash() works with remote table", {
                          dbname = "unit_testing",
                          host = "eviz.cs.calvin.edu",
                          port = 5432,
-                         user = "postgres")
+                         user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
 
   # Create a test table that has same Country

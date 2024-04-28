@@ -71,7 +71,7 @@ test_that("pl_upload_schema_and_simple_tables() works as expected", {
                          dbname = "unit_testing",
                          host = "eviz.cs.calvin.edu",
                          port = 5432,
-                         user = "postgres")
+                         user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
 
   # Build the data model remotely
@@ -171,7 +171,7 @@ test_that("encode_fks() works with re-routed foreign keys", {
                          dbname = "unit_testing",
                          host = "eviz.cs.calvin.edu",
                          port = 5432,
-                         user = "postgres")
+                         user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
   # Get rid of tables before we start
   if (DBI::dbExistsTable(conn, "TestUpsertTable")) {
@@ -232,7 +232,7 @@ test_that("decode_fks() works as expected", {
                          dbname = "unit_testing",
                          host = "eviz.cs.calvin.edu",
                          port = 5432,
-                         user = "postgres")
+                         user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
 
   # Build the data model remotely
@@ -289,7 +289,7 @@ test_that("decode_fks() and encode_fks() work with tbls", {
                          dbname = "unit_testing",
                          host = "eviz.cs.calvin.edu",
                          port = 5432,
-                         user = "postgres")
+                         user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
 
   # Build the data model remotely
@@ -339,7 +339,7 @@ test_that("pl_collect_from_hash() decodes correctly", {
                          dbname = "unit_testing",
                          host = "eviz.cs.calvin.edu",
                          port = 5432,
-                         user = "postgres")
+                         user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
 
   # Build the data model remotely
@@ -380,7 +380,7 @@ test_that("pl_upsert() works for zero matrices", {
                          dbname = "unit_testing",
                          host = "eviz.cs.calvin.edu",
                          port = 5432,
-                         user = "postgres")
+                         user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
 
   # Start with a fresh slate

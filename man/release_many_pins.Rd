@@ -25,7 +25,7 @@ Default is \code{FALSE}.}
 }
 \value{
 If \code{release} is \code{TRUE},
-a list of fully-qualified path names of the pinboard items.
+a list of names of items written to the the pinboard.
 If \code{release} is \code{FALSE}, the string "Release not requested."
 }
 \description{

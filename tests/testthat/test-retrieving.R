@@ -6,7 +6,7 @@ test_that("pl_collect_from_hash() works as expected", {
                          dbname = "unit_testing",
                          host = "eviz.cs.calvin.edu",
                          port = 5432,
-                         user = "postgres")
+                         user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
 
   # Make a data frame for testing.
@@ -157,7 +157,7 @@ test_that("pl_filter_collect() works as expected", {
                          dbname = "unit_testing",
                          host = "eviz.cs.calvin.edu",
                          port = 5432,
-                         user = "postgres")
+                         user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
 
   db_table_name <- "PLFilterCollectTestTable"

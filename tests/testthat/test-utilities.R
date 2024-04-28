@@ -16,7 +16,7 @@ test_that("inboard_filter_copy() works as expected", {
                          dbname = "unit_testing",
                          host = "eviz.cs.calvin.edu",
                          port = 5432,
-                         user = "postgres")
+                         user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
 
   # Make a table for testing
