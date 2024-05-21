@@ -61,6 +61,3 @@ my_old_psut <- pinboard |>
   pins::pin_read(name = "psut", version = "20220218T023112Z-1d9e1")
 }
 }
-\seealso{
-\code{\link[=release_many_targets]{release_many_targets()}}
-}

@@ -21,8 +21,6 @@
 #'
 #' @export
 #'
-#' @seealso [release_many_targets()]
-#'
 #' @examples
 #' \dontrun{
 #' # Establish the pinboard

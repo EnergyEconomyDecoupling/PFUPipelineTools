@@ -672,7 +672,11 @@ encode_fks <- function(.df,
     parent_table_fk_value_colname <- gsub(pattern = paste0(.pk_suffix, "$"),
                                           replacement = "",
                                           x = parent_table_fk_colname)
-    this_fk_col_parent_table <- fk_parent_tables[[parent_table_name]]
+    this_fk_col_parent_table <- fk_parent_tables[[parent_table_name]] |>
+      # Select only the relevant columns.
+      # There may be other columns such as FullName, Description, etc.
+      dplyr::select(dplyr::all_of(c(parent_table_fk_colname,
+                                    parent_table_fk_value_colname)))
     encoded_df <- encoded_df |>
       dplyr::left_join(this_fk_col_parent_table,
                        by = dplyr::join_by({{this_fk_col_in_df}} == {{parent_table_fk_value_colname}}),
