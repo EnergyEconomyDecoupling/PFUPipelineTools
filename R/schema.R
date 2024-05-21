@@ -851,7 +851,8 @@ decode_fks <- function(.df = NULL,
       dplyr::rename(
         "{new_ID_colname}" := dplyr::all_of(parent_table_key_col_for_this_fk_col_in_df),
         "{this_fk_col_in_df}" := dplyr::all_of(parent_table_value_col_for_this_fk_col_in_df)
-      )
+      ) |>
+      dplyr::select(dplyr::all_of(c(new_ID_colname, this_fk_col_in_df)))
 
     joined_colname <- paste0(this_fk_col_in_df, .y_joining_suffix)
 
