@@ -327,15 +327,15 @@ pl_filter_collect <- function(db_table_name,
 }
 
 
-vars_in_dots <- function(enquos_dots) {
-  enquos_dots |>
-    # as.character(enquos_dots) turns the quosure into a string
-    # in which table column names are prefixed by "~" and
-    # terminated with a white space.
-    as.character() |>
-    # This pattern extracts for all characters between "~" and whitespace,
-    # namely the column names to be decoded.
-    stringr::str_extract("(?<=~)([^\\s]+)") |>
-    # Make sure we have no duplicates.
-    unique()
-}
+# vars_in_dots <- function(enquos_dots) {
+#   enquos_dots |>
+#     # as.character(enquos_dots) turns the quosure into a string
+#     # in which table column names are prefixed by "~" and
+#     # terminated with a white space.
+#     as.character() |>
+#     # This pattern extracts for all characters between "~" and whitespace,
+#     # namely the column names to be decoded.
+#     stringr::str_extract("(?<=~)([^\\s]+)") |>
+#     # Make sure we have no duplicates.
+#     unique()
+# }
