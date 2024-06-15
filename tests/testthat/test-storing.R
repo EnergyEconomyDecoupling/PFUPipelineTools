@@ -33,15 +33,18 @@ test_that("pl_hash() works as expected with in-memory data frame", {
     pl_hash(table_name = "MyTable")
 
   expect_equal(names(the_hash), c(PFUPipelineTools::hashed_table_colnames$db_table_name,
+                                  "Country",
                                   "Year",
                                   PFUPipelineTools::hashed_table_colnames$nested_hash_colname))
-  expect_equal(nrow(the_hash), 1)
-  expect_equal(the_hash[[PFUPipelineTools::hashed_table_colnames$db_table_name]],
+  expect_equal(nrow(the_hash), 2)
+  expect_equal(the_hash[[PFUPipelineTools::hashed_table_colnames$db_table_name]] |>
+                 unique(),
                "MyTable")
 
   # Now try with non-NULL hash_group_cols
   the_hash2 <- DF |>
     pl_hash(table_name = "MyTable",
+            usual_hash_group_cols = NULL,
             additional_hash_group_cols = c("Country", "Year"))
   # Both Country and Year will be preserved
   expect_equal(nrow(the_hash2), 2)
@@ -52,7 +55,7 @@ test_that("pl_hash() works as expected with in-memory data frame", {
   # Try with too many grouping variables
   the_hash3 <- DF |>
     pl_hash(table_name = "MyTable",
-            additional_hash_group_cols = PFUPipelineTools::additional_hash_group_cols)
+            additional_hash_group_cols = PFUPipelineTools::usual_hash_group_cols)
   # Should also preserve Country and Year
   expect_equal(nrow(the_hash3), 2)
   expect_equal(the_hash3[[PFUPipelineTools::hashed_table_colnames$db_table_name]] |>
@@ -72,7 +75,7 @@ test_that("pl_hash() works with remote table", {
                          dbname = "unit_testing",
                          host = "eviz.cs.calvin.edu",
                          port = 5432,
-                         user = "postgres")
+                         user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
 
   # Create a test table that has same Country
@@ -84,7 +87,8 @@ test_that("pl_hash() works with remote table", {
                    Value = c(1/3, 43, 44, 45))
   pl_hash_df <- pl_hash(df,
                         table_name = "TestPLHash",
-                        additional_hash_group_cols = c("Country", "EnergyType"))
+                        additional_hash_group_cols = c("Country", "EnergyType"),
+                        usual_hash_group_cols = NULL)
   expect_equal(nrow(pl_hash_df), 2)
   expected_colnames <- c("DBTableName", "Country", "EnergyType", "NestedDataHash")
   expect_equal(colnames(pl_hash_df), expected_colnames)
@@ -95,7 +99,8 @@ test_that("pl_hash() works with remote table", {
 
   pl_hash_tbl <- pl_hash(table_name = "TestPLHash",
                          conn = conn,
-                         additional_hash_group_cols = c("EnergyType"))
+                         additional_hash_group_cols = c("EnergyType"),
+                         usual_hash_group_cols = NULL)
   expect_equal(nrow(pl_hash_tbl), 2)
   expect_equal(colnames(pl_hash_tbl), expected_colnames)
 

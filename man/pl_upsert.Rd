@@ -8,14 +8,18 @@ pl_upsert(
   .df,
   conn,
   db_table_name = NULL,
-  additional_hash_group_cols = PFUPipelineTools::additional_hash_group_cols,
+  additional_hash_group_cols = NULL,
+  usual_hash_group_cols = PFUPipelineTools::usual_hash_group_cols,
   keep_single_unique_cols = TRUE,
   in_place = FALSE,
   encode_fks = TRUE,
   index_map =
     magrittr::set_names(list(fk_parent_tables[[IEATools::row_col_types$industry]],
-    fk_parent_tables[[IEATools::row_col_types$product]]),
-    c(IEATools::row_col_types$industry, IEATools::row_col_types$product)),
+    fk_parent_tables[[IEATools::row_col_types$product]],
+    fk_parent_tables[[IEATools::row_col_types$other]]),
+    c(IEATools::row_col_types$industry, IEATools::row_col_types$product,
+    IEATools::row_col_types$other)),
+  retain_zero_structure = FALSE,
   schema = schema_from_conn(conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema, collect = TRUE),
   .db_table_name = PFUPipelineTools::hashed_table_colnames$db_table_name,
@@ -35,7 +39,12 @@ will be taken from the \code{.db_table_name} column of \code{.df}.}
 
 \item{additional_hash_group_cols}{A vector or list of additional columns
 by which \code{.df} will be grouped
-before hashing.
+before hashing and, therefore, appear in the output.
+Default is \code{NULL}.
+Passed to \code{\link[=pl_hash]{pl_hash()}}.}
+
+\item{usual_hash_group_cols}{A vector of columns by which \code{.df} will be grouped
+before hashing and, therefore, appear in the output.
 Default is \code{PFUPipelineTools::additional_hash_group_cols}
 but can be set to \code{NULL} to disable.
 Passed to \code{\link[=pl_hash]{pl_hash()}}.}
@@ -59,7 +68,13 @@ mappings from inboard row and column indices in the database
 to outboard row and column names in the memory
 of the local computer.
 See documentation for \code{\link[=encode_matsindf]{encode_matsindf()}} and
-\code{\link[matsbyname:to_named_triplet]{matsbyname::to_triplet()}}.}
+\code{\link[matsbyname:to_named_triplet]{matsbyname::to_triplet()}}.
+Default is a \code{list} that contains the \code{industry}, \code{product}, and \code{other}
+members of \code{fk_parent_tables}.}
+
+\item{retain_zero_structure}{A boolean that tells whether to retain the stucture
+of zero matrices.
+See details.}
 
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
 Default is \code{dm_from_con(conn, learn_keys = TRUE)}.
@@ -104,9 +119,11 @@ before uploading.
 The output of this function is a special data frame that
 contains the following columns:
 \itemize{
-\item All single-valued columns columns in \code{.df} and
+\item All single-valued columns columns in \code{.df},
 columns given in \code{additional_hash_group_cols}
-(default \code{PFUPipelineTools::additional_hash_group_cols}).
+(default \code{NULL}), and
+columns given in \code{usual_hash_group_cols}
+(default \code{PFUPipelineTools::usual_hash_group_cols}).
 \item Hash: A column with a hash of all non-foreign-key columns.
 }
 
@@ -132,6 +149,13 @@ and pass the list to the \code{fk_parent_tables} argument
 of this function.
 
 The user in \code{conn} must have write access to the database.
+
+By default, \code{\link[=pl_upsert]{pl_upsert()}} will delete all zero entries
+in matrices before upserting.
+But for some countries and years,
+that could result in missing matrices, such as \strong{U_EIOU}.
+Set \code{retain_zero_structure = TRUE}
+to preserve all entries in a zero matrix.
 }
 \seealso{
 \code{pl_download()} for the reverse operation.

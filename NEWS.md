@@ -8,6 +8,13 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+* Now allowing foreign key tables to contain more than 
+  only the ID column and the foreign key column.
+  This is particularly useful for, e.g., 
+  the energy type table:
+  EnergyTypeID	EnergyType	FullName	Description
+  1             E           Energy    Energy is a thermal quantification of energy.
+  2             X	          Exergy    Exergy is a work quantification of energy.
 * New functions for interacting with databases, including
     - `pl_collect()`
     - `load_schema_table()`

@@ -2,7 +2,7 @@
 % Please edit documentation in R/storing.R
 \name{release_target}
 \alias{release_target}
-\title{Save a target to a pinboard.}
+\title{Save a single target to a pinboard.}
 \usage{
 release_target(
   pipeline_releases_folder,
@@ -32,7 +32,7 @@ If \code{release} is \code{FALSE}, the string "Release not requested."
 \description{
 Releases (\code{release = TRUE})
 or not (\code{release = FALSE})
-a new version of \code{targ}
+a new version of the single target \code{targ}
 using the \code{pins} package.
 }
 \details{

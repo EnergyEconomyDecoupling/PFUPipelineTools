@@ -3,7 +3,6 @@
 #' If `hashed_table` has `0` rows, `NULL` is returned.
 #'
 #' @param hashed_table A table created by `pl_hash()`.
-#' @param conn The database connection.
 #' @param decode_fks A boolean that tells whether to decode foreign keys
 #'                   before returning.
 #'                   Default is `TRUE`.
@@ -16,8 +15,24 @@
 #'                      There can be only one unique value in `tar_group_colname`,
 #'                      otherwise an error is raised.
 #'                      Default is `TRUE`.
+#' @param decode_matsindf A boolean that tells whether to decode the
+#'                        a matsindf data frame.
+#'                        Calls [decode_matsindf()] internally.
+#'                        Default is `TRUE`.
+#' @param index_map A list of data frames to assist with decoding matrices.
+#'                  Passed to [decode_matsindf()] when `decode_matsindf` is `TRUE`
+#'                  but otherwise not needed.
+#' @param rctypes A data frame of row and column types.
+#'                Passed to [decode_matsindf()] when `decode_matsindf` is `TRUE`
+#'                but otherwise not needed.
+#' @param matrix_class One of "Matrix" (the default for sparse matrices)
+#'                     or ("matrix") for the native matrix form in `R`.
+#'                     Default is "Matrix".
 #' @param tar_group_colname The name of the `tar_group` column.
 #'                          default is `PFUPipelineTools::hashed_table_colnames$tar_group_colname`.
+#' @param matname_colname,matval_colname Names used for matrix names and matrix values.
+#'                                       Defaults are "matname" and "matval".
+#' @param conn The database connection.
 #' @param schema The database schema (a `dm` object).
 #'               Default calls `schema_from_conn()`, but
 #'               you can supply a pre-computed schema for speed.
@@ -36,15 +51,22 @@
 #'
 #' @export
 pl_collect_from_hash <- function(hashed_table,
-                                 conn,
                                  decode_fks = TRUE,
                                  retain_table_name_col = FALSE,
                                  set_tar_group = TRUE,
+                                 decode_matsindf = TRUE,
+                                 index_map,
+                                 rctypes,
+                                 matrix_class = c("Matrix", "matrix"),
                                  tar_group_colname = PFUPipelineTools::hashed_table_colnames$tar_group_colname,
+                                 matname_colname = "matname",
+                                 matval_colname = "matval",
+                                 conn,
                                  schema = schema_from_conn(conn = conn),
                                  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
                                  .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
                                  .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_colname) {
+  matrix_class <- match.arg(matrix_class)
   if (nrow(hashed_table) == 0) {
     return(NULL)
   }
@@ -79,6 +101,12 @@ pl_collect_from_hash <- function(hashed_table,
                  schema = schema,
                  fk_parent_tables = fk_parent_tables)
   }
+  if (decode_matsindf) {
+    out <- out |>
+      decode_matsindf(index_map = index_map,
+                      rctypes = rctypes,
+                      matrix_class = matrix_class)
+  }
   if (retain_table_name_col) {
     out <- out |>
       dplyr::mutate(
@@ -92,7 +120,7 @@ pl_collect_from_hash <- function(hashed_table,
     this_tar_group <- hashed_table[[tar_group_colname]] |>
       unique()
     assertthat::assert_that(length(this_tar_group) == 1,
-                            msg = "You asked for the tar_group to be retained, but there is more than 1 tar_group in `hashed_table`")
+                            msg = "You asked for the tar_group column to be retained, but there is more than 1 tar_group in `hashed_table`")
     out <- out |>
       dplyr::mutate(
         "{tar_group_colname}" := this_tar_group
@@ -145,17 +173,35 @@ pl_collect_from_hash <- function(hashed_table,
 #' by supplying a pre-computed named list of
 #' foreign key tables.
 #'
+#' Setting any of the filtering arguments
+#' (`countries`, `years`, `methods`, `last_stages`, `energy_types`, `includes_neu`)
+#' to `NULL` turns off filtering and returns all values.
+#'
+#' When `collect = TRUE`,
+#' [decode_matsindf()] is called on the downloaded data frame.
+#'
 #' @param db_table_name The string name of the database table to be filtered.
-#' @param countries,years,methods,last_stages,energy_types Vectors of strings to be kept from
-#'                                                         the respective columns.
-#'                                                         Default values are `NULL`, meaning
-#'                                                         that no filters should be applied.
-#' @param country,year,method,last_stage,energy_type Columns that are likely to be in db_table_name
-#'                                                   and may be filtered with `%in%`-style subsetting.
-#' @param conn The database connection.
+#' @param countries A vector of country strings to be retained in the output.
+#'                  Default is `as.character(PFUPipelineTools::canonical_countries)`.
+#' @param years A vector of integers to be retained in the output.
+#'              Default is `1960:2020`.
+#' @param methods A vector of method strings to be retained in the output.
+#'                At present, only "PCM" (physical content method) is implemented.
+#'                Default is "PCM" (physical content method).
+#' @param last_stages A vector of last stage strings to be retained in the output.
+#'                    At present, only "Final" and "Useful" are implemented.
+#'                    Default is "Final". "Useful" is also a valid option.
+#' @param energy_types A vector of energy type strings to be retained in the output.
+#'                     At present, only "E" (energy) and "X" (exergy) are implemented.
+#'                     Default is "E" but "X" is also valid.
+#' @param includes_neu A vector of booleans that indicates what to retain in output.
+#'                     `TRUE` means non-energy use is included in the ECCs.
+#'                     `FALSE` means non-energy use is excluded from the ECCs.
+#'                     Default is `TRUE`.
 #' @param collect A boolean that tells whether to download the result.
 #'                Default is `FALSE`.
 #'                See details.
+#' @param conn The database connection.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               Default is `schema_from_conn(conn = conn)`.
 #'               See details.
@@ -164,27 +210,71 @@ pl_collect_from_hash <- function(hashed_table,
 #'                         Default is
 #'                         `get_all_fk_tables(conn = conn, schema = schema)`.
 #'                         See details.
+#' @param index_map_name The name of the table that serves as the index for row and column names.
+#'                       Default is "Index".
+#' @param index_map The index map for the matrices in the database at `conn`.
+#'                  Default is `fk_parent_tables[[index_table_name]]`.
+#' @param rctype_table_name The name of the table that contains row and column types.
+#'                          Default is "matnameRCType".
+#' @param rctypes The table of row and column types for the database at `conn`.
+#'                Default is `fk_parent_tables[[rctype_table_name]]`.
+#' @param matrix_class One of "Matrix" (the default) for sparse matrices or
+#'                     "matrix" (the base matrix representation in `R`) for non-sparse matrices.
+#' @param matname The name of the matrix name column.
+#'                Default is "matname".
+#' @param matval The name of the matrix value column.
+#'               Default is "matval".
+#' @param rowtype_colname,coltype_colname The names for row and column type columns in data frames.
+#'                                        Defaults are "rowtype" and "coltype", respectively.
+#' @param country,year,method,last_stage,energy_type Columns that are likely to be in db_table_name
+#'                                                   and may be filtered with `%in%`-style subsetting.
 #'
-#' @return A data frame downloaded from `conn`,
-#'         a filtered version of `db_table_name`.
+#' @return A filtered version of `db_table_name` downloaded from `conn`.
 #'
 #' @export
 pl_filter_collect <- function(db_table_name,
-                              countries = NULL,
-                              years = NULL,
-                              methods = NULL,
-                              last_stages = NULL,
-                              energy_types = NULL,
+                              countries = as.character(PFUPipelineTools::canonical_countries),
+                              years = 1960:2020,
+                              methods = "PCM",
+                              last_stages = c("Final", "Useful"),
+                              energy_types = c("E", "X"),
+                              includes_neu = TRUE,
+                              collect = FALSE,
+                              conn,
+                              schema = schema_from_conn(conn = conn),
+                              fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+                              index_map_name = "Index",
+                              index_map = fk_parent_tables[[index_table_name]],
+                              rctype_table_name = "matnameRCType",
+                              rctypes = decode_fks(db_table_name = rctype_table_name,
+                                                   collect = TRUE,
+                                                   conn = conn,
+                                                   schema = schema,
+                                                   fk_parent_tables = fk_parent_tables),
+                              matrix_class = c("Matrix", "matrix"),
+                              matname = "matname",
+                              matval = "matval",
+                              rowtype_colname = "rowtype",
+                              coltype_colname = "coltype",
                               country = IEATools::iea_cols$country,
                               year = IEATools::iea_cols$year,
                               method = IEATools::iea_cols$method,
                               last_stage = IEATools::iea_cols$last_stage,
                               energy_type = IEATools::iea_cols$energy_type,
-                              conn,
-                              collect = FALSE,
-                              schema = schema_from_conn(conn = conn),
-                              fk_parent_tables = get_all_fk_tables(conn = conn,
-                                                                   schema = schema)) {
+                              includes_neu_col = Recca::psut_cols$includes_neu) {
+
+  # Protect the match.arg statements, because NULL has special meaning.
+  if (!is.null(methods)) {
+    methods <- match.arg(methods)
+  }
+  if (!is.null(last_stages)) {
+    last_stages <- match.arg(last_stages)
+  }
+  if (!is.null(energy_types)) {
+    energy_types <- match.arg(energy_types)
+  }
+  matrix_class <- match.arg(matrix_class)
+
   out <- dplyr::tbl(src = conn, db_table_name) |>
     # First, decode the foreign keys with
     # collect = FALSE to ensure a tbl is returned.
@@ -192,6 +282,7 @@ pl_filter_collect <- function(db_table_name,
                schema = schema,
                fk_parent_tables = fk_parent_tables,
                collect = FALSE)
+
   cnames <- colnames(out)
   if (!is.null(countries) & country %in% cnames) {
     out <- out |>
@@ -213,24 +304,38 @@ pl_filter_collect <- function(db_table_name,
     out <- out |>
       dplyr::filter(.data[[energy_type]] %in% energy_types)
   }
+  if (!is.null(includes_neu) & includes_neu_col %in% cnames) {
+    out <- out |>
+      dplyr::filter(.data[[includes_neu_col]] %in% includes_neu)
+  }
+
   if (collect) {
     # Collect (execute the SQL), if desired.
     out <- out |>
-      dplyr::collect()
+      dplyr::collect() |>
+      # Now decode the matsindf data frame
+      decode_matsindf(index_map = index_map,
+                      rctypes = rctypes,
+                      matrix_class = matrix_class,
+                      matname = matname,
+                      matval = matval,
+                      rowtype_colname = rowtype_colname,
+                      coltype_colname = coltype_colname)
   }
+
   return(out)
 }
 
 
-vars_in_dots <- function(enquos_dots) {
-  enquos_dots |>
-    # as.character(enquos_dots) turns the quosure into a string
-    # in which table column names are prefixed by "~" and
-    # terminated with a white space.
-    as.character() |>
-    # This pattern extracts for all characters between "~" and whitespace,
-    # namely the column names to be decoded.
-    stringr::str_extract("(?<=~)([^\\s]+)") |>
-    # Make sure we have no duplicates.
-    unique()
-}
+# vars_in_dots <- function(enquos_dots) {
+#   enquos_dots |>
+#     # as.character(enquos_dots) turns the quosure into a string
+#     # in which table column names are prefixed by "~" and
+#     # terminated with a white space.
+#     as.character() |>
+#     # This pattern extracts for all characters between "~" and whitespace,
+#     # namely the column names to be decoded.
+#     stringr::str_extract("(?<=~)([^\\s]+)") |>
+#     # Make sure we have no duplicates.
+#     unique()
+# }

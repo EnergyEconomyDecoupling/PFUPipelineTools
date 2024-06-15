@@ -1,8 +1,8 @@
-#' Save a target to a pinboard.
+#' Save a single target to a pinboard.
 #'
 #' Releases (`release = TRUE`)
 #' or not (`release = FALSE`)
-#' a new version of `targ`
+#' a new version of the single target `targ`
 #' using the `pins` package.
 #'
 #' Released versions of the target can be obtained
@@ -124,7 +124,7 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 #'                   or the name of a table in the database to be hashed.
 #' @param conn A connection to a database.
 #'             Necessary only if `.df` is `NULL` (its default value).
-#' @param additional_hash_group_cols The string names of
+#' @param additional_hash_group_cols A string vector of names of
 #'                                   additional columns by which `.df` will be grouped
 #'                                   before making the `.nested_hash_col` hash column.
 #'                                   All `additional_hash_group_cols` that exist in the
@@ -133,6 +133,9 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 #'                                   Default is `NULL`, meaning that grouping will be
 #'                                   done on all columns that contain only 1 unique value.
 #'                                   See details.
+#' @param usual_hash_group_cols The string vector of usual column names to be preserved
+#'                              in the hashed data frame.
+#'                              Default is `PFUPipelineTools::usual_hash_group_cols`.
 #' @param keep_single_unique_cols A boolean that tells whether to keep columns
 #'                                that have a single unique value in the outgoing hash.
 #'                                Default is `TRUE`.
@@ -145,6 +148,8 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 #'                    nested data.
 #'                    Used internally.
 #'                    Default is `PFUPipelineTools::hashed_table_colnames$nested_colname`.
+#' @param tar_group_col The name of the tar_group column.
+#'                      Default is "tar_group".
 #' @param .algo The algorithm for hashing.
 #'              Default is "md5".
 #'
@@ -154,11 +159,13 @@ release_target <- function(pipeline_releases_folder, targ, pin_name, type = "rds
 pl_hash <- function(.df = NULL,
                     table_name,
                     conn,
+                    usual_hash_group_cols = PFUPipelineTools::usual_hash_group_cols,
                     additional_hash_group_cols = NULL,
                     keep_single_unique_cols = TRUE,
                     .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
                     .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_colname,
                     .nested_col = PFUPipelineTools::hashed_table_colnames$nested_colname,
+                    tar_group_col = "tar_group",
                     .algo = "md5") {
   if (!is.null(table_name)) {
     # Make sure the table_name has length 1.
@@ -167,8 +174,8 @@ pl_hash <- function(.df = NULL,
     }
   }
 
-  if (is.null(additional_hash_group_cols) & !keep_single_unique_cols) {
-    stop("additional_hash_group_cols was `NULL` and keep_single_unique_cols was `TRUE` in pl_hash(). Something must change!")
+  if (is.null(additional_hash_group_cols) & is.null(usual_hash_group_cols) & !keep_single_unique_cols) {
+    stop("additional_hash_group_cols was `NULL`, `usual_hash_group_cols` was `NULL`, and keep_single_unique_cols was `TRUE` in pl_hash(). Something must change!")
   }
 
   if (!is.null(.df)) {
@@ -184,7 +191,7 @@ pl_hash <- function(.df = NULL,
     }
 
     # Start with an empty character vector. Fill as we go along.
-    hash_group_cols <- character()
+    hash_group_cols <- usual_hash_group_cols
 
     if (keep_single_unique_cols) {
       # Figure out names of columns that have only 1 unique value.
@@ -194,21 +201,23 @@ pl_hash <- function(.df = NULL,
           length(unique(this_col)) == 1
         })
       hash_group_cols <- hash_group_cols |>
-        append(names(single_value_cols[single_value_cols]))
+        append(names(single_value_cols[single_value_cols])) |>
+        unique()
     }
 
     if (!is.null(additional_hash_group_cols)) {
-      # Eliminate any strings that don't have a corresponding column in .df
-      additional_hash_group_cols_not_present <- setdiff(colnames(.df), additional_hash_group_cols)
-      additional_hash_group_cols <- setdiff(colnames(.df), additional_hash_group_cols_not_present)
-      # Now add to hash_group_cols
       hash_group_cols <- hash_group_cols |>
         append(additional_hash_group_cols) |>
         unique()
     }
+    # Looks like there is a bug in tidyr::nest().
+    # When nesting with a named vector in group_by(),
+    # the nested data frame picks up the names of the vector.
+    # To work around the bug, unname hash_group_cols here.
+    unnamed_hash_group_cols <- unname(hash_group_cols)
     out <- .df |>
       # Group by hash_group_cols
-      dplyr::group_by(dplyr::across(dplyr::all_of(hash_group_cols))) |>
+      dplyr::group_by(dplyr::across(dplyr::any_of(unnamed_hash_group_cols))) |>
       # Nest
       tidyr::nest(.key = .nested_col) |>
       # Calculate hash
@@ -266,7 +275,7 @@ pl_hash <- function(.df = NULL,
     # Build the SQL statement that will pull down the hashed table
 
     # Start with an empty character vector for cols_to_nest
-    cols_to_keep <- character()
+    cols_to_keep <- usual_hash_group_cols
 
     if (keep_single_unique_cols) {
       # First find the columns with only 1 unique value.
@@ -274,7 +283,8 @@ pl_hash <- function(.df = NULL,
       # they are in additional_hash_group_cols.
       single_unique_cols <- unique_cols_in_tbl(table_name = table_name, conn = conn)
       cols_to_keep <- cols_to_keep |>
-        append(single_unique_cols)
+        append(single_unique_cols) |>
+        unique()
     }
     if (!is.null(additional_hash_group_cols)) {
       cols_to_keep <- cols_to_keep |>

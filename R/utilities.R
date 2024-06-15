@@ -206,6 +206,9 @@ clean_up_beatles <- function(conn) {
 #'                     See details.
 #' @param additional_hash_group_cols A vector of strings that gives names of additional
 #'                                   columns that should _not_ be hashed.
+#' @param usual_hash_group_cols A string vector that gives typical names of columns that should _not_
+#'                              be hashed.
+#'                              Default is `PFUPipelineTools::usual_hash_group_cols`.
 #' @param conn A database connection.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               Default is `dm_from_con(conn, learn_keys = TRUE)`.
@@ -231,7 +234,8 @@ inboard_filter_copy <- function(source,
                                 empty_dest = TRUE,
                                 in_place = FALSE,
                                 dependencies = NULL,
-                                additional_hash_group_cols = PFUPipelineTools::additional_hash_group_cols,
+                                additional_hash_group_cols = NULL,
+                                usual_hash_group_cols = PFUPipelineTools::usual_hash_group_cols,
                                 conn,
                                 schema = schema_from_conn(conn),
                                 fk_parent_tables = get_all_fk_tables(conn = conn,
@@ -294,7 +298,8 @@ inboard_filter_copy <- function(source,
   # Download a hashed table of the dest table
   pl_hash(table_name = dest,
           conn = conn,
-          additional_hash_group_cols = additional_hash_group_cols) |>
+          additional_hash_group_cols = additional_hash_group_cols,
+          usual_hash_group_cols = usual_hash_group_cols) |>
     # Decode the foreign keys, so they are human-readable.
     decode_fks(db_table_name = dest,
                conn = conn,
@@ -491,13 +496,13 @@ decode_fk_keys <- function(v_key,
 }
 
 
-#' Encode a `matsindf` data frame for insertion into a database
+#' Encode and decode `matsindf` data frames for storage in a database
 #'
 #' The CL-PFU database enables storage of `matsindf` data frames
 #' by encoding matrix values in triplet format.
-#' This function performs that encoding.
-#' A sister function, [decode_matsindf()],
-#' performs the operation in reverse.
+#' These functions perform encoding and decoding
+#' of `matsindf` data frames.
+#' [encode_matsindf()] and [decode_matsindf()] are inverses of each other.
 #'
 #' `index_map` must be
 #' an unnamed list of two data frames or
@@ -523,7 +528,7 @@ decode_fk_keys <- function(v_key,
 #'   When both row and column have "Industry" type,
 #'   the "Industry" mapping is applied to both.
 #'   When sending named data frames in `index_map`,
-#'   `a` must have both a row type and a column type.
+#'   matrices to be encoded must have both a row type and a column type.
 #'   If an appropriate mapping cannot be found in `index_map`,
 #'   an error is raised.
 #'   Both matching data frames must have only
@@ -533,25 +538,117 @@ decode_fk_keys <- function(v_key,
 #' `.matsindf` can be
 #' (a) wide by matrices,
 #' with matrix names as column names or
-#' (b) tidy, with `matnames` and `matvals` columns.
+#' (b) tidy, with `matname` and `matval` columns.
 #'
 #' If `.matsindf` does not contain any matrix columns,
 #' `.matsindf` is returned unchanged.
 #'
+#' If `.encoded` does not contain a `matname` column,
+#' `.encoded` is returned unchanged.
+#'
+#' By default, [encode_matsindf()] will return
+#' zero-row data frames when
+#' encoding zero matrices.
+#' Set `retain_zero_structure = TRUE`
+#' to return all entries in zero matrices.
+#'
+#' All of `matname`, `row_index_colname`,
+#' `col_index_colname`, and `val_colname`
+#' must be present in `.encoded`.
+#' If not, `.encoded` is returned unmodified.
+#'
 #' @param .matsindf A matsindf data frame whose matrices are to be encoded.
+#' @param .encoded A data frame of matrices in triplet form whose matrices are to be decoded.
 #' @param index_map A list of two or more index map data frames.
 #'                  Default is `list(Industry = industry_index_map, Product = product_index_map)`.
+#' @param rctypes A data frame of row and column types.
+#' @param wide_by_matrices A boolean that tells whether to
+#'                         [tidyr::pivot_wider()] the results.
+#'                         Default is `TRUE`.
 #' @param industry_index_map,product_index_map Optional data frames with two columns providing the mapping
 #'                                             between row and column indices and row and column names.
 #'                                             See details.
-#' @param matnames The name of the column in `.matsindf` that contains matrix names.
-#'                 Default is "matnames".
-#' @param matvals The name of the column in `.matsindf` that contains matrix values.
-#'                Default is "matvals".
+#' @param matrix_class The class of matrices to be created by [decode_matsindf()].
+#'                     One of "matrix" (the default
+#'                     and `R`'s native matrix class) or
+#'                     "Matrix" (for sparse matrices).
+#' @param retain_zero_structure A boolean that tells whether to retain
+#'                              the structure of zero matrices when creating triplets.
+#'                              Default is `FALSE`.
+#'                              See details.
+#' @param matname The name of the column in `.matsindf` that contains matrix names.
+#'                 Default is "matname".
+#' @param matval The name of the column in `.matsindf` that contains matrix values.
+#'                Default is "matval".
+#' @param row_index_colname The name of the row index column in `.encoded`.
+#'                          Default is "i".
+#' @param col_index_colname The name of the column index column in `.encoded`.
+#'                          Default is "j".
+#' @param val_colname The name of the value column.
+#'                    Default is "x".
 #'
-#' @return A version of `.matsindf` with matrices in triplet form,
+#' @return For [encode_matsindf()],
+#'         a version of `.matsindf` with matrices in triplet form,
 #'         appropriate for insertion into a database.
+#'         For [decode_matsindf()],
+#'         a version of `.encoded` appropriate for in-memory
+#'         analysis and calculations.
 #'
+#' @name encode_decode_matsindf
+
+
+#' @rdname encode_decode_matsindf
+#' @export
+decode_matsindf <- function(.encoded,
+                            index_map,
+                            rctypes,
+                            wide_by_matrices = TRUE,
+                            matrix_class = c("matrix", "Matrix"),
+                            matname = "matname",
+                            matval = "matval",
+                            row_index_colname = "i",
+                            col_index_colname = "j",
+                            val_colname = "x",
+                            rowtype_colname = "rowtype",
+                            coltype_colname = "coltype") {
+  # if (!(matname %in% colnames(.encoded))) {
+  #   return(.encoded)
+  # }
+  if (!all(c(matname, row_index_colname, col_index_colname, val_colname)
+           %in% colnames(.encoded))) {
+    return(.encoded)
+  }
+  matrix_class <- match.arg(matrix_class)
+  out <- .encoded |>
+    matsindf::group_by_everything_except(row_index_colname, col_index_colname, val_colname) |>
+    tidyr::nest(.key = matval) |>
+    dplyr::ungroup() |>
+    dplyr::left_join(rctypes, by = matname, copy = TRUE) |>
+    dplyr::mutate(
+      # Need to set row and column type differently,
+      # because setrowtype and setcoltype will apply rowtype and coltype
+      # to each column of the data frame.
+      "{matval}" := Map(f = matsbyname::setrowtype, a = .data[[matval]], rowtype = .data[[rowtype_colname]]),
+      "{matval}" := Map(f = matsbyname::setcoltype, a = .data[[matval]], coltype = .data[[coltype_colname]]),
+      "{rowtype_colname}" := NULL,
+      "{coltype_colname}" := NULL,
+      "{matval}" := .data[[matval]] |>
+        matsbyname::to_named_matrix(index_map = index_map,
+                                    matrix_class = matrix_class,
+                                    row_index_colname = row_index_colname,
+                                    col_index_colname = col_index_colname,
+                                    val_colname = val_colname)
+    )
+  if (wide_by_matrices) {
+    out <- out |>
+      tidyr::pivot_wider(names_from = matname,
+                         values_from = matval)
+  }
+  return(out)
+}
+
+
+#' @rdname encode_decode_matsindf
 #' @export
 encode_matsindf <- function(.matsindf,
                             index_map = list(industry_index_map,
@@ -560,8 +657,12 @@ encode_matsindf <- function(.matsindf,
                                                     IEATools::row_col_types$product)),
                             industry_index_map,
                             product_index_map,
-                            matnames = "matnames",
-                            matvals = "matvals") {
+                            retain_zero_structure = FALSE,
+                            matname = "matname",
+                            matval = "matval",
+                            row_index_colname = "i",
+                            col_index_colname = "j",
+                            val_colname = "x") {
 
   # Find matrix column names
   matcols <- matsindf::matrix_cols(.matsindf, .any = TRUE) |>
@@ -570,24 +671,32 @@ encode_matsindf <- function(.matsindf,
     # These aren't the droids you are looking for.
     return(.matsindf)
   }
-  if (length(matcols) > 1) {
-    # We have more than 1 column of matrices
-    # Pivot to a tidy data frame
+  if (!(matval %in% colnames(.matsindf))) {
+    # We have at least 1 column of matrices
+    # but not the matval column.
+    # Pivot to a tidy data frame.
     .matsindf <- .matsindf |>
       tidyr::pivot_longer(cols = dplyr::all_of(matcols),
-                          names_to = matnames,
-                          values_to = matvals)
+                          names_to = matname,
+                          values_to = matval)
   }
-  # Ensure that both matnames and matvals are present
-  assertthat::assert_that(matnames %in% colnames(.matsindf),
-                          msg = paste0("Matrix name column '", matnames, "' missing from .matsindf in encode_matsindf()"))
-  assertthat::assert_that(matvals %in% colnames(.matsindf),
-                          msg = paste0("Matrix value column '", matvals, "' missing from .matsindf in encode_matsindf()"))
+  # Ensure that both matname and matval are present
+  assertthat::assert_that(matname %in% colnames(.matsindf),
+                          msg = paste0("Matrix name column '", matname, "' missing from .matsindf in encode_matsindf()"))
+  assertthat::assert_that(matval %in% colnames(.matsindf),
+                          msg = paste0("Matrix value column '", matval, "' missing from .matsindf in encode_matsindf()"))
 
   .matsindf |>
     dplyr::mutate(
-      # Convert the matvals column triplet form
-      "{matvals}" := matsbyname::to_triplet(.data[[matvals]], index_map)
+      # Convert the matval column triplet form
+      "{matval}" := matsbyname::to_triplet(.data[[matval]],
+                                           index_map,
+                                           retain_zero_structure = retain_zero_structure,
+                                           row_index_colname = row_index_colname,
+                                           col_index_colname = col_index_colname,
+                                           val_colname = val_colname)
     ) |>
-    tidyr::unnest(cols = dplyr::all_of(matvals))
+    tidyr::unnest(cols = dplyr::all_of(matval))
 }
+
+

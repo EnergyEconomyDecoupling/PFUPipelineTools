@@ -6,38 +6,65 @@
 \usage{
 pl_filter_collect(
   db_table_name,
-  countries = NULL,
-  years = NULL,
-  methods = NULL,
-  last_stages = NULL,
-  energy_types = NULL,
+  countries = as.character(PFUPipelineTools::canonical_countries),
+  years = 1960:2020,
+  methods = "PCM",
+  last_stages = c("Final", "Useful"),
+  energy_types = c("E", "X"),
+  includes_neu = TRUE,
+  collect = FALSE,
+  conn,
+  schema = schema_from_conn(conn = conn),
+  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+  index_map_name = "Index",
+  index_map = fk_parent_tables[[index_table_name]],
+  rctype_table_name = "matnameRCType",
+  rctypes = decode_fks(db_table_name = rctype_table_name, collect = TRUE, conn = conn,
+    schema = schema, fk_parent_tables = fk_parent_tables),
+  matrix_class = c("Matrix", "matrix"),
+  matname = "matname",
+  matval = "matval",
+  rowtype_colname = "rowtype",
+  coltype_colname = "coltype",
   country = IEATools::iea_cols$country,
   year = IEATools::iea_cols$year,
   method = IEATools::iea_cols$method,
   last_stage = IEATools::iea_cols$last_stage,
   energy_type = IEATools::iea_cols$energy_type,
-  conn,
-  collect = FALSE,
-  schema = schema_from_conn(conn = conn),
-  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema)
+  includes_neu_col = Recca::psut_cols$includes_neu
 )
 }
 \arguments{
 \item{db_table_name}{The string name of the database table to be filtered.}
 
-\item{countries, years, methods, last_stages, energy_types}{Vectors of strings to be kept from
-the respective columns.
-Default values are \code{NULL}, meaning
-that no filters should be applied.}
+\item{countries}{A vector of country strings to be retained in the output.
+Default is \code{as.character(PFUPipelineTools::canonical_countries)}.}
 
-\item{country, year, method, last_stage, energy_type}{Columns that are likely to be in db_table_name
-and may be filtered with \code{\%in\%}-style subsetting.}
+\item{years}{A vector of integers to be retained in the output.
+Default is \code{1960:2020}.}
 
-\item{conn}{The database connection.}
+\item{methods}{A vector of method strings to be retained in the output.
+At present, only "PCM" (physical content method) is implemented.
+Default is "PCM" (physical content method).}
+
+\item{last_stages}{A vector of last stage strings to be retained in the output.
+At present, only "Final" and "Useful" are implemented.
+Default is "Final". "Useful" is also a valid option.}
+
+\item{energy_types}{A vector of energy type strings to be retained in the output.
+At present, only "E" (energy) and "X" (exergy) are implemented.
+Default is "E" but "X" is also valid.}
+
+\item{includes_neu}{A vector of booleans that indicates what to retain in output.
+\code{TRUE} means non-energy use is included in the ECCs.
+\code{FALSE} means non-energy use is excluded from the ECCs.
+Default is \code{TRUE}.}
 
 \item{collect}{A boolean that tells whether to download the result.
 Default is \code{FALSE}.
 See details.}
+
+\item{conn}{The database connection.}
 
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
 Default is \code{schema_from_conn(conn = conn)}.
@@ -48,10 +75,36 @@ for the foreign keys in \code{db_table_name}.
 Default is
 \code{get_all_fk_tables(conn = conn, schema = schema)}.
 See details.}
+
+\item{index_map_name}{The name of the table that serves as the index for row and column names.
+Default is "Index".}
+
+\item{index_map}{The index map for the matrices in the database at \code{conn}.
+Default is \code{fk_parent_tables[[index_table_name]]}.}
+
+\item{rctype_table_name}{The name of the table that contains row and column types.
+Default is "matnameRCType".}
+
+\item{rctypes}{The table of row and column types for the database at \code{conn}.
+Default is \code{fk_parent_tables[[rctype_table_name]]}.}
+
+\item{matrix_class}{One of "Matrix" (the default) for sparse matrices or
+"matrix" (the base matrix representation in \code{R}) for non-sparse matrices.}
+
+\item{matname}{The name of the matrix name column.
+Default is "matname".}
+
+\item{matval}{The name of the matrix value column.
+Default is "matval".}
+
+\item{rowtype_colname, coltype_colname}{The names for row and column type columns in data frames.
+Defaults are "rowtype" and "coltype", respectively.}
+
+\item{country, year, method, last_stage, energy_type}{Columns that are likely to be in db_table_name
+and may be filtered with \code{\%in\%}-style subsetting.}
 }
 \value{
-A data frame downloaded from \code{conn},
-a filtered version of \code{db_table_name}.
+A filtered version of \code{db_table_name} downloaded from \code{conn}.
 }
 \description{
 Often when collecting data from the database,
@@ -95,4 +148,11 @@ If minimal interaction with the database is desired,
 be sure to override the default value for \code{fk_parent_tables}
 by supplying a pre-computed named list of
 foreign key tables.
+
+Setting any of the filtering arguments
+(\code{countries}, \code{years}, \code{methods}, \code{last_stages}, \code{energy_types}, \code{includes_neu})
+to \code{NULL} turns off filtering and returns all values.
+
+When \code{collect = TRUE},
+\code{\link[=decode_matsindf]{decode_matsindf()}} is called on the downloaded data frame.
 }

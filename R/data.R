@@ -256,23 +256,83 @@
 "dataset_info"
 
 
-#' Additional columns to be preserved when hashing target uploads
+#' Usual columns to be preserved when hashing target uploads
 #'
-#' A string list containing names of columns to preserved on upload
+#' A string list containing names of the usual columns to preserve on upload,
 #' in addition to columns that contain only one unique value.
 #'
-#' @format A string list with `r length(additional_hash_group_cols)` entries.
+#' @format A string list with `r length(usual_hash_group_cols)` entries.
 #' \describe{
 #' \item{dataset}{The string name of the dataset column.}
+#' \item{table_name}{The string name of the table name column.}
 #' \item{country}{The string name of the country column.}
 #' \item{method}{The string name of the method column.}
 #' \item{year}{The string name of the year column.}
 #' \item{last_stage}{The string name of the last_stage column.}
 #' \item{energy_type}{The string name of the energy_type column.}
+#' \item{tar_group}{The string name of the tar_group column.}
 #' }
 #'
 #' @examples
-#' additional_hash_group_cols
-"additional_hash_group_cols"
+#' usual_hash_group_cols
+"usual_hash_group_cols"
 
 
+#' Aggregation file tab information
+#'
+#' A string list containing the aggregation file's tab names.
+#'
+#' @format A string list with `r length(aggregation_file_tab_names)` entries.
+#' \describe{
+#' \item{region_aggregation}{The name of the region aggregation tab, "region_aggregation".}
+#' \item{continent_aggregation}{The name of the continent aggregation tab, "continent_aggregation".}
+#' \item{world_aggregation}{The string name of the world aggregation tab. "world_aggregation".}
+#' \item{ef_product_aggregation}{The string name of the final energy product aggregation tab. "ef_product_aggregation".}
+#' \item{eu_product_aggregation}{The string name of the useful energy product aggregation tab. "eu_product_aggregation".}
+#' \item{ef_sector_aggregation}{The string name of the final energy sector aggregation tab. "ef_sector_aggregation".}
+#' }
+#'
+#' @examples
+#' aggregation_file_tab_names
+"aggregation_file_tab_names"
+
+
+
+#' Aggregation file column names
+#'
+#' A string list containing aggregation file column names.
+#'
+#' @format A string list with `r length(aggregation_file_cols)` entries.
+#' \describe{
+#' \item{many_colname}{The string name of the many column. "Many".}
+#' \item{few_colname}{The string name of the few column. "Few".}
+#' }
+#'
+#' @examples
+#' aggregation_file_cols
+"aggregation_file_cols"
+
+
+
+#' PFUAggPipeline data frame column names
+#'
+#' Aggregation data frame column names
+#'
+#' A string list containing names of column names and values for aggregation data frames.
+#'
+#' @format A string list with `r length(aggregation_df_cols)` entries.
+#' \describe{
+#' \item{product_aggregation}{The name of the metadata column that tells about product aggregation. "ProductAggregation"}
+#' \item{industry_aggregation}{The name of the metadata column that tells about industry aggregation. "IndustryAggregation"}
+#' \item{specified}{The value that indicates products or industries remain is specified. "Specified"}
+#' \item{despecified}{The value that indicates products or industries have been despecified and aggregated. "Despecified"}
+#' \item{ungrouped}{The value that indicates products or industries have not been grouped. "Ungrouped"}
+#' \item{grouped}{The value that indicates products or industries have been grouped. "Grouped"}
+#' \item{chopped_mat}{The value that indicates which matrix has been chopped. "ChoppedMat"}
+#' \item{chopped_var}{The value that indicates the chopping product or industry. "ChopVar"}
+#' \item{product_sector}{The column containing values for chopped_var. `Recca::aggregate_cols$product_sector`.}
+#' }
+#'
+#' @examples
+#' aggregation_df_cols
+"aggregation_df_cols"

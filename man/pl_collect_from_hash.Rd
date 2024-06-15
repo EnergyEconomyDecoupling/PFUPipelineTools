@@ -6,11 +6,17 @@
 \usage{
 pl_collect_from_hash(
   hashed_table,
-  conn,
   decode_fks = TRUE,
   retain_table_name_col = FALSE,
   set_tar_group = TRUE,
+  decode_matsindf = TRUE,
+  index_map,
+  rctypes,
+  matrix_class = c("Matrix", "matrix"),
   tar_group_colname = PFUPipelineTools::hashed_table_colnames$tar_group_colname,
+  matname_colname = "matname",
+  matval_colname = "matval",
+  conn,
   schema = schema_from_conn(conn = conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
   .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
@@ -19,8 +25,6 @@ pl_collect_from_hash(
 }
 \arguments{
 \item{hashed_table}{A table created by \code{pl_hash()}.}
-
-\item{conn}{The database connection.}
 
 \item{decode_fks}{A boolean that tells whether to decode foreign keys
 before returning.
@@ -37,8 +41,30 @@ There can be only one unique value in \code{tar_group_colname},
 otherwise an error is raised.
 Default is \code{TRUE}.}
 
+\item{decode_matsindf}{A boolean that tells whether to decode the
+a matsindf data frame.
+Calls \code{\link[=decode_matsindf]{decode_matsindf()}} internally.
+Default is \code{TRUE}.}
+
+\item{index_map}{A list of data frames to assist with decoding matrices.
+Passed to \code{\link[=decode_matsindf]{decode_matsindf()}} when \code{decode_matsindf} is \code{TRUE}
+but otherwise not needed.}
+
+\item{rctypes}{A data frame of row and column types.
+Passed to \code{\link[=decode_matsindf]{decode_matsindf()}} when \code{decode_matsindf} is \code{TRUE}
+but otherwise not needed.}
+
+\item{matrix_class}{One of "Matrix" (the default for sparse matrices)
+or ("matrix") for the native matrix form in \code{R}.
+Default is "Matrix".}
+
 \item{tar_group_colname}{The name of the \code{tar_group} column.
 default is \code{PFUPipelineTools::hashed_table_colnames$tar_group_colname}.}
+
+\item{matname_colname, matval_colname}{Names used for matrix names and matrix values.
+Defaults are "matname" and "matval".}
+
+\item{conn}{The database connection.}
 
 \item{schema}{The database schema (a \code{dm} object).
 Default calls \code{schema_from_conn()}, but

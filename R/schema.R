@@ -388,9 +388,11 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #' The output of this function is a special data frame that
 #' contains the following columns:
 #'
-#'   * All single-valued columns columns in `.df` and
+#'   * All single-valued columns columns in `.df`,
 #'     columns given in `additional_hash_group_cols`
-#'     (default `PFUPipelineTools::additional_hash_group_cols`).
+#'     (default `NULL`), and
+#'     columns given in `usual_hash_group_cols`
+#'     (default `PFUPipelineTools::usual_hash_group_cols`).
 #'   * Hash: A column with a hash of all non-foreign-key columns.
 #'
 #' `schema` is a data model (`dm` object) for the database in `conn`.
@@ -416,6 +418,13 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #'
 #' The user in `conn` must have write access to the database.
 #'
+#' By default, [pl_upsert()] will delete all zero entries
+#' in matrices before upserting.
+#' But for some countries and years,
+#' that could result in missing matrices, such as **U_EIOU**.
+#' Set `retain_zero_structure = TRUE`
+#' to preserve all entries in a zero matrix.
+#'
 #' @param .df The data frame to be upserted.
 #' @param conn A connection to the CL-PFU database.
 #' @param db_table_name A string identifying the destination for `.df` in `conn`,
@@ -424,10 +433,14 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #'                      will be taken from the `.db_table_name` column of `.df`.
 #' @param additional_hash_group_cols A vector or list of additional columns
 #'                                   by which `.df` will be grouped
-#'                                   before hashing.
-#'                                   Default is `PFUPipelineTools::additional_hash_group_cols`
-#'                                   but can be set to `NULL` to disable.
+#'                                   before hashing and, therefore, appear in the output.
+#'                                   Default is `NULL`.
 #'                                   Passed to [pl_hash()].
+#' @param usual_hash_group_cols A vector of columns by which `.df` will be grouped
+#'                              before hashing and, therefore, appear in the output.
+#'                              Default is `PFUPipelineTools::additional_hash_group_cols`
+#'                              but can be set to `NULL` to disable.
+#'                              Passed to [pl_hash()].
 #' @param keep_single_unique_cols A boolean that tells whether to keep
 #'                                columns with a single unique value
 #'                                in the output.
@@ -445,6 +458,11 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #'                  of the local computer.
 #'                  See documentation for [encode_matsindf()] and
 #'                  [matsbyname::to_triplet()].
+#'                  Default is a `list` that contains the `industry`, `product`, and `other`
+#'                  members of `fk_parent_tables`.
+#' @param retain_zero_structure A boolean that tells whether to retain the stucture
+#'                              of zero matrices.
+#'                              See details.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               Default is `dm_from_con(conn, learn_keys = TRUE)`.
 #'               See details.
@@ -467,14 +485,18 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 pl_upsert <- function(.df,
                       conn,
                       db_table_name = NULL,
-                      additional_hash_group_cols = PFUPipelineTools::additional_hash_group_cols,
+                      additional_hash_group_cols = NULL,
+                      usual_hash_group_cols = PFUPipelineTools::usual_hash_group_cols,
                       keep_single_unique_cols = TRUE,
                       in_place = FALSE,
                       encode_fks = TRUE,
                       index_map = list(fk_parent_tables[[IEATools::row_col_types$industry]],
-                                       fk_parent_tables[[IEATools::row_col_types$product]]) |>
+                                       fk_parent_tables[[IEATools::row_col_types$product]],
+                                       fk_parent_tables[[IEATools::row_col_types$other]]) |>
                         magrittr::set_names(c(IEATools::row_col_types$industry,
-                                              IEATools::row_col_types$product)),
+                                              IEATools::row_col_types$product,
+                                              IEATools::row_col_types$other)),
+                      retain_zero_structure = FALSE,
                       schema = schema_from_conn(conn),
                       fk_parent_tables = get_all_fk_tables(conn = conn,
                                                            schema = schema,
@@ -513,14 +535,15 @@ pl_upsert <- function(.df,
     magrittr::extract2(1)
 
   df_matsindf_encoded <- .df |>
-    # The database shouldn't care about targets groups, so
-    # remove any targets grouping.
-    tar_ungroup() |>
     # Encode for upload using the index_map
-    encode_matsindf(index_map = index_map)
+    encode_matsindf(index_map = index_map,
+                    retain_zero_structure = retain_zero_structure)
 
   # Encode fk column values in .df with integer keys, if requested.
-  df_to_upsert <- df_matsindf_encoded
+  df_to_upsert <- df_matsindf_encoded |>
+    # The database shouldn't care about targets groups, so
+    # remove any targets grouping.
+    tar_ungroup()
   if (encode_fks) {
     df_to_upsert <- df_to_upsert |>
       encode_fks(db_table_name = db_table_name,
@@ -537,7 +560,8 @@ pl_upsert <- function(.df,
   df_matsindf_encoded |>
     pl_hash(table_name = db_table_name,
             keep_single_unique_cols = keep_single_unique_cols,
-            additional_hash_group_cols = additional_hash_group_cols)
+            additional_hash_group_cols = additional_hash_group_cols,
+            usual_hash_group_cols = usual_hash_group_cols)
 }
 
 
@@ -648,7 +672,11 @@ encode_fks <- function(.df,
     parent_table_fk_value_colname <- gsub(pattern = paste0(.pk_suffix, "$"),
                                           replacement = "",
                                           x = parent_table_fk_colname)
-    this_fk_col_parent_table <- fk_parent_tables[[parent_table_name]]
+    this_fk_col_parent_table <- fk_parent_tables[[parent_table_name]] |>
+      # Select only the relevant columns.
+      # There may be other columns such as FullName, Description, etc.
+      dplyr::select(dplyr::all_of(c(parent_table_fk_colname,
+                                    parent_table_fk_value_colname)))
     encoded_df <- encoded_df |>
       dplyr::left_join(this_fk_col_parent_table,
                        by = dplyr::join_by({{this_fk_col_in_df}} == {{parent_table_fk_value_colname}}),
@@ -823,7 +851,8 @@ decode_fks <- function(.df = NULL,
       dplyr::rename(
         "{new_ID_colname}" := dplyr::all_of(parent_table_key_col_for_this_fk_col_in_df),
         "{this_fk_col_in_df}" := dplyr::all_of(parent_table_value_col_for_this_fk_col_in_df)
-      )
+      ) |>
+      dplyr::select(dplyr::all_of(c(new_ID_colname, this_fk_col_in_df)))
 
     joined_colname <- paste0(this_fk_col_in_df, .y_joining_suffix)
 

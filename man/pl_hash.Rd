@@ -8,11 +8,13 @@ pl_hash(
   .df = NULL,
   table_name,
   conn,
+  usual_hash_group_cols = PFUPipelineTools::usual_hash_group_cols,
   additional_hash_group_cols = NULL,
   keep_single_unique_cols = TRUE,
   .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
   .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_colname,
   .nested_col = PFUPipelineTools::hashed_table_colnames$nested_colname,
+  tar_group_col = "tar_group",
   .algo = "md5"
 )
 }
@@ -26,7 +28,11 @@ or the name of a table in the database to be hashed.}
 \item{conn}{A connection to a database.
 Necessary only if \code{.df} is \code{NULL} (its default value).}
 
-\item{additional_hash_group_cols}{The string names of
+\item{usual_hash_group_cols}{The string vector of usual column names to be preserved
+in the hashed data frame.
+Default is \code{PFUPipelineTools::usual_hash_group_cols}.}
+
+\item{additional_hash_group_cols}{A string vector of names of
 additional columns by which \code{.df} will be grouped
 before making the \code{.nested_hash_col} hash column.
 All \code{additional_hash_group_cols} that exist in the
@@ -51,6 +57,9 @@ Default is \code{PFUPipelineTools::hashed_table_colnames$nested_hash_colname}.}
 nested data.
 Used internally.
 Default is \code{PFUPipelineTools::hashed_table_colnames$nested_colname}.}
+
+\item{tar_group_col}{The name of the tar_group column.
+Default is "tar_group".}
 
 \item{.algo}{The algorithm for hashing.
 Default is "md5".}

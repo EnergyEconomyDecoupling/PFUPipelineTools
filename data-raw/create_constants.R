@@ -358,14 +358,63 @@ usethis::use_data(dataset_info, overwrite = TRUE)
 
 
 #
-# Additinoal hash group columns
+# Additional hash group columns
 #
 
-additional_hash_group_cols <- c(dataset = dataset_info$dataset_colname,
-                                country = IEATools::iea_cols$country,
-                                method = IEATools::iea_cols$method,
-                                year = IEATools::iea_cols$year,
-                                last_stage = IEATools::iea_cols$last_stage,
-                                energy_type = IEATools::iea_cols$energy_type)
-usethis::use_data(additional_hash_group_cols, overwrite = TRUE)
+usual_hash_group_cols <- c(dataset = dataset_info$dataset_colname,
+                           table_name = hashed_table_colnames$db_table_name,
+                           country = IEATools::iea_cols$country,
+                           method = IEATools::iea_cols$method,
+                           year = IEATools::iea_cols$year,
+                           last_stage = IEATools::iea_cols$last_stage,
+                           energy_type = IEATools::iea_cols$energy_type,
+                           includes_neu = Recca::psut_cols$includes_neu,
+                           tar_group = "tar_group")
+usethis::use_data(usual_hash_group_cols, overwrite = TRUE)
 
+
+#
+# Aggregation file information
+#
+
+aggregation_file_tab_names <- list(region_aggregation = "region_aggregation",
+                                   continent_aggregation = "continent_aggregation",
+                                   world_aggregation = "world_aggregation",
+                                   ef_product_aggregation = "ef_product_aggregation",
+                                   eu_product_aggregation = "eu_product_aggregation",
+                                   ef_sector_aggregation = "ef_sector_aggregation")
+usethis::use_data(aggregation_file_tab_names, overwrite = TRUE)
+
+
+aggregation_file_cols <- list(many_colname = "Many",
+                              few_colname = "Few")
+usethis::use_data(aggregation_file_cols, overwrite = TRUE)
+
+
+#
+# Aggregation data frame columns
+#
+
+aggregation_df_cols <- list(product_aggregation = "ProductAggregation",
+                            industry_aggregation = "IndustryAggregation",
+                            specified = "Specified",
+                            despecified = "Despecified",
+                            ungrouped = "Ungrouped",
+                            grouped = "Grouped",
+                            chopped_mat = "ChoppedMat",
+                            chopped_var = "ChoppedVar",
+                            product_sector = Recca::aggregate_cols$product_sector)
+usethis::use_data(aggregation_df_cols, overwrite = TRUE)
+
+
+#
+# Metadata information for aggregation groups
+#
+
+agg_metadata <- list(total_value = "Total",
+                     all_value = "All",
+                     product_value = "Product",
+                     sector_value = "Sector",
+                     flow_value = "Flow",
+                     none = "None")
+usethis::use_data(agg_metadata, overwrite = TRUE)

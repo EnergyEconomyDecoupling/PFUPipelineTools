@@ -16,7 +16,7 @@ test_that("inboard_filter_copy() works as expected", {
                          dbname = "unit_testing",
                          host = "eviz.cs.calvin.edu",
                          port = 5432,
-                         user = "postgres")
+                         user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
 
   # Make a table for testing
@@ -143,18 +143,18 @@ test_that("encode_matsindf() works as expected", {
   itype <- "Industries"
   tidy <- data.frame(Country  = c( "GH",  "GH",  "GH",  "GH",  "GH",  "GH",  "GH",  "US",  "US",  "US",  "US"),
                      Year     = c( 1971,  1971,  1971,  1971,  1971,  1971,  1971,  1980,  1980,  1980,  1980),
-                     matnames = c(   "U",   "U",   "Y",   "Y",   "Y",   "V",   "V",   "U",   "U",   "Y",   "Y"),
+                     matname = c(   "U",   "U",   "Y",   "Y",   "Y",   "V",   "V",   "U",   "U",   "Y",   "Y"),
                      row      = c(  "p1",  "p2",  "p1",  "p2",  "p2",  "i1",  "i2",  "p1",  "p1",  "p1",  "p2"),
                      col      = c(  "i1",  "i2",  "i1",  "i2",  "i3",  "p1",  "p2",  "i1",  "i2",  "i1",  "i2"),
                      rowtypes = c(ptype, ptype, ptype, ptype, ptype, itype, itype, ptype, ptype, ptype, ptype),
                      coltypes = c(itype, itype, itype, itype, itype, ptype, ptype, itype, itype, itype, itype),
-                     matvals  = c(   11  ,  12,    13 ,   14 ,   15 ,   16 ,   17 ,   49 ,   50 ,   51 ,   52),
+                     matval  = c(   11  ,  12,    13 ,   14 ,   15 ,   16 ,   17 ,   49 ,   50 ,   51 ,   52),
                      stringsAsFactors = FALSE) |>
-    dplyr::group_by(Country, Year, matnames)
+    dplyr::group_by(Country, Year, matname)
   mats <- tidy |>
-    matsindf::collapse_to_matrices(matnames = "matrix", rownames = "row", colnames = "col",
+    matsindf::collapse_to_matrices(matname = "matrix", rownames = "row", colnames = "col",
                                    rowtypes = "rowtypes", coltypes = "coltypes",
-                                   matvals = "matvals", matrix_class = "Matrix") |>
+                                   matval = "matval", matrix_class = "Matrix") |>
     dplyr::ungroup()
 
   industry_index_map <- data.frame(index = as.integer(c(1, 2, 3)),
@@ -166,41 +166,41 @@ test_that("encode_matsindf() works as expected", {
   res <- mats |>
     encode_matsindf(index_map = index_map)
   expect_equal(res |>
-                 dplyr::filter(matnames == "U", Year == 1971) |>
+                 dplyr::filter(matname == "U", Year == 1971) |>
                  nrow(),
                2)
   expect_equal(res |>
-                 dplyr::filter(matnames == "V", Year == 1971) |>
+                 dplyr::filter(matname == "V", Year == 1971) |>
                  nrow(),
                2)
   expect_equal(res |>
-                 dplyr::filter(matnames == "Y", Year == 1971) |>
+                 dplyr::filter(matname == "Y", Year == 1971) |>
                  nrow(),
                3)
   expect_equal(res |>
-                 dplyr::filter(matnames == "U", Year == 1980) |>
+                 dplyr::filter(matname == "U", Year == 1980) |>
                  nrow(),
                2)
   expect_equal(res |>
-                 dplyr::filter(matnames == "Y", Year == 1980) |>
+                 dplyr::filter(matname == "Y", Year == 1980) |>
                  nrow(),
                2)
 
   # Check a few results
   expect_equal(res |>
-                 dplyr::filter(matnames == "U", Year == 1971, i == 1, j == 1) |>
+                 dplyr::filter(matname == "U", Year == 1971, i == 1, j == 1) |>
                  magrittr::extract2("x"),
                11)
   expect_equal(res |>
-                 dplyr::filter(matnames == "Y", Year == 1971, i == 2, j == 3) |>
+                 dplyr::filter(matname == "Y", Year == 1971, i == 2, j == 3) |>
                  magrittr::extract2("x"),
                15)
   expect_equal(res |>
-                 dplyr::filter(matnames == "U", Year == 1980, i == 1, j == 2) |>
+                 dplyr::filter(matname == "U", Year == 1980, i == 1, j == 2) |>
                  magrittr::extract2("x"),
                50)
   expect_equal(res |>
-                 dplyr::filter(matnames == "Y", Year == 1980, i == 2, j == 2) |>
+                 dplyr::filter(matname == "Y", Year == 1980, i == 2, j == 2) |>
                  magrittr::extract2("x"),
                52)
 })
@@ -212,18 +212,18 @@ test_that("decode_matsindf() works as expected", {
   itype <- "Industries"
   tidy <- data.frame(Country  = c( "GH",  "GH",  "GH",  "GH",  "GH",  "GH",  "GH",  "US",  "US",  "US",  "US"),
                      Year     = c( 1971,  1971,  1971,  1971,  1971,  1971,  1971,  1980,  1980,  1980,  1980),
-                     matnames = c(   "U",   "U",   "Y",   "Y",   "Y",   "V",   "V",   "U",   "U",   "Y",   "Y"),
+                     matname = c(   "U",   "U",   "Y",   "Y",   "Y",   "V",   "V",   "U",   "U",   "Y",   "Y"),
                      row      = c(  "p1",  "p2",  "p1",  "p2",  "p2",  "i1",  "i2",  "p1",  "p1",  "p1",  "p2"),
                      col      = c(  "i1",  "i2",  "i1",  "i2",  "i3",  "p1",  "p2",  "i1",  "i2",  "i1",  "i2"),
                      rowtypes = c(ptype, ptype, ptype, ptype, ptype, itype, itype, ptype, ptype, ptype, ptype),
                      coltypes = c(itype, itype, itype, itype, itype, ptype, ptype, itype, itype, itype, itype),
-                     matvals  = c(   11  ,  12,    13 ,   14 ,   15 ,   16 ,   17 ,   49 ,   50 ,   51 ,   52),
+                     matval  = c(   11  ,  12,    13 ,   14 ,   15 ,   16 ,   17 ,   49 ,   50 ,   51 ,   52),
                      stringsAsFactors = FALSE) |>
-    dplyr::group_by(Country, Year, matnames)
+    dplyr::group_by(Country, Year, matname)
   mats <- tidy |>
-    matsindf::collapse_to_matrices(matnames = "matrix", rownames = "row", colnames = "col",
+    matsindf::collapse_to_matrices(matname = "matrix", rownames = "row", colnames = "col",
                                    rowtypes = "rowtypes", coltypes = "coltypes",
-                                   matvals = "matvals", matrix_class = "Matrix") |>
+                                   matval = "matval", matrix_class = "Matrix") |>
     dplyr::ungroup()
 
   industry_index_map <- data.frame(index = as.integer(c(1, 2, 3)),
@@ -232,8 +232,72 @@ test_that("decode_matsindf() works as expected", {
                                   name = c("p1", "p2"))
   index_map <- list(Industries = industry_index_map,
                     Products = product_index_map)
+
+  rctypes <- tibble::tribble(~matname, ~rowtype, ~coltype,
+                             "U",       ptype,    itype,
+                             "V",       itype,    ptype,
+                             "Y",       ptype,    itype)
   encoded <- mats |>
     encode_matsindf(index_map = index_map)
 
+  # Decode the encoded data frame
+  res <- encoded |>
+    decode_matsindf(index_map = index_map,
+                    rctypes = rctypes,
+                    matrix_class = "Matrix",
+                    wide_by_matrices = FALSE)
 
+  # Check that things are the same
+  dplyr::full_join(mats, res, by = c("Country", "Year", "matname")) |>
+    dplyr::mutate(
+      OK = matsbyname:::equal_byname(matval.x, matval.y)
+    ) |>
+    magrittr::extract2("OK") |>
+    unlist() |>
+    all() |>
+    expect_true()
+})
+
+
+test_that("encode_matsindf() works with a NULL matrix", {
+  # Create an example data frame.
+  ptype <- "Products"
+  itype <- "Industries"
+  tidy <- data.frame(Country  = c( "GH",  "GH",  "GH",  "GH",  "GH",  "GH",  "GH",  "US",  "US",  "US",  "US"),
+                     Year     = c( 1971,  1971,  1971,  1971,  1971,  1971,  1971,  1980,  1980,  1980,  1980),
+                     matname = c(   "U",   "U",   "Y",   "Y",   "Y",   "V",   "V",   "U",   "U",   "Y",   "Y"),
+                     row      = c(  "p1",  "p2",  "p1",  "p2",  "p2",  "i1",  "i2",  "p1",  "p1",  "p1",  "p2"),
+                     col      = c(  "i1",  "i2",  "i1",  "i2",  "i3",  "p1",  "p2",  "i1",  "i2",  "i1",  "i2"),
+                     rowtypes = c(ptype, ptype, ptype, ptype, ptype, itype, itype, ptype, ptype, ptype, ptype),
+                     coltypes = c(itype, itype, itype, itype, itype, ptype, ptype, itype, itype, itype, itype),
+                     matval  = c(   11  ,  12,    13 ,   14 ,   15 ,   16 ,   17 ,   49 ,   50 ,   51 ,   52),
+                     stringsAsFactors = FALSE) |>
+    dplyr::group_by(Country, Year, matname)
+  mats <- tidy |>
+    matsindf::collapse_to_matrices(matname = "matrix", rownames = "row", colnames = "col",
+                                   rowtypes = "rowtypes", coltypes = "coltypes",
+                                   matval = "matval", matrix_class = "Matrix") |>
+    dplyr::ungroup()
+
+  # Now set one of the matrices to NULL,
+  # the U matrix in 1971.
+  mats$matval[1] <- list(NULL)
+
+  industry_index_map <- data.frame(index = as.integer(c(1, 2, 3)),
+                                   name = c("i1", "i2", "i3"))
+  product_index_map <- data.frame(index = as.integer(c(1, 2)),
+                                  name = c("p1", "p2"))
+  index_map <- list(Industries = industry_index_map,
+                    Products = product_index_map)
+
+  rctypes <- tibble::tribble(~matname, ~rowtype, ~coltype,
+                             "U",       ptype,    itype,
+                             "V",       itype,    ptype,
+                             "Y",       ptype,    itype)
+  # Encode the data frame with a NULL position.
+  encoded <- mats |>
+    encode_matsindf(index_map = index_map)
+  expect_equal(encoded |>
+                 dplyr::filter(Year == 1971, matname == "U") |>
+                 nrow(), 0)
 })
