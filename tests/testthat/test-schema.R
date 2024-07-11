@@ -392,7 +392,7 @@ test_that("pl_upsert() works for zero matrices", {
   dm <- list(testzeromatrix = data.frame(matname = "zerom",
                                          i = as.integer(1),
                                          j = as.integer(1),
-                                         x = 3.1415926) |>
+                                         value = 3.1415926) |>
                # Delete all rows, but keep names and column types
                dplyr::filter(FALSE)) |>
     dm::new_dm() |>

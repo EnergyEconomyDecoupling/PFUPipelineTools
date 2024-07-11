@@ -16,7 +16,7 @@ decode_matsindf(
   matval = "matval",
   row_index_colname = "i",
   col_index_colname = "j",
-  val_colname = "x",
+  val_colname = "value",
   rowtype_colname = "rowtype",
   coltype_colname = "coltype"
 )
@@ -32,7 +32,7 @@ encode_matsindf(
   matval = "matval",
   row_index_colname = "i",
   col_index_colname = "j",
-  val_colname = "x"
+  val_colname = "value"
 )
 }
 \arguments{
@@ -65,7 +65,7 @@ Default is "i".}
 Default is "j".}
 
 \item{val_colname}{The name of the value column.
-Default is "x".}
+Default is "value".}
 
 \item{.matsindf}{A matsindf data frame whose matrices are to be encoded.}
 

@@ -585,7 +585,7 @@ decode_fk_keys <- function(v_key,
 #' @param col_index_colname The name of the column index column in `.encoded`.
 #'                          Default is "j".
 #' @param val_colname The name of the value column.
-#'                    Default is "x".
+#'                    Default is "value".
 #'
 #' @return For [encode_matsindf()],
 #'         a version of `.matsindf` with matrices in triplet form,
@@ -608,7 +608,7 @@ decode_matsindf <- function(.encoded,
                             matval = "matval",
                             row_index_colname = "i",
                             col_index_colname = "j",
-                            val_colname = "x",
+                            val_colname = "value",
                             rowtype_colname = "rowtype",
                             coltype_colname = "coltype") {
   # if (!(matname %in% colnames(.encoded))) {
@@ -662,7 +662,7 @@ encode_matsindf <- function(.matsindf,
                             matval = "matval",
                             row_index_colname = "i",
                             col_index_colname = "j",
-                            val_colname = "x") {
+                            val_colname = "value") {
 
   # Find matrix column names
   matcols <- matsindf::matrix_cols(.matsindf, .any = TRUE) |>
@@ -694,7 +694,7 @@ encode_matsindf <- function(.matsindf,
                                            retain_zero_structure = retain_zero_structure,
                                            row_index_colname = row_index_colname,
                                            col_index_colname = col_index_colname,
-                                           val_colname = val_colname)
+                                           value_colname = val_colname)
     ) |>
     tidyr::unnest(cols = dplyr::all_of(matval))
 }

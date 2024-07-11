@@ -189,19 +189,19 @@ test_that("encode_matsindf() works as expected", {
   # Check a few results
   expect_equal(res |>
                  dplyr::filter(matname == "U", Year == 1971, i == 1, j == 1) |>
-                 magrittr::extract2("x"),
+                 magrittr::extract2("value"),
                11)
   expect_equal(res |>
                  dplyr::filter(matname == "Y", Year == 1971, i == 2, j == 3) |>
-                 magrittr::extract2("x"),
+                 magrittr::extract2("value"),
                15)
   expect_equal(res |>
                  dplyr::filter(matname == "U", Year == 1980, i == 1, j == 2) |>
-                 magrittr::extract2("x"),
+                 magrittr::extract2("value"),
                50)
   expect_equal(res |>
                  dplyr::filter(matname == "Y", Year == 1980, i == 2, j == 2) |>
-                 magrittr::extract2("x"),
+                 magrittr::extract2("value"),
                52)
 })
 
