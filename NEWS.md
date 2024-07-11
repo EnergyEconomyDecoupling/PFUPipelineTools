@@ -16,7 +16,7 @@ which always resolves to the latest release.
   1             E           Energy    Energy is a thermal quantification of energy.
   2             X	          Exergy    Exergy is a work quantification of energy.
 * New functions for interacting with databases, including
-    - `pl_collect()`
+    - `pl_filter_collect()`
     - `load_schema_table()`
     - `load_fk_tables()`
     - `schema_dm()`
