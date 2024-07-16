@@ -692,7 +692,7 @@ encode_matsindf <- function(.matsindf,
                                            retain_zero_structure = retain_zero_structure,
                                            row_index_colname = row_index_colname,
                                            col_index_colname = col_index_colname,
-                                           val_colname = value_colname)
+                                           value_colname = value_colname)
     ) |>
     tidyr::unnest(cols = dplyr::all_of(matval))
 }
