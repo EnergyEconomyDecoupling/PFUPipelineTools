@@ -418,3 +418,30 @@ agg_metadata <- list(total_value = "Total",
                      flow_value = "Flow",
                      none = "None")
 usethis::use_data(agg_metadata, overwrite = TRUE)
+
+
+#
+# Unwrapped matrix column names.
+# These were formerly i, j, and x.
+#
+
+mat_colnames <- list(i = "i",
+                     row = "i",
+                     j = "j",
+                     col = "j",
+                     x = "value",
+                     value = "value")
+usethis::use_data(mat_colnames, overwrite = TRUE)
+
+
+#
+# Give names for matrix meta information columns
+#
+
+mat_meta_cols <- list(matname = "matname",
+                      matval  = "matval",
+                      rowname = "rowname",
+                      colname = "colname",
+                      rowtype = "rowtype",
+                      coltype = "coltype")
+usethis::use_data(mat_meta_cols, overwrite = TRUE)

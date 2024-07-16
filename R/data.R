@@ -336,3 +336,46 @@
 #' @examples
 #' aggregation_df_cols
 "aggregation_df_cols"
+
+
+#' Unwrapped matrix column names
+#'
+#' A string list containing names of columns
+#' for unwrapped matrices.
+#' The CL-PFU database stores matrices in row, col, val format.
+#' These are the names of those columns.
+#'
+#' @format A string list with `r length(mat_colnames)` entries.
+#' \describe{
+#' \item{i}{The name of the row column, namely "i".}
+#' \item{row}{The name of the row column, namely "i".}
+#' \item{j}{The name of the column column, namely "j".}
+#' \item{col}{The name of the column column, namely "j".}
+#' \item{x}{The name of the value column, namely "value".}
+#' \item{value}{The name of the value column, namely "value".}
+#' }
+#'
+#' @examples
+#' mat_colnames
+"mat_colnames"
+
+
+#' PSUT matrix formation meta information column names
+#'
+#' When forming PSUT matrices, meta information is provided in columns.
+#' This list provides the typical names for the meta information columns
+#' throughout the `PFUPipelineTools` package.
+#'
+#' @format A string list with `r length(mat_meta_cols)` entries.
+#' \describe{
+#' \item{matname}{The name of the column that contains matrix names.}
+#' \item{matval}{The name of the column in a tidy data frame that contains matrices themselves.}
+#' \item{rowname}{The name of the column that contains matrix row names.}
+#' \item{colname}{The name of the column that contains matrix column names.}
+#' \item{rowtype}{The name of the column that contains matrix row types.}
+#' \item{coltype}{The name of the column that contains matrix column types.}
+#' }
+#'
+#' @examples
+#' mat_meta_cols
+"mat_meta_cols"

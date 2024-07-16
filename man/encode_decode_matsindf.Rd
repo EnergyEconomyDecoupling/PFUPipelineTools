@@ -12,13 +12,13 @@ decode_matsindf(
   rctypes,
   wide_by_matrices = TRUE,
   matrix_class = c("matrix", "Matrix"),
-  matname = "matname",
-  matval = "matval",
-  row_index_colname = "i",
-  col_index_colname = "j",
-  val_colname = "x",
-  rowtype_colname = "rowtype",
-  coltype_colname = "coltype"
+  matname = PFUPipelineTools::mat_meta_cols$matname,
+  matval = PFUPipelineTools::mat_meta_cols$matval,
+  row_index_colname = PFUPipelineTools::mat_colnames$i,
+  col_index_colname = PFUPipelineTools::mat_colnames$j,
+  val_colname = PFUPipelineTools::mat_colnames$value,
+  rowtype_colname = PFUPipelineTools::mat_meta_cols$rowtype,
+  coltype_colname = PFUPipelineTools::mat_meta_cols$coltype
 )
 
 encode_matsindf(
@@ -28,11 +28,11 @@ encode_matsindf(
   industry_index_map,
   product_index_map,
   retain_zero_structure = FALSE,
-  matname = "matname",
-  matval = "matval",
-  row_index_colname = "i",
-  col_index_colname = "j",
-  val_colname = "x"
+  matname = PFUPipelineTools::mat_meta_cols$matname,
+  matval = PFUPipelineTools::mat_meta_cols$matval,
+  row_index_colname = PFUPipelineTools::mat_colnames$i,
+  col_index_colname = PFUPipelineTools::mat_colnames$j,
+  val_colname = PFUPipelineTools::mat_colnames$value
 )
 }
 \arguments{
@@ -65,7 +65,7 @@ Default is "i".}
 Default is "j".}
 
 \item{val_colname}{The name of the value column.
-Default is "x".}
+Default is "value".}
 
 \item{.matsindf}{A matsindf data frame whose matrices are to be encoded.}
 
