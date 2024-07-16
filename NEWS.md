@@ -8,6 +8,7 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+* Now using "value" column instead of "x".
 * Now allowing foreign key tables to contain more than 
   only the ID column and the foreign key column.
   This is particularly useful for, e.g., 
@@ -16,7 +17,7 @@ which always resolves to the latest release.
   1             E           Energy    Energy is a thermal quantification of energy.
   2             X	          Exergy    Exergy is a work quantification of energy.
 * New functions for interacting with databases, including
-    - `pl_collect()`
+    - `pl_filter_collect()`
     - `load_schema_table()`
     - `load_fk_tables()`
     - `schema_dm()`

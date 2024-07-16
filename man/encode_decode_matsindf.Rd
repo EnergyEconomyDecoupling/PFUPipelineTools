@@ -32,7 +32,7 @@ encode_matsindf(
   matval = PFUPipelineTools::mat_meta_cols$matval,
   row_index_colname = PFUPipelineTools::mat_colnames$i,
   col_index_colname = PFUPipelineTools::mat_colnames$j,
-  val_colname = PFUPipelineTools::mat_colnames$value
+  value_colname = PFUPipelineTools::mat_colnames$value
 )
 }
 \arguments{

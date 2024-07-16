@@ -185,6 +185,8 @@ pl_collect_from_hash <- function(hashed_table,
 #'                  Default is `as.character(PFUPipelineTools::canonical_countries)`.
 #' @param years A vector of integers to be retained in the output.
 #'              Default is `1960:2020`.
+#' @param ieamws A string that describes which data to download.
+#'               One of "IEA", "MW", or "IEAMW".
 #' @param methods A vector of method strings to be retained in the output.
 #'                At present, only "PCM" (physical content method) is implemented.
 #'                Default is "PCM" (physical content method).
@@ -226,8 +228,8 @@ pl_collect_from_hash <- function(hashed_table,
 #'               Default is "matval".
 #' @param rowtype_colname,coltype_colname The names for row and column type columns in data frames.
 #'                                        Defaults are "rowtype" and "coltype", respectively.
-#' @param country,year,method,last_stage,energy_type Columns that are likely to be in db_table_name
-#'                                                   and may be filtered with `%in%`-style subsetting.
+#' @param country,year,method,last_stage,ieamw,energy_type Columns that are likely to be in db_table_name
+#'                                                         and may be filtered with `%in%`-style subsetting.
 #'
 #' @return A filtered version of `db_table_name` downloaded from `conn`.
 #'
@@ -235,6 +237,7 @@ pl_collect_from_hash <- function(hashed_table,
 pl_filter_collect <- function(db_table_name,
                               countries = as.character(PFUPipelineTools::canonical_countries),
                               years = 1960:2020,
+                              ieamws = c("IEA", "MW", "IEAMW"),
                               methods = "PCM",
                               last_stages = c("Final", "Useful"),
                               energy_types = c("E", "X"),
@@ -257,13 +260,18 @@ pl_filter_collect <- function(db_table_name,
                               rowtype_colname = "rowtype",
                               coltype_colname = "coltype",
                               country = IEATools::iea_cols$country,
+
                               year = IEATools::iea_cols$year,
                               method = IEATools::iea_cols$method,
                               last_stage = IEATools::iea_cols$last_stage,
                               energy_type = IEATools::iea_cols$energy_type,
+                              ieamw = "IEAMW",
                               includes_neu_col = Recca::psut_cols$includes_neu) {
 
   # Protect the match.arg statements, because NULL has special meaning.
+  if (!is.null(ieamw)) {
+    ieamw <- match.arg(ieamw)
+  }
   if (!is.null(methods)) {
     methods <- match.arg(methods)
   }
@@ -284,6 +292,10 @@ pl_filter_collect <- function(db_table_name,
                collect = FALSE)
 
   cnames <- colnames(out)
+  if (!is.null(ieamws) & ieamw %in% cnames) {
+    out <- out |>
+      dplyr::filter(.data[[ieamw]] %in% ieamws)
+  }
   if (!is.null(countries) & country %in% cnames) {
     out <- out |>
       dplyr::filter(.data[[country]] %in% countries)

@@ -611,9 +611,7 @@ decode_matsindf <- function(.encoded,
                             val_colname = PFUPipelineTools::mat_colnames$value,
                             rowtype_colname = PFUPipelineTools::mat_meta_cols$rowtype,
                             coltype_colname = PFUPipelineTools::mat_meta_cols$coltype) {
-  # if (!(matname %in% colnames(.encoded))) {
-  #   return(.encoded)
-  # }
+
   if (!all(c(matname, row_index_colname, col_index_colname, val_colname)
            %in% colnames(.encoded))) {
     return(.encoded)
@@ -662,7 +660,7 @@ encode_matsindf <- function(.matsindf,
                             matval = PFUPipelineTools::mat_meta_cols$matval,
                             row_index_colname = PFUPipelineTools::mat_colnames$i,
                             col_index_colname = PFUPipelineTools::mat_colnames$j,
-                            val_colname = PFUPipelineTools::mat_colnames$value) {
+                            value_colname = PFUPipelineTools::mat_colnames$value) {
 
   # Find matrix column names
   matcols <- matsindf::matrix_cols(.matsindf, .any = TRUE) |>
@@ -694,7 +692,7 @@ encode_matsindf <- function(.matsindf,
                                            retain_zero_structure = retain_zero_structure,
                                            row_index_colname = row_index_colname,
                                            col_index_colname = col_index_colname,
-                                           val_colname = val_colname)
+                                           val_colname = value_colname)
     ) |>
     tidyr::unnest(cols = dplyr::all_of(matval))
 }
