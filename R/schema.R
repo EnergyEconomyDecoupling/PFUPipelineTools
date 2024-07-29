@@ -178,6 +178,8 @@ schema_dm <- function(schema_table,
           this_dm_table[[icol]] <- as.logical(this_dm_table[[icol]])
         } else if (this_data_type == "double precision") {
           this_dm_table[[icol]] <- as.double(this_dm_table[[icol]])
+        } else if (this_data_type == "date") {
+          this_dm_table[[icol]] <- as.Date(this_dm_table[[icol]], format = "%Y-%m-%d")
         } else {
           stop(paste0("Unknown data type: '", this_data_type, "' in schema_dm()"))
         }
