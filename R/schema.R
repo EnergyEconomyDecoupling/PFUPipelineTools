@@ -99,6 +99,8 @@ load_fk_tables <- function(version,
           this_table[[this_colname]] <- as.logical(this_table[[this_colname]])
         } else if (this_data_type == "double precision") {
           this_table[[this_colname]] <- as.double(this_table[[this_colname]])
+        } else if (this_data_type == "date") {
+          this_table[[this_colname]] <- as.Date(this_table[[this_colname]], format = "%Y-%m-%d")
         } else {
           stop(paste0("Unknown data type: '", this_data_type, "' in load_fk_tables()"))
         }
