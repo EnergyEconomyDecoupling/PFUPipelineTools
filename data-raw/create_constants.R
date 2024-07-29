@@ -353,7 +353,9 @@ usethis::use_data(phi_sources, overwrite = TRUE)
 # Dataset colname
 #
 
-dataset_info <- list(dataset_colname = "Dataset")
+dataset_info <- list(dataset_colname = "Dataset",
+                     valid_from_version_colname = "ValidFromVersion",
+                     valid_to_version_colname = "ValidToVersion")
 usethis::use_data(dataset_info, overwrite = TRUE)
 
 
