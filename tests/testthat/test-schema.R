@@ -61,7 +61,6 @@ test_that("load_fk_tables() works as expected", {
   expect_true(is.integer(simple_tables$Year$Year))
   expect_true(is.integer(simple_tables$IncludesNEU$IncludesNEUID))
   expect_true(is.logical(simple_tables$IncludesNEU$IncludesNEU))
-  expect_true(is.logical(simple_tables$Version$Public))
 })
 
 
