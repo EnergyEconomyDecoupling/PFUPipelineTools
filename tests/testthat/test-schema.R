@@ -204,6 +204,7 @@ test_that("encode_fks() works with re-routed foreign keys", {
   retrieved <- DBI::dbReadTable(conn, "TestUpsertTable")
   expect_equal(retrieved, TestUpsertTable)
   decoded <- pl_filter_collect("TestUpsertTable", last_stages = NULL, conn = conn, collect = TRUE)
+  Sys.sleep(0.5) # Make sure the database has time to put everything in place.
   expect_equal(decoded, TestUpsertTable2, ignore_attr = TRUE)
   # Now try with decoding
   pl_upsert(TestUpsertTable2,
