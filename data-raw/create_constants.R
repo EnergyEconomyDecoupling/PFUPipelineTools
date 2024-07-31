@@ -310,9 +310,9 @@ usethis::use_data(machine_constants, overwrite = TRUE)
 #
 
 ieamw_cols <- list(ieamw = "IEAMW",
-                   iea = "IEA",
-                   mw = "MW",
-                   both = "Both")
+                   iea = "CL-PFU IEA",
+                   mw = "CL-PFU MW",
+                   both = "CL-PFU IEA+MW")
 usethis::use_data(ieamw_cols, overwrite = TRUE)
 
 
