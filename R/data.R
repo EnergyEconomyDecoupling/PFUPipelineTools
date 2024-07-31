@@ -249,7 +249,7 @@
 #' @format A string list with `r length(dataset_info)` entries.
 #' \describe{
 #' \item{dataset_colname}{The string name of the dataset column, "Dataset".}
-#' \item{valid_from_version_colname}{The string name of the column that gives the inital version for which this datapoint is valid, "ValidFromVersion".}
+#' \item{valid_from_version_colname}{The string name of the column that gives the initial version for which this datapoint is valid, "ValidFromVersion".}
 #' \item{valid_to_version_colname}{The string name of the column that gives the last version for which this datapoint is valid, "ValidToVersion".}
 #' }
 #'

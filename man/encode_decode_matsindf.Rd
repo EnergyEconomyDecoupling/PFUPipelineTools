@@ -16,7 +16,7 @@ decode_matsindf(
   matval = PFUPipelineTools::mat_meta_cols$matval,
   row_index_colname = PFUPipelineTools::mat_colnames$i,
   col_index_colname = PFUPipelineTools::mat_colnames$j,
-  val_colname = PFUPipelineTools::mat_colnames$value,
+  value_colname = PFUPipelineTools::mat_colnames$value,
   rowtype_colname = PFUPipelineTools::mat_meta_cols$rowtype,
   coltype_colname = PFUPipelineTools::mat_meta_cols$coltype
 )
@@ -64,8 +64,10 @@ Default is "i".}
 \item{col_index_colname}{The name of the column index column in \code{.encoded}.
 Default is "j".}
 
-\item{val_colname}{The name of the value column.
+\item{value_colname}{The name of the value column.
 Default is "value".}
+
+\item{rowtype_colname, coltype_colname}{Names of \code{rowtype} and \code{coltype} columns.}
 
 \item{.matsindf}{A matsindf data frame whose matrices are to be encoded.}
 
