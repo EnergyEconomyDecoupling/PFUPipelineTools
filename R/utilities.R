@@ -584,8 +584,9 @@ decode_fk_keys <- function(v_key,
 #'                          Default is "i".
 #' @param col_index_colname The name of the column index column in `.encoded`.
 #'                          Default is "j".
-#' @param val_colname The name of the value column.
-#'                    Default is "value".
+#' @param rowtype_colname,coltype_colname Names of `rowtype` and `coltype` columns.
+#' @param value_colname The name of the value column.
+#'                      Default is "value".
 #'
 #' @return For [encode_matsindf()],
 #'         a version of `.matsindf` with matrices in triplet form,
@@ -608,17 +609,17 @@ decode_matsindf <- function(.encoded,
                             matval = PFUPipelineTools::mat_meta_cols$matval,
                             row_index_colname = PFUPipelineTools::mat_colnames$i,
                             col_index_colname = PFUPipelineTools::mat_colnames$j,
-                            val_colname = PFUPipelineTools::mat_colnames$value,
+                            value_colname = PFUPipelineTools::mat_colnames$value,
                             rowtype_colname = PFUPipelineTools::mat_meta_cols$rowtype,
                             coltype_colname = PFUPipelineTools::mat_meta_cols$coltype) {
 
-  if (!all(c(matname, row_index_colname, col_index_colname, val_colname)
+  if (!all(c(matname, row_index_colname, col_index_colname, value_colname)
            %in% colnames(.encoded))) {
     return(.encoded)
   }
   matrix_class <- match.arg(matrix_class)
   out <- .encoded |>
-    matsindf::group_by_everything_except(row_index_colname, col_index_colname, val_colname) |>
+    matsindf::group_by_everything_except(row_index_colname, col_index_colname, value_colname) |>
     tidyr::nest(.key = matval) |>
     dplyr::ungroup() |>
     dplyr::left_join(rctypes, by = matname, copy = TRUE) |>
@@ -635,7 +636,7 @@ decode_matsindf <- function(.encoded,
                                     matrix_class = matrix_class,
                                     row_index_colname = row_index_colname,
                                     col_index_colname = col_index_colname,
-                                    val_colname = val_colname)
+                                    val_colname = value_colname)
     )
   if (wide_by_matrices) {
     out <- out |>

@@ -249,7 +249,7 @@
 #' @format A string list with `r length(dataset_info)` entries.
 #' \describe{
 #' \item{dataset_colname}{The string name of the dataset column, "Dataset".}
-#' \item{valid_from_version_colname}{The string name of the column that gives the inital version for which this datapoint is valid, "ValidFromVersion".}
+#' \item{valid_from_version_colname}{The string name of the column that gives the initial version for which this datapoint is valid, "ValidFromVersion".}
 #' \item{valid_to_version_colname}{The string name of the column that gives the last version for which this datapoint is valid, "ValidToVersion".}
 #' }
 #'
@@ -338,6 +338,28 @@
 #' @examples
 #' aggregation_df_cols
 "aggregation_df_cols"
+
+
+#' Metadata information for aggregation groups
+#'
+#' A string list containing metadata information for aggregation
+#' groups.
+#'
+#' @format A string list with `r length(agg_metadata)` entries.
+#' \describe{
+#' \item{total_value}{A total value.}
+#' \item{all_value}{An aggregation of all items.}
+#' \item{product_value}{An aggregation of products.}
+#' \item{sector_value}{An aggregation across sectors.}
+#' \item{flow_value}{An aggregation across flows.}
+#' \item{none}{No aggregation.}
+#' }
+#'
+#' @examples
+#' agg_metadata
+"agg_metadata"
+
+
 
 
 #' Unwrapped matrix column names

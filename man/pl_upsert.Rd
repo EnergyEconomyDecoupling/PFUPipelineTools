@@ -72,7 +72,7 @@ See documentation for \code{\link[=encode_matsindf]{encode_matsindf()}} and
 Default is a \code{list} that contains the \code{industry}, \code{product}, and \code{other}
 members of \code{fk_parent_tables}.}
 
-\item{retain_zero_structure}{A boolean that tells whether to retain the stucture
+\item{retain_zero_structure}{A boolean that tells whether to retain the structure
 of zero matrices.
 See details.}
 
