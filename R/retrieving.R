@@ -186,7 +186,7 @@ pl_collect_from_hash <- function(hashed_table,
 #' @param years A vector of integers to be retained in the output.
 #'              Default is `1960:2020`.
 #' @param ieamws A string that describes which data to download.
-#'               One of "IEA", "MW", or "IEAMW".
+#'               One of "IEA", "MW", or "Both".
 #' @param methods A vector of method strings to be retained in the output.
 #'                At present, only "PCM" (physical content method) is implemented.
 #'                Default is "PCM" (physical content method).
@@ -240,10 +240,14 @@ pl_collect_from_hash <- function(hashed_table,
 pl_filter_collect <- function(db_table_name,
                               countries = as.character(PFUPipelineTools::canonical_countries),
                               years = 1960:2020,
-                              ieamws = c("IEA", "MW", "IEAMW"),
+                              ieamws = c(PFUPipelineTools::ieamw_cols$iea,
+                                         PFUPipelineTools::ieamw_cols$mw,
+                                         PFUPipelineTools::ieamw_cols$both),
                               methods = "PCM",
-                              last_stages = c("Final", "Useful"),
-                              energy_types = c("E", "X"),
+                              last_stages = c(IEATools::last_stages$final,
+                                              IEATools::last_stages$useful),
+                              energy_types = c(IEATools::energy_types$e,
+                                               IEATools::energy_types$x),
                               includes_neu = TRUE,
                               collect = FALSE,
                               conn,
@@ -269,7 +273,7 @@ pl_filter_collect <- function(db_table_name,
                               method = IEATools::iea_cols$method,
                               last_stage = IEATools::iea_cols$last_stage,
                               energy_type = IEATools::iea_cols$energy_type,
-                              ieamw = "IEAMW",
+                              ieamw = PFUPipelineTools::ieamw_cols$ieamw,
                               includes_neu_col = Recca::psut_cols$includes_neu) {
 
   # Protect the match.arg statements, because NULL has special meaning.

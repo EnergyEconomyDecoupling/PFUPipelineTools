@@ -7,10 +7,10 @@
 \format{
 A string list with 4 entries.
 \describe{
-\item{ieamw}{The name of the column containing metadata on ECC sources. "IEAMW"}
-\item{iea}{A string identifying that ECC data are from the IEA exclusively. "IEA"}
-\item{mw}{A string identifying that ECC data are for muscle work (MW) exclusively. "MW"}
-\item{both}{A string identifying that ECC data include both IEA and muscle work. "Both"}
+\item{ieamw}{The name of the column containing metadata on ECC sources.}
+\item{iea}{A string identifying that ECC data are from the IEA exclusively.}
+\item{mw}{A string identifying that ECC data are for muscle work (MW) exclusively.}
+\item{both}{A string identifying that ECC data include both IEA and muscle work.}
 }
 }
 \usage{
