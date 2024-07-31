@@ -8,6 +8,8 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+# PFUPipelineTools 0.1.9 (2024-07-30)
+
 * Added new "date" option for foreign key columns.
 * Now using "value" column instead of "x".
 * Now allowing foreign key tables to contain more than 

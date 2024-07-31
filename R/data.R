@@ -340,6 +340,28 @@
 "aggregation_df_cols"
 
 
+#' Metadata information for aggregation groups
+#'
+#' A string list containing metadata information for aggregation
+#' groups.
+#'
+#' @format A string list with `r length(agg_metadata)` entries.
+#' \describe{
+#' \item{total_value}{A total value.}
+#' \item{all_value}{An aggregation of all items.}
+#' \item{product_value}{An aggregation of products.}
+#' \item{sector_value}{An aggregation across sectors.}
+#' \item{flow_value}{An aggregation across flows.}
+#' \item{none}{No aggregation.}
+#' }
+#'
+#' @examples
+#' agg_metadata
+"agg_metadata"
+
+
+
+
 #' Unwrapped matrix column names
 #'
 #' A string list containing names of columns

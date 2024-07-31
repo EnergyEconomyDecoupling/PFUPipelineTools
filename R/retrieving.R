@@ -230,6 +230,9 @@ pl_collect_from_hash <- function(hashed_table,
 #'                                        Defaults are "rowtype" and "coltype", respectively.
 #' @param country,year,method,last_stage,ieamw,energy_type Columns that are likely to be in db_table_name
 #'                                                         and may be filtered with `%in%`-style subsetting.
+#' @param includes_neu_col The name of a column that tells whether non-energy
+#'                         use (NEU) is included.
+#'                         Default is `Recca::psut_cols$includes_neu`.
 #'
 #' @return A filtered version of `db_table_name` downloaded from `conn`.
 #'
@@ -247,7 +250,8 @@ pl_filter_collect <- function(db_table_name,
                               schema = schema_from_conn(conn = conn),
                               fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
                               index_map_name = "Index",
-                              index_map = fk_parent_tables[[index_table_name]],
+                              # index_map = fk_parent_tables[[index_table_name]],
+                              index_map = fk_parent_tables[[index_map_name]],
                               rctype_table_name = "matnameRCType",
                               rctypes = decode_fks(db_table_name = rctype_table_name,
                                                    collect = TRUE,

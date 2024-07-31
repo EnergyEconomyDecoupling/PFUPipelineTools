@@ -160,7 +160,7 @@ test_that("pl_upload_schema_and_simple_tables() works as expected", {
 
   # Clean up after ourselves
   # Get rid of the MemberRole table first, because the other depend on it
-  clean_up_beatles(conn)
+  PFUPipelineTools:::clean_up_beatles(conn)
 })
 
 

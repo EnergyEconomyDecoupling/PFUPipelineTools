@@ -464,7 +464,7 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #'                  [matsbyname::to_triplet()].
 #'                  Default is a `list` that contains the `industry`, `product`, and `other`
 #'                  members of `fk_parent_tables`.
-#' @param retain_zero_structure A boolean that tells whether to retain the stucture
+#' @param retain_zero_structure A boolean that tells whether to retain the structure
 #'                              of zero matrices.
 #'                              See details.
 #' @param schema The data model (`dm` object) for the database in `conn`.
