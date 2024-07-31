@@ -1,7 +1,7 @@
 Package: PFUPipelineTools
-Title: Tools for PFU Pipelines
-Version: 0.1.8
-Date: 2023-12-21
+Title: Tools for CL-PFU Database Pipelines
+Version: 0.1.9
+Date: 2024-07-30
 Authors@R: 
     person("Matthew", "Heun", , "matthew.heun@me.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-7438-214X"))
@@ -11,23 +11,38 @@ Description: There are several repositories that provide computation pipelines f
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
+Config/testthat/edition: 3
+Config/testthat/parallel: true
+Config/testthat/start-first: schema, pl_collect, data_functions
 Imports:
+    assertthat,
+    DBI,
+    digest,
+    dm,
     dplyr,
     IEATools, 
-    lubridate,
     magrittr,
+    matsbyname,
+    matsindf,
     PFUSetup,
-    parsedate,
     pins,
-    rlang
+    purrr,
+    Recca,
+    readxl,
+    rlang, 
+    tidyr,
+    tibble
 Depends: 
     R (>= 2.10)
 LazyData: true
 Suggests:
+    dbplyr,
+    RPostgres,
+    RSQLite,
     spelling,
+    tarchetypes,
     targets,
     testthat (>= 3.0.0)
-Config/testthat/edition: 3
 URL: https://energyeconomydecoupling.github.io/PFUPipelineTools/
 Language: en-US

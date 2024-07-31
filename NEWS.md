@@ -8,8 +8,38 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+# PFUPipelineTools 0.1.9 (2024-07-30)
 
-# PFUPipelineTools 0.1.8 (2023-12-21)
+* Added new "date" option for foreign key columns.
+* Now using "value" column instead of "x".
+* Now allowing foreign key tables to contain more than 
+  only the ID column and the foreign key column.
+  This is particularly useful for, e.g., 
+  the energy type table:
+  EnergyTypeID	EnergyType	FullName	Description
+  1             E           Energy    Energy is a thermal quantification of energy.
+  2             X	          Exergy    Exergy is a work quantification of energy.
+* New functions for interacting with databases, including
+    - `pl_filter_collect()`
+    - `load_schema_table()`
+    - `load_fk_tables()`
+    - `schema_dm()`
+    - `pl_upload_schema_and_simple_tables()`
+    - `set_not_null_constraints_on_fk_cols()`
+    - `pl_upsert()`
+    - `encode_fks()`
+    - `decode_fks()`
+    - `encode_fk_values()`
+    - `encode_fk_keys()`
+* Removed `stash_cache()` and associated tests.
+  We no longer save the pipeline cache.
+  It seemed like a good idea at the time, but
+  we never looked at saved caches.
+* New function `self_name()` is helpful in many places.
+* Several new functions to assist with database schema, etc.
+
+
+# PFUPipelineTools 0.1.8 (2023-12-21) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10420449.svg)](https://doi.org/10.5281/zenodo.10420449)
 
 * Added a statement of need to `README.Rmd`.
 * No new tests

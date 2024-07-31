@@ -2,7 +2,7 @@
 #'
 #' Data is extracted according to the `countries` and `years` objects
 #' in a way that is amenable to drake subtargets.
-#' `dplyr::filter()` does the subsetting.
+#' `dplyr:` `:filter()` does the subsetting.
 #'
 #' @param .df A data frame containing cleaned data with lots of countries and years.
 #' @param countries A list of country codes for countries to be analyzed.
@@ -49,11 +49,13 @@ filter_countries_years <- function(.df,
 #'
 #' The [tarchetypes::tar_group_by()] function
 #' adds a column named "tar_group".
-#' This function ungroups and removes the special column.
+#' This function ungroups and removes the special column
+#' and optionally removes `dplyr` groups, too.
 #'
-#' @param .df The data frame to be ungrouped.
+#' @param .df The data frame to have its `targets` grouping removed.
 #' @param tar_group_colname The name of the grouping column. Default is "tar_group".
-#' @param ungroup A boolean that tells whether to ungroup `.df`. Default is `TRUE`.
+#' @param ungroup A boolean that tells whether to ungroup
+#'                (in the `dplyr` sense, not the `targets` sense) `.df`. Default is `TRUE`.
 #'
 #' @return A modified version of `.df`.
 #'

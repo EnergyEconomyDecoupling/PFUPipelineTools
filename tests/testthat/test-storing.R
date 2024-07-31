@@ -24,43 +24,88 @@ test_that("release_target() works as expected", {
 })
 
 
-test_that("stash_cache() works as expected", {
-  # Try without a release
-  expect_equal(stash_cache(release = FALSE), "Release not requested.")
+test_that("pl_hash() works as expected with in-memory data frame", {
+  # Example data frame
+  DF <- tibble::tribble(~Country, ~Year, ~Value,
+                        "USA", 1967, 42,
+                        "ZAF", 1967, 43)
+  the_hash <- DF |>
+    pl_hash(table_name = "MyTable")
 
-  # Now try with temporary folders and a bogus target
-  tdir <- tempdir()
-  pipeline_caches_folder <- file.path(tdir, "pipeline_caches_folder")
-  dir.create(pipeline_caches_folder, recursive = TRUE)
-  cache_folder <- file.path(tdir, "cache_folder")
-  dir.create(cache_folder, recursive = TRUE)
-  df <- data.frame(names = c("A", "B"), values = c(1, 2))
-  saveRDS(df, file = file.path(cache_folder, "df.rds"))
-  res <- stash_cache(pipeline_caches_folder = pipeline_caches_folder,
-                     cache_folder = cache_folder,
-                     file_prefix = "prefix",
-                     release = TRUE)
-  expect_equal(res, "prefix")
-  # Check that a file now exists in the pipeline_caches_folder
-  yeardir <- file.path(pipeline_caches_folder, list.files(pipeline_caches_folder))
-  monthdir <- file.path(yeardir, list.files(yeardir))
-  fname <- list.files(monthdir)
-  expect_true(startsWith(fname, "prefix"))
-  expect_true(endsWith(fname, ".zip"))
+  expect_equal(names(the_hash), c(PFUPipelineTools::hashed_table_colnames$db_table_name,
+                                  "Country",
+                                  "Year",
+                                  PFUPipelineTools::hashed_table_colnames$nested_hash_colname))
+  expect_equal(nrow(the_hash), 2)
+  expect_equal(the_hash[[PFUPipelineTools::hashed_table_colnames$db_table_name]] |>
+                 unique(),
+               "MyTable")
 
-  # Delete all temporary files
-  unlink(tdir, recursive = TRUE, force = TRUE)
+  # Now try with non-NULL hash_group_cols
+  the_hash2 <- DF |>
+    pl_hash(table_name = "MyTable",
+            usual_hash_group_cols = NULL,
+            additional_hash_group_cols = c("Country", "Year"))
+  # Both Country and Year will be preserved
+  expect_equal(nrow(the_hash2), 2)
+  expect_equal(the_hash2[[PFUPipelineTools::hashed_table_colnames$db_table_name]] |>
+                 unique(),
+               "MyTable")
 
-  # The next bit fails on only one of the GitHub actions platforms.
-  # So don't worry about running on CI.
+  # Try with too many grouping variables
+  the_hash3 <- DF |>
+    pl_hash(table_name = "MyTable",
+            additional_hash_group_cols = PFUPipelineTools::usual_hash_group_cols)
+  # Should also preserve Country and Year
+  expect_equal(nrow(the_hash3), 2)
+  expect_equal(the_hash3[[PFUPipelineTools::hashed_table_colnames$db_table_name]] |>
+                 unique(),
+               "MyTable")
+  expect_equal(the_hash3[[PFUPipelineTools::hashed_table_colnames$nested_hash_colname]][[1]],
+               "dfc3511d250aee5b3ac45c08cba8c2a3")
+  expect_equal(the_hash3[[PFUPipelineTools::hashed_table_colnames$nested_hash_colname]][[2]],
+               "d25bbeb674b4041524d283ff08fadc0c")
+})
+
+
+test_that("pl_hash() works with remote table", {
   skip_on_ci()
+  skip_on_cran()
+  conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
+                         dbname = "unit_testing",
+                         host = "eviz.cs.calvin.edu",
+                         port = 5432,
+                         user = "mkh2")
+  on.exit(DBI::dbDisconnect(conn))
 
-  # Try again after deleting the temporary files.
-  stash_cache(pipeline_caches_folder = pipeline_caches_folder,
-              cache_folder = cache_folder,
-              file_prefix = "prefix",
-              release = TRUE) |>
-    expect_error(regexp = "cannot open the connection") |>
-    expect_error(regexp = "copying of pipeline cache unsuccessful")
+  # Create a test table that has same Country
+  # for all rows.
+  # Thus, Country would normally be nested.
+  df <- data.frame(Country = as.integer(c(1, 1, 1, 1)),
+                   Year = as.integer(c(1971, 1972, 1973, 1974)),
+                   EnergyType = as.integer(c(1, 1, 2, 2)),
+                   Value = c(1/3, 43, 44, 45))
+  pl_hash_df <- pl_hash(df,
+                        table_name = "TestPLHash",
+                        additional_hash_group_cols = c("Country", "EnergyType"),
+                        usual_hash_group_cols = NULL)
+  expect_equal(nrow(pl_hash_df), 2)
+  expected_colnames <- c("DBTableName", "Country", "EnergyType", "NestedDataHash")
+  expect_equal(colnames(pl_hash_df), expected_colnames)
+
+
+  # Upload to database
+  DBI::dbWriteTable(conn, "TestPLHash", df, overwrite = TRUE)
+
+  pl_hash_tbl <- pl_hash(table_name = "TestPLHash",
+                         conn = conn,
+                         additional_hash_group_cols = c("EnergyType"),
+                         usual_hash_group_cols = NULL)
+  expect_equal(nrow(pl_hash_tbl), 2)
+  expect_equal(colnames(pl_hash_tbl), expected_colnames)
+
+
+
+  DBI::dbRemoveTable(conn, "TestPLHash")
 })
 
