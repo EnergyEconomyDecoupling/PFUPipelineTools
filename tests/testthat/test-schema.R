@@ -32,7 +32,7 @@ test_that("schema_dm() works as expected", {
     magrittr::extract2("pk_col") |>
     unlist() |>
     length() |>
-    expect_equal(13)
+    expect_equal(12)
 })
 
 

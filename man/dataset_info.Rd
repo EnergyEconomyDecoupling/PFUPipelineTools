@@ -5,11 +5,14 @@
 \alias{dataset_info}
 \title{Column name for datasets}
 \format{
-A string list with 3 entries.
+A string list with 6 entries.
 \describe{
 \item{dataset_colname}{The string name of the dataset column, "Dataset".}
 \item{valid_from_version_colname}{The string name of the column that gives the initial version for which this datapoint is valid, "ValidFromVersion".}
 \item{valid_to_version_colname}{The string name of the column that gives the last version for which this datapoint is valid, "ValidToVersion".}
+\item{iea}{A string identifying that ECC data are from the IEA exclusively.}
+\item{mw}{A string identifying that ECC data are for muscle work (MW) exclusively.}
+\item{both}{A string identifying that ECC data include both IEA and muscle work.}
 }
 }
 \usage{
