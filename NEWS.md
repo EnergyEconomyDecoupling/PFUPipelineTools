@@ -8,6 +8,12 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+# PFUPipelineTools 0.1.10 (2024-08-01)
+
+* Eliminated the `IEAMW` column everywhere.
+  The `Dataset` column is now doing the work of the `IEAMW` column.
+
+
 # PFUPipelineTools 0.1.9 (2024-07-30)
 
 * Added new "date" option for foreign key columns.
