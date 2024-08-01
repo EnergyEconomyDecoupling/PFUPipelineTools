@@ -6,10 +6,10 @@
 \usage{
 pl_filter_collect(
   db_table_name,
+  datasets = c(PFUPipelineTools::dataset_info$iea, PFUPipelineTools::dataset_info$mw,
+    PFUPipelineTools::dataset_info$both),
   countries = as.character(PFUPipelineTools::canonical_countries),
   years = 1960:2020,
-  ieamws = c(PFUPipelineTools::ieamw_cols$iea, PFUPipelineTools::ieamw_cols$mw,
-    PFUPipelineTools::ieamw_cols$both),
   methods = "PCM",
   last_stages = c(IEATools::last_stages$final, IEATools::last_stages$useful),
   energy_types = c(IEATools::energy_types$e, IEATools::energy_types$x),
@@ -33,7 +33,7 @@ pl_filter_collect(
   method = IEATools::iea_cols$method,
   last_stage = IEATools::iea_cols$last_stage,
   energy_type = IEATools::iea_cols$energy_type,
-  ieamw = PFUPipelineTools::ieamw_cols$ieamw,
+  dataset_colname = PFUPipelineTools::dataset_info$dataset_colname,
   includes_neu_col = Recca::psut_cols$includes_neu
 )
 }
@@ -45,9 +45,6 @@ Default is \code{as.character(PFUPipelineTools::canonical_countries)}.}
 
 \item{years}{A vector of integers to be retained in the output.
 Default is \code{1960:2020}.}
-
-\item{ieamws}{A string that describes which data to download.
-One of "IEA", "MW", or "Both".}
 
 \item{methods}{A vector of method strings to be retained in the output.
 At present, only "PCM" (physical content method) is implemented.
@@ -112,6 +109,9 @@ and may be filtered with \code{\%in\%}-style subsetting.}
 \item{includes_neu_col}{The name of a column that tells whether non-energy
 use (NEU) is included.
 Default is \code{Recca::psut_cols$includes_neu}.}
+
+\item{ieamws}{A string that describes which data to download.
+One of "IEA", "MW", or "Both".}
 }
 \value{
 A filtered version of \code{db_table_name} downloaded from \code{conn}.

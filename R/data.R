@@ -177,24 +177,6 @@
 "machine_constants"
 
 
-#' Constants for data frames containing IEA and MW data frames
-#'
-#' A string list containing both the column name and column values
-#' for energy conversion chains (ECCs) in PSUT format.
-#'
-#' @format A string list with `r length(ieamw_cols)` entries.
-#' \describe{
-#' \item{ieamw}{The name of the column containing metadata on ECC sources.}
-#' \item{iea}{A string identifying that ECC data are from the IEA exclusively.}
-#' \item{mw}{A string identifying that ECC data are for muscle work (MW) exclusively.}
-#' \item{both}{A string identifying that ECC data include both IEA and muscle work.}
-#' }
-#'
-#' @examples
-#' ieamw_cols
-"ieamw_cols"
-
-
 #' Exemplar table names
 #'
 #' A string list containing named names of columns and tabs for exemplar tables.
@@ -251,6 +233,9 @@
 #' \item{dataset_colname}{The string name of the dataset column, "Dataset".}
 #' \item{valid_from_version_colname}{The string name of the column that gives the initial version for which this datapoint is valid, "ValidFromVersion".}
 #' \item{valid_to_version_colname}{The string name of the column that gives the last version for which this datapoint is valid, "ValidToVersion".}
+#' \item{iea}{A string identifying that ECC data are from the IEA exclusively.}
+#' \item{mw}{A string identifying that ECC data are for muscle work (MW) exclusively.}
+#' \item{both}{A string identifying that ECC data include both IEA and muscle work.}
 #' }
 #'
 #' @examples

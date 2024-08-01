@@ -238,11 +238,11 @@ pl_collect_from_hash <- function(hashed_table,
 #'
 #' @export
 pl_filter_collect <- function(db_table_name,
+                              datasets = c(PFUPipelineTools::dataset_info$iea,
+                                           PFUPipelineTools::dataset_info$mw,
+                                           PFUPipelineTools::dataset_info$both),
                               countries = as.character(PFUPipelineTools::canonical_countries),
                               years = 1960:2020,
-                              ieamws = c(PFUPipelineTools::ieamw_cols$iea,
-                                         PFUPipelineTools::ieamw_cols$mw,
-                                         PFUPipelineTools::ieamw_cols$both),
                               methods = "PCM",
                               last_stages = c(IEATools::last_stages$final,
                                               IEATools::last_stages$useful),
@@ -254,7 +254,6 @@ pl_filter_collect <- function(db_table_name,
                               schema = schema_from_conn(conn = conn),
                               fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
                               index_map_name = "Index",
-                              # index_map = fk_parent_tables[[index_table_name]],
                               index_map = fk_parent_tables[[index_map_name]],
                               rctype_table_name = "matnameRCType",
                               rctypes = decode_fks(db_table_name = rctype_table_name,
@@ -273,12 +272,12 @@ pl_filter_collect <- function(db_table_name,
                               method = IEATools::iea_cols$method,
                               last_stage = IEATools::iea_cols$last_stage,
                               energy_type = IEATools::iea_cols$energy_type,
-                              ieamw = PFUPipelineTools::ieamw_cols$ieamw,
+                              dataset_colname = PFUPipelineTools::dataset_info$dataset_colname,
                               includes_neu_col = Recca::psut_cols$includes_neu) {
 
   # Protect the match.arg statements, because NULL has special meaning.
-  if (!is.null(ieamw)) {
-    ieamw <- match.arg(ieamw)
+  if (!is.null(datasets)) {
+    datasets <- match.arg(datasets)
   }
   if (!is.null(methods)) {
     methods <- match.arg(methods)
@@ -300,9 +299,9 @@ pl_filter_collect <- function(db_table_name,
                collect = FALSE)
 
   cnames <- colnames(out)
-  if (!is.null(ieamws) & ieamw %in% cnames) {
+  if (!is.null(datasets) & dataset_colname %in% cnames) {
     out <- out |>
-      dplyr::filter(.data[[ieamw]] %in% ieamws)
+      dplyr::filter(.data[[dataset_colname]] %in% datasets)
   }
   if (!is.null(countries) & country %in% cnames) {
     out <- out |>
