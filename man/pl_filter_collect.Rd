@@ -40,6 +40,9 @@ pl_filter_collect(
 \arguments{
 \item{db_table_name}{The string name of the database table to be filtered.}
 
+\item{datasets}{A vector of dataset strings to be retained in the output.
+Default is \code{c(PFUPipelineTools::dataset_info$iea, PFUPipelineTools::dataset_info$mw, PFUPipelineTools::dataset_info$both)}.}
+
 \item{countries}{A vector of country strings to be retained in the output.
 Default is \code{as.character(PFUPipelineTools::canonical_countries)}.}
 
@@ -103,15 +106,12 @@ Default is "matval".}
 \item{rowtype_colname, coltype_colname}{The names for row and column type columns in data frames.
 Defaults are "rowtype" and "coltype", respectively.}
 
-\item{country, year, method, last_stage, ieamw, energy_type}{Columns that are likely to be in db_table_name
+\item{dataset_colname, country, year, method, last_stage, energy_type}{Columns that are likely to be in db_table_name
 and may be filtered with \code{\%in\%}-style subsetting.}
 
 \item{includes_neu_col}{The name of a column that tells whether non-energy
 use (NEU) is included.
 Default is \code{Recca::psut_cols$includes_neu}.}
-
-\item{ieamws}{A string that describes which data to download.
-One of "IEA", "MW", or "Both".}
 }
 \value{
 A filtered version of \code{db_table_name} downloaded from \code{conn}.

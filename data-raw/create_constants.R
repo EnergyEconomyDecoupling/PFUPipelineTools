@@ -306,18 +306,6 @@ usethis::use_data(machine_constants, overwrite = TRUE)
 
 
 #
-# Column names in PSUT data frames
-#
-
-# ieamw_cols <- list(#ieamw = "IEAMW",
-#                    ieamw = "Dataset",
-#                    iea = "CL-PFU IEA",
-#                    mw = "CL-PFU MW",
-#                    both = "CL-PFU IEA+MW")
-# usethis::use_data(ieamw_cols, overwrite = TRUE)
-
-
-#
 # Names and constants associated with exemplar tables.
 #
 

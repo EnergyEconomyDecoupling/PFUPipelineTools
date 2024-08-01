@@ -181,12 +181,14 @@ pl_collect_from_hash <- function(hashed_table,
 #' [decode_matsindf()] is called on the downloaded data frame.
 #'
 #' @param db_table_name The string name of the database table to be filtered.
+#' @param datasets A vector of dataset strings to be retained in the output.
+#'                 Default is `c(PFUPipelineTools::dataset_info$iea,
+#'                 PFUPipelineTools::dataset_info$mw,
+#'                 PFUPipelineTools::dataset_info$both)`.
 #' @param countries A vector of country strings to be retained in the output.
 #'                  Default is `as.character(PFUPipelineTools::canonical_countries)`.
 #' @param years A vector of integers to be retained in the output.
 #'              Default is `1960:2020`.
-#' @param ieamws A string that describes which data to download.
-#'               One of "IEA", "MW", or "Both".
 #' @param methods A vector of method strings to be retained in the output.
 #'                At present, only "PCM" (physical content method) is implemented.
 #'                Default is "PCM" (physical content method).
@@ -228,8 +230,8 @@ pl_collect_from_hash <- function(hashed_table,
 #'               Default is "matval".
 #' @param rowtype_colname,coltype_colname The names for row and column type columns in data frames.
 #'                                        Defaults are "rowtype" and "coltype", respectively.
-#' @param country,year,method,last_stage,ieamw,energy_type Columns that are likely to be in db_table_name
-#'                                                         and may be filtered with `%in%`-style subsetting.
+#' @param dataset_colname,country,year,method,last_stage,energy_type Columns that are likely to be in db_table_name
+#'                                                                   and may be filtered with `%in%`-style subsetting.
 #' @param includes_neu_col The name of a column that tells whether non-energy
 #'                         use (NEU) is included.
 #'                         Default is `Recca::psut_cols$includes_neu`.
