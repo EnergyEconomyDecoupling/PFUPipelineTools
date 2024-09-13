@@ -1,0 +1,72 @@
+---
+title: "PFUPipelineTools"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{PFUPipelineTools}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(PFUPipelineTools)
+```
+
+## Introduction
+
+`PFUPipelineTools` provides a suite of functions that assist
+running the computational pipeline to make the CL-PFU database.
+This vignette provides use cases and example code to access the database.
+
+
+## Create the connection
+
+The first step is to create a connection to the database.
+The following code provides an example.
+
+```{r}
+conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
+                       dbname = "MexerDB",
+                       host = "eviz.cs.calvin.edu",
+                       port = 6432,
+                       user = "dbcreator")
+on.exit(DBI::dbDisconnect(conn))
+```
+
+Next, get the schema and parent tables from the database.
+
+```{r}
+schema <- schema_from_conn(conn = conn)
+fk_parent_tables <- get_all_fk_tables(conn = conn, schema = schema)
+```
+
+
+## Raw data download
+
+This method works for any table in the database.
+
+```{r}
+dplyr::tbl(src = conn, "AMWPFUDataRaw") |> 
+  decode_fks(db_table_name = "AMWPFUDataRaw", 
+             schema = schema,
+             fk_parent_tables = fk_parent_tables,
+             collect = FALSE) |> 
+  dplyr::filter(Country == "CAN", 
+                Stage == "Final") |> 
+  dplyr::collect()
+```
+
+
+## Specialized functions
+
+Other functions internalize the filtering process, 
+but they work only on tables with a specific structure.
+The next example shows using the `pl_filter_collect()` function.
+
+<<<Work in progress. Add an example here.>>>
