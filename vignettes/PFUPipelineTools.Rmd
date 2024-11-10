@@ -30,7 +30,7 @@ This vignette provides use cases and example code to access the database.
 The first step is to create a connection to the database.
 The following code provides an example.
 
-```{r}
+```{r connection}
 conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
                        dbname = "MexerDB",
                        host = "eviz.cs.calvin.edu",
@@ -41,7 +41,7 @@ on.exit(DBI::dbDisconnect(conn))
 
 Next, get the schema and parent tables from the database.
 
-```{r}
+```{r schema}
 schema <- schema_from_conn(conn = conn)
 fk_parent_tables <- get_all_fk_tables(conn = conn, schema = schema)
 ```
@@ -51,7 +51,7 @@ fk_parent_tables <- get_all_fk_tables(conn = conn, schema = schema)
 
 This method works for any table in the database.
 
-```{r}
+```{r AMWPFUDataRaw}
 dplyr::tbl(src = conn, "AMWPFUDataRaw") |> 
   decode_fks(db_table_name = "AMWPFUDataRaw", 
              schema = schema,
