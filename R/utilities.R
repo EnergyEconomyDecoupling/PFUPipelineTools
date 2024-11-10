@@ -636,7 +636,7 @@ decode_matsindf <- function(.encoded,
                                     matrix_class = matrix_class,
                                     row_index_colname = row_index_colname,
                                     col_index_colname = col_index_colname,
-                                    val_colname = value_colname)
+                                    value_colname = value_colname)
     )
   if (wide_by_matrices) {
     out <- out |>
