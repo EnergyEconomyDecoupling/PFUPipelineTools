@@ -6,9 +6,8 @@
 \usage{
 pl_filter_collect(
   db_table_name,
-  datasets = c(PFUPipelineTools::dataset_info$iea, PFUPipelineTools::dataset_info$mw,
-    PFUPipelineTools::dataset_info$both),
-  countries = as.character(PFUPipelineTools::canonical_countries),
+  datasets = PFUPipelineTools::dataset_info$clpfu_iea,
+  countries = PFUPipelineTools::canonical_countries,
   years = 1960:2020,
   methods = "PCM",
   last_stages = c(IEATools::last_stages$final, IEATools::last_stages$useful),

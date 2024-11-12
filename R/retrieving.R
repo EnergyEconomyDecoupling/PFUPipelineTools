@@ -240,10 +240,8 @@ pl_collect_from_hash <- function(hashed_table,
 #'
 #' @export
 pl_filter_collect <- function(db_table_name,
-                              datasets = c(PFUPipelineTools::dataset_info$iea,
-                                           PFUPipelineTools::dataset_info$mw,
-                                           PFUPipelineTools::dataset_info$both),
-                              countries = as.character(PFUPipelineTools::canonical_countries),
+                              datasets = PFUPipelineTools::dataset_info$clpfu_iea,
+                              countries = PFUPipelineTools::canonical_countries,
                               years = 1960:2020,
                               methods = "PCM",
                               last_stages = c(IEATools::last_stages$final,
@@ -277,19 +275,6 @@ pl_filter_collect <- function(db_table_name,
                               dataset_colname = PFUPipelineTools::dataset_info$dataset_colname,
                               includes_neu_col = Recca::psut_cols$includes_neu) {
 
-  # Protect the match.arg statements, because NULL has special meaning.
-  if (!is.null(datasets)) {
-    datasets <- match.arg(datasets)
-  }
-  if (!is.null(methods)) {
-    methods <- match.arg(methods)
-  }
-  if (!is.null(last_stages)) {
-    last_stages <- match.arg(last_stages)
-  }
-  if (!is.null(energy_types)) {
-    energy_types <- match.arg(energy_types)
-  }
   matrix_class <- match.arg(matrix_class)
 
   out <- dplyr::tbl(src = conn, db_table_name) |>

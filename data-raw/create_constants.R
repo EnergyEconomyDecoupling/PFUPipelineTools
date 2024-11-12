@@ -345,9 +345,17 @@ usethis::use_data(phi_sources, overwrite = TRUE)
 dataset_info <- list(dataset_colname = "Dataset",
                      valid_from_version_colname = "ValidFromVersion",
                      valid_to_version_colname = "ValidToVersion",
-                     iea = "CL-PFU IEA",
-                     mw = "CL-PFU MW",
-                     both = "CL-PFU IEA+MW")
+                     clpfu_iea = "CL-PFU IEA",
+                     clpfu_mw = "CL-PFU MW",
+                     clpfu_iea_mw = "CL-PFU IEA+MW",
+                     clpfu = "CL-PFU",
+                     ieaeweb = "IEA EWEB",
+                     faostat = "FAOSTAT",
+                     ilostat = "ILOSTAT",
+                     wlrpfu = "WLR-PFU",
+                     wlrpfu_elect = "WLR-PFU Electricity",
+                     wlrpfu_trans = "WLR-PFU Transport",
+                     wlrpfu_mw = "WLR-PFU Muscle work")
 usethis::use_data(dataset_info, overwrite = TRUE)
 
 

@@ -5,7 +5,7 @@
 \alias{dataset_info}
 \title{Column name for datasets}
 \format{
-A string list with 6 entries.
+A string list with 14 entries.
 \describe{
 \item{dataset_colname}{The string name of the dataset column, "Dataset".}
 \item{valid_from_version_colname}{The string name of the column that gives the initial version for which this datapoint is valid, "ValidFromVersion".}
