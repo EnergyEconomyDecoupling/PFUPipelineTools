@@ -287,32 +287,40 @@ pl_filter_collect <- function(db_table_name,
 
   cnames <- colnames(out)
   if (!is.null(datasets) & dataset_colname %in% cnames) {
+    # %in% seemingly works only on vectors, not lists
+    dsets <- unlist(datasets)
     out <- out |>
-      dplyr::filter(.data[[dataset_colname]] %in% datasets)
+      dplyr::filter(.data[[dataset_colname]] %in% dsets)
   }
   if (!is.null(countries) & country %in% cnames) {
+    couns <- unlist(countries)
     out <- out |>
-      dplyr::filter(.data[[country]] %in% countries)
+      dplyr::filter(.data[[country]] %in% couns)
   }
   if (!is.null(years) & year %in% cnames) {
+    yrs <- unlist(years)
     out <- out |>
-      dplyr::filter(.data[[year]] %in% years)
+      dplyr::filter(.data[[year]] %in% yrs)
   }
   if (!is.null(methods) & method %in% cnames) {
+    meths <- unlist(methods)
     out <- out |>
-      dplyr::filter(.data[[method]] %in% methods)
+      dplyr::filter(.data[[method]] %in% meths)
   }
   if (!is.null(last_stages) & last_stage %in% cnames) {
+    lstages <- unlist(last_stages)
     out <- out |>
-      dplyr::filter(.data[[last_stage]] %in% last_stages)
+      dplyr::filter(.data[[last_stage]] %in% lstages)
   }
   if (!is.null(energy_types) & energy_type %in% cnames) {
+    etypes <- unlist(energy_types)
     out <- out |>
-      dplyr::filter(.data[[energy_type]] %in% energy_types)
+      dplyr::filter(.data[[energy_type]] %in% etypes)
   }
   if (!is.null(includes_neu) & includes_neu_col %in% cnames) {
+    ineu <- unlist(includes_neu)
     out <- out |>
-      dplyr::filter(.data[[includes_neu_col]] %in% includes_neu)
+      dplyr::filter(.data[[includes_neu_col]] %in% ineu)
   }
 
   if (collect) {
