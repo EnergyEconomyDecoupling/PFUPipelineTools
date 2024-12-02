@@ -288,6 +288,8 @@ pl_filter_collect <- function(db_table_name,
   cnames <- colnames(out)
   if (!is.null(datasets) & dataset_colname %in% cnames) {
     # %in% seemingly works only on vectors, not lists
+    # And the vectors need to be previously defined.
+    # They can't appear inline as unlist(X)
     dsets <- unlist(datasets)
     out <- out |>
       dplyr::filter(.data[[dataset_colname]] %in% dsets)
