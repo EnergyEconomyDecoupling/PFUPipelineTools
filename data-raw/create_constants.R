@@ -211,4 +211,239 @@ canonical_countries <- dplyr::setdiff(all_countries,
 usethis::use_data(canonical_countries, overwrite = TRUE)
 
 
+#
+# Metadata about table keys
+#
 
+key_col_info <- list(
+  pk_suffix = "ID"
+)
+
+usethis::use_data(key_col_info, overwrite = TRUE)
+
+
+#
+# schema_table_colnames
+#
+
+schema_table_colnames <- list(
+  table = "Table",
+  colname = "Colname",
+  is_pk = "IsPK",
+  coldatatype = "ColDataType",
+  fk_table = "FKTable",
+  fk_colname = "FKColname"
+)
+
+usethis::use_data(schema_table_colnames, overwrite = TRUE)
+
+
+#
+# Column names in primary key data frames from the `dm` package
+#
+
+dm_pk_colnames <- list(
+  table = "table",
+  pk_col = "pk_col",
+  autoincrement = "autoincrement"
+)
+
+usethis::use_data(dm_pk_colnames, overwrite = TRUE)
+
+
+#
+# Column names in foreign key data frames from the `dm` package
+#
+
+dm_fk_colnames <- list(
+  child_table = "child_table",
+  child_fk_cols = "child_fk_cols",
+  parent_table = "parent_table",
+  parent_key_cols = "parent_key_cols",
+  on_delete = "on_delete"
+)
+
+usethis::use_data(dm_fk_colnames, overwrite = TRUE)
+
+
+#
+# Hashed table colnames
+#
+
+hashed_table_colnames <- list(
+  db_table_name = "DBTableName",
+  nested_colname = "NestedData",
+  nested_hash_colname = "NestedDataHash",
+  tar_group_colname = "tar_group"
+)
+
+usethis::use_data(hashed_table_colnames, overwrite = TRUE)
+
+
+#
+# Beatles tables
+#
+
+beatles_file_path <- file.path("data-raw", "BeatlesSchema.xlsx")
+beatles_schema_table <- load_schema_table(schema_path = beatles_file_path,
+                                          schema_sheet = "Schema")
+
+usethis::use_data(beatles_schema_table, overwrite = TRUE)
+
+beatles_fk_tables <- load_fk_tables(simple_tables_path = beatles_file_path,
+                                        readme_sheet = "README",
+                                        schema_sheet = "Schema")
+
+usethis::use_data(beatles_fk_tables, overwrite = TRUE)
+
+
+#
+# Tab name for machine efficiencies
+#
+
+machine_constants <- list(efficiency_tab_name = "FIN_ETA")
+usethis::use_data(machine_constants, overwrite = TRUE)
+
+
+#
+# Names and constants associated with exemplar tables.
+#
+
+exemplar_names <- list(exemplar_tab_name = "exemplar_table",
+                       prev_names = "PrevNames",
+                       exemplars = "Exemplars",
+                       exemplar_country = "ExemplarCountry",
+                       exemplar_countries = "ExemplarCountries",
+                       exemplar_tables = "ExemplarTables",
+                       iea_data = "IEAData",
+                       alloc_data = "AllocData",
+                       incomplete_alloc_table = "IncompleteAllocTable",
+                       complete_alloc_table = "CompleteAllocTable",
+                       incomplete_eta_table = "IncompleteEtaTable",
+                       complete_eta_table = "CompleteEtaTable",
+                       region_code = "RegionCode",
+                       country_name = "CountryName",
+                       agg_code_col = "AggCode",
+                       world = "WRLD")
+usethis::use_data(exemplar_names, overwrite = TRUE)
+
+
+#
+# phi.sources
+#
+
+phi_sources <- list(eta_fu_tables = "etafuTables",
+                    temperature_data = "TemperatureData",
+                    phi_constants = "phiConstants")
+usethis::use_data(phi_sources, overwrite = TRUE)
+
+
+#
+# Dataset colname
+#
+
+dataset_info <- list(dataset_colname = "Dataset",
+                     valid_from_version_colname = "ValidFromVersion",
+                     valid_to_version_colname = "ValidToVersion",
+                     clpfu_iea = "CL-PFU IEA",
+                     clpfu_mw = "CL-PFU MW",
+                     clpfu_iea_mw = "CL-PFU IEA+MW",
+                     clpfu = "CL-PFU",
+                     ieaeweb = "IEA EWEB",
+                     faostat = "FAOSTAT",
+                     ilostat = "ILOSTAT",
+                     wlrpfu = "WLR-PFU",
+                     wlrpfu_elect = "WLR-PFU Electricity",
+                     wlrpfu_trans = "WLR-PFU Transport",
+                     wlrpfu_mw = "WLR-PFU Muscle work")
+usethis::use_data(dataset_info, overwrite = TRUE)
+
+
+#
+# Additional hash group columns
+#
+
+usual_hash_group_cols <- c(dataset = dataset_info$dataset_colname,
+                           table_name = hashed_table_colnames$db_table_name,
+                           country = IEATools::iea_cols$country,
+                           method = IEATools::iea_cols$method,
+                           year = IEATools::iea_cols$year,
+                           last_stage = IEATools::iea_cols$last_stage,
+                           energy_type = IEATools::iea_cols$energy_type,
+                           includes_neu = Recca::psut_cols$includes_neu,
+                           tar_group = "tar_group")
+usethis::use_data(usual_hash_group_cols, overwrite = TRUE)
+
+
+#
+# Aggregation file information
+#
+
+aggregation_file_tab_names <- list(region_aggregation = "region_aggregation",
+                                   continent_aggregation = "continent_aggregation",
+                                   world_aggregation = "world_aggregation",
+                                   ef_product_aggregation = "ef_product_aggregation",
+                                   eu_product_aggregation = "eu_product_aggregation",
+                                   ef_sector_aggregation = "ef_sector_aggregation")
+usethis::use_data(aggregation_file_tab_names, overwrite = TRUE)
+
+
+aggregation_file_cols <- list(many_colname = "Many",
+                              few_colname = "Few")
+usethis::use_data(aggregation_file_cols, overwrite = TRUE)
+
+
+#
+# Aggregation data frame columns
+#
+
+aggregation_df_cols <- list(product_aggregation = "ProductAggregation",
+                            industry_aggregation = "IndustryAggregation",
+                            specified = "Specified",
+                            despecified = "Despecified",
+                            ungrouped = "Ungrouped",
+                            grouped = "Grouped",
+                            chopped_mat = "ChoppedMat",
+                            chopped_var = "ChoppedVar",
+                            product_sector = Recca::aggregate_cols$product_sector)
+usethis::use_data(aggregation_df_cols, overwrite = TRUE)
+
+
+#
+# Metadata information for aggregation groups
+#
+
+agg_metadata <- list(total_value = "Total",
+                     all_value = "All",
+                     product_value = "Product",
+                     sector_value = "Sector",
+                     flow_value = "Flow",
+                     none = "None")
+usethis::use_data(agg_metadata, overwrite = TRUE)
+
+
+#
+# Unwrapped matrix column names.
+# These were formerly i, j, and x.
+#
+
+mat_colnames <- list(i = "i",
+                     row = "i",
+                     j = "j",
+                     col = "j",
+                     x = "value",
+                     value = "value")
+usethis::use_data(mat_colnames, overwrite = TRUE)
+
+
+#
+# Give names for matrix meta information columns
+#
+
+mat_meta_cols <- list(matname = "matname",
+                      matval  = "matval",
+                      rowname = "rowname",
+                      colname = "colname",
+                      rowtype = "rowtype",
+                      coltype = "coltype")
+usethis::use_data(mat_meta_cols, overwrite = TRUE)

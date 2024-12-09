@@ -59,3 +59,11 @@ test_that("read_pin_version() fails when a non-existent pin is supplied", {
   expect_error(read_pin_version(pin_name = "bogus_pin", database_version = 1.2),
                "CL-PFU database product bogus_pin does not exist")
 })
+
+
+test_that("read_pin_version() works with v1.3", {
+  agg_eta_pfu <- PFUPipelineTools::read_pin_version(
+    pin_name = "agg_eta_pfu",
+    database_version =  "v1.3")
+  expect_true(!is.null(agg_eta_pfu))
+})
