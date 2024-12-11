@@ -4,13 +4,7 @@
 \alias{schema_from_conn}
 \title{Get the database schema (a \code{dm} object) from a connection}
 \usage{
-schema_from_conn(
-  conn = NULL,
-  table_names = NULL,
-  learn_keys = TRUE,
-  .names = NULL,
-  table_type = "BASE TABLE"
-)
+schema_from_conn(conn = NULL, table_names = NULL, learn_keys = TRUE)
 }
 \arguments{
 \item{conn}{A \code{DBI::DBIConnection}.}
@@ -21,13 +15,6 @@ schema_from_conn(
 \item{learn_keys}{A boolean that tells whether to include the definition
 of primary and final keys in the return value.
 Default is \code{TRUE}.}
-
-\item{.names}{See documentation for \code{dm_from_con()} in the \code{dm} package.
-Default is \code{NULL}.}
-
-\item{table_type}{Gives the type of table to return.
-Default is "BASE TABLE", which means to return persistent tables,
-the normal table type.}
 }
 \value{
 A \code{dm} object.
