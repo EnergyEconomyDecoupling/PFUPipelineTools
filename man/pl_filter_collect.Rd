@@ -6,9 +6,9 @@
 \usage{
 pl_filter_collect(
   db_table_name,
-  datasets = PFUPipelineTools::dataset_info$clpfu_iea,
-  countries = PFUPipelineTools::canonical_countries,
-  years = 1960:2020,
+  datasets = NULL,
+  countries = NULL,
+  years = NULL,
   methods = "PCM",
   last_stages = c(IEATools::last_stages$final, IEATools::last_stages$useful),
   energy_types = c(IEATools::energy_types$e, IEATools::energy_types$x),
@@ -40,13 +40,17 @@ pl_filter_collect(
 \item{db_table_name}{The string name of the database table to be filtered.}
 
 \item{datasets}{A vector of dataset strings to be retained in the output.
-Default is \code{c(PFUPipelineTools::dataset_info$iea, PFUPipelineTools::dataset_info$mw, PFUPipelineTools::dataset_info$both)}.}
+\code{NULL} (the default) returns all datasets.
+Another interesting option is
+\code{PFUPipelineTools::dataset_info$clpfu_iea}.}
 
 \item{countries}{A vector of country strings to be retained in the output.
-Default is \code{as.character(PFUPipelineTools::canonical_countries)}.}
+\code{NULL} (the default) returns all countries.
+Another useful option is \code{as.character(PFUPipelineTools::canonical_countries)}.}
 
 \item{years}{A vector of integers to be retained in the output.
-Default is \code{1960:2020}.}
+\code{NULL} (the default) returns all years.
+Another option is \code{1960:2020}.}
 
 \item{methods}{A vector of method strings to be retained in the output.
 At present, only "PCM" (physical content method) is implemented.
