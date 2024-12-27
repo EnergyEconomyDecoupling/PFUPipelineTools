@@ -96,21 +96,16 @@ get_all_fk_tables <- function(conn,
 #' @param learn_keys A boolean that tells whether to include the definition
 #'                   of primary and final keys in the return value.
 #'                   Default is `TRUE`.
-#' @param .names See documentation for `dm_from_con()` in the `dm` package.
-#'               Default is `NULL`.
-#' @param table_type Gives the type of table to return.
-#'                   Default is "BASE TABLE", which means to return persistent tables,
-#'                   the normal table type.
 #'
 #' @return A `dm` object.
 #'
 #' @export
 schema_from_conn <- function(conn = NULL,
                              table_names = NULL,
-                             learn_keys = TRUE,
-                             .names = NULL,
-                             table_type = "BASE TABLE") {
-  dm::dm_from_con(conn, table_names = table_names, learn_keys = TRUE)
+                             learn_keys = TRUE) {
+  dm::dm_from_con(conn,
+                  table_names = table_names,
+                  learn_keys = TRUE)
 }
 
 
