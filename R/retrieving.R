@@ -182,13 +182,15 @@ pl_collect_from_hash <- function(hashed_table,
 #'
 #' @param db_table_name The string name of the database table to be filtered.
 #' @param datasets A vector of dataset strings to be retained in the output.
-#'                 Default is `c(PFUPipelineTools::dataset_info$iea,
-#'                 PFUPipelineTools::dataset_info$mw,
-#'                 PFUPipelineTools::dataset_info$both)`.
+#'                 `NULL` (the default) returns all datasets.
+#'                 Another interesting option is
+#'                 `PFUPipelineTools::dataset_info$clpfu_iea`.
 #' @param countries A vector of country strings to be retained in the output.
-#'                  Default is `as.character(PFUPipelineTools::canonical_countries)`.
+#'                  `NULL` (the default) returns all countries.
+#'                  Another useful option is `as.character(PFUPipelineTools::canonical_countries)`.
 #' @param years A vector of integers to be retained in the output.
-#'              Default is `1960:2020`.
+#'              `NULL` (the default) returns all years.
+#'              Another option is `1960:2020`.
 #' @param methods A vector of method strings to be retained in the output.
 #'                At present, only "PCM" (physical content method) is implemented.
 #'                Default is "PCM" (physical content method).
@@ -240,9 +242,9 @@ pl_collect_from_hash <- function(hashed_table,
 #'
 #' @export
 pl_filter_collect <- function(db_table_name,
-                              datasets = PFUPipelineTools::dataset_info$clpfu_iea,
-                              countries = PFUPipelineTools::canonical_countries,
-                              years = 1960:2020,
+                              datasets = NULL,
+                              countries = NULL,
+                              years = NULL,
                               methods = "PCM",
                               last_stages = c(IEATools::last_stages$final,
                                               IEATools::last_stages$useful),
