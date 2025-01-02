@@ -9,9 +9,10 @@ pl_filter_collect(
   datasets = NULL,
   countries = NULL,
   years = NULL,
-  methods = "PCM",
+  methods = NULL,
   last_stages = c(IEATools::last_stages$final, IEATools::last_stages$useful),
   energy_types = c(IEATools::energy_types$e, IEATools::energy_types$x),
+  gross_nets = NULL,
   includes_neu = TRUE,
   collect = FALSE,
   conn,
@@ -32,6 +33,7 @@ pl_filter_collect(
   method = IEATools::iea_cols$method,
   last_stage = IEATools::iea_cols$last_stage,
   energy_type = IEATools::iea_cols$energy_type,
+  gross_net = Recca::efficiency_cols$gross_net,
   dataset_colname = PFUPipelineTools::dataset_info$dataset_colname,
   includes_neu_col = Recca::psut_cols$includes_neu
 )
@@ -53,8 +55,8 @@ Another useful option is \code{as.character(PFUPipelineTools::canonical_countrie
 Another option is \code{1960:2020}.}
 
 \item{methods}{A vector of method strings to be retained in the output.
-At present, only "PCM" (physical content method) is implemented.
-Default is "PCM" (physical content method).}
+\code{NULL} (the default) returns all methods.
+Another good option is "PCM" (physical content method).}
 
 \item{last_stages}{A vector of last stage strings to be retained in the output.
 At present, only "Final" and "Useful" are implemented.
@@ -63,6 +65,10 @@ Default is "Final". "Useful" is also a valid option.}
 \item{energy_types}{A vector of energy type strings to be retained in the output.
 At present, only "E" (energy) and "X" (exergy) are implemented.
 Default is "E" but "X" is also valid.}
+
+\item{gross_nets}{A vector of values for the \code{GrossNet} column (when it exists).
+\code{NULL} (the default) turns off filtering on this column.
+Other good values are "Gross" and "Net".}
 
 \item{includes_neu}{A vector of booleans that indicates what to retain in output.
 \code{TRUE} means non-energy use is included in the ECCs.
@@ -109,7 +115,7 @@ Default is "matval".}
 \item{rowtype_colname, coltype_colname}{The names for row and column type columns in data frames.
 Defaults are "rowtype" and "coltype", respectively.}
 
-\item{dataset_colname, country, year, method, last_stage, energy_type}{Columns that are likely to be in db_table_name
+\item{dataset_colname, country, year, method, last_stage, energy_type, gross_net}{Columns that are likely to be in db_table_name
 and may be filtered with \code{\%in\%}-style subsetting.}
 
 \item{includes_neu_col}{The name of a column that tells whether non-energy

@@ -200,6 +200,9 @@ pl_collect_from_hash <- function(hashed_table,
 #' @param energy_types A vector of energy type strings to be retained in the output.
 #'                     At present, only "E" (energy) and "X" (exergy) are implemented.
 #'                     Default is "E" but "X" is also valid.
+#' @param gross_nets A vector of values for the `GrossNet` column (when it exists).
+#'                   `NULL` (the default) turns off filtering on this column.
+#'                   Other good values are "Gross" and "Net".
 #' @param includes_neu A vector of booleans that indicates what to retain in output.
 #'                     `TRUE` means non-energy use is included in the ECCs.
 #'                     `FALSE` means non-energy use is excluded from the ECCs.
@@ -232,8 +235,8 @@ pl_collect_from_hash <- function(hashed_table,
 #'               Default is "matval".
 #' @param rowtype_colname,coltype_colname The names for row and column type columns in data frames.
 #'                                        Defaults are "rowtype" and "coltype", respectively.
-#' @param dataset_colname,country,year,method,last_stage,energy_type Columns that are likely to be in db_table_name
-#'                                                                   and may be filtered with `%in%`-style subsetting.
+#' @param dataset_colname,country,year,method,last_stage,energy_type,gross_net Columns that are likely to be in db_table_name
+#'                                                                             and may be filtered with `%in%`-style subsetting.
 #' @param includes_neu_col The name of a column that tells whether non-energy
 #'                         use (NEU) is included.
 #'                         Default is `Recca::psut_cols$includes_neu`.
@@ -250,6 +253,7 @@ pl_filter_collect <- function(db_table_name,
                                               IEATools::last_stages$useful),
                               energy_types = c(IEATools::energy_types$e,
                                                IEATools::energy_types$x),
+                              gross_nets = NULL,
                               includes_neu = TRUE,
                               collect = FALSE,
                               conn,
@@ -274,6 +278,7 @@ pl_filter_collect <- function(db_table_name,
                               method = IEATools::iea_cols$method,
                               last_stage = IEATools::iea_cols$last_stage,
                               energy_type = IEATools::iea_cols$energy_type,
+                              gross_net = Recca::efficiency_cols$gross_net,
                               dataset_colname = PFUPipelineTools::dataset_info$dataset_colname,
                               includes_neu_col = Recca::psut_cols$includes_neu) {
 
@@ -320,6 +325,11 @@ pl_filter_collect <- function(db_table_name,
     etypes <- unlist(energy_types)
     out <- out |>
       dplyr::filter(.data[[energy_type]] %in% etypes)
+  }
+  if (!is.null(gross_nets) & gross_net %in% cnames) {
+    grossnettypes <- unlist(gross_nets)
+    out <- out |>
+      dplyr::filter(.data[[gross_net]] %in% grossnettypes)
   }
   if (!is.null(includes_neu) & includes_neu_col %in% cnames) {
     ineu <- unlist(includes_neu)
