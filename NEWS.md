@@ -12,6 +12,8 @@ which always resolves to the latest release.
     - GrossNet
     - IndustryAggregation
     - ProductAggregation
+    - ChoppedMat
+    - ChoppedVar
 
 
 # PFUPipelineTools 0.1.12 (2024-12-09) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14589472.svg)](https://doi.org/10.5281/zenodo.14589472)

@@ -213,6 +213,10 @@ pl_collect_from_hash <- function(hashed_table,
 #' @param product_aggs A vector of strings identifying the product aggregations desired.
 #'                     `NULL` (the default) means all product aggregations should be returned.
 #'                     Other reasonable values are "Specified", "Despecified", and "Grouped".
+#' @param chopped_mats A vector of strings identifying the matrix chops desired.
+#'                     `NULL` (the default) means all chopped matrices should be returned.
+#' @param chopped_vars A vector of strings identifying the matrix variables desired.
+#'                     `NULL` (the default) means all chopped variables should be returned.
 #' @param collect A boolean that tells whether to download the result.
 #'                Default is `FALSE`.
 #'                See details.
@@ -241,7 +245,7 @@ pl_collect_from_hash <- function(hashed_table,
 #'               Default is "matval".
 #' @param rowtype_colname,coltype_colname The names for row and column type columns in data frames.
 #'                                        Defaults are "rowtype" and "coltype", respectively.
-#' @param dataset_colname,country_colname,year_colname,method_colname,last_stage_colname,energy_type_colname,gross_net_colname,product_agg_colname,industry_agg_colname Columns that are likely to be in db_table_name
+#' @param dataset_colname,country_colname,year_colname,method_colname,last_stage_colname,energy_type_colname,gross_net_colname,product_agg_colname,industry_agg_colname,chopped_mat_colname,chopped_var_colname Columns that are likely to be in db_table_name
 #'                                                                             and may be filtered with `%in%`-style subsetting.
 #' @param includes_neu_col The name of a column that tells whether non-energy
 #'                         use (NEU) is included.
@@ -263,6 +267,8 @@ pl_filter_collect <- function(db_table_name,
                               includes_neu = TRUE,
                               industry_aggs = NULL,
                               product_aggs = NULL,
+                              chopped_mats = NULL,
+                              chopped_vars = NULL,
                               collect = FALSE,
                               conn,
                               schema = schema_from_conn(conn = conn),
@@ -289,7 +295,9 @@ pl_filter_collect <- function(db_table_name,
                               dataset_colname = PFUPipelineTools::dataset_info$dataset_colname,
                               includes_neu_colname = Recca::psut_cols$includes_neu,
                               product_agg_colname = PFUPipelineTools::aggregation_df_cols$product_aggregation,
-                              industry_agg_colname =  PFUPipelineTools::aggregation_df_cols$industry_aggregation) {
+                              industry_agg_colname =  PFUPipelineTools::aggregation_df_cols$industry_aggregation,
+                              chopped_mat_colname = PFUPipelineTools::aggregation_df_cols$chopped_mat,
+                              chopped_var_colname = PFUPipelineTools::aggregation_df_cols$chopped_var) {
 
   matrix_class <- match.arg(matrix_class)
 
@@ -354,6 +362,16 @@ pl_filter_collect <- function(db_table_name,
     prodaggs <- unlist(product_aggs)
     out <- out |>
       dplyr::filter(.data[[product_agg_colname]] %in% prodaggs)
+  }
+  if (!is.null(chopped_mats) & chopped_mat_colname %in% cnames) {
+    chopped_mats <- unlist(chopped_mats)
+    out <- out |>
+      dplyr::filter(.data[[chopped_mat_colname]] %in% chopped_mats)
+  }
+  if (!is.null(chopped_vars) & chopped_var_colname %in% cnames) {
+    chopped_vars <- unlist(chopped_vars)
+    out <- out |>
+      dplyr::filter(.data[[chopped_var_colname]] %in% chopped_vars)
   }
 
   if (collect) {

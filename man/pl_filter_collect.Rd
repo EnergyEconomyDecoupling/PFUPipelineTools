@@ -16,6 +16,8 @@ pl_filter_collect(
   includes_neu = TRUE,
   industry_aggs = NULL,
   product_aggs = NULL,
+  chopped_mats = NULL,
+  chopped_vars = NULL,
   collect = FALSE,
   conn,
   schema = schema_from_conn(conn = conn),
@@ -39,7 +41,9 @@ pl_filter_collect(
   dataset_colname = PFUPipelineTools::dataset_info$dataset_colname,
   includes_neu_colname = Recca::psut_cols$includes_neu,
   product_agg_colname = PFUPipelineTools::aggregation_df_cols$product_aggregation,
-  industry_agg_colname = PFUPipelineTools::aggregation_df_cols$industry_aggregation
+  industry_agg_colname = PFUPipelineTools::aggregation_df_cols$industry_aggregation,
+  chopped_mat_colname = PFUPipelineTools::aggregation_df_cols$chopped_mat,
+  chopped_var_colname = PFUPipelineTools::aggregation_df_cols$chopped_var
 )
 }
 \arguments{
@@ -87,6 +91,12 @@ Other reasonable values are "Specified", "Despecified", and "Grouped".}
 \code{NULL} (the default) means all product aggregations should be returned.
 Other reasonable values are "Specified", "Despecified", and "Grouped".}
 
+\item{chopped_mats}{A vector of strings identifying the matrix chops desired.
+\code{NULL} (the default) means all chopped matrices should be returned.}
+
+\item{chopped_vars}{A vector of strings identifying the matrix variables desired.
+\code{NULL} (the default) means all chopped variables should be returned.}
+
 \item{collect}{A boolean that tells whether to download the result.
 Default is \code{FALSE}.
 See details.}
@@ -127,7 +137,7 @@ Default is "matval".}
 \item{rowtype_colname, coltype_colname}{The names for row and column type columns in data frames.
 Defaults are "rowtype" and "coltype", respectively.}
 
-\item{dataset_colname, country_colname, year_colname, method_colname, last_stage_colname, energy_type_colname, gross_net_colname, product_agg_colname, industry_agg_colname}{Columns that are likely to be in db_table_name
+\item{dataset_colname, country_colname, year_colname, method_colname, last_stage_colname, energy_type_colname, gross_net_colname, product_agg_colname, industry_agg_colname, chopped_mat_colname, chopped_var_colname}{Columns that are likely to be in db_table_name
 and may be filtered with \code{\%in\%}-style subsetting.}
 
 \item{includes_neu_col}{The name of a column that tells whether non-energy
