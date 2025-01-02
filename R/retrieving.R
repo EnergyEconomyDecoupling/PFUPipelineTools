@@ -207,6 +207,12 @@ pl_collect_from_hash <- function(hashed_table,
 #'                     `TRUE` means non-energy use is included in the ECCs.
 #'                     `FALSE` means non-energy use is excluded from the ECCs.
 #'                     Default is `TRUE`.
+#' @param industry_aggs A vector of strings identifying the industry aggregations desired.
+#'                     `NULL` (the default) means all industry aggregations should be returned.
+#'                     Other reasonable values are "Specified", "Despecified", and "Grouped".
+#' @param product_aggs A vector of strings identifying the product aggregations desired.
+#'                     `NULL` (the default) means all product aggregations should be returned.
+#'                     Other reasonable values are "Specified", "Despecified", and "Grouped".
 #' @param collect A boolean that tells whether to download the result.
 #'                Default is `FALSE`.
 #'                See details.
@@ -235,7 +241,7 @@ pl_collect_from_hash <- function(hashed_table,
 #'               Default is "matval".
 #' @param rowtype_colname,coltype_colname The names for row and column type columns in data frames.
 #'                                        Defaults are "rowtype" and "coltype", respectively.
-#' @param dataset_colname,country,year,method,last_stage,energy_type,gross_net Columns that are likely to be in db_table_name
+#' @param dataset_colname,country_colname,year_colname,method_colname,last_stage_colname,energy_type_colname,gross_net_colname,product_agg_colname,industry_agg_colname Columns that are likely to be in db_table_name
 #'                                                                             and may be filtered with `%in%`-style subsetting.
 #' @param includes_neu_col The name of a column that tells whether non-energy
 #'                         use (NEU) is included.
@@ -255,6 +261,8 @@ pl_filter_collect <- function(db_table_name,
                                                IEATools::energy_types$x),
                               gross_nets = NULL,
                               includes_neu = TRUE,
+                              industry_aggs = NULL,
+                              product_aggs = NULL,
                               collect = FALSE,
                               conn,
                               schema = schema_from_conn(conn = conn),
@@ -272,15 +280,16 @@ pl_filter_collect <- function(db_table_name,
                               matval = "matval",
                               rowtype_colname = "rowtype",
                               coltype_colname = "coltype",
-                              country = IEATools::iea_cols$country,
-
-                              year = IEATools::iea_cols$year,
-                              method = IEATools::iea_cols$method,
-                              last_stage = IEATools::iea_cols$last_stage,
-                              energy_type = IEATools::iea_cols$energy_type,
-                              gross_net = Recca::efficiency_cols$gross_net,
+                              country_colname = IEATools::iea_cols$country,
+                              year_colname = IEATools::iea_cols$year,
+                              method_colname = IEATools::iea_cols$method,
+                              last_stage_colname = IEATools::iea_cols$last_stage,
+                              energy_type_colname = IEATools::iea_cols$energy_type,
+                              gross_net_colname = Recca::efficiency_cols$gross_net,
                               dataset_colname = PFUPipelineTools::dataset_info$dataset_colname,
-                              includes_neu_col = Recca::psut_cols$includes_neu) {
+                              includes_neu_colname = Recca::psut_cols$includes_neu,
+                              product_agg_colname = PFUPipelineTools::aggregation_df_cols$product_aggregation,
+                              industry_agg_colname =  PFUPipelineTools::aggregation_df_cols$industry_aggregation) {
 
   matrix_class <- match.arg(matrix_class)
 
@@ -301,40 +310,50 @@ pl_filter_collect <- function(db_table_name,
     out <- out |>
       dplyr::filter(.data[[dataset_colname]] %in% dsets)
   }
-  if (!is.null(countries) & country %in% cnames) {
+  if (!is.null(countries) & country_colname %in% cnames) {
     couns <- unlist(countries)
     out <- out |>
-      dplyr::filter(.data[[country]] %in% couns)
+      dplyr::filter(.data[[country_colname]] %in% couns)
   }
-  if (!is.null(years) & year %in% cnames) {
+  if (!is.null(years) & year_colname %in% cnames) {
     yrs <- unlist(years)
     out <- out |>
-      dplyr::filter(.data[[year]] %in% yrs)
+      dplyr::filter(.data[[year_colname]] %in% yrs)
   }
-  if (!is.null(methods) & method %in% cnames) {
+  if (!is.null(methods) & method_colname %in% cnames) {
     meths <- unlist(methods)
     out <- out |>
-      dplyr::filter(.data[[method]] %in% meths)
+      dplyr::filter(.data[[method_colname]] %in% meths)
   }
-  if (!is.null(last_stages) & last_stage %in% cnames) {
+  if (!is.null(last_stages) & last_stage_colname %in% cnames) {
     lstages <- unlist(last_stages)
     out <- out |>
-      dplyr::filter(.data[[last_stage]] %in% lstages)
+      dplyr::filter(.data[[last_stage_colname]] %in% lstages)
   }
-  if (!is.null(energy_types) & energy_type %in% cnames) {
+  if (!is.null(energy_types) & energy_type_colname %in% cnames) {
     etypes <- unlist(energy_types)
     out <- out |>
-      dplyr::filter(.data[[energy_type]] %in% etypes)
+      dplyr::filter(.data[[energy_type_colname]] %in% etypes)
   }
-  if (!is.null(gross_nets) & gross_net %in% cnames) {
+  if (!is.null(gross_nets) & gross_net_colname %in% cnames) {
     grossnettypes <- unlist(gross_nets)
     out <- out |>
-      dplyr::filter(.data[[gross_net]] %in% grossnettypes)
+      dplyr::filter(.data[[gross_net_colname]] %in% grossnettypes)
   }
-  if (!is.null(includes_neu) & includes_neu_col %in% cnames) {
+  if (!is.null(includes_neu) & includes_neu_colname %in% cnames) {
     ineu <- unlist(includes_neu)
     out <- out |>
-      dplyr::filter(.data[[includes_neu_col]] %in% ineu)
+      dplyr::filter(.data[[includes_neu_colname]] %in% ineu)
+  }
+  if (!is.null(industry_aggs) & industry_agg_colname %in% cnames) {
+    indaggs <- unlist(industry_aggs)
+    out <- out |>
+      dplyr::filter(.data[[industry_agg_colname]] %in% indaggs)
+  }
+  if (!is.null(product_aggs) & product_agg_colname %in% cnames) {
+    prodaggs <- unlist(product_aggs)
+    out <- out |>
+      dplyr::filter(.data[[product_agg_colname]] %in% prodaggs)
   }
 
   if (collect) {

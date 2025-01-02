@@ -14,6 +14,8 @@ pl_filter_collect(
   energy_types = c(IEATools::energy_types$e, IEATools::energy_types$x),
   gross_nets = NULL,
   includes_neu = TRUE,
+  industry_aggs = NULL,
+  product_aggs = NULL,
   collect = FALSE,
   conn,
   schema = schema_from_conn(conn = conn),
@@ -28,14 +30,16 @@ pl_filter_collect(
   matval = "matval",
   rowtype_colname = "rowtype",
   coltype_colname = "coltype",
-  country = IEATools::iea_cols$country,
-  year = IEATools::iea_cols$year,
-  method = IEATools::iea_cols$method,
-  last_stage = IEATools::iea_cols$last_stage,
-  energy_type = IEATools::iea_cols$energy_type,
-  gross_net = Recca::efficiency_cols$gross_net,
+  country_colname = IEATools::iea_cols$country,
+  year_colname = IEATools::iea_cols$year,
+  method_colname = IEATools::iea_cols$method,
+  last_stage_colname = IEATools::iea_cols$last_stage,
+  energy_type_colname = IEATools::iea_cols$energy_type,
+  gross_net_colname = Recca::efficiency_cols$gross_net,
   dataset_colname = PFUPipelineTools::dataset_info$dataset_colname,
-  includes_neu_col = Recca::psut_cols$includes_neu
+  includes_neu_colname = Recca::psut_cols$includes_neu,
+  product_agg_colname = PFUPipelineTools::aggregation_df_cols$product_aggregation,
+  industry_agg_colname = PFUPipelineTools::aggregation_df_cols$industry_aggregation
 )
 }
 \arguments{
@@ -74,6 +78,14 @@ Other good values are "Gross" and "Net".}
 \code{TRUE} means non-energy use is included in the ECCs.
 \code{FALSE} means non-energy use is excluded from the ECCs.
 Default is \code{TRUE}.}
+
+\item{industry_aggs}{A vector of strings identifying the industry aggregations desired.
+\code{NULL} (the default) means all industry aggregations should be returned.
+Other reasonable values are "Specified", "Despecified", and "Grouped".}
+
+\item{product_aggs}{A vector of strings identifying the product aggregations desired.
+\code{NULL} (the default) means all product aggregations should be returned.
+Other reasonable values are "Specified", "Despecified", and "Grouped".}
 
 \item{collect}{A boolean that tells whether to download the result.
 Default is \code{FALSE}.
@@ -115,7 +127,7 @@ Default is "matval".}
 \item{rowtype_colname, coltype_colname}{The names for row and column type columns in data frames.
 Defaults are "rowtype" and "coltype", respectively.}
 
-\item{dataset_colname, country, year, method, last_stage, energy_type, gross_net}{Columns that are likely to be in db_table_name
+\item{dataset_colname, country_colname, year_colname, method_colname, last_stage_colname, energy_type_colname, gross_net_colname, product_agg_colname, industry_agg_colname}{Columns that are likely to be in db_table_name
 and may be filtered with \code{\%in\%}-style subsetting.}
 
 \item{includes_neu_col}{The name of a column that tells whether non-energy
