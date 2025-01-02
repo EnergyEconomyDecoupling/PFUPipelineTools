@@ -8,9 +8,11 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
-# PFUPipelineTools 0.1.10 (2024-12-09)
+* Improve defaults for `pl_filter_collect()`.
 
-* Improve defaults on `pl_filter_collect()`.
+
+# PFUPipelineTools 0.1.11 (2024-12-09)
+
 * Updates to many accessing functions for the database.
 * Added several new tests for new accessing functions.
     - Now up to 143 tests, all passing
