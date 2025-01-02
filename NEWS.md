@@ -7,7 +7,7 @@ output: html_document
 Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zenodo.8226419), 
 which always resolves to the latest release.
 
-# PFUPipelineTools 0.1.12 (2024-12-09)
+# PFUPipelineTools 0.1.12 (2024-12-09) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14589472.svg)](https://doi.org/10.5281/zenodo.14589472)
 
 * Improve defaults for `pl_filter_collect()`.
 * No new tests. 
