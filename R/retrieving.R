@@ -192,8 +192,8 @@ pl_collect_from_hash <- function(hashed_table,
 #'              `NULL` (the default) returns all years.
 #'              Another option is `1960:2020`.
 #' @param methods A vector of method strings to be retained in the output.
-#'                At present, only "PCM" (physical content method) is implemented.
-#'                Default is "PCM" (physical content method).
+#'                `NULL` (the default) returns all methods.
+#'                Another good option is "PCM" (physical content method).
 #' @param last_stages A vector of last stage strings to be retained in the output.
 #'                    At present, only "Final" and "Useful" are implemented.
 #'                    Default is "Final". "Useful" is also a valid option.
@@ -245,7 +245,7 @@ pl_filter_collect <- function(db_table_name,
                               datasets = NULL,
                               countries = NULL,
                               years = NULL,
-                              methods = "PCM",
+                              methods = NULL,
                               last_stages = c(IEATools::last_stages$final,
                                               IEATools::last_stages$useful),
                               energy_types = c(IEATools::energy_types$e,
