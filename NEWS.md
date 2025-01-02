@@ -10,6 +10,7 @@ which always resolves to the latest release.
 
 # PFUPipelineTools 0.1.10 (2024-12-09)
 
+* Improve defaults on `pl_filter_collect()`.
 * Updates to many accessing functions for the database.
 * Added several new tests for new accessing functions.
     - Now up to 143 tests, all passing
