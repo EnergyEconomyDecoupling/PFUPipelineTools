@@ -4,7 +4,7 @@ test_that("pl_collect_from_hash() works as expected", {
   skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
                          dbname = "unit_testing",
-                         host = "eviz.cs.calvin.edu",
+                         host = "mexer.site",
                          port = 5432,
                          user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
@@ -155,7 +155,7 @@ test_that("pl_filter_collect() works as expected", {
   skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
                          dbname = "unit_testing",
-                         host = "eviz.cs.calvin.edu",
+                         host = "mexer.site",
                          port = 5432,
                          user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))

@@ -10,7 +10,7 @@ library(PFUPipelineTools)
 ## ----connection---------------------------------------------------------------
 conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
                        dbname = "MexerDB",
-                       host = "eviz.cs.calvin.edu",
+                       host = "mexer.site",
                        port = 6432,
                        user = "dbcreator")
 on.exit(DBI::dbDisconnect(conn))

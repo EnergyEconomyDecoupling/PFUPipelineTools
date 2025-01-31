@@ -69,7 +69,7 @@ test_that("pl_upload_schema_and_simple_tables() works as expected", {
   skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
                          dbname = "unit_testing",
-                         host = "eviz.cs.calvin.edu",
+                         host = "mexer.site",
                          port = 5432,
                          user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
@@ -169,7 +169,7 @@ test_that("encode_fks() works with re-routed foreign keys", {
   skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
                          dbname = "unit_testing",
-                         host = "eviz.cs.calvin.edu",
+                         host = "mexer.site",
                          port = 5432,
                          user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
@@ -231,7 +231,7 @@ test_that("decode_fks() works as expected", {
   skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
                          dbname = "unit_testing",
-                         host = "eviz.cs.calvin.edu",
+                         host = "mexer.site",
                          port = 5432,
                          user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
@@ -288,7 +288,7 @@ test_that("decode_fks() and encode_fks() work with tbls", {
   skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
                          dbname = "unit_testing",
-                         host = "eviz.cs.calvin.edu",
+                         host = "mexer.site",
                          port = 5432,
                          user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
@@ -338,7 +338,7 @@ test_that("pl_collect_from_hash() decodes correctly", {
   skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
                          dbname = "unit_testing",
-                         host = "eviz.cs.calvin.edu",
+                         host = "mexer.site",
                          port = 5432,
                          user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
@@ -379,7 +379,7 @@ test_that("pl_upsert() works for zero matrices", {
   skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
                          dbname = "unit_testing",
-                         host = "eviz.cs.calvin.edu",
+                         host = "mexer.site",
                          port = 5432,
                          user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
