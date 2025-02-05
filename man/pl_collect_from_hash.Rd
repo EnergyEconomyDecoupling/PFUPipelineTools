@@ -10,8 +10,6 @@ pl_collect_from_hash(
   retain_table_name_col = FALSE,
   set_tar_group = TRUE,
   decode_matsindf = TRUE,
-  index_map,
-  rctypes,
   matrix_class = c("Matrix", "matrix"),
   tar_group_colname = PFUPipelineTools::hashed_table_colnames$tar_group_colname,
   matname_colname = "matname",
@@ -19,6 +17,11 @@ pl_collect_from_hash(
   conn,
   schema = schema_from_conn(conn = conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+  index_map_name = "Index",
+  index_map = fk_parent_tables[[index_map_name]],
+  rctype_table_name = "matnameRCType",
+  rctypes = decode_fks(db_table_name = rctype_table_name, collect = TRUE, conn = conn,
+    schema = schema, fk_parent_tables = fk_parent_tables),
   .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
   .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_colname
 )
@@ -46,14 +49,6 @@ a matsindf data frame.
 Calls \code{\link[=decode_matsindf]{decode_matsindf()}} internally.
 Default is \code{TRUE}.}
 
-\item{index_map}{A list of data frames to assist with decoding matrices.
-Passed to \code{\link[=decode_matsindf]{decode_matsindf()}} when \code{decode_matsindf} is \code{TRUE}
-but otherwise not needed.}
-
-\item{rctypes}{A data frame of row and column types.
-Passed to \code{\link[=decode_matsindf]{decode_matsindf()}} when \code{decode_matsindf} is \code{TRUE}
-but otherwise not needed.}
-
 \item{matrix_class}{One of "Matrix" (the default for sparse matrices)
 or ("matrix") for the native matrix form in \code{R}.
 Default is "Matrix".}
@@ -79,6 +74,14 @@ Default calls \code{get_all_fk_tables()}.
 Needed only when \code{decode_fks = TRUE} (the default).
 If foreign keys are not being decoded,
 setting \code{NULL} may improve speed.}
+
+\item{index_map}{A list of data frames to assist with decoding matrices.
+Passed to \code{\link[=decode_matsindf]{decode_matsindf()}} when \code{decode_matsindf} is \code{TRUE}
+but otherwise not needed.}
+
+\item{rctypes}{A data frame of row and column types.
+Passed to \code{\link[=decode_matsindf]{decode_matsindf()}} when \code{decode_matsindf} is \code{TRUE}
+but otherwise not needed.}
 
 \item{.table_name_col, .nested_hash_col}{See \code{PFUPipelineTools::hashed_table_colnames}.}
 }

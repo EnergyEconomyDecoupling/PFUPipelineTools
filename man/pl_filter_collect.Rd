@@ -10,8 +10,8 @@ pl_filter_collect(
   countries = NULL,
   years = NULL,
   methods = NULL,
-  last_stages = c(IEATools::last_stages$final, IEATools::last_stages$useful),
-  energy_types = c(IEATools::energy_types$e, IEATools::energy_types$x),
+  last_stages = NULL,
+  energy_types = NULL,
   gross_nets = NULL,
   includes_neu = TRUE,
   industry_aggs = NULL,
@@ -68,11 +68,11 @@ Another good option is "PCM" (physical content method).}
 
 \item{last_stages}{A vector of last stage strings to be retained in the output.
 At present, only "Final" and "Useful" are implemented.
-Default is "Final". "Useful" is also a valid option.}
+\code{NULL} (the default) returns all last stages.}
 
 \item{energy_types}{A vector of energy type strings to be retained in the output.
 At present, only "E" (energy) and "X" (exergy) are implemented.
-Default is "E" but "X" is also valid.}
+\code{NULL} (the default) returns all energy types.}
 
 \item{gross_nets}{A vector of values for the \code{GrossNet} column (when it exists).
 \code{NULL} (the default) turns off filtering on this column.

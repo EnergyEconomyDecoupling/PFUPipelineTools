@@ -55,8 +55,6 @@ pl_collect_from_hash <- function(hashed_table,
                                  retain_table_name_col = FALSE,
                                  set_tar_group = TRUE,
                                  decode_matsindf = TRUE,
-                                 index_map,
-                                 rctypes,
                                  matrix_class = c("Matrix", "matrix"),
                                  tar_group_colname = PFUPipelineTools::hashed_table_colnames$tar_group_colname,
                                  matname_colname = "matname",
@@ -64,6 +62,14 @@ pl_collect_from_hash <- function(hashed_table,
                                  conn,
                                  schema = schema_from_conn(conn = conn),
                                  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+                                 index_map_name = "Index",
+                                 index_map = fk_parent_tables[[index_map_name]],
+                                 rctype_table_name = "matnameRCType",
+                                 rctypes = decode_fks(db_table_name = rctype_table_name,
+                                                      collect = TRUE,
+                                                      conn = conn,
+                                                      schema = schema,
+                                                      fk_parent_tables = fk_parent_tables),
                                  .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
                                  .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_colname) {
   matrix_class <- match.arg(matrix_class)
@@ -196,10 +202,10 @@ pl_collect_from_hash <- function(hashed_table,
 #'                Another good option is "PCM" (physical content method).
 #' @param last_stages A vector of last stage strings to be retained in the output.
 #'                    At present, only "Final" and "Useful" are implemented.
-#'                    Default is "Final". "Useful" is also a valid option.
+#'                    `NULL` (the default) returns all last stages.
 #' @param energy_types A vector of energy type strings to be retained in the output.
 #'                     At present, only "E" (energy) and "X" (exergy) are implemented.
-#'                     Default is "E" but "X" is also valid.
+#'                     `NULL` (the default) returns all energy types.
 #' @param gross_nets A vector of values for the `GrossNet` column (when it exists).
 #'                   `NULL` (the default) turns off filtering on this column.
 #'                   Other good values are "Gross" and "Net".
@@ -259,10 +265,8 @@ pl_filter_collect <- function(db_table_name,
                               countries = NULL,
                               years = NULL,
                               methods = NULL,
-                              last_stages = c(IEATools::last_stages$final,
-                                              IEATools::last_stages$useful),
-                              energy_types = c(IEATools::energy_types$e,
-                                               IEATools::energy_types$x),
+                              last_stages = NULL,
+                              energy_types = NULL,
                               gross_nets = NULL,
                               includes_neu = TRUE,
                               industry_aggs = NULL,
