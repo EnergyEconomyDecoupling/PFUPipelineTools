@@ -13,7 +13,7 @@ pl_filter_collect(
   last_stages = NULL,
   energy_types = NULL,
   gross_nets = NULL,
-  includes_neu = TRUE,
+  includes_neu = NULL,
   industry_aggs = NULL,
   product_aggs = NULL,
   chopped_mats = NULL,
@@ -81,7 +81,7 @@ Other good values are "Gross" and "Net".}
 \item{includes_neu}{A vector of booleans that indicates what to retain in output.
 \code{TRUE} means non-energy use is included in the ECCs.
 \code{FALSE} means non-energy use is excluded from the ECCs.
-Default is \code{TRUE}.}
+Default is \code{NULL}, meaning extract both \code{TRUE} and `FALSE values.}
 
 \item{industry_aggs}{A vector of strings identifying the industry aggregations desired.
 \code{NULL} (the default) means all industry aggregations should be returned.

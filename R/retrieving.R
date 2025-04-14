@@ -212,7 +212,7 @@ pl_collect_from_hash <- function(hashed_table,
 #' @param includes_neu A vector of booleans that indicates what to retain in output.
 #'                     `TRUE` means non-energy use is included in the ECCs.
 #'                     `FALSE` means non-energy use is excluded from the ECCs.
-#'                     Default is `TRUE`.
+#'                     Default is `NULL`, meaning extract both `TRUE` and `FALSE values.
 #' @param industry_aggs A vector of strings identifying the industry aggregations desired.
 #'                     `NULL` (the default) means all industry aggregations should be returned.
 #'                     Other reasonable values are "Specified", "Despecified", and "Grouped".
@@ -268,7 +268,7 @@ pl_filter_collect <- function(db_table_name,
                               last_stages = NULL,
                               energy_types = NULL,
                               gross_nets = NULL,
-                              includes_neu = TRUE,
+                              includes_neu = NULL,
                               industry_aggs = NULL,
                               product_aggs = NULL,
                               chopped_mats = NULL,

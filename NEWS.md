@@ -18,6 +18,8 @@ which always resolves to the latest release.
     - ProductAggregation
     - ChoppedMat
     - ChoppedVar
+* All filtering options for `pl_filter_collect()` are now `NULL`, 
+meaning that no filtering is applied.
 
 
 # PFUPipelineTools 0.1.12 (2024-12-09) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14589472.svg)](https://doi.org/10.5281/zenodo.14589472)
