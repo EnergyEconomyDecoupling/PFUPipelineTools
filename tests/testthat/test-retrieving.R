@@ -1,3 +1,69 @@
+test_that("pl_collect_from_hash() works with versions", {
+
+  skip_on_ci()
+  skip_on_cran()
+
+  conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
+                         dbname = "unit_testing",
+                         host = "mexer.site",
+                         port = 5432,
+                         user = "mkh2")
+  on.exit(DBI::dbDisconnect(conn))
+
+  db_table_name <- "PLCollectFromHashVersionsTest"
+  version_table_name <- "VersionTableTest"
+  if (db_table_name %in% DBI::dbListTables(conn)) {
+    DBI::dbRemoveTable(conn, db_table_name)
+  }
+  if (version_table_name %in% DBI::dbListTables(conn)) {
+    DBI::dbRemoveTable(conn, version_table_name)
+  }
+  version_table1 <- data.frame(VersionID = 1:10,
+                               Version = paste0("v", 1:10))
+  version_table1_empty <- version_table1[0, ]
+  test_table1 <- data.frame(ValidFromVersion = as.integer(c(1, 2, 4)),
+                            ValidToVersion   = as.integer(c(1, 3, 10)),
+                            val = c("A", "B", "C"))
+  test_table1_empty <- test_table1[0, ]
+  DM <- list(test_table1_empty, version_table1_empty) |>
+    magrittr::set_names(c(db_table_name, version_table_name)) |>
+    dm::as_dm() |>
+    dm::dm_add_pk({{db_table_name}}, c(ValidFromVersion, ValidToVersion)) |>
+    # Add foreign keys
+    dm::dm_add_fk(table = PLCollectFromHashVersionsTest,
+                  columns = ValidFromVersion,
+                  ref_table = VersionTableTest,
+                  ref_columns = VersionID) |>
+    dm::dm_add_fk(table = PLCollectFromHashVersionsTest,
+                  columns = ValidToVersion,
+                  ref_table = VersionTableTest,
+                  ref_columns = VersionID)
+  dm::copy_dm_to(dest = conn, dm = DM, temporary = FALSE)
+  Sys.sleep(1) # Make sure the database has time to put everything in place.
+  hash0 <- version_table1 |>
+    pl_upsert(db_table_name = version_table_name,
+              conn = conn,
+              in_place = TRUE)
+  hash1 <- test_table1 |>
+    pl_upsert(db_table_name = db_table_name,
+              conn = conn,
+              in_place = TRUE)
+
+
+
+
+
+
+
+
+
+
+
+
+
+})
+
+
 test_that("pl_collect_from_hash() works as expected", {
 
   skip_on_ci()

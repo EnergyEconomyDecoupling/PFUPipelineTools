@@ -34,7 +34,7 @@ Imports:
     tidyr,
     tibble
 Depends: 
-    R (>= 2.10)
+    R (>= 3.5)
 LazyData: true
 Suggests:
     dbplyr,

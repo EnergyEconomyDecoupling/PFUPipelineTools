@@ -447,3 +447,12 @@ mat_meta_cols <- list(matname = "matname",
                       rowtype = "rowtype",
                       coltype = "coltype")
 usethis::use_data(mat_meta_cols, overwrite = TRUE)
+
+
+#
+# Version column names
+#
+
+version_cols <- list(valid_from_version = "ValidFromVersion",
+                     valid_to_version = "ValidToVersion")
+usethis::use_data(version_cols, overwrite = TRUE)

@@ -6,14 +6,17 @@
 \usage{
 pl_collect_from_hash(
   hashed_table,
+  version = NULL,
   decode_fks = TRUE,
   retain_table_name_col = FALSE,
   set_tar_group = TRUE,
   decode_matsindf = TRUE,
   matrix_class = c("Matrix", "matrix"),
   tar_group_colname = PFUPipelineTools::hashed_table_colnames$tar_group_colname,
-  matname_colname = "matname",
-  matval_colname = "matval",
+  matname_colname = PFUPipelineTools::mat_meta_cols$matname,
+  matval_colname = PFUPipelineTools::mat_meta_cols$matval,
+  valid_from_version_colname = PFUPipelineTools::version_cols$valid_from_version,
+  valid_to_version_colname = PFUPipelineTools::version_cols$valid_to_version,
   conn,
   schema = schema_from_conn(conn = conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
@@ -28,6 +31,9 @@ pl_collect_from_hash(
 }
 \arguments{
 \item{hashed_table}{A table created by \code{pl_hash()}.}
+
+\item{version}{A string indicating the version to be downloaded.
+\code{NULL}, the default, means to download all versions.}
 
 \item{decode_fks}{A boolean that tells whether to decode foreign keys
 before returning.
@@ -57,7 +63,12 @@ Default is "Matrix".}
 default is \code{PFUPipelineTools::hashed_table_colnames$tar_group_colname}.}
 
 \item{matname_colname, matval_colname}{Names used for matrix names and matrix values.
-Defaults are "matname" and "matval".}
+Defaults are
+\code{PFUPipelineTools::mat_meta_cols$matname} and
+\code{PFUPipelineTools::mat_meta_cols$matval}, respectively.}
+
+\item{valid_from_version_colname, valid_to_version_colname}{Names for columns containing version information.
+Defaults are}
 
 \item{conn}{The database connection.}
 
@@ -73,7 +84,7 @@ foreign keys (when \code{decode_fks = TRUE}, the default).
 Default calls \code{get_all_fk_tables()}.
 Needed only when \code{decode_fks = TRUE} (the default).
 If foreign keys are not being decoded,
-setting \code{NULL} may improve speed.}
+setting to \code{NULL} may improve speed.}
 
 \item{index_map}{A list of data frames to assist with decoding matrices.
 Passed to \code{\link[=decode_matsindf]{decode_matsindf()}} when \code{decode_matsindf} is \code{TRUE}

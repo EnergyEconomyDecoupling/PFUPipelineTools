@@ -3,6 +3,8 @@
 #' If `hashed_table` has `0` rows, `NULL` is returned.
 #'
 #' @param hashed_table A table created by `pl_hash()`.
+#' @param version A string indicating the version to be downloaded.
+#'                `NULL`, the default, means to download all versions.
 #' @param decode_fks A boolean that tells whether to decode foreign keys
 #'                   before returning.
 #'                   Default is `TRUE`.
@@ -31,7 +33,11 @@
 #' @param tar_group_colname The name of the `tar_group` column.
 #'                          default is `PFUPipelineTools::hashed_table_colnames$tar_group_colname`.
 #' @param matname_colname,matval_colname Names used for matrix names and matrix values.
-#'                                       Defaults are "matname" and "matval".
+#'                                       Defaults are
+#'                                       `PFUPipelineTools::mat_meta_cols$matname` and
+#'                                       `PFUPipelineTools::mat_meta_cols$matval`, respectively.
+#' @param valid_from_version_colname,valid_to_version_colname Names for columns containing version information.
+#'                                                            Defaults are
 #' @param conn The database connection.
 #' @param schema The database schema (a `dm` object).
 #'               Default calls `schema_from_conn()`, but
@@ -44,21 +50,24 @@
 #'                         Default calls `get_all_fk_tables()`.
 #'                         Needed only when `decode_fks = TRUE` (the default).
 #'                         If foreign keys are not being decoded,
-#'                         setting `NULL` may improve speed.
+#'                         setting to `NULL` may improve speed.
 #' @param .table_name_col,.nested_hash_col  See `PFUPipelineTools::hashed_table_colnames`.
 #'
 #' @return The downloaded data frame described by `hashed_table`.
 #'
 #' @export
 pl_collect_from_hash <- function(hashed_table,
+                                 version = NULL,
                                  decode_fks = TRUE,
                                  retain_table_name_col = FALSE,
                                  set_tar_group = TRUE,
                                  decode_matsindf = TRUE,
                                  matrix_class = c("Matrix", "matrix"),
                                  tar_group_colname = PFUPipelineTools::hashed_table_colnames$tar_group_colname,
-                                 matname_colname = "matname",
-                                 matval_colname = "matval",
+                                 matname_colname = PFUPipelineTools::mat_meta_cols$matname,
+                                 matval_colname = PFUPipelineTools::mat_meta_cols$matval,
+                                 valid_from_version_colname = PFUPipelineTools::version_cols$valid_from_version,
+                                 valid_to_version_colname = PFUPipelineTools::version_cols$valid_to_version,
                                  conn,
                                  schema = schema_from_conn(conn = conn),
                                  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
@@ -72,6 +81,7 @@ pl_collect_from_hash <- function(hashed_table,
                                                       fk_parent_tables = fk_parent_tables),
                                  .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
                                  .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_colname) {
+
   matrix_class <- match.arg(matrix_class)
   if (nrow(hashed_table) == 0) {
     return(NULL)
