@@ -6,7 +6,7 @@
 \usage{
 pl_collect_from_hash(
   hashed_table,
-  version = NULL,
+  version_string = NULL,
   decode_fks = TRUE,
   retain_table_name_col = FALSE,
   set_tar_group = TRUE,
@@ -32,7 +32,7 @@ pl_collect_from_hash(
 \arguments{
 \item{hashed_table}{A table created by \code{pl_hash()}.}
 
-\item{version}{A string indicating the version to be downloaded.
+\item{version_string}{A string of length 1 indicating the version to be downloaded.
 \code{NULL}, the default, means to download all versions.}
 
 \item{decode_fks}{A boolean that tells whether to decode foreign keys

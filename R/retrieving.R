@@ -3,8 +3,8 @@
 #' If `hashed_table` has `0` rows, `NULL` is returned.
 #'
 #' @param hashed_table A table created by `pl_hash()`.
-#' @param version A string indicating the version to be downloaded.
-#'                `NULL`, the default, means to download all versions.
+#' @param version_string A string of length 1 indicating the version to be downloaded.
+#'                       `NULL`, the default, means to download all versions.
 #' @param decode_fks A boolean that tells whether to decode foreign keys
 #'                   before returning.
 #'                   Default is `TRUE`.
@@ -57,7 +57,7 @@
 #'
 #' @export
 pl_collect_from_hash <- function(hashed_table,
-                                 version = NULL,
+                                 version_string = NULL,
                                  decode_fks = TRUE,
                                  retain_table_name_col = FALSE,
                                  set_tar_group = TRUE,
@@ -94,6 +94,10 @@ pl_collect_from_hash <- function(hashed_table,
     unique()
   assertthat::assert_that(length(table_name) == 1,
                           msg = "More than 1 table received in pl_collect_from_hash()")
+
+  out <- dplyr::tbl(conn, table_name)
+
+  # Filter on any foreign keys
   filter_tbl <- hashed_table |>
     PFUPipelineTools::tar_ungroup() |>
     dplyr::select(!dplyr::all_of(c(.table_name_col, .nested_hash_col))) |>
@@ -103,12 +107,28 @@ pl_collect_from_hash <- function(hashed_table,
                conn = conn,
                schema = schema,
                fk_parent_tables = fk_parent_tables)
-  out <- dplyr::tbl(conn, table_name)
+
   if (ncol(filter_tbl) > 0) {
     out <- out |>
       # Perform a semi_join to keep only the rows in x that have a match in y
       dplyr::semi_join(filter_tbl, copy = TRUE, by = colnames(filter_tbl))
   }
+
+  # Filter on the version, if requested
+  if (!is.null(version_string)) {
+    # Figure out the index for the version of interest to us.
+    version_index <- encode_version_string(version_string = version_string,
+                                           version_colname = valid_from_version_colname,
+                                           table_name = table_name,
+                                           conn = conn,
+                                           schema = schema,
+                                           fk_parent_tables = fk_parent_tables)
+    # Filter the outgoing data frame according to the version_index
+    out <- out |>
+      dplyr::filter(.data[[valid_from_version_colname]] <= version_index) |>
+      dplyr::filter(.data[[valid_to_version_colname]] >= version_index)
+  }
+
   out <- out |>
     dplyr::collect()
   if (decode_fks) {
@@ -404,17 +424,3 @@ pl_filter_collect <- function(db_table_name,
 
   return(out)
 }
-
-
-# vars_in_dots <- function(enquos_dots) {
-#   enquos_dots |>
-#     # as.character(enquos_dots) turns the quosure into a string
-#     # in which table column names are prefixed by "~" and
-#     # terminated with a white space.
-#     as.character() |>
-#     # This pattern extracts for all characters between "~" and whitespace,
-#     # namely the column names to be decoded.
-#     stringr::str_extract("(?<=~)([^\\s]+)") |>
-#     # Make sure we have no duplicates.
-#     unique()
-# }

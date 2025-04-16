@@ -59,9 +59,45 @@ test_that("pl_collect_from_hash() works with versions", {
               conn = conn,
               in_place = TRUE)
 
+  # Try to collect from the hashes without specifying a version
+  hash_dbt |>
+    pl_collect_from_hash(conn = conn) |>
+    expect_equal(tibble::tribble(~ValidFromVersion, ~ValidToVersion, ~val,
+                                 "v1", "v1", "A",
+                                 "v2", "v3", "B",
+                                 "v4", "v10", "C"))
+
+  # Collect from hash while specifying a version
+  hash_dbt |>
+    pl_collect_from_hash(conn = conn, version_string = "v1") |>
+    expect_equal(tibble::tribble(~ValidFromVersion, ~ValidToVersion, ~val,
+                                 "v1", "v1", "A"))
+
+  hash_dbt |>
+    pl_collect_from_hash(conn = conn, version_string = "v2") |>
+    expect_equal(tibble::tribble(~ValidFromVersion, ~ValidToVersion, ~val,
+                                 "v2", "v3", "B"))
+
+  hash_dbt |>
+    pl_collect_from_hash(conn = conn, version_string = "v3") |>
+    expect_equal(tibble::tribble(~ValidFromVersion, ~ValidToVersion, ~val,
+                                 "v2", "v3", "B"))
+
+  for (i in 4:10) {
+    hash_dbt |>
+      pl_collect_from_hash(conn = conn, version_string = paste0("v", i)) |>
+      expect_equal(tibble::tribble(~ValidFromVersion, ~ValidToVersion, ~val,
+                                   "v4", "v10", "C"))
+  }
 
 
-
+  # Clean up
+  if (db_table_name %in% DBI::dbListTables(conn)) {
+    DBI::dbRemoveTable(conn, db_table_name)
+  }
+  if (version_table_name %in% DBI::dbListTables(conn)) {
+    DBI::dbRemoveTable(conn, version_table_name)
+  }
 })
 
 
