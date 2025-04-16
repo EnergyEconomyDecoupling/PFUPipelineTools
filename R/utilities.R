@@ -694,3 +694,52 @@ encode_matsindf <- function(.matsindf,
 }
 
 
+#' Encode a version string
+#'
+#' This function encodes a version string,
+#' returning the integer representation of the version string.
+#'
+#' @param version_string The version to be encoded.
+#' @param version_colname A column in which versions are provided.
+#'                        This is likely to be either
+#'                        `PFUPipelineTools::version_cols$valid_from_version`
+#'                        or `PFUPipelineTools::version_cols$valid_to_version`.
+#'                        Either will work.
+#' @param table_name The name of the table in which the `version_string` is found.
+#' @param conn A database connection.
+#' @param schema The schema for the database.
+#'               Default is `schema_from_conn(conn = conn)`.
+#' @param fk_parent_tables The foreign key parent tables.
+#'                         Default is `get_all_fk_tables(conn = conn, schema = schema)`.
+#'
+#' @export
+#'
+#' @return An integer which is the index for `version_string`.
+encode_version_string <- function(version_string,
+                                  version_colname,
+                                  table_name,
+                                  conn,
+                                  schema = schema_from_conn(conn = conn),
+                                  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema)) {
+  # Make sure we have only 1 version
+  assertthat::assert_that(length(version_string) == 1,
+                          msg = paste("version_string must have length 1",
+                                      "in PFUPipelineTools:::encode_version_string()."))
+  # Make a small data frame that will be used to decode the version.
+  mini_df <- tibble::tribble(~c1,
+                             version_string) |>
+    magrittr::set_names(version_colname)
+  # Encode the versions according to foreign keys
+  version_index <- mini_df |>
+    encode_fks(db_table_name = table_name,
+               conn = conn,
+               schema = schema,
+               fk_parent_tables = fk_parent_tables) |>
+    # Pull out the only integer we find
+    magrittr::extract2(version_colname)
+  # Do some error checking
+  assertthat::assert_that(length(version_index) != 0,
+                          msg = paste("Didn't find a version that matches", version,
+                                      "in PFUPipelineTools::pl_collect_from_hash()."))
+  return(version_index)
+}

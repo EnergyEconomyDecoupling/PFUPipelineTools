@@ -1,3 +1,106 @@
+test_that("pl_collect_from_hash() works with versions", {
+
+  skip_on_ci()
+  skip_on_cran()
+
+  conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
+                         dbname = "unit_testing",
+                         host = "mexer.site",
+                         port = 5432,
+                         user = "mkh2")
+  on.exit(DBI::dbDisconnect(conn))
+
+  # Database table with 2 version columns
+  # and 1 column of real data.
+  db_table_name <- "PLCollectFromHashVersionsTest"
+  if (db_table_name %in% DBI::dbListTables(conn)) {
+    DBI::dbRemoveTable(conn, db_table_name)
+  }
+  db_table <- data.frame(ValidFromVersion = as.integer(c(1, 2, 4)),
+                         ValidToVersion   = as.integer(c(1, 3, 10)),
+                         val = c("A", "B", "C"))
+  db_table_empty <- db_table[0, ]
+
+  # Version table with a VersionID column and a Version column.
+  version_table_name <- "VersionTableTest"
+  if (version_table_name %in% DBI::dbListTables(conn)) {
+    DBI::dbRemoveTable(conn, version_table_name)
+  }
+  version_table <- data.frame(VersionID = 1:10,
+                              Version = paste0("v", 1:10))
+  version_table_empty <- version_table[0, ]
+
+  DM <- list(db_table_empty, version_table_empty) |>
+    magrittr::set_names(c(db_table_name, version_table_name)) |>
+    dm::as_dm() |>
+    # Add primary keys
+    dm::dm_add_pk({{db_table_name}}, c(ValidFromVersion,
+                                       ValidToVersion)) |>
+    dm::dm_add_pk({{version_table_name}}, VersionID) |>
+    # Add foreign keys
+    dm::dm_add_fk(table = PLCollectFromHashVersionsTest,
+                  columns = ValidFromVersion,
+                  ref_table = VersionTableTest,
+                  ref_columns = VersionID) |>
+    dm::dm_add_fk(table = PLCollectFromHashVersionsTest,
+                  columns = ValidToVersion,
+                  ref_table = VersionTableTest,
+                  ref_columns = VersionID)
+
+  dm::copy_dm_to(dest = conn, dm = DM, temporary = FALSE)
+  Sys.sleep(1) # Make sure the database has time to put everything in place.
+  # Upload tables
+  hash_vt <- version_table |>
+    pl_upsert(db_table_name = version_table_name,
+              conn = conn,
+              in_place = TRUE)
+  hash_dbt <- db_table |>
+    pl_upsert(db_table_name = db_table_name,
+              conn = conn,
+              in_place = TRUE)
+
+  # Try to collect from the hashes without specifying a version
+  hash_dbt |>
+    pl_collect_from_hash(conn = conn) |>
+    expect_equal(tibble::tribble(~ValidFromVersion, ~ValidToVersion, ~val,
+                                 "v1", "v1", "A",
+                                 "v2", "v3", "B",
+                                 "v4", "v10", "C"))
+
+  # Collect from hash while specifying a version
+  hash_dbt |>
+    pl_collect_from_hash(conn = conn, version_string = "v1") |>
+    expect_equal(tibble::tribble(~ValidFromVersion, ~ValidToVersion, ~val,
+                                 "v1", "v1", "A"))
+
+  hash_dbt |>
+    pl_collect_from_hash(conn = conn, version_string = "v2") |>
+    expect_equal(tibble::tribble(~ValidFromVersion, ~ValidToVersion, ~val,
+                                 "v2", "v3", "B"))
+
+  hash_dbt |>
+    pl_collect_from_hash(conn = conn, version_string = "v3") |>
+    expect_equal(tibble::tribble(~ValidFromVersion, ~ValidToVersion, ~val,
+                                 "v2", "v3", "B"))
+
+  for (i in 4:10) {
+    hash_dbt |>
+      pl_collect_from_hash(conn = conn, version_string = paste0("v", i)) |>
+      expect_equal(tibble::tribble(~ValidFromVersion, ~ValidToVersion, ~val,
+                                   "v4", "v10", "C"))
+  }
+
+
+  # Clean up
+  if (db_table_name %in% DBI::dbListTables(conn)) {
+    DBI::dbRemoveTable(conn, db_table_name)
+  }
+  if (version_table_name %in% DBI::dbListTables(conn)) {
+    DBI::dbRemoveTable(conn, version_table_name)
+  }
+})
+
+
 test_that("pl_collect_from_hash() works as expected", {
 
   skip_on_ci()
@@ -180,7 +283,7 @@ test_that("pl_filter_collect() works as expected", {
                   columns = Country,
                   ref_table = PLFilterCollectTestCountry,
                   ref_columns = CountryID)
-  dm::copy_dm_to(conn, DM, set_key_constraints = TRUE, temporary = FALSE)
+  dm::copy_dm_to(dest = conn, dm = DM, set_key_constraints = TRUE, temporary = FALSE)
   Sys.sleep(0.5) # Make sure the database has time to put everything in place.
 
   expect_equal(DBI::dbReadTable(conn, "PLFilterCollectTestTable"), PLFilterCollectTestTable)
