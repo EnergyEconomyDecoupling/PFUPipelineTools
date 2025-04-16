@@ -12,7 +12,7 @@ which always resolves to the latest release.
   that provides capability to filter downloads by version.
   The default value (`NULL`) means that all versions
   should be downloaded.
-* `pl_collect_from_hash()` now more convenient
+* `pl_collect_from_hash()` is now more convenient
   with default arguments that pull values from `conn`.
   The behavior of `pl_collect_from_hash()` is now consistent with
   `pl_filter_collect()`.
@@ -23,7 +23,7 @@ which always resolves to the latest release.
     - ChoppedMat
     - ChoppedVar
 * All filtering options for `pl_filter_collect()` are now `NULL`, 
-meaning that no filtering is applied.
+  meaning that no filtering is applied.
 
 
 # PFUPipelineTools 0.1.12 (2024-12-09) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14589472.svg)](https://doi.org/10.5281/zenodo.14589472)
