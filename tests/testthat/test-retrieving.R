@@ -10,23 +10,26 @@ test_that("pl_collect_from_hash() works with versions", {
                          user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
 
+  # Database table with 2 version columns
+  # and 1 column of real data.
   db_table_name <- "PLCollectFromHashVersionsTest"
-  version_table_name <- "VersionTableTest"
   if (db_table_name %in% DBI::dbListTables(conn)) {
     DBI::dbRemoveTable(conn, db_table_name)
   }
+  db_table <- data.frame(ValidFromVersion = as.integer(c(1, 2, 4)),
+                         ValidToVersion   = as.integer(c(1, 3, 10)),
+                         val = c("A", "B", "C"))
+
+  # Version table with a VersionID column and a Version column.
+  version_table_name <- "VersionTableTest"
   if (version_table_name %in% DBI::dbListTables(conn)) {
     DBI::dbRemoveTable(conn, version_table_name)
   }
-  version_table1 <- data.frame(VersionID = 1:10,
-                               Version = paste0("v", 1:10))
-  version_table1_empty <- version_table1[0, ]
-  test_table1 <- data.frame(ValidFromVersion = as.integer(c(1, 2, 4)),
-                            ValidToVersion   = as.integer(c(1, 3, 10)),
-                            val = c("A", "B", "C"))
-  test_table1_empty <- test_table1[0, ]
-  DM <- list(test_table1_empty, version_table1_empty) |>
-    magrittr::set_names(c(db_table_name, version_table_name)) |>
+  version_table <- data.frame(VersionID = 1:10,
+                              Version = paste0("v", 1:10))
+
+  DM <- list(version_table[0, ], db_table[0, ]) |>
+    magrittr::set_names(c(version_table_name, db_table_name)) |>
     dm::as_dm() |>
     dm::dm_add_pk({{db_table_name}}, c(ValidFromVersion, ValidToVersion)) |>
     # Add foreign keys
@@ -38,29 +41,16 @@ test_that("pl_collect_from_hash() works with versions", {
                   columns = ValidToVersion,
                   ref_table = VersionTableTest,
                   ref_columns = VersionID)
-  dm::copy_dm_to(dest = conn, dm = DM, temporary = FALSE)
+  dm::copy_dm_to(dest = conn, dm = DM, temporary = FALSE, set_key_constraints = TRUE)
   Sys.sleep(1) # Make sure the database has time to put everything in place.
-  hash0 <- version_table1 |>
+  hash_vt <- version_table |>
     pl_upsert(db_table_name = version_table_name,
               conn = conn,
               in_place = TRUE)
-  hash1 <- test_table1 |>
+  hash_dbt <- db_table |>
     pl_upsert(db_table_name = db_table_name,
               conn = conn,
               in_place = TRUE)
-
-
-
-
-
-
-
-
-
-
-
-
-
 })
 
 
@@ -246,7 +236,7 @@ test_that("pl_filter_collect() works as expected", {
                   columns = Country,
                   ref_table = PLFilterCollectTestCountry,
                   ref_columns = CountryID)
-  dm::copy_dm_to(conn, DM, set_key_constraints = TRUE, temporary = FALSE)
+  dm::copy_dm_to(dest = conn, dm = DM, set_key_constraints = TRUE, temporary = FALSE)
   Sys.sleep(0.5) # Make sure the database has time to put everything in place.
 
   expect_equal(DBI::dbReadTable(conn, "PLFilterCollectTestTable"), PLFilterCollectTestTable)
