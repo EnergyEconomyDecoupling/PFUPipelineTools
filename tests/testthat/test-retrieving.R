@@ -19,6 +19,7 @@ test_that("pl_collect_from_hash() works with versions", {
   db_table <- data.frame(ValidFromVersion = as.integer(c(1, 2, 4)),
                          ValidToVersion   = as.integer(c(1, 3, 10)),
                          val = c("A", "B", "C"))
+  db_table_empty <- db_table[0, ]
 
   # Version table with a VersionID column and a Version column.
   version_table_name <- "VersionTableTest"
@@ -27,11 +28,15 @@ test_that("pl_collect_from_hash() works with versions", {
   }
   version_table <- data.frame(VersionID = 1:10,
                               Version = paste0("v", 1:10))
+  version_table_empty <- version_table[0, ]
 
-  DM <- list(version_table[0, ], db_table[0, ]) |>
-    magrittr::set_names(c(version_table_name, db_table_name)) |>
+  DM <- list(db_table_empty, version_table_empty) |>
+    magrittr::set_names(c(db_table_name, version_table_name)) |>
     dm::as_dm() |>
-    dm::dm_add_pk({{db_table_name}}, c(ValidFromVersion, ValidToVersion)) |>
+    # Add primary keys
+    dm::dm_add_pk({{db_table_name}}, c(ValidFromVersion,
+                                       ValidToVersion)) |>
+    dm::dm_add_pk({{version_table_name}}, VersionID) |>
     # Add foreign keys
     dm::dm_add_fk(table = PLCollectFromHashVersionsTest,
                   columns = ValidFromVersion,
@@ -41,8 +46,10 @@ test_that("pl_collect_from_hash() works with versions", {
                   columns = ValidToVersion,
                   ref_table = VersionTableTest,
                   ref_columns = VersionID)
-  dm::copy_dm_to(dest = conn, dm = DM, temporary = FALSE, set_key_constraints = TRUE)
+
+  dm::copy_dm_to(dest = conn, dm = DM, temporary = FALSE)
   Sys.sleep(1) # Make sure the database has time to put everything in place.
+  # Upload tables
   hash_vt <- version_table |>
     pl_upsert(db_table_name = version_table_name,
               conn = conn,
@@ -51,6 +58,10 @@ test_that("pl_collect_from_hash() works with versions", {
     pl_upsert(db_table_name = db_table_name,
               conn = conn,
               in_place = TRUE)
+
+
+
+
 })
 
 
