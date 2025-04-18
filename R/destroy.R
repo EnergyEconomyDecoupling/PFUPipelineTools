@@ -35,6 +35,9 @@ pl_destroy <- function(conn,
 
   db_name <- DBI::dbGetInfo(conn)$dbname
   if (db_name == "MexerDB") {
+    # MexerDB is the name of the "real" database.
+    # We don't ever want to destroy MexerDB,
+    # as I did in September 2024. ---MKH
     stop("**** You can't destroy MexerDB! ****")
   }
 
