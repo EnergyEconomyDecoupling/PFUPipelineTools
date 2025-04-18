@@ -34,7 +34,7 @@ pl_filter_collect(
 such as \code{Country == "USA"} or \code{Year \%in\% 1960:2020}.
 These conditions reduce data volume,
 because they are applied prior to downloading from \code{conn}.
-If no data match these conditions,
+If no rows match these conditions,
 a data frame with no rows is returned.}
 
 \item{version_string}{A string of length \code{1} that indicates the desired version.
