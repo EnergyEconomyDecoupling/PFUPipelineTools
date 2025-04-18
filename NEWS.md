@@ -8,6 +8,10 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+* In several places, 
+  code no longer passes `conn`
+  when both `schema` and `fk_parent_talbes` 
+  are known.
 * Added a safety check in `pl_destroy()` to 
   disable destroying "MexerDB".
 * `pl_collect_from_hash()` and `pl_filter_collect()`
