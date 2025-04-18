@@ -110,7 +110,6 @@ pl_collect_from_hash <- function(hashed_table,
     # Need to encode foreign keys, because the table in the database has
     # encoded foreign keys
     encode_fks(db_table_name = table_name,
-               conn = conn,
                schema = schema,
                fk_parent_tables = fk_parent_tables)
 
