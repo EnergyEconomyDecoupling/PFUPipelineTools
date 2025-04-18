@@ -122,16 +122,15 @@ pl_collect_from_hash <- function(hashed_table,
 
   # Filter on the version, if requested
   if (!is.null(version_string)) {
-    # Figure out the index for the version of interest to us.
-    version_index <- encode_version_string(version_string = version_string,
-                                           table_name = table_name,
-                                           conn = conn,
-                                           schema = schema,
-                                           fk_parent_tables = fk_parent_tables)
-    # Filter the outgoing data frame according to the version_index
     out <- out |>
-      dplyr::filter(.data[[valid_from_version_colname]] <= version_index) |>
-      dplyr::filter(.data[[valid_to_version_colname]] >= version_index)
+      filter_on_version_string(version_string = version_string,
+                               db_table_name = table_name,
+                               collect = FALSE,
+                               conn = conn,
+                               schema = schema,
+                               fk_parent_tables = fk_parent_tables,
+                               valid_from_version_colname = valid_from_version_colname,
+                               valid_to_version_colname = valid_to_version_colname)
   }
 
   out <- out |>
