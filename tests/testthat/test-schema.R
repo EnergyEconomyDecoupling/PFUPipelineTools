@@ -465,3 +465,127 @@ test_that("pl_upsert() works for zero matrices", {
   # Clean up after ourselves
   DBI::dbRemoveTable(conn = conn, name = "testzeromatrix")
 })
+
+
+test_that("pl_upsert() works with compression", {
+  skip_on_ci()
+  skip_on_cran()
+  conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
+                         dbname = "unit_testing",
+                         host = "mexer.site",
+                         port = 5432,
+                         user = "mkh2")
+  on.exit(DBI::dbDisconnect(conn))
+
+  db_table_name <- "PLUpsertTest"
+  if (db_table_name %in% DBI::dbListTables(conn)) {
+    DBI::dbRemoveTable(conn, db_table_name)
+  }
+  db_table <- tibble::tribble(
+    ~ValidFromVersion, ~ValidToVersion, ~Country, ~Year, ~val,
+    1L, 1L, 1L, 1967L, 1,
+    1L, 1L, 2L, 1967L, 2,
+    2L, 2L, 1L, 1967L, 1,
+    2L, 2L, 2L, 1967L, 2,
+    2L, 2L, 1L, 1968L, 5,
+    2L, 2L, 2L, 1968L, 6,
+    3L, 3L, 1L, 1968L, 5,
+    3L, 3L, 2L, 1968L, 6,
+    3L, 3L, 3L, 2000L, 7,
+    4L, 10L, 3L, 2000L, 8) |>
+    as.data.frame()
+  db_table_empty <- db_table[0, ]
+
+  # Version table with a VersionID column and a Version column.
+  version_table_name <- "VersionTablePLUpsertTest"
+  if (version_table_name %in% DBI::dbListTables(conn)) {
+    DBI::dbRemoveTable(conn, version_table_name)
+  }
+  version_table <- data.frame(VersionID = 1:10,
+                              Version = paste0("v", 1:10))
+  version_table_empty <- version_table[0, ]
+
+  # Country table with a CountryID column
+  country_table_name <- "CountryTablePLUpsertTest"
+  if (country_table_name %in% DBI::dbListTables(conn)) {
+    DBI::dbRemoveTable(conn, country_table_name)
+  }
+  country_table <- data.frame(CountryID = c(1, 2, 3),
+                              Country = c("USA", "ZAF", "GHA"))
+  country_table_empty <- country_table[0, ]
+
+  # Build the data model
+  DM <- list(db_table_empty, version_table_empty, country_table_empty) |>
+    magrittr::set_names(c(db_table_name, version_table_name, country_table_name)) |>
+    dm::as_dm() |>
+    # Add primary keys
+    dm::dm_add_pk({{db_table_name}}, c(ValidFromVersion,
+                                       ValidToVersion,
+                                       Country,
+                                       Year)) |>
+    dm::dm_add_pk({{version_table_name}}, VersionID) |>
+    dm::dm_add_pk({{country_table_name}}, CountryID) |>
+    # Add foreign keys
+    dm::dm_add_fk(table = PLUpsertTest,
+                  columns = ValidFromVersion,
+                  ref_table = VersionTablePLUpsertTest,
+                  ref_columns = VersionID) |>
+    dm::dm_add_fk(table = PLUpsertTest,
+                  columns = ValidToVersion,
+                  ref_table = VersionTablePLUpsertTest,
+                  ref_columns = VersionID) |>
+    dm::dm_add_fk(table = PLUpsertTest,
+                  columns = Country,
+                  ref_table = CountryTablePLUpsertTest,
+                  ref_columns = CountryID)
+
+  dm::copy_dm_to(dest = conn, dm = DM, temporary = FALSE)
+
+  # Get these things here to reduce download time below.
+  schema <- schema_from_conn(conn = conn)
+  fk_parent_tables <- get_all_fk_tables(conn = conn, schema = schema)
+
+  # Upload tables
+  hash_vt <- version_table |>
+    pl_upsert(db_table_name = version_table_name,
+              conn = conn,
+              in_place = TRUE)
+  hash_ct <- country_table |>
+    pl_upsert(db_table_name = country_table_name,
+              conn = conn,
+              in_place = TRUE)
+  hash_dbt <- db_table |>
+    pl_upsert(db_table_name = db_table_name,
+              conn = conn,
+              in_place = TRUE)
+
+  # Now try to compress the db_table
+  DBI::dbExecute(conn = conn,
+                 statement = "CALL compress('PLUpsertTest', 'ValidFromVersion', 'ValidToVersion');")
+
+
+  # Clean up after ourselves
+  if (db_table_name %in% DBI::dbListTables(conn)) {
+    DBI::dbRemoveTable(conn, db_table_name)
+  }
+  if (version_table_name %in% DBI::dbListTables(conn)) {
+    DBI::dbRemoveTable(conn, version_table_name)
+  }
+  if (country_table_name %in% DBI::dbListTables(conn)) {
+    DBI::dbRemoveTable(conn, country_table_name)
+  }
+
+})
+
+
+
+
+
+
+
+
+
+
+
+
+

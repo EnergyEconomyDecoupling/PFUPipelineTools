@@ -611,6 +611,9 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
   if (version_table_name %in% DBI::dbListTables(conn)) {
     DBI::dbRemoveTable(conn, version_table_name)
   }
+  if (country_table_name %in% DBI::dbListTables(conn)) {
+    DBI::dbRemoveTable(conn, country_table_name)
+  }
 })
 
 

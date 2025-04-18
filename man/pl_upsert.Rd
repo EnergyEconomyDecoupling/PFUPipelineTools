@@ -13,6 +13,7 @@ pl_upsert(
   keep_single_unique_cols = TRUE,
   in_place = FALSE,
   encode_fks = TRUE,
+  compress = FALSE,
   index_map =
     magrittr::set_names(list(fk_parent_tables[[IEATools::row_col_types$industry]],
     fk_parent_tables[[IEATools::row_col_types$product]],

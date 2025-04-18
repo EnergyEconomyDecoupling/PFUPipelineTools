@@ -822,3 +822,33 @@ filter_on_version_string <- function(tbl,
 
   return(out)
 }
+
+
+#' Add the compress function to a database
+#'
+#' When running the pipeline,
+#' we compress the version columns.
+#' This plpgsql function in `compress_func_string`
+#' does that work for us.
+#' This function adds the compress function
+#' to the database at `conn`.
+#'
+#' @param conn A connection to the database into which the compress
+#'             function should be added.
+#' @param compress_func_string The compress function.
+#'
+#' @returns The number of rows affected by adding the function to the
+#'          database at `conn`,
+#'          which should always be `0`.
+#'
+#' @export
+create_compress_function <- function(conn,
+                                     compress_func_string = readr::read_file(file.path("data-raw", "compress.sql"))) {
+
+  DBI::dbExecute(conn = conn,
+                 statement = compress_func_string)
+}
+
+
+
+
