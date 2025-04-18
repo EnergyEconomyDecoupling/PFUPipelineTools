@@ -297,7 +297,6 @@ inboard_filter_copy <- function(source,
           usual_hash_group_cols = usual_hash_group_cols) |>
     # Decode the foreign keys, so they are human-readable.
     decode_fks(db_table_name = dest,
-               conn = conn,
                schema = schema,
                fk_parent_tables = fk_parent_tables)
 }
@@ -338,6 +337,7 @@ inboard_filter_copy <- function(source,
 #'                      to fk keys.
 #' @param conn A connection to the CL-PFU database.
 #'             Needed only if `fk_parent_tables` is not provided.
+#'             Default is `NULL`.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               Default is `dm_from_con(conn, learn_keys = TRUE)`.
 #'               Needed only if `fk_parent_tables` is not provided.
@@ -364,7 +364,7 @@ inboard_filter_copy <- function(source,
 #'                  fk_parent_tables = fk_parent_tables)
 encode_fk_values <- function(v_val,
                              fk_table_name,
-                             conn,
+                             conn = NULL,
                              schema = schema_from_conn(conn),
                              fk_parent_tables = get_all_fk_tables(conn = conn,
                                                                   schema = schema,
