@@ -221,6 +221,8 @@ pl_collect_from_hash <- function(hashed_table,
 #'                 `NULL` (the default) returns all datasets.
 #'                 Another interesting option is
 #'                 `PFUPipelineTools::dataset_info$clpfu_iea`.
+#' @param versions A string vector indicating the versions to be downloaded.
+#'                 `NULL`, the default, means to download all versions available in the table.
 #' @param countries A vector of country strings to be retained in the output.
 #'                  `NULL` (the default) returns all countries.
 #'                  Another useful option is `as.character(PFUPipelineTools::canonical_countries)`.
@@ -292,6 +294,7 @@ pl_collect_from_hash <- function(hashed_table,
 #' @export
 pl_filter_collect <- function(db_table_name,
                               datasets = NULL,
+                              versions = NULL,
                               countries = NULL,
                               years = NULL,
                               methods = NULL,

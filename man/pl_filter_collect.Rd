@@ -7,6 +7,7 @@
 pl_filter_collect(
   db_table_name,
   datasets = NULL,
+  versions = NULL,
   countries = NULL,
   years = NULL,
   methods = NULL,
@@ -53,6 +54,9 @@ pl_filter_collect(
 \code{NULL} (the default) returns all datasets.
 Another interesting option is
 \code{PFUPipelineTools::dataset_info$clpfu_iea}.}
+
+\item{versions}{A string vector indicating the versions to be downloaded.
+\code{NULL}, the default, means to download all versions available in the table.}
 
 \item{countries}{A vector of country strings to be retained in the output.
 \code{NULL} (the default) returns all countries.
