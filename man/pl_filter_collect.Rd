@@ -6,6 +6,7 @@
 \usage{
 pl_filter_collect(
   db_table_name,
+  version_string = NULL,
   datasets = NULL,
   versions = NULL,
   countries = NULL,
@@ -44,11 +45,15 @@ pl_filter_collect(
   product_agg_colname = PFUPipelineTools::aggregation_df_cols$product_aggregation,
   industry_agg_colname = PFUPipelineTools::aggregation_df_cols$industry_aggregation,
   chopped_mat_colname = PFUPipelineTools::aggregation_df_cols$chopped_mat,
-  chopped_var_colname = PFUPipelineTools::aggregation_df_cols$chopped_var
+  chopped_var_colname = PFUPipelineTools::aggregation_df_cols$chopped_var,
+  valid_from_version_colname = PFUPipelineTools::version_cols$valid_from_version,
+  valid_to_version_colname = PFUPipelineTools::version_cols$valid_to_version
 )
 }
 \arguments{
 \item{db_table_name}{The string name of the database table to be filtered.}
+
+\item{version_string}{A string of length 1 that indicates the desired version.}
 
 \item{datasets}{A vector of dataset strings to be retained in the output.
 \code{NULL} (the default) returns all datasets.
@@ -143,6 +148,14 @@ Defaults are "rowtype" and "coltype", respectively.}
 
 \item{dataset_colname, country_colname, year_colname, method_colname, last_stage_colname, energy_type_colname, gross_net_colname, product_agg_colname, industry_agg_colname, chopped_mat_colname, chopped_var_colname}{Columns that are likely to be in db_table_name
 and may be filtered with \code{\%in\%}-style subsetting.}
+
+\item{valid_from_version_colname, valid_to_version_colname}{Names
+for columns containing version information.
+Defaults are
+\code{PFUPipelineTools::version_cols$valid_from_version}
+and
+\code{PFUPipelineTools::version_cols$valid_to_version},
+respectively.}
 
 \item{includes_neu_col}{The name of a column that tells whether non-energy
 use (NEU) is included.

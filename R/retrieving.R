@@ -35,9 +35,15 @@
 #' @param matname_colname,matval_colname Names used for matrix names and matrix values.
 #'                                       Defaults are
 #'                                       `PFUPipelineTools::mat_meta_cols$matname` and
-#'                                       `PFUPipelineTools::mat_meta_cols$matval`, respectively.
-#' @param valid_from_version_colname,valid_to_version_colname Names for columns containing version information.
-#'                                                            Defaults are
+#'                                       `PFUPipelineTools::mat_meta_cols$matval`,
+#'                                       respectively.
+#' @param valid_from_version_colname,valid_to_version_colname Names
+#'              for columns containing version information.
+#'              Defaults are
+#'              `PFUPipelineTools::version_cols$valid_from_version`
+#'              and
+#'              `PFUPipelineTools::version_cols$valid_to_version`,
+#'              respectively.
 #' @param conn The database connection.
 #' @param schema The database schema (a `dm` object).
 #'               Default calls `schema_from_conn()`, but
@@ -118,7 +124,6 @@ pl_collect_from_hash <- function(hashed_table,
   if (!is.null(version_string)) {
     # Figure out the index for the version of interest to us.
     version_index <- encode_version_string(version_string = version_string,
-                                           version_colname = valid_from_version_colname,
                                            table_name = table_name,
                                            conn = conn,
                                            schema = schema,
@@ -217,6 +222,7 @@ pl_collect_from_hash <- function(hashed_table,
 #' [decode_matsindf()] is called on the downloaded data frame.
 #'
 #' @param db_table_name The string name of the database table to be filtered.
+#' @param version_string A string of length 1 that indicates the desired version.
 #' @param datasets A vector of dataset strings to be retained in the output.
 #'                 `NULL` (the default) returns all datasets.
 #'                 Another interesting option is
@@ -288,11 +294,19 @@ pl_collect_from_hash <- function(hashed_table,
 #' @param includes_neu_col The name of a column that tells whether non-energy
 #'                         use (NEU) is included.
 #'                         Default is `Recca::psut_cols$includes_neu`.
+#' @param valid_from_version_colname,valid_to_version_colname Names
+#'              for columns containing version information.
+#'              Defaults are
+#'              `PFUPipelineTools::version_cols$valid_from_version`
+#'              and
+#'              `PFUPipelineTools::version_cols$valid_to_version`,
+#'              respectively.
 #'
 #' @return A filtered version of `db_table_name` downloaded from `conn`.
 #'
 #' @export
 pl_filter_collect <- function(db_table_name,
+                              version_string = NULL,
                               datasets = NULL,
                               versions = NULL,
                               countries = NULL,
@@ -334,13 +348,30 @@ pl_filter_collect <- function(db_table_name,
                               product_agg_colname = PFUPipelineTools::aggregation_df_cols$product_aggregation,
                               industry_agg_colname =  PFUPipelineTools::aggregation_df_cols$industry_aggregation,
                               chopped_mat_colname = PFUPipelineTools::aggregation_df_cols$chopped_mat,
-                              chopped_var_colname = PFUPipelineTools::aggregation_df_cols$chopped_var) {
+                              chopped_var_colname = PFUPipelineTools::aggregation_df_cols$chopped_var,
+                              valid_from_version_colname = PFUPipelineTools::version_cols$valid_from_version,
+                              valid_to_version_colname = PFUPipelineTools::version_cols$valid_to_version) {
 
   matrix_class <- match.arg(matrix_class)
 
-  out <- dplyr::tbl(src = conn, db_table_name) |>
-    # First, decode the foreign keys with
-    # collect = FALSE to ensure a tbl is returned.
+  out <- dplyr::tbl(src = conn, db_table_name)
+
+  # First, filter according to version string,
+  # if desired.
+  if (!is.null(version_string)) {
+    out <- out |>
+      filter_on_version_string(version_string = version_string,
+                               db_table_name = db_table_name,
+                               conn = conn,
+                               schema = schema,
+                               fk_parent_tables = fk_parent_tables,
+                               valid_from_version_colname = valid_from_version_colname,
+                               valid_to_version_colname = valid_to_version_colname)
+  }
+
+  # Next, decode the foreign keys with
+  # collect = FALSE to ensure a tbl is returned.
+  out <- out |>
     decode_fks(db_table_name = db_table_name,
                schema = schema,
                fk_parent_tables = fk_parent_tables,

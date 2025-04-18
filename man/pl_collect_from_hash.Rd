@@ -65,10 +65,16 @@ default is \code{PFUPipelineTools::hashed_table_colnames$tar_group_colname}.}
 \item{matname_colname, matval_colname}{Names used for matrix names and matrix values.
 Defaults are
 \code{PFUPipelineTools::mat_meta_cols$matname} and
-\code{PFUPipelineTools::mat_meta_cols$matval}, respectively.}
+\code{PFUPipelineTools::mat_meta_cols$matval},
+respectively.}
 
-\item{valid_from_version_colname, valid_to_version_colname}{Names for columns containing version information.
-Defaults are}
+\item{valid_from_version_colname, valid_to_version_colname}{Names
+for columns containing version information.
+Defaults are
+\code{PFUPipelineTools::version_cols$valid_from_version}
+and
+\code{PFUPipelineTools::version_cols$valid_to_version},
+respectively.}
 
 \item{conn}{The database connection.}
 

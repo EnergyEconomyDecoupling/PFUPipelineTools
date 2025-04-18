@@ -617,7 +617,7 @@ pl_upsert <- function(.df,
 #' @export
 encode_fks <- function(.df,
                        db_table_name,
-                       conn,
+                       conn = NULL,
                        schema = schema_from_conn(conn),
                        fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
                        .child_table = PFUPipelineTools::dm_fk_colnames$child_table,
