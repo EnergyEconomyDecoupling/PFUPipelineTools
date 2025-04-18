@@ -322,7 +322,10 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
     pl_filter_collect(conn = conn, collect = TRUE) |>
     expect_equal(expected_all)
 
-
+  # Filter to get v1
+  db_table_name |>
+    pl_filter_collect(versions = "v1", conn = conn, collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(ValidToVersion == "v1"))
 
 
 
