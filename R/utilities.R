@@ -800,10 +800,16 @@ filter_on_version_string <- function(tbl,
 
 
   # Figure out the index for the version of interest to us.
-  version_index <- encode_version_string(version_string = version_string,
-                                         table_name = db_table_name,
-                                         schema = schema,
-                                         fk_parent_tables = fk_parent_tables)
+  tryCatch(
+    version_index <- encode_version_string(version_string = version_string,
+                                           table_name = db_table_name,
+                                           schema = schema,
+                                           fk_parent_tables = fk_parent_tables),
+    error = function(e) {
+      stop(paste0('Unknown version_string" "', version_string, '".'))
+    }
+
+  )
   # Filter the outgoing data frame according to the version_index
   out <- tbl |>
     dplyr::filter(.data[[valid_from_version_colname]] <= version_index) |>

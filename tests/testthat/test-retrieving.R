@@ -535,6 +535,7 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
                                                  Country == "ZAF"))
 
   # Try degenerate cases
+  # Setting impossible filters in ... should return an empty data frame.
   db_table_name |>
     pl_filter_collect(val == 100,
                       conn = conn,
@@ -550,13 +551,14 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
                       fk_parent_tables = fk_parent_tables,
                       collect = TRUE) |>
     expect_equal(expected_all[0, ])
+  # Requesting a non-existent version should emit an error.
   db_table_name |>
     pl_filter_collect(version_string = "bogus",
                       conn = conn,
                       schema = schema,
                       fk_parent_tables = fk_parent_tables,
                       collect = TRUE) |>
-    expect_error(regexp = "unable to convert the following entries to foreign keys")
+    expect_error(regexp = 'Unknown version_string')
 
 
   #### Test pl_collect_from_hash() with versions
