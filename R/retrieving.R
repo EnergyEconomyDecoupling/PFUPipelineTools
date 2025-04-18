@@ -214,7 +214,7 @@ pl_collect_from_hash <- function(hashed_table,
 #'            such as `Country == "USA"` or `Year %in% 1960:2020`.
 #'            These conditions reduce data volume,
 #'            because they are applied prior to downloading from `conn`.
-#'            If no data match these conditions,
+#'            If no rows match these conditions,
 #'            a data frame with no rows is returned.
 #' @param version_string A string of length `1` that indicates the desired version.
 #'                       `NULL`, the default, means to download all versions available in
