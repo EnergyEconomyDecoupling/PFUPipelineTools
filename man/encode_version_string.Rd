@@ -6,31 +6,33 @@
 \usage{
 encode_version_string(
   version_string,
-  version_colname,
   table_name,
-  conn,
+  conn = NULL,
   schema = schema_from_conn(conn = conn),
-  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema)
+  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+  .version_colname = PFUPipelineTools::version_cols$valid_from_version
 )
 }
 \arguments{
 \item{version_string}{The version to be encoded.}
 
-\item{version_colname}{A column in which versions are provided.
-This is likely to be either
-\code{PFUPipelineTools::version_cols$valid_from_version}
-or \code{PFUPipelineTools::version_cols$valid_to_version}.
-Either will work.}
-
 \item{table_name}{The name of the table in which the \code{version_string} is found.}
 
-\item{conn}{A database connection.}
+\item{conn}{An optional database connection.
+Necessary only for the default values of \code{schema} and \code{fk_parent_tables}.
+Default is \code{NULL}.}
 
 \item{schema}{The schema for the database.
 Default is \code{schema_from_conn(conn = conn)}.}
 
 \item{fk_parent_tables}{The foreign key parent tables.
 Default is \code{get_all_fk_tables(conn = conn, schema = schema)}.}
+
+\item{.version_colname}{A column in which versions are provided.
+This column is used internally.
+Default is \code{PFUPipelineTools::version_cols$valid_from_version}.
+\code{PFUPipelineTools::version_cols$valid_to_version}
+would also work.}
 }
 \value{
 An integer which is the index for \code{version_string}.

@@ -302,13 +302,14 @@ test_that("decode_fks() and encode_fks() work with tbls", {
     pl_upsert(conn = conn,
               db_table_name = "MemberRole",
               in_place = TRUE)
-  schema <- schema_from_conn(conn)
   # This next call should download MemberRole as a tbl, because
   # (a) .df is not specified and
   # (b) collect = FALSE (the default)
+  # decoded_tbl <- decode_fks(db_table_name = "MemberRole",
+  #                           conn = conn,
+  #                           schema = schema)
   decoded_tbl <- decode_fks(db_table_name = "MemberRole",
-                            conn = conn,
-                            schema = schema)
+                            conn = conn)
   expect_true(dplyr::is.tbl(decoded_tbl))
   expect_equal(dplyr::collect(decoded_tbl),
                tibble::tribble(~Member, ~Role,

@@ -8,7 +8,14 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
-* `pl_collect_from_hash()` gains new argument `version_string`
+* In several places, 
+  code no longer passes `conn`
+  when both `schema` and `fk_parent_tables` 
+  are known.
+* Added a safety check in `pl_destroy()` to 
+  disable destroying "MexerDB".
+* `pl_collect_from_hash()` and `pl_filter_collect()`
+  gain new argument `version_string`
   that provides capability to filter downloads by version.
   The default value (`NULL`) means that all versions
   should be downloaded.

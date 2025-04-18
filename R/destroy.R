@@ -10,7 +10,7 @@
 #' Because this is a very destructive function,
 #' the caller must opt into behaviors.
 #'
-#' When `drop_tables` is `TRUE`,  `destroy_cache` is implied to be `TRUE`,
+#' When `drop_tables` is `TRUE`, `destroy_cache` is implied to be `TRUE`,
 #' and the targets cache is destroyed.
 #'
 #' At present
@@ -32,6 +32,14 @@ pl_destroy <- function(conn,
                        store = targets::tar_config_get("store"),
                        destroy_cache = FALSE,
                        drop_tables = FALSE) {
+
+  db_name <- DBI::dbGetInfo(conn)$dbname
+  if (db_name == "MexerDB") {
+    # MexerDB is the name of the "real" database.
+    # We don't ever want to destroy MexerDB,
+    # as I did in September 2024. ---MKH
+    stop("**** You can't destroy MexerDB! ****")
+  }
 
   if (destroy_cache) {
     # Delete the local targets cache
