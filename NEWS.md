@@ -10,7 +10,7 @@ which always resolves to the latest release.
 
 * In several places, 
   code no longer passes `conn`
-  when both `schema` and `fk_parent_talbes` 
+  when both `schema` and `fk_parent_tables` 
   are known.
 * Added a safety check in `pl_destroy()` to 
   disable destroying "MexerDB".
