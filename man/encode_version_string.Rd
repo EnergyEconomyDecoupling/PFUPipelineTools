@@ -7,7 +7,7 @@
 encode_version_string(
   version_string,
   table_name,
-  conn,
+  conn = NULL,
   schema = schema_from_conn(conn = conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
   .version_colname = PFUPipelineTools::version_cols$valid_from_version
@@ -18,7 +18,9 @@ encode_version_string(
 
 \item{table_name}{The name of the table in which the \code{version_string} is found.}
 
-\item{conn}{A database connection.}
+\item{conn}{An optional database connection.
+Necessary only for the default values of \code{schema} and \code{fk_parent_tables}.
+Default is \code{NULL}.}
 
 \item{schema}{The schema for the database.
 Default is \code{schema_from_conn(conn = conn)}.}

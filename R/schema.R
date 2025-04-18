@@ -600,6 +600,7 @@ pl_upsert <- function(.df,
 #' @param db_table_name The string name of the database table where `.df` is to be uploaded.
 #' @param conn An optional database connection.
 #'             Necessary only for the default values of `schema` and `fk_parent_tables`.
+#'             Default is `NULL`.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               See details.
 #' @param fk_parent_tables A named list of all parent tables

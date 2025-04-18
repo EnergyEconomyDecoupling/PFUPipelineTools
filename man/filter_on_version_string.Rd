@@ -9,7 +9,7 @@ filter_on_version_string(
   version_string,
   db_table_name,
   collect = FALSE,
-  conn,
+  conn = NULL,
   schema = schema_from_conn(conn = conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
   valid_from_version_colname = PFUPipelineTools::version_cols$valid_from_version,
@@ -27,7 +27,9 @@ filter_on_version_string(
 before returning.
 Default is \code{FALSE}.}
 
-\item{conn}{The database connection.}
+\item{conn}{An optional database connection.
+Necessary only for the default values of \code{schema} and \code{fk_parent_tables}.
+Default is \code{NULL}.}
 
 \item{schema}{The database schema (a \code{dm} object).
 Default calls \code{schema_from_conn()}, but

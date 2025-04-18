@@ -33,6 +33,11 @@ pl_destroy <- function(conn,
                        destroy_cache = FALSE,
                        drop_tables = FALSE) {
 
+  db_name <- DBI::dbGetInfo(conn)$dbname
+  if (db_name == "MexerDB") {
+    stop("**** You can't destroy MexerDB! ****")
+  }
+
   if (destroy_cache) {
     # Delete the local targets cache
     unlink(store, recursive = TRUE)

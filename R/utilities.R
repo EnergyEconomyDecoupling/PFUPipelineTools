@@ -701,7 +701,9 @@ encode_matsindf <- function(.matsindf,
 #'
 #' @param version_string The version to be encoded.
 #' @param table_name The name of the table in which the `version_string` is found.
-#' @param conn A database connection.
+#' @param conn An optional database connection.
+#'             Necessary only for the default values of `schema` and `fk_parent_tables`.
+#'             Default is `NULL`.
 #' @param schema The schema for the database.
 #'               Default is `schema_from_conn(conn = conn)`.
 #' @param fk_parent_tables The foreign key parent tables.
@@ -717,7 +719,7 @@ encode_matsindf <- function(.matsindf,
 #' @return An integer which is the index for `version_string`.
 encode_version_string <- function(version_string,
                                   table_name,
-                                  conn,
+                                  conn = NULL,
                                   schema = schema_from_conn(conn = conn),
                                   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
                                   .version_colname = PFUPipelineTools::version_cols$valid_from_version) {
@@ -732,7 +734,6 @@ encode_version_string <- function(version_string,
   # Encode the versions according to foreign keys
   version_index <- mini_df |>
     encode_fks(db_table_name = table_name,
-               conn = conn,
                schema = schema,
                fk_parent_tables = fk_parent_tables) |>
     # Pull out the only integer we find
@@ -765,7 +766,9 @@ encode_version_string <- function(version_string,
 #'                before returning.
 #'                Default is `FALSE`.
 #' @param db_table_name The name of the table to be filtered.
-#' @param conn The database connection.
+#' @param conn An optional database connection.
+#'             Necessary only for the default values of `schema` and `fk_parent_tables`.
+#'             Default is `NULL`.
 #' @param schema The database schema (a `dm` object).
 #'               Default calls `schema_from_conn()`, but
 #'               you can supply a pre-computed schema for speed.
@@ -789,7 +792,7 @@ filter_on_version_string <- function(tbl,
                                      version_string,
                                      db_table_name,
                                      collect = FALSE,
-                                     conn,
+                                     conn = NULL,
                                      schema = schema_from_conn(conn = conn),
                                      fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
                                      valid_from_version_colname = PFUPipelineTools::version_cols$valid_from_version,
@@ -799,7 +802,6 @@ filter_on_version_string <- function(tbl,
   # Figure out the index for the version of interest to us.
   version_index <- encode_version_string(version_string = version_string,
                                          table_name = db_table_name,
-                                         conn = conn,
                                          schema = schema,
                                          fk_parent_tables = fk_parent_tables)
   # Filter the outgoing data frame according to the version_index
