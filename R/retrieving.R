@@ -304,20 +304,21 @@ pl_collect_from_hash <- function(hashed_table,
 #'
 #' @export
 pl_filter_collect <- function(db_table_name,
+                              ...,
                               version_string = NULL,
-                              datasets = NULL,
-                              versions = NULL,
-                              countries = NULL,
-                              years = NULL,
-                              methods = NULL,
-                              last_stages = NULL,
-                              energy_types = NULL,
-                              gross_nets = NULL,
-                              includes_neu = NULL,
-                              industry_aggs = NULL,
-                              product_aggs = NULL,
-                              chopped_mats = NULL,
-                              chopped_vars = NULL,
+                              # datasets = NULL,
+                              # versions = NULL,
+                              # countries = NULL,
+                              # years = NULL,
+                              # methods = NULL,
+                              # last_stages = NULL,
+                              # energy_types = NULL,
+                              # gross_nets = NULL,
+                              # includes_neu = NULL,
+                              # industry_aggs = NULL,
+                              # product_aggs = NULL,
+                              # chopped_mats = NULL,
+                              # chopped_vars = NULL,
                               collect = FALSE,
                               conn,
                               schema = schema_from_conn(conn = conn),
@@ -335,18 +336,18 @@ pl_filter_collect <- function(db_table_name,
                               matval = "matval",
                               rowtype_colname = "rowtype",
                               coltype_colname = "coltype",
-                              country_colname = IEATools::iea_cols$country,
-                              year_colname = IEATools::iea_cols$year,
-                              method_colname = IEATools::iea_cols$method,
-                              last_stage_colname = IEATools::iea_cols$last_stage,
-                              energy_type_colname = IEATools::iea_cols$energy_type,
-                              gross_net_colname = Recca::efficiency_cols$gross_net,
-                              dataset_colname = PFUPipelineTools::dataset_info$dataset_colname,
-                              includes_neu_colname = Recca::psut_cols$includes_neu,
-                              product_agg_colname = PFUPipelineTools::aggregation_df_cols$product_aggregation,
-                              industry_agg_colname =  PFUPipelineTools::aggregation_df_cols$industry_aggregation,
-                              chopped_mat_colname = PFUPipelineTools::aggregation_df_cols$chopped_mat,
-                              chopped_var_colname = PFUPipelineTools::aggregation_df_cols$chopped_var,
+                              # country_colname = IEATools::iea_cols$country,
+                              # year_colname = IEATools::iea_cols$year,
+                              # method_colname = IEATools::iea_cols$method,
+                              # last_stage_colname = IEATools::iea_cols$last_stage,
+                              # energy_type_colname = IEATools::iea_cols$energy_type,
+                              # gross_net_colname = Recca::efficiency_cols$gross_net,
+                              # dataset_colname = PFUPipelineTools::dataset_info$dataset_colname,
+                              # includes_neu_colname = Recca::psut_cols$includes_neu,
+                              # product_agg_colname = PFUPipelineTools::aggregation_df_cols$product_aggregation,
+                              # industry_agg_colname =  PFUPipelineTools::aggregation_df_cols$industry_aggregation,
+                              # chopped_mat_colname = PFUPipelineTools::aggregation_df_cols$chopped_mat,
+                              # chopped_var_colname = PFUPipelineTools::aggregation_df_cols$chopped_var,
                               valid_from_version_colname = PFUPipelineTools::version_cols$valid_from_version,
                               valid_to_version_colname = PFUPipelineTools::version_cols$valid_to_version) {
 
@@ -375,70 +376,77 @@ pl_filter_collect <- function(db_table_name,
                fk_parent_tables = fk_parent_tables,
                collect = FALSE)
 
-  cnames <- colnames(out)
-  if (!is.null(datasets) & dataset_colname %in% cnames) {
-    # %in% seemingly works only on vectors, not lists
-    # And the vectors need to be previously defined.
-    # They can't appear inline as unlist(X)
-    dsets <- unlist(datasets)
-    out <- out |>
-      dplyr::filter(.data[[dataset_colname]] %in% dsets)
-  }
-  if (!is.null(countries) & country_colname %in% cnames) {
-    couns <- unlist(countries)
-    out <- out |>
-      dplyr::filter(.data[[country_colname]] %in% couns)
-  }
-  if (!is.null(years) & year_colname %in% cnames) {
-    yrs <- unlist(years)
-    out <- out |>
-      dplyr::filter(.data[[year_colname]] %in% yrs)
-  }
-  if (!is.null(methods) & method_colname %in% cnames) {
-    meths <- unlist(methods)
-    out <- out |>
-      dplyr::filter(.data[[method_colname]] %in% meths)
-  }
-  if (!is.null(last_stages) & last_stage_colname %in% cnames) {
-    lstages <- unlist(last_stages)
-    out <- out |>
-      dplyr::filter(.data[[last_stage_colname]] %in% lstages)
-  }
-  if (!is.null(energy_types) & energy_type_colname %in% cnames) {
-    etypes <- unlist(energy_types)
-    out <- out |>
-      dplyr::filter(.data[[energy_type_colname]] %in% etypes)
-  }
-  if (!is.null(gross_nets) & gross_net_colname %in% cnames) {
-    grossnettypes <- unlist(gross_nets)
-    out <- out |>
-      dplyr::filter(.data[[gross_net_colname]] %in% grossnettypes)
-  }
-  if (!is.null(includes_neu) & includes_neu_colname %in% cnames) {
-    ineu <- unlist(includes_neu)
-    out <- out |>
-      dplyr::filter(.data[[includes_neu_colname]] %in% ineu)
-  }
-  if (!is.null(industry_aggs) & industry_agg_colname %in% cnames) {
-    indaggs <- unlist(industry_aggs)
-    out <- out |>
-      dplyr::filter(.data[[industry_agg_colname]] %in% indaggs)
-  }
-  if (!is.null(product_aggs) & product_agg_colname %in% cnames) {
-    prodaggs <- unlist(product_aggs)
-    out <- out |>
-      dplyr::filter(.data[[product_agg_colname]] %in% prodaggs)
-  }
-  if (!is.null(chopped_mats) & chopped_mat_colname %in% cnames) {
-    chopped_mats <- unlist(chopped_mats)
-    out <- out |>
-      dplyr::filter(.data[[chopped_mat_colname]] %in% chopped_mats)
-  }
-  if (!is.null(chopped_vars) & chopped_var_colname %in% cnames) {
-    chopped_vars <- unlist(chopped_vars)
-    out <- out |>
-      dplyr::filter(.data[[chopped_var_colname]] %in% chopped_vars)
-  }
+
+  # Filter based on the expressions in ...
+  filter_args <- rlang::enquos(...)
+  out <- out |>
+    dplyr::filter(!!!filter_args)
+
+
+  # cnames <- colnames(out)
+  # if (!is.null(datasets) & dataset_colname %in% cnames) {
+  #   # %in% seemingly works only on vectors, not lists
+  #   # And the vectors need to be previously defined.
+  #   # They can't appear inline as unlist(X)
+  #   dsets <- unlist(datasets)
+  #   out <- out |>
+  #     dplyr::filter(.data[[dataset_colname]] %in% dsets)
+  # }
+  # if (!is.null(countries) & country_colname %in% cnames) {
+  #   couns <- unlist(countries)
+  #   out <- out |>
+  #     dplyr::filter(.data[[country_colname]] %in% couns)
+  # }
+  # if (!is.null(years) & year_colname %in% cnames) {
+  #   yrs <- unlist(years)
+  #   out <- out |>
+  #     dplyr::filter(.data[[year_colname]] %in% yrs)
+  # }
+  # if (!is.null(methods) & method_colname %in% cnames) {
+  #   meths <- unlist(methods)
+  #   out <- out |>
+  #     dplyr::filter(.data[[method_colname]] %in% meths)
+  # }
+  # if (!is.null(last_stages) & last_stage_colname %in% cnames) {
+  #   lstages <- unlist(last_stages)
+  #   out <- out |>
+  #     dplyr::filter(.data[[last_stage_colname]] %in% lstages)
+  # }
+  # if (!is.null(energy_types) & energy_type_colname %in% cnames) {
+  #   etypes <- unlist(energy_types)
+  #   out <- out |>
+  #     dplyr::filter(.data[[energy_type_colname]] %in% etypes)
+  # }
+  # if (!is.null(gross_nets) & gross_net_colname %in% cnames) {
+  #   grossnettypes <- unlist(gross_nets)
+  #   out <- out |>
+  #     dplyr::filter(.data[[gross_net_colname]] %in% grossnettypes)
+  # }
+  # if (!is.null(includes_neu) & includes_neu_colname %in% cnames) {
+  #   ineu <- unlist(includes_neu)
+  #   out <- out |>
+  #     dplyr::filter(.data[[includes_neu_colname]] %in% ineu)
+  # }
+  # if (!is.null(industry_aggs) & industry_agg_colname %in% cnames) {
+  #   indaggs <- unlist(industry_aggs)
+  #   out <- out |>
+  #     dplyr::filter(.data[[industry_agg_colname]] %in% indaggs)
+  # }
+  # if (!is.null(product_aggs) & product_agg_colname %in% cnames) {
+  #   prodaggs <- unlist(product_aggs)
+  #   out <- out |>
+  #     dplyr::filter(.data[[product_agg_colname]] %in% prodaggs)
+  # }
+  # if (!is.null(chopped_mats) & chopped_mat_colname %in% cnames) {
+  #   chopped_mats <- unlist(chopped_mats)
+  #   out <- out |>
+  #     dplyr::filter(.data[[chopped_mat_colname]] %in% chopped_mats)
+  # }
+  # if (!is.null(chopped_vars) & chopped_var_colname %in% cnames) {
+  #   chopped_vars <- unlist(chopped_vars)
+  #   out <- out |>
+  #     dplyr::filter(.data[[chopped_var_colname]] %in% chopped_vars)
+  # }
 
   if (collect) {
     # Collect (execute the SQL), if desired.

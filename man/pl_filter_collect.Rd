@@ -6,20 +6,8 @@
 \usage{
 pl_filter_collect(
   db_table_name,
+  ...,
   version_string = NULL,
-  datasets = NULL,
-  versions = NULL,
-  countries = NULL,
-  years = NULL,
-  methods = NULL,
-  last_stages = NULL,
-  energy_types = NULL,
-  gross_nets = NULL,
-  includes_neu = NULL,
-  industry_aggs = NULL,
-  product_aggs = NULL,
-  chopped_mats = NULL,
-  chopped_vars = NULL,
   collect = FALSE,
   conn,
   schema = schema_from_conn(conn = conn),
@@ -34,18 +22,6 @@ pl_filter_collect(
   matval = "matval",
   rowtype_colname = "rowtype",
   coltype_colname = "coltype",
-  country_colname = IEATools::iea_cols$country,
-  year_colname = IEATools::iea_cols$year,
-  method_colname = IEATools::iea_cols$method,
-  last_stage_colname = IEATools::iea_cols$last_stage,
-  energy_type_colname = IEATools::iea_cols$energy_type,
-  gross_net_colname = Recca::efficiency_cols$gross_net,
-  dataset_colname = PFUPipelineTools::dataset_info$dataset_colname,
-  includes_neu_colname = Recca::psut_cols$includes_neu,
-  product_agg_colname = PFUPipelineTools::aggregation_df_cols$product_aggregation,
-  industry_agg_colname = PFUPipelineTools::aggregation_df_cols$industry_aggregation,
-  chopped_mat_colname = PFUPipelineTools::aggregation_df_cols$chopped_mat,
-  chopped_var_colname = PFUPipelineTools::aggregation_df_cols$chopped_var,
   valid_from_version_colname = PFUPipelineTools::version_cols$valid_from_version,
   valid_to_version_colname = PFUPipelineTools::version_cols$valid_to_version
 )
@@ -54,6 +30,54 @@ pl_filter_collect(
 \item{db_table_name}{The string name of the database table to be filtered.}
 
 \item{version_string}{A string of length 1 that indicates the desired version.}
+
+\item{collect}{A boolean that tells whether to download the result.
+Default is \code{FALSE}.
+See details.}
+
+\item{conn}{The database connection.}
+
+\item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
+Default is \code{schema_from_conn(conn = conn)}.
+See details.}
+
+\item{fk_parent_tables}{A named list of all parent tables
+for the foreign keys in \code{db_table_name}.
+Default is
+\code{get_all_fk_tables(conn = conn, schema = schema)}.
+See details.}
+
+\item{index_map_name}{The name of the table that serves as the index for row and column names.
+Default is "Index".}
+
+\item{index_map}{The index map for the matrices in the database at \code{conn}.
+Default is \code{fk_parent_tables[[index_table_name]]}.}
+
+\item{rctype_table_name}{The name of the table that contains row and column types.
+Default is "matnameRCType".}
+
+\item{rctypes}{The table of row and column types for the database at \code{conn}.
+Default is \code{fk_parent_tables[[rctype_table_name]]}.}
+
+\item{matrix_class}{One of "Matrix" (the default) for sparse matrices or
+"matrix" (the base matrix representation in \code{R}) for non-sparse matrices.}
+
+\item{matname}{The name of the matrix name column.
+Default is "matname".}
+
+\item{matval}{The name of the matrix value column.
+Default is "matval".}
+
+\item{rowtype_colname, coltype_colname}{The names for row and column type columns in data frames.
+Defaults are "rowtype" and "coltype", respectively.}
+
+\item{valid_from_version_colname, valid_to_version_colname}{Names
+for columns containing version information.
+Defaults are
+\code{PFUPipelineTools::version_cols$valid_from_version}
+and
+\code{PFUPipelineTools::version_cols$valid_to_version},
+respectively.}
 
 \item{datasets}{A vector of dataset strings to be retained in the output.
 \code{NULL} (the default) returns all datasets.
@@ -106,56 +130,8 @@ Other reasonable values are "Specified", "Despecified", and "Grouped".}
 \item{chopped_vars}{A vector of strings identifying the matrix variables desired.
 \code{NULL} (the default) means all chopped variables should be returned.}
 
-\item{collect}{A boolean that tells whether to download the result.
-Default is \code{FALSE}.
-See details.}
-
-\item{conn}{The database connection.}
-
-\item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
-Default is \code{schema_from_conn(conn = conn)}.
-See details.}
-
-\item{fk_parent_tables}{A named list of all parent tables
-for the foreign keys in \code{db_table_name}.
-Default is
-\code{get_all_fk_tables(conn = conn, schema = schema)}.
-See details.}
-
-\item{index_map_name}{The name of the table that serves as the index for row and column names.
-Default is "Index".}
-
-\item{index_map}{The index map for the matrices in the database at \code{conn}.
-Default is \code{fk_parent_tables[[index_table_name]]}.}
-
-\item{rctype_table_name}{The name of the table that contains row and column types.
-Default is "matnameRCType".}
-
-\item{rctypes}{The table of row and column types for the database at \code{conn}.
-Default is \code{fk_parent_tables[[rctype_table_name]]}.}
-
-\item{matrix_class}{One of "Matrix" (the default) for sparse matrices or
-"matrix" (the base matrix representation in \code{R}) for non-sparse matrices.}
-
-\item{matname}{The name of the matrix name column.
-Default is "matname".}
-
-\item{matval}{The name of the matrix value column.
-Default is "matval".}
-
-\item{rowtype_colname, coltype_colname}{The names for row and column type columns in data frames.
-Defaults are "rowtype" and "coltype", respectively.}
-
 \item{dataset_colname, country_colname, year_colname, method_colname, last_stage_colname, energy_type_colname, gross_net_colname, product_agg_colname, industry_agg_colname, chopped_mat_colname, chopped_var_colname}{Columns that are likely to be in db_table_name
 and may be filtered with \code{\%in\%}-style subsetting.}
-
-\item{valid_from_version_colname, valid_to_version_colname}{Names
-for columns containing version information.
-Defaults are
-\code{PFUPipelineTools::version_cols$valid_from_version}
-and
-\code{PFUPipelineTools::version_cols$valid_to_version},
-respectively.}
 
 \item{includes_neu_col}{The name of a column that tells whether non-energy
 use (NEU) is included.
