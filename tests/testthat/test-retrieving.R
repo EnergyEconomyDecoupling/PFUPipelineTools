@@ -444,7 +444,119 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
                       fk_parent_tables = fk_parent_tables,
                       collect = TRUE) |>
     expect_equal(expected_all |> dplyr::filter(ValidToVersion == "v3"))
+  # Try with different orders for arguments
+  db_table_name |>
+    pl_filter_collect(Country == "GHA",
+                      version_string = "v3",
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(ValidToVersion == "v3"))
+  pl_filter_collect(Country == "GHA",
+                    version_string = "v3",
+                    db_table_name = db_table_name,
+                    conn = conn,
+                    schema = schema,
+                    fk_parent_tables = fk_parent_tables,
+                    collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(ValidToVersion == "v3"))
+  pl_filter_collect(version_string = "v3",
+                    db_table_name = db_table_name,
+                    conn = conn,
+                    schema = schema,
+                    fk_parent_tables = fk_parent_tables,
+                    collect = TRUE,
+                    Country == "GHA") |>
+    expect_equal(expected_all |> dplyr::filter(ValidToVersion == "v3"))
+  pl_filter_collect(version_string = "v3",
+                    conn = conn,
+                    schema = schema,
+                    fk_parent_tables = fk_parent_tables,
+                    collect = TRUE,
+                    Country == "GHA",
+                    db_table_name = db_table_name) |>
+    expect_equal(expected_all |> dplyr::filter(ValidToVersion == "v3"))
 
+  # Try a filter in both version_string and ...
+  db_table_name |>
+    pl_filter_collect(Country == "USA",
+                      version_string = "v2",
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(ValidToVersion == "v2" &
+                                                 Country == "USA"))
+
+  # Try an inequality filter
+  db_table_name |>
+    pl_filter_collect(val <= 6,
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(val <= 6))
+
+  # Try an %in% filter
+  db_table_name |>
+    pl_filter_collect(Country %in% c("GHA", "USA"),
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(Country %in% c("GHA", "USA")))
+
+  # Add extra conditions
+  db_table_name |>
+    pl_filter_collect(val <= 6 & Year >= 1968,
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(val <= 6 & Year >= 1968))
+  # Split conditions
+  db_table_name |>
+    pl_filter_collect(val <= 6, Year >= 1968,
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(val <= 6 & Year >= 1968))
+  db_table_name |>
+    pl_filter_collect(val <= 6 & Year >= 1968,
+                      Country == "ZAF",
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(val <= 6 &
+                                                 Year >= 1968 &
+                                                 Country == "ZAF"))
+
+  # Try degenerate cases
+  db_table_name |>
+    pl_filter_collect(val == 100,
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all[0, ])
+  db_table_name |>
+    pl_filter_collect(val == 100,
+                      version_string = "v1",
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all[0, ])
+  db_table_name |>
+    pl_filter_collect(version_string = "bogus",
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_error(regexp = "unable to convert the following entries to foreign keys")
 
 
   #### Test pl_collect_from_hash() with versions
@@ -459,20 +571,32 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
 
   # Collect from hash while specifying a version
   hash_dbt |>
-    pl_collect_from_hash(version_string = "v1", conn = conn) |>
+    pl_collect_from_hash(version_string = "v1",
+                         conn = conn,
+                         schema = schema,
+                         fk_parent_tables = fk_parent_tables) |>
     expect_equal(expected_all |> dplyr::filter(ValidFromVersion == "v1"))
 
   hash_dbt |>
-    pl_collect_from_hash(version_string = "v2", conn = conn) |>
+    pl_collect_from_hash(version_string = "v2",
+                         conn = conn,
+                         schema = schema,
+                         fk_parent_tables = fk_parent_tables) |>
     expect_equal(expected_all |> dplyr::filter(ValidFromVersion == "v2"))
 
   hash_dbt |>
-    pl_collect_from_hash(version_string = "v3", conn = conn) |>
+    pl_collect_from_hash(version_string = "v3",
+                         conn = conn,
+                         schema = schema,
+                         fk_parent_tables = fk_parent_tables) |>
     expect_equal(expected_all |> dplyr::filter(ValidToVersion == "v3"))
 
   for (i in 4:10) {
     hash_dbt |>
-      pl_collect_from_hash(version_string = paste0("v", i), conn = conn) |>
+      pl_collect_from_hash(version_string = paste0("v", i),
+                           conn = conn,
+                           schema = schema,
+                           fk_parent_tables = fk_parent_tables) |>
       expect_equal(expected_all |> dplyr::filter(ValidFromVersion == "v4"))
   }
 
