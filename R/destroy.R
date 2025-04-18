@@ -10,7 +10,7 @@
 #' Because this is a very destructive function,
 #' the caller must opt into behaviors.
 #'
-#' When `drop_tables` is `TRUE`,  `destroy_cache` is implied to be `TRUE`,
+#' When `drop_tables` is `TRUE`, `destroy_cache` is implied to be `TRUE`,
 #' and the targets cache is destroyed.
 #'
 #' At present
