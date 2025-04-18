@@ -8,6 +8,13 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+* `pl_filter_collect()` gains new argument `...`
+  in which filtering expressions can be placed.
+  `...` replaces the myriad other arguments which
+  provided filtering for possible columns. 
+  This approach provides significantly 
+  more flexibility for users of this function.
+  Plus, inside `pl_filter_collect()`, the code is much cleaner!
 * In several places, 
   code no longer passes `conn`
   when both `schema` and `fk_parent_tables` 

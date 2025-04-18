@@ -749,6 +749,31 @@ encode_fks <- function(.df,
 #' An appropriate value for `fk_parent_tables` can be obtained
 #' from `get_all_fk_tables()`.
 #'
+#' There are two three ways to use this function.
+#'
+#' Offline:
+#' supply a value for `.df` and values for `schema` and `fk_parent_tables`.
+#' In offline mode, `conn` is not needed and
+#' no connection to a database at `conn` will be made.
+#'
+#' Download:
+#' accept the default value for `.df` (`NULL`)
+#' and supply a `conn`.
+#' In download mode, `db_table_name` will be downloaded
+#' from the database at `conn`.
+#'
+#' Fast download:
+#' supply values for all of `conn`, `schema` and `fk_parent_tables`.
+#' `schema` and `fk_parent_tables()`
+#' can be obtained by calling
+#' `schema_from_conn(conn = conn)` and
+#' `get_all_fk_tables(conn = conn, schema = schema)`,
+#' respectively.
+#' In fast download mode,
+#' execution time is reduced, because the database at `conn`
+#' has already been queried for `schema` and `fk_parent_tables`.
+#' Fast download mode quickens multiple downloads to the same database.
+#'
 #' @param .df A data frame whose foreign keys are to be decoded.
 #'            Default is `NULL`, meaning that
 #'            `.df` should be downloaded from `db_table_name` at `conn`
@@ -762,11 +787,15 @@ encode_fks <- function(.df,
 #'                Default is `FALSE`.
 #'                Applies only when `.df` is `NULL`.
 #'                Note that to prevent downloads
-#'                from `conn`, supply a value for `schema`,
-#'                whose default value will download a `dm` object
+#'                from `conn`, supply values for `schema`
+#'                and `fk_parent_tables`,
+#'                whose default values will download both
+#'                a `dm` object and
+#'                the foreign key parent tables
 #'                from the database at `conn`.
 #' @param conn An optional database connection.
-#'             Necessary only for the default values of `schema` and `fk_parent_tables`.
+#'             Necessary only for the default values of `.df`, `schema`,
+#'             and `fk_parent_tables`.
 #'             Also necessary if `collect = TRUE`.
 #'             Default is `NULL`.
 #' @param schema The data model (`dm` object) for the database in `conn`.

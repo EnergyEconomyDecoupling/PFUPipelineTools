@@ -195,7 +195,7 @@ test_that("encode_fks() works with re-routed foreign keys", {
     dm::dm_add_pk(ECCStage, ECCStageID) |>
     dm::dm_add_fk(TestUpsertTable, LastStage, ECCStage, ECCStageID)
   dm::copy_dm_to(conn, DM, temporary = FALSE, set_key_constraints = TRUE)
-  Sys.sleep(0.5) # Make sure the database has time to put everything in place.
+  # Sys.sleep(0.5) # Make sure the database has time to put everything in place.
   pl_upsert(TestUpsertTable,
             conn = conn,
             db_table_name = "TestUpsertTable",
@@ -203,8 +203,7 @@ test_that("encode_fks() works with re-routed foreign keys", {
   # Get the table to make sure it worked
   retrieved <- DBI::dbReadTable(conn, "TestUpsertTable")
   expect_equal(retrieved, TestUpsertTable)
-  decoded <- pl_filter_collect("TestUpsertTable", last_stages = NULL, conn = conn, collect = TRUE)
-  Sys.sleep(0.5) # Make sure the database has time to put everything in place.
+  decoded <- pl_filter_collect("TestUpsertTable", conn = conn, collect = TRUE)
   expect_equal(decoded, TestUpsertTable2, ignore_attr = TRUE)
   # Now try with decoding
   pl_upsert(TestUpsertTable2,
@@ -212,12 +211,11 @@ test_that("encode_fks() works with re-routed foreign keys", {
             db_table_name = "TestUpsertTable",
             in_place = TRUE,
             encode_fks = TRUE)
-  Sys.sleep(0.5) # Make sure the database has time to put everything in place.
+  # Sys.sleep(0.5) # Make sure the database has time to put everything in place.
   retrieved2 <- DBI::dbReadTable(conn, "TestUpsertTable")
   expect_equal(retrieved2, TestUpsertTable)
-  Sys.sleep(0.5) # Make sure the database has time to put everything in place.
   # Retrieve with decoding
-  decoded2 <- pl_filter_collect("TestUpsertTable", last_stages = NULL, conn = conn, collect = TRUE)
+  decoded2 <- pl_filter_collect("TestUpsertTable", conn = conn, collect = TRUE)
   expect_equal(decoded2, TestUpsertTable2, ignore_attr = TRUE)
 
   # Clean up after ourselves

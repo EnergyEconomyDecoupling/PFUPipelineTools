@@ -34,12 +34,16 @@ by \code{dplyr::collect()}).
 Default is \code{FALSE}.
 Applies only when \code{.df} is \code{NULL}.
 Note that to prevent downloads
-from \code{conn}, supply a value for \code{schema},
-whose default value will download a \code{dm} object
+from \code{conn}, supply values for \code{schema}
+and \code{fk_parent_tables},
+whose default values will download both
+a \code{dm} object and
+the foreign key parent tables
 from the database at \code{conn}.}
 
 \item{conn}{An optional database connection.
-Necessary only for the default values of \code{schema} and \code{fk_parent_tables}.
+Necessary only for the default values of \code{.df}, \code{schema},
+and \code{fk_parent_tables}.
 Also necessary if \code{collect = TRUE}.
 Default is \code{NULL}.}
 
@@ -83,6 +87,31 @@ and fk keys (usually integers).
 are retrieved by name when needed.
 An appropriate value for \code{fk_parent_tables} can be obtained
 from \code{get_all_fk_tables()}.
+
+There are two three ways to use this function.
+
+Offline:
+supply a value for \code{.df} and values for \code{schema} and \code{fk_parent_tables}.
+In offline mode, \code{conn} is not needed and
+no connection to a database at \code{conn} will be made.
+
+Download:
+accept the default value for \code{.df} (\code{NULL})
+and supply a \code{conn}.
+In download mode, \code{db_table_name} will be downloaded
+from the database at \code{conn}.
+
+Fast download:
+supply values for all of \code{conn}, \code{schema} and \code{fk_parent_tables}.
+\code{schema} and \code{fk_parent_tables()}
+can be obtained by calling
+\code{schema_from_conn(conn = conn)} and
+\code{get_all_fk_tables(conn = conn, schema = schema)},
+respectively.
+In fast download mode,
+execution time is reduced, because the database at \code{conn}
+has already been queried for \code{schema} and \code{fk_parent_tables}.
+Fast download mode quickens multiple downloads to the same database.
 }
 \seealso{
 \code{\link[=encode_fks]{encode_fks()}} for the reverse operation.

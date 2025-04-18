@@ -173,24 +173,21 @@ pl_collect_from_hash <- function(hashed_table,
 #'
 #' Often when collecting data from the database,
 #' filtering is desired.
-#' But filtering based on foreign keys (as stored in the database)
+#' But filtering based on foreign keys
+#' (fks, as stored in the database)
 #' is effectively impossible, because of foreign key encoding.
 #' This function filters based on
 #' fk values (typically strings),
 #' not fk keys (typically integers),
 #' thereby simplifying the filtering process,
 #' with optional downloading thereafter.
-#' By default, a `tbl` is returned
+#' By default (`collect = FALSE`),
+#' a `tbl` is returned
 #' (and data are not downloaded from the database).
 #' Use `dplyr::collect()` to execute the resulting SQL query
 #' and obtain an in-memory data frame.
 #' Or, set `collect = TRUE` to execute the SQL and
 #' return an in-memory data frame.
-#'
-#' To obtain `db_table_name` _without_ filtering
-#' but with fk keys (typically integers)
-#' decoded to fk values (typically strings),
-#' call this function with nothing in the `...` argument.
 #'
 #' `schema` is a data model (`dm` object) for the CL-PFU database.
 #' It can be obtained from calling `schema_from_conn()`.
@@ -212,56 +209,29 @@ pl_collect_from_hash <- function(hashed_table,
 #' by supplying a pre-computed named list of
 #' foreign key tables.
 #'
-#' Setting any of the filtering arguments
-#' (`countries`, `years`, `methods`, `last_stages`, `energy_types`, `includes_neu`)
-#' to `NULL` turns off filtering and returns all values.
-#'
-#' When `collect = TRUE`,
-#' [decode_matsindf()] is called on the downloaded data frame.
-#'
 #' @param db_table_name The string name of the database table to be filtered.
-#' @param version_string A string of length 1 that indicates the desired version.
+#' @param ... Filter conditions on the data frame,
+#'            such as `Country == "USA"` or `Year %in% 1960:2020`.
+#'            These conditions reduce data volume,
+#'            because they are applied prior to downloading from `conn`.
+#'            If no rows match these conditions,
+#'            a data frame with no rows is returned.
+#' @param version_string A string of length `1` that indicates the desired version.
+#'                       `NULL`, the default, means to download all versions available in
+#'                       `db_table_name`.
+#'                       An error will be emitted if `version_string` is unknown.
 #' @param datasets A vector of dataset strings to be retained in the output.
 #'                 `NULL` (the default) returns all datasets.
 #'                 Another interesting option is
 #'                 `PFUPipelineTools::dataset_info$clpfu_iea`.
-#' @param versions A string vector indicating the versions to be downloaded.
-#'                 `NULL`, the default, means to download all versions available in the table.
-#' @param countries A vector of country strings to be retained in the output.
-#'                  `NULL` (the default) returns all countries.
-#'                  Another useful option is `as.character(PFUPipelineTools::canonical_countries)`.
-#' @param years A vector of integers to be retained in the output.
-#'              `NULL` (the default) returns all years.
-#'              Another option is `1960:2020`.
-#' @param methods A vector of method strings to be retained in the output.
-#'                `NULL` (the default) returns all methods.
-#'                Another good option is "PCM" (physical content method).
-#' @param last_stages A vector of last stage strings to be retained in the output.
-#'                    At present, only "Final" and "Useful" are implemented.
-#'                    `NULL` (the default) returns all last stages.
-#' @param energy_types A vector of energy type strings to be retained in the output.
-#'                     At present, only "E" (energy) and "X" (exergy) are implemented.
-#'                     `NULL` (the default) returns all energy types.
-#' @param gross_nets A vector of values for the `GrossNet` column (when it exists).
-#'                   `NULL` (the default) turns off filtering on this column.
-#'                   Other good values are "Gross" and "Net".
-#' @param includes_neu A vector of booleans that indicates what to retain in output.
-#'                     `TRUE` means non-energy use is included in the ECCs.
-#'                     `FALSE` means non-energy use is excluded from the ECCs.
-#'                     Default is `NULL`, meaning extract both `TRUE` and `FALSE values.
-#' @param industry_aggs A vector of strings identifying the industry aggregations desired.
-#'                     `NULL` (the default) means all industry aggregations should be returned.
-#'                     Other reasonable values are "Specified", "Despecified", and "Grouped".
-#' @param product_aggs A vector of strings identifying the product aggregations desired.
-#'                     `NULL` (the default) means all product aggregations should be returned.
-#'                     Other reasonable values are "Specified", "Despecified", and "Grouped".
-#' @param chopped_mats A vector of strings identifying the matrix chops desired.
-#'                     `NULL` (the default) means all chopped matrices should be returned.
-#' @param chopped_vars A vector of strings identifying the matrix variables desired.
-#'                     `NULL` (the default) means all chopped variables should be returned.
 #' @param collect A boolean that tells whether to download the result.
 #'                Default is `FALSE`.
 #'                See details.
+#' @param create_matsindf A boolean that tells whether to create a matsindf data frame
+#'                        from the collected data frame.
+#'                        Default is the value of `collect`,
+#'                        such that setting `collect = TRUE` also
+#'                        implies `create_matsindf`.
 #' @param conn The database connection.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               Default is `schema_from_conn(conn = conn)`.
@@ -282,16 +252,14 @@ pl_collect_from_hash <- function(hashed_table,
 #' @param matrix_class One of "Matrix" (the default) for sparse matrices or
 #'                     "matrix" (the base matrix representation in `R`) for non-sparse matrices.
 #' @param matname The name of the matrix name column.
-#'                Default is "matname".
+#'                Default is `PFUPipelineTools::mat_meta_cols$matname`.
 #' @param matval The name of the matrix value column.
-#'               Default is "matval".
+#'               Default is `PFUPipelineTools::mat_meta_cols$matval`.
 #' @param rowtype_colname,coltype_colname The names for row and column type columns in data frames.
-#'                                        Defaults are "rowtype" and "coltype", respectively.
-#' @param dataset_colname,country_colname,year_colname,method_colname,last_stage_colname,energy_type_colname,gross_net_colname,product_agg_colname,industry_agg_colname,chopped_mat_colname,chopped_var_colname Columns that are likely to be in db_table_name
-#'                                                                             and may be filtered with `%in%`-style subsetting.
-#' @param includes_neu_col The name of a column that tells whether non-energy
-#'                         use (NEU) is included.
-#'                         Default is `Recca::psut_cols$includes_neu`.
+#'                                        Defaults are
+#'                                        `PFUPipelineTools::mat_meta_cols$rowtype` and
+#'                                        `PFUPipelineTools::mat_meta_cols$coltype`,
+#'                                        respectively.
 #' @param valid_from_version_colname,valid_to_version_colname Names
 #'              for columns containing version information.
 #'              Defaults are
@@ -304,21 +272,10 @@ pl_collect_from_hash <- function(hashed_table,
 #'
 #' @export
 pl_filter_collect <- function(db_table_name,
+                              ...,
                               version_string = NULL,
-                              datasets = NULL,
-                              versions = NULL,
-                              countries = NULL,
-                              years = NULL,
-                              methods = NULL,
-                              last_stages = NULL,
-                              energy_types = NULL,
-                              gross_nets = NULL,
-                              includes_neu = NULL,
-                              industry_aggs = NULL,
-                              product_aggs = NULL,
-                              chopped_mats = NULL,
-                              chopped_vars = NULL,
                               collect = FALSE,
+                              create_matsindf = collect,
                               conn,
                               schema = schema_from_conn(conn = conn),
                               fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
@@ -331,22 +288,10 @@ pl_filter_collect <- function(db_table_name,
                                                    schema = schema,
                                                    fk_parent_tables = fk_parent_tables),
                               matrix_class = c("Matrix", "matrix"),
-                              matname = "matname",
-                              matval = "matval",
-                              rowtype_colname = "rowtype",
-                              coltype_colname = "coltype",
-                              country_colname = IEATools::iea_cols$country,
-                              year_colname = IEATools::iea_cols$year,
-                              method_colname = IEATools::iea_cols$method,
-                              last_stage_colname = IEATools::iea_cols$last_stage,
-                              energy_type_colname = IEATools::iea_cols$energy_type,
-                              gross_net_colname = Recca::efficiency_cols$gross_net,
-                              dataset_colname = PFUPipelineTools::dataset_info$dataset_colname,
-                              includes_neu_colname = Recca::psut_cols$includes_neu,
-                              product_agg_colname = PFUPipelineTools::aggregation_df_cols$product_aggregation,
-                              industry_agg_colname =  PFUPipelineTools::aggregation_df_cols$industry_aggregation,
-                              chopped_mat_colname = PFUPipelineTools::aggregation_df_cols$chopped_mat,
-                              chopped_var_colname = PFUPipelineTools::aggregation_df_cols$chopped_var,
+                              matname = PFUPipelineTools::mat_meta_cols$matname,
+                              matval = PFUPipelineTools::mat_meta_cols$matval,
+                              rowtype_colname = PFUPipelineTools::mat_meta_cols$rowtype,
+                              coltype_colname = PFUPipelineTools::mat_meta_cols$coltype,
                               valid_from_version_colname = PFUPipelineTools::version_cols$valid_from_version,
                               valid_to_version_colname = PFUPipelineTools::version_cols$valid_to_version) {
 
@@ -354,20 +299,19 @@ pl_filter_collect <- function(db_table_name,
 
   out <- dplyr::tbl(src = conn, db_table_name)
 
-  # First, filter according to version string,
+  # First, filter the tbl according to version string,
   # if desired.
   if (!is.null(version_string)) {
     out <- out |>
       filter_on_version_string(version_string = version_string,
                                db_table_name = db_table_name,
-                               conn = conn,
                                schema = schema,
                                fk_parent_tables = fk_parent_tables,
                                valid_from_version_colname = valid_from_version_colname,
                                valid_to_version_colname = valid_to_version_colname)
   }
 
-  # Next, decode the foreign keys with
+  # Next, decode the foreign keys in the tbl with
   # collect = FALSE to ensure a tbl is returned.
   out <- out |>
     decode_fks(db_table_name = db_table_name,
@@ -375,75 +319,20 @@ pl_filter_collect <- function(db_table_name,
                fk_parent_tables = fk_parent_tables,
                collect = FALSE)
 
-  cnames <- colnames(out)
-  if (!is.null(datasets) & dataset_colname %in% cnames) {
-    # %in% seemingly works only on vectors, not lists
-    # And the vectors need to be previously defined.
-    # They can't appear inline as unlist(X)
-    dsets <- unlist(datasets)
-    out <- out |>
-      dplyr::filter(.data[[dataset_colname]] %in% dsets)
-  }
-  if (!is.null(countries) & country_colname %in% cnames) {
-    couns <- unlist(countries)
-    out <- out |>
-      dplyr::filter(.data[[country_colname]] %in% couns)
-  }
-  if (!is.null(years) & year_colname %in% cnames) {
-    yrs <- unlist(years)
-    out <- out |>
-      dplyr::filter(.data[[year_colname]] %in% yrs)
-  }
-  if (!is.null(methods) & method_colname %in% cnames) {
-    meths <- unlist(methods)
-    out <- out |>
-      dplyr::filter(.data[[method_colname]] %in% meths)
-  }
-  if (!is.null(last_stages) & last_stage_colname %in% cnames) {
-    lstages <- unlist(last_stages)
-    out <- out |>
-      dplyr::filter(.data[[last_stage_colname]] %in% lstages)
-  }
-  if (!is.null(energy_types) & energy_type_colname %in% cnames) {
-    etypes <- unlist(energy_types)
-    out <- out |>
-      dplyr::filter(.data[[energy_type_colname]] %in% etypes)
-  }
-  if (!is.null(gross_nets) & gross_net_colname %in% cnames) {
-    grossnettypes <- unlist(gross_nets)
-    out <- out |>
-      dplyr::filter(.data[[gross_net_colname]] %in% grossnettypes)
-  }
-  if (!is.null(includes_neu) & includes_neu_colname %in% cnames) {
-    ineu <- unlist(includes_neu)
-    out <- out |>
-      dplyr::filter(.data[[includes_neu_colname]] %in% ineu)
-  }
-  if (!is.null(industry_aggs) & industry_agg_colname %in% cnames) {
-    indaggs <- unlist(industry_aggs)
-    out <- out |>
-      dplyr::filter(.data[[industry_agg_colname]] %in% indaggs)
-  }
-  if (!is.null(product_aggs) & product_agg_colname %in% cnames) {
-    prodaggs <- unlist(product_aggs)
-    out <- out |>
-      dplyr::filter(.data[[product_agg_colname]] %in% prodaggs)
-  }
-  if (!is.null(chopped_mats) & chopped_mat_colname %in% cnames) {
-    chopped_mats <- unlist(chopped_mats)
-    out <- out |>
-      dplyr::filter(.data[[chopped_mat_colname]] %in% chopped_mats)
-  }
-  if (!is.null(chopped_vars) & chopped_var_colname %in% cnames) {
-    chopped_vars <- unlist(chopped_vars)
-    out <- out |>
-      dplyr::filter(.data[[chopped_var_colname]] %in% chopped_vars)
-  }
+
+  # Finally, filter the foreign keys in the tbl based on the expressions in ...
+  filter_args <- rlang::enquos(...)
+  out <- out |>
+    dplyr::filter(!!!filter_args)
 
   if (collect) {
     # Collect (execute the SQL), if desired.
     out <- out |>
-      dplyr::collect() |>
+      dplyr::collect()
+  }
+
+  if (create_matsindf) {
+    out <- out |>
       # Now decode the matsindf data frame
       decode_matsindf(index_map = index_map,
                       rctypes = rctypes,
