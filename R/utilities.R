@@ -729,10 +729,10 @@ encode_matsindf <- function(.matsindf,
 #'                         Default calls `get_all_fk_tables()`.
 #' @param valid_from_version_colname The name of the ValidFromVersion column.
 #'                                   Default is
-#'                                   `PFUPipelineTools::version_cols$valid_from_version`.
+#'                                   `PFUPipelineTools::dataset_info$valid_from_version_colname`.
 #' @param valid_to_version_colname The name of the ValidToVersion column.
 #'                                 Default is
-#'                                 `PFUPipelineTools::version_cols$valid_to_version`.
+#'                                 `PFUPipelineTools::dataset_info$valid_to_version_colname`.
 #'
 #' @returns A filtered version of `tbl`.
 #'
@@ -744,8 +744,8 @@ filter_on_version_string <- function(tbl,
                                      conn = NULL,
                                      schema = schema_from_conn(conn = conn),
                                      fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
-                                     valid_from_version_colname = PFUPipelineTools::version_cols$valid_from_version,
-                                     valid_to_version_colname = PFUPipelineTools::version_cols$valid_to_version) {
+                                     valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
+                                     valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname) {
 
   version_string <- unique(version_string)
 
@@ -822,8 +822,8 @@ filter_on_version_string <- function(tbl,
 #'                         Default is `get_all_fk_tables(conn = conn, schema = schema)`.
 #' @param .version_colname A column in which versions are provided.
 #'                         This column is used internally.
-#'                         Default is `PFUPipelineTools::version_cols$valid_from_version`.
-#'                         `PFUPipelineTools::version_cols$valid_to_version`
+#'                         Default is `PFUPipelineTools::dataset_info$valid_from_version_colname`.
+#'                         `PFUPipelineTools::dataset_info$valid_to_version_colname`
 #'                         would also work.
 #'
 #' @export
@@ -834,7 +834,7 @@ encode_version_string <- function(version_string,
                                   conn = NULL,
                                   schema = schema_from_conn(conn = conn),
                                   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
-                                  .version_colname = PFUPipelineTools::version_cols$valid_from_version) {
+                                  .version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname) {
   # Make sure we have only 1 version
   assertthat::assert_that(length(version_string) == 1,
                           msg = paste("version_string must have length 1",

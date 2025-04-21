@@ -15,8 +15,8 @@ pl_collect_from_hash(
   tar_group_colname = PFUPipelineTools::hashed_table_colnames$tar_group_colname,
   matname_colname = PFUPipelineTools::mat_meta_cols$matname,
   matval_colname = PFUPipelineTools::mat_meta_cols$matval,
-  valid_from_version_colname = PFUPipelineTools::version_cols$valid_from_version,
-  valid_to_version_colname = PFUPipelineTools::version_cols$valid_to_version,
+  valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
+  valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname,
   conn,
   schema = schema_from_conn(conn = conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
@@ -71,9 +71,9 @@ respectively.}
 \item{valid_from_version_colname, valid_to_version_colname}{Names
 for columns containing version information.
 Defaults are
-\code{PFUPipelineTools::version_cols$valid_from_version}
+\code{PFUPipelineTools::dataset_info$valid_from_version}
 and
-\code{PFUPipelineTools::version_cols$valid_to_version},
+\code{PFUPipelineTools::dataset_info$valid_to_version},
 respectively.}
 
 \item{conn}{The database connection.}

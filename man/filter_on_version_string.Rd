@@ -12,8 +12,8 @@ filter_on_version_string(
   conn = NULL,
   schema = schema_from_conn(conn = conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
-  valid_from_version_colname = PFUPipelineTools::version_cols$valid_from_version,
-  valid_to_version_colname = PFUPipelineTools::version_cols$valid_to_version
+  valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
+  valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname
 )
 }
 \arguments{
@@ -44,11 +44,11 @@ Default calls \code{get_all_fk_tables()}.}
 
 \item{valid_from_version_colname}{The name of the ValidFromVersion column.
 Default is
-\code{PFUPipelineTools::version_cols$valid_from_version}.}
+\code{PFUPipelineTools::dataset_info$valid_from_version_colname}.}
 
 \item{valid_to_version_colname}{The name of the ValidToVersion column.
 Default is
-\code{PFUPipelineTools::version_cols$valid_to_version}.}
+\code{PFUPipelineTools::dataset_info$valid_to_version_colname}.}
 }
 \value{
 A filtered version of \code{tbl}.
