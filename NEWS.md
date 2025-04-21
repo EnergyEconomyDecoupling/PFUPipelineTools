@@ -38,7 +38,7 @@ which always resolves to the latest release.
   Supplying `c()` will download an empty table.
 * `pl_collect_from_hash()` is now more convenient
   with default arguments that pull values from `conn`.
-  The behavior of `pl_collect_from_hash()` is now consistent with
+  This behavior of `pl_collect_from_hash()` is now consistent with
   `pl_filter_collect()`.
 
 
