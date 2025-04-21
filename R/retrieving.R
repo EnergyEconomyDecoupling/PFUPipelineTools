@@ -220,7 +220,8 @@ pl_collect_from_hash <- function(hashed_table,
 #'                       that indicates the desired version(s).
 #'                       `NULL`, the default, means to download all versions available in
 #'                       `db_table_name`.
-#'                       An error will be emitted if `version_string` is unknown.
+#'                       `c()` (an empty string) returns a zero-row table.
+#'                       If `version_string` is invalid, an error will be emitted.
 #' @param datasets A vector of dataset strings to be retained in the output.
 #'                 `NULL` (the default) returns all datasets.
 #'                 Another interesting option is

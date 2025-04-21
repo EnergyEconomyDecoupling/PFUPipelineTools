@@ -187,14 +187,6 @@ test_that("pl_filter_collect() works as expected", {
   expect_equal(DBI::dbReadTable(conn, "PLFilterCollectTestTable"), PLFilterCollectTestTable)
   expect_equal(DBI::dbReadTable(conn, "PLFilterCollectTestCountry"), PLFilterCollectTestCountry)
 
-  # pl_filter_collect("PLFilterCollectTestTable",
-  #                   countries = "USA",
-  #                   conn = conn,
-  #                   collect = TRUE) |>
-  #   expect_equal(tibble::tribble(~Country, ~MyValue,
-  #                                "USA", 3.1415,
-  #                                "USA", 5.67e-8))
-
   pl_filter_collect("PLFilterCollectTestTable",
                     Country == "USA",
                     conn = conn,
@@ -205,15 +197,6 @@ test_that("pl_filter_collect() works as expected", {
 
   # Now try with the schema and fk tables pre-supplied
   fk_tables <- get_all_fk_tables(conn = conn, schema = DM)
-  # pl_filter_collect("PLFilterCollectTestTable",
-  #                   countries = "USA",
-  #                   conn = conn,
-  #                   collect = TRUE,
-  #                   schema = DM,
-  #                   fk_parent_tables = fk_tables) |>
-  #   expect_equal(tibble::tribble(~Country, ~MyValue,
-  #                                "USA", 3.1415,
-  #                                "USA", 5.67e-8))
 
   pl_filter_collect("PLFilterCollectTestTable",
                     Country == "USA",
@@ -225,18 +208,6 @@ test_that("pl_filter_collect() works as expected", {
                                  "USA", 3.1415,
                                  "USA", 5.67e-8))
 
-
-
-
-  # pl_filter_collect("PLFilterCollectTestTable",
-  #                   countries = c("USA", "ZAF"),
-  #                   conn = conn,
-  #                   collect = TRUE) |>
-  #   expect_equal(tibble::tribble(~Country, ~MyValue,
-  #                                "USA", 3.1415,
-  #                                "ZAF", 2.71828,
-  #                                "USA", 5.67e-8))
-
   pl_filter_collect("PLFilterCollectTestTable",
                     Country %in% c("USA", "ZAF"),
                     conn = conn,
@@ -247,11 +218,6 @@ test_that("pl_filter_collect() works as expected", {
                                  "USA", 5.67e-8))
 
   # Try without collecting
-  # uncollected <- pl_filter_collect(db_table_name = "PLFilterCollectTestTable",
-  #                                  countries = "USA",
-  #                                  conn = conn,
-  #                                  schema = DM,
-  #                                  fk_parent_tables = fk_tables)
   uncollected <- pl_filter_collect(db_table_name = "PLFilterCollectTestTable",
                                    Country == "USA",
                                    conn = conn,
@@ -592,7 +558,7 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
                       collect = TRUE) |>
     expect_error(regexp = 'Unknown version_string')
   # Setting a zero-length vector for version_string
-  # should result in no version filtering.
+  # should result in no rows.
   db_table_name |>
     pl_filter_collect(version_string = c(),
                       val == 100,
@@ -601,6 +567,16 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
                       fk_parent_tables = fk_parent_tables,
                       collect = TRUE) |>
     expect_equal(expected_all[0, ])
+  # Passing the same version string twice should give
+  # only one copy of the relevant data.
+  db_table_name |>
+    pl_filter_collect(version_string = c("v3", "v3", "v3"),
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(ValidToVersion == "v3"))
+
 
 
 

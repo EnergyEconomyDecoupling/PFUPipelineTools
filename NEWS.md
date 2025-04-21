@@ -24,8 +24,10 @@ which always resolves to the latest release.
 * `pl_collect_from_hash()` and `pl_filter_collect()`
   gain new argument `version_string`
   that provides capability to filter downloads by version.
-  The default value (`NULL`) means that all versions
-  should be downloaded.
+  The default value (`NULL`) downloads all versions.
+  Multiple versions can be downloaded by passing
+  a vector of strings.
+  Supplying `c()` will download an empty table.
 * `pl_collect_from_hash()` is now more convenient
   with default arguments that pull values from `conn`.
   The behavior of `pl_collect_from_hash()` is now consistent with

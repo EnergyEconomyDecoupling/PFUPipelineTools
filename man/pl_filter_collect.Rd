@@ -41,7 +41,8 @@ a data frame with no rows is returned.}
 that indicates the desired version(s).
 \code{NULL}, the default, means to download all versions available in
 \code{db_table_name}.
-An error will be emitted if \code{version_string} is unknown.}
+\code{c()} (an empty string) returns a zero-row table.
+If \code{version_string} is invalid, an error will be emitted.}
 
 \item{collect}{A boolean that tells whether to download the result.
 Default is \code{FALSE}.
