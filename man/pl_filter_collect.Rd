@@ -37,7 +37,8 @@ because they are applied prior to downloading from \code{conn}.
 If no rows match these conditions,
 a data frame with no rows is returned.}
 
-\item{version_string}{A string of length \code{1} that indicates the desired version.
+\item{version_string}{A string of length \code{1} or more
+that indicates the desired version(s).
 \code{NULL}, the default, means to download all versions available in
 \code{db_table_name}.
 An error will be emitted if \code{version_string} is unknown.}

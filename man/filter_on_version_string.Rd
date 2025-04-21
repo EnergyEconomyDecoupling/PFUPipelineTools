@@ -19,7 +19,7 @@ filter_on_version_string(
 \arguments{
 \item{tbl}{The \code{tbl} object that should be filtered.}
 
-\item{version_string}{A string of length 1 that indicates the desired version.}
+\item{version_string}{A vector of version strings to indicate the desired version(s).}
 
 \item{db_table_name}{The name of the table to be filtered.}
 
@@ -62,7 +62,8 @@ Rather, they are stored in a single row with the \code{ValidFromVersion}
 and \code{ValidToVersion} columns incremented appropriately.
 }
 \details{
-The desired version is supplied in the \code{version_string} argument.
+The desired version is supplied in the \code{version_string} argument,
+which can be a vector of any length.
 
 If both \code{tbl} and \code{db_table_name} are provided, \code{db_table_name} is
 ignored.

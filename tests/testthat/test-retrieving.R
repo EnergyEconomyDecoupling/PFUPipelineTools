@@ -534,7 +534,39 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
                                                  Year >= 1968 &
                                                  Country == "ZAF"))
 
-  # Try degenerate cases
+
+  #### Test multiple versions
+  db_table_name |>
+    pl_filter_collect(version_string = c("v1", "v2"),
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(ValidToVersion %in% c("v1", "v2")))
+
+  db_table_name |>
+    pl_filter_collect(version_string = c("v1", "v2"),
+                      Country == "USA",
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(ValidToVersion %in% c("v1", "v2"),
+                                               Country == "USA"))
+
+  db_table_name |>
+    pl_filter_collect(version_string = c("v5", "v2"),
+                      Country %in% c("USA", "GHA"),
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    dplyr::arrange(ValidFromVersion) |>
+    expect_equal(expected_all |> dplyr::filter(ValidFromVersion %in% c("v4", "v2"),
+                                               Country %in% c("GHA", "USA")))
+
+
+  #### Try degenerate cases
   # Setting impossible filters in ... should return an empty data frame.
   db_table_name |>
     pl_filter_collect(val == 100,
@@ -559,6 +591,17 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
                       fk_parent_tables = fk_parent_tables,
                       collect = TRUE) |>
     expect_error(regexp = 'Unknown version_string')
+  # Setting a zero-length vector for version_string
+  # should result in no version filtering.
+  db_table_name |>
+    pl_filter_collect(version_string = c(),
+                      val == 100,
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all[0, ])
+
 
 
   #### Test pl_collect_from_hash() with versions

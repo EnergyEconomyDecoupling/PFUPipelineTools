@@ -216,7 +216,8 @@ pl_collect_from_hash <- function(hashed_table,
 #'            because they are applied prior to downloading from `conn`.
 #'            If no rows match these conditions,
 #'            a data frame with no rows is returned.
-#' @param version_string A string of length `1` that indicates the desired version.
+#' @param version_string A string of length `1` or more
+#'                       that indicates the desired version(s).
 #'                       `NULL`, the default, means to download all versions available in
 #'                       `db_table_name`.
 #'                       An error will be emitted if `version_string` is unknown.
