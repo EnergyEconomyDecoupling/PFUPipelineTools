@@ -8,17 +8,21 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+* `pl_upsert()` gains new argument `compress`, 
+  which defaults to `FALSE`.
+  If set to `TRUE`, `compress_rows()` is called internally
+  to `pl_upsert()`.
 * New functions `install_compress_function()`, 
   `remove_compress_function()`, and 
   `compress_rows()` 
   assist with compressing rows in the database.
 * `pl_filter_collect()` gains new argument `...`
   in which filtering expressions can be placed.
-  `...` replaces the myriad other arguments which
+  `...` replaces the myriad other arguments that
   provided filtering for possible columns. 
-  This approach provides significantly 
-  more flexibility for users of this function.
-  Plus, inside `pl_filter_collect()`, the code is much cleaner!
+  This new approach provides significant
+  flexibility for users of this function.
+  Plus, the code is much cleaner inside `pl_filter_collect()`!
 * In several places, 
   code no longer passes `conn`
   when both `schema` and `fk_parent_tables` 
@@ -36,14 +40,6 @@ which always resolves to the latest release.
   with default arguments that pull values from `conn`.
   The behavior of `pl_collect_from_hash()` is now consistent with
   `pl_filter_collect()`.
-* Added additional filtering options for `pl_filter_collect()`, including
-    - GrossNet
-    - IndustryAggregation
-    - ProductAggregation
-    - ChoppedMat
-    - ChoppedVar
-* All filtering options for `pl_filter_collect()` are now `NULL`, 
-  meaning that no filtering is applied.
 
 
 # PFUPipelineTools 0.1.12 (2024-12-09) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14589472.svg)](https://doi.org/10.5281/zenodo.14589472)
