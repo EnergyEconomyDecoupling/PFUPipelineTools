@@ -456,6 +456,9 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #' @param encode_fks A boolean that tells whether to code foreign keys in `.df`
 #'                   before upserting to `conn`.
 #'                   Default is `TRUE`.
+#' @param compress A boolean that tells whether to compress `db_table_name`
+#'                 in the database after uploading.
+#'                 Default is `FALSE`.
 #' @param index_map A list of 2 or more data frames that represent the
 #'                  mappings from inboard row and column indices in the database
 #'                  to outboard row and column names in the memory

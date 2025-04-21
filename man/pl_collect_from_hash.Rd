@@ -92,13 +92,20 @@ Needed only when \code{decode_fks = TRUE} (the default).
 If foreign keys are not being decoded,
 setting to \code{NULL} may improve speed.}
 
+\item{index_map_name}{The name of the index map.
+Default is "Index".}
+
 \item{index_map}{A list of data frames to assist with decoding matrices.
 Passed to \code{\link[=decode_matsindf]{decode_matsindf()}} when \code{decode_matsindf} is \code{TRUE}
-but otherwise not needed.}
+but otherwise not needed.
+Default is \code{fk_parent_tables[[index_map_name]]}.}
+
+\item{rctype_table_name}{The name of the row and column types.}
 
 \item{rctypes}{A data frame of row and column types.
 Passed to \code{\link[=decode_matsindf]{decode_matsindf()}} when \code{decode_matsindf} is \code{TRUE}
-but otherwise not needed.}
+but otherwise not needed.
+Default calls \code{\link[=decode_fks]{decode_fks()}}.}
 
 \item{.table_name_col, .nested_hash_col}{See \code{PFUPipelineTools::hashed_table_colnames}.}
 }

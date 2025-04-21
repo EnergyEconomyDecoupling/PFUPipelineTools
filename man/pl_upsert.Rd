@@ -64,6 +64,10 @@ several requests.}
 before upserting to \code{conn}.
 Default is \code{TRUE}.}
 
+\item{compress}{A boolean that tells whether to compress \code{db_table_name}
+in the database after uploading.
+Default is \code{FALSE}.}
+
 \item{index_map}{A list of 2 or more data frames that represent the
 mappings from inboard row and column indices in the database
 to outboard row and column names in the memory

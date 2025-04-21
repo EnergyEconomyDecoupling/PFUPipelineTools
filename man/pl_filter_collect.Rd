@@ -100,11 +100,6 @@ Defaults are
 and
 \code{PFUPipelineTools::version_cols$valid_to_version},
 respectively.}
-
-\item{datasets}{A vector of dataset strings to be retained in the output.
-\code{NULL} (the default) returns all datasets.
-Another interesting option is
-\code{PFUPipelineTools::dataset_info$clpfu_iea}.}
 }
 \value{
 A filtered version of \code{db_table_name} downloaded from \code{conn}.

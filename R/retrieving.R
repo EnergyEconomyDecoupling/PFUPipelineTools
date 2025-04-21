@@ -21,12 +21,17 @@
 #'                        a matsindf data frame.
 #'                        Calls [decode_matsindf()] internally.
 #'                        Default is `TRUE`.
+#' @param index_map_name The name of the index map.
+#'                       Default is "Index".
 #' @param index_map A list of data frames to assist with decoding matrices.
 #'                  Passed to [decode_matsindf()] when `decode_matsindf` is `TRUE`
 #'                  but otherwise not needed.
+#'                  Default is `fk_parent_tables[[index_map_name]]`.
+#' @param rctype_table_name The name of the row and column types.
 #' @param rctypes A data frame of row and column types.
 #'                Passed to [decode_matsindf()] when `decode_matsindf` is `TRUE`
 #'                but otherwise not needed.
+#'                Default calls [decode_fks()].
 #' @param matrix_class One of "Matrix" (the default for sparse matrices)
 #'                     or ("matrix") for the native matrix form in `R`.
 #'                     Default is "Matrix".
@@ -222,10 +227,6 @@ pl_collect_from_hash <- function(hashed_table,
 #'                       `db_table_name`.
 #'                       `c()` (an empty string) returns a zero-row table.
 #'                       If `version_string` is invalid, an error will be emitted.
-#' @param datasets A vector of dataset strings to be retained in the output.
-#'                 `NULL` (the default) returns all datasets.
-#'                 Another interesting option is
-#'                 `PFUPipelineTools::dataset_info$clpfu_iea`.
 #' @param collect A boolean that tells whether to download the result.
 #'                Default is `FALSE`.
 #'                See details.
