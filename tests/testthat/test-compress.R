@@ -189,6 +189,38 @@ test_that("Compression works maunally and with pl_upsert()", {
     dplyr::arrange(val) |>
     expect_equal(expected_compressed_table)
 
+  # Eliminate rows from db_table in preparation for compressing
+  # an incompressible table, which should be successful but have no effect.
+  incompressible_db_table <- tibble::tribble(
+    ~ValidFromVersion, ~ValidToVersion, ~Country, ~Year, ~val,
+    "v1", "v1", "USA", 1967L, 1,
+    "v1", "v1", "ZAF", 1967L, 2,
+    "v2", "v2", "USA", 1968L, 5,
+    "v2", "v2", "ZAF", 1968L, 6,
+    "v3", "v3", "GHA", 2000L, 7,
+    "v4", "v10", "GHA", 2000L, 8)
+
+  DBI::dbExecute(conn,
+                 statement = paste0('DELETE FROM "', db_table_name, '";')) |>
+    expect_equal(nrow(expected_compressed_table))
+  # Now re-upload only unique rows in the data frame using compress = TRUE
+  hash_cdbt_incompressible <- db_table |>
+    dplyr::slice(c(1, 2, 5, 6, 9, 10)) |>
+    pl_upsert(db_table_name = db_table_name,
+              conn = conn,
+              schema = schema,
+              fk_parent_tables = fk_parent_tables,
+              in_place = TRUE,
+              compress = TRUE)
+  # Make sure no compression happened.
+  pl_filter_collect(db_table_name = db_table_name,
+                    collect = TRUE,
+                    conn = conn,
+                    schema = schema,
+                    fk_parent_tables = fk_parent_tables) |>
+    dplyr::arrange(val) |>
+    expect_equal(incompressible_db_table)
+
   # Clean up after ourselves
   if (db_table_name %in% DBI::dbListTables(conn)) {
     DBI::dbRemoveTable(conn, db_table_name)
