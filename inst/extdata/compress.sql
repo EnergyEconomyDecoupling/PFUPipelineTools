@@ -1,5 +1,8 @@
 -- This function compresses versions in the Mexer database.
 -- It is used with PFUPipelineTools::create_compress_function()
+-- target is the string name of table to compress.
+-- version_from_col is the string name of the ValidFromVersion column.
+-- version_to_col is the string name of the ValidToVersion column.
 CREATE OR REPLACE PROCEDURE compress(target TEXT, version_from_col TEXT, version_to_col TEXT)
 LANGUAGE plpgsql
 AS $$

@@ -301,3 +301,6 @@ test_that("encode_matsindf() works with a NULL matrix", {
                  dplyr::filter(Year == 1971, matname == "U") |>
                  nrow(), 0)
 })
+
+
+
