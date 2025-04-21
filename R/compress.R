@@ -22,7 +22,7 @@
 #'          database at `conn`,
 #'          which should always be `0`.
 #'
-#' @seealso [remove_compress_function()]
+#' @seealso [remove_compress_function()], [compress_rows()]
 #'
 #' @export
 install_compress_function <- function(conn,
@@ -52,7 +52,7 @@ install_compress_function <- function(conn,
 #'          database at `conn`,
 #'          which should always be `0`.
 #'
-#' @seealso [install_compress_function()]
+#' @seealso [install_compress_function()], [compress_rows()]
 #'
 #' @export
 remove_compress_function <- function(conn) {
@@ -80,7 +80,9 @@ remove_compress_function <- function(conn) {
 #' @param conn A connection to the database in which tables are to be compressed.
 #'
 #' @returns The number of rows affected by the call to `compress`
-#'          `db_table_name`.
+#'          `db_table_name`, which should always be `0`.
+#'
+#' @seealso [install_compress_function()], [remove_compress_function()]
 #'
 #' @export
 compress_rows <- function(db_table_name,

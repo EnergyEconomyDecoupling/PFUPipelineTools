@@ -112,7 +112,28 @@ test_that("pl_upsert() works with compression", {
               conn = conn,
               in_place = TRUE)
 
-  # Now try to compress the db_table
+  # Make sure we get the same table back before calling compress()
+  expected_db_table <- tibble::tribble(
+    ~ValidFromVersion, ~ValidToVersion, ~Country, ~Year, ~val,
+    "v1", "v1", "USA", 1967L, 1,
+    "v1", "v1", "ZAF", 1967L, 2,
+    "v2", "v2", "USA", 1967L, 1,
+    "v2", "v2", "ZAF", 1967L, 2,
+    "v2", "v2", "USA", 1968L, 5,
+    "v2", "v2", "ZAF", 1968L, 6,
+    "v3", "v3", "USA", 1968L, 5,
+    "v3", "v3", "ZAF", 1968L, 6,
+    "v3", "v3", "GHA", 2000L, 7,
+    "v4", "v10", "GHA", 2000L, 8)
+
+  pl_filter_collect(db_table_name = db_table_name,
+                    collect = TRUE,
+                    conn = conn,
+                    schema = schema,
+                    fk_parent_tables = fk_parent_tables) |>
+    expect_equal(expected_db_table)
+
+  #### Compress and compare to expected.
   expected_compressed_table <- tibble::tribble(
     ~ValidFromVersion, ~ValidToVersion, ~Country, ~Year, ~val,
     # "v1", "v1", "USA", 1967L, 1,
@@ -131,18 +152,19 @@ test_that("pl_upsert() works with compression", {
     "v4", "v10", "GHA", 2000L, 8) |>
     dplyr::arrange(val)
 
-  install_compress_function(conn = conn)
-  compress_rows(db_table_name = db_table_name,
-                conn = conn) |>
+  # Now install the compression function and compress the db_table
+  install_compress_function(conn = conn) |>
     expect_equal(0)
+  compress_rows(db_table_name = db_table_name, conn = conn) |>
+    expect_equal(0)
+  # Re-collect the table and compare
   actual <- pl_filter_collect(db_table_name = db_table_name,
                               collect = TRUE,
                               conn = conn,
                               schema = schema,
                               fk_parent_tables = fk_parent_tables) |>
-    dplyr::arrange(val)
-  expect_equal(actual, expected_compressed_table)
-
+    dplyr::arrange(val) |>
+    expect_equal(expected_compressed_table)
 
   # Clean up after ourselves
   if (db_table_name %in% DBI::dbListTables(conn)) {
@@ -155,6 +177,7 @@ test_that("pl_upsert() works with compression", {
     DBI::dbRemoveTable(conn, country_table_name)
   }
 
-  remove_compress_function(conn = conn)
+  remove_compress_function(conn = conn) |>
+    expect_equal(0)
 
 })

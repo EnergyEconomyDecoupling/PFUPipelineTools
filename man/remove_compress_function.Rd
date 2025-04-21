@@ -25,5 +25,5 @@ The function can be removed only by the owner of the function,
 i.e., the user who installed the function in the first instance.
 }
 \seealso{
-\code{\link[=install_compress_function]{install_compress_function()}}
+\code{\link[=install_compress_function]{install_compress_function()}}, \code{\link[=compress_rows]{compress_rows()}}
 }

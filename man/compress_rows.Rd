@@ -24,7 +24,7 @@ and
 }
 \value{
 The number of rows affected by the call to \code{compress}
-\code{db_table_name}.
+\code{db_table_name}, which should always be \code{0}.
 }
 \description{
 During the execution of the pipeline,
@@ -34,4 +34,7 @@ The \code{compress} function performs this task
 in the database.
 This \code{R} function is a wrapper that executes
 \code{compress} in the database.
+}
+\seealso{
+\code{\link[=install_compress_function]{install_compress_function()}}, \code{\link[=remove_compress_function]{remove_compress_function()}}
 }

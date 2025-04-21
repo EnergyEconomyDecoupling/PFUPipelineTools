@@ -38,5 +38,5 @@ only the user who previously installed \code{compress} can update it.
 To remove \code{compress}, see \code{\link[=remove_compress_function]{remove_compress_function()}}.
 }
 \seealso{
-\code{\link[=remove_compress_function]{remove_compress_function()}}
+\code{\link[=remove_compress_function]{remove_compress_function()}}, \code{\link[=compress_rows]{compress_rows()}}
 }
