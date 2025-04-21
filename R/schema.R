@@ -559,11 +559,18 @@ pl_upsert <- function(.df,
                  fk_parent_tables = fk_parent_tables)
   }
 
+  # Perform the upload.
   dplyr::tbl(conn, db_table_name) |>
     dplyr::rows_upsert(df_to_upsert,
                        by = pk_str,
                        copy = TRUE,
                        in_place = in_place)
+
+  # If compression is desired, do it.
+  if (compress) {
+    compress_rows(db_table_name = db_table_name, conn = conn)
+  }
+
   # Return a hash of df_matsindf_encoded
   df_matsindf_encoded |>
     pl_hash(table_name = db_table_name,

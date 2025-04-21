@@ -80,7 +80,8 @@ pl_destroy <- function(conn,
     # Remove all tables in Postgres database
     tables_to_drop |>
       purrr::map(function(this_table_name) {
-        DBI::dbExecute(conn, paste0('DROP TABLE "', this_table_name, '" CASCADE;'))
+        DBI::dbExecute(conn,
+                       statement = paste0('DROP TABLE "', this_table_name, '" CASCADE;'))
       })
   } else {
     # Remove all tables in a different type of database

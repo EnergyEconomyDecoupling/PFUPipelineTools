@@ -18,7 +18,7 @@ test_that("install_compress_function() and remove_compress_function() both work"
 })
 
 
-test_that("pl_upsert() works with compression", {
+test_that("Compression works maunally and with pl_upsert()", {
 
   skip_on_ci()
   skip_on_cran()
@@ -134,6 +134,9 @@ test_that("pl_upsert() works with compression", {
     expect_equal(expected_db_table)
 
   #### Compress and compare to expected.
+  install_compress_function(conn = conn) |>
+    expect_equal(0)
+
   expected_compressed_table <- tibble::tribble(
     ~ValidFromVersion, ~ValidToVersion, ~Country, ~Year, ~val,
     # "v1", "v1", "USA", 1967L, 1,
@@ -152,17 +155,37 @@ test_that("pl_upsert() works with compression", {
     "v4", "v10", "GHA", 2000L, 8) |>
     dplyr::arrange(val)
 
-  # Now install the compression function and compress the db_table
-  install_compress_function(conn = conn) |>
-    expect_equal(0)
+  # Compress the db_table
   compress_rows(db_table_name = db_table_name, conn = conn) |>
     expect_equal(0)
   # Re-collect the table and compare
-  actual <- pl_filter_collect(db_table_name = db_table_name,
+  pl_filter_collect(db_table_name = db_table_name,
                               collect = TRUE,
                               conn = conn,
                               schema = schema,
                               fk_parent_tables = fk_parent_tables) |>
+    dplyr::arrange(val) |>
+    expect_equal(expected_compressed_table)
+
+  # Eliminate rows from db_table in preparation for compressing on upload.
+  DBI::dbExecute(conn,
+                 statement = paste0('DELETE FROM "', db_table_name, '";')) |>
+    expect_equal(nrow(expected_compressed_table))
+  # Now re-upload the data frame using compress = TRUE
+  hash_cdbt <- db_table |>
+    pl_upsert(db_table_name = db_table_name,
+              conn = conn,
+              schema = schema,
+              fk_parent_tables = fk_parent_tables,
+              in_place = TRUE,
+              compress = TRUE)
+  # Make sure the compression happened as expected
+  # and gives the same results as before.
+  pl_filter_collect(db_table_name = db_table_name,
+                    collect = TRUE,
+                    conn = conn,
+                    schema = schema,
+                    fk_parent_tables = fk_parent_tables) |>
     dplyr::arrange(val) |>
     expect_equal(expected_compressed_table)
 
@@ -179,5 +202,4 @@ test_that("pl_upsert() works with compression", {
 
   remove_compress_function(conn = conn) |>
     expect_equal(0)
-
 })
