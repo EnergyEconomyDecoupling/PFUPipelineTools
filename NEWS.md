@@ -35,7 +35,7 @@ which always resolves to the latest release.
   The default value (`NULL`) downloads all versions.
   Multiple versions can be downloaded by passing
   a vector of strings.
-  Supplying `c()` will download an empty table.
+  Supplying `c()` downloads an empty table.
 * `pl_collect_from_hash()` is now more convenient
   with default arguments that pull values from `conn`.
   This behavior of `pl_collect_from_hash()` is now consistent with
