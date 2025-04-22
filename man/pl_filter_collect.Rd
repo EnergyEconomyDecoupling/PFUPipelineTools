@@ -23,8 +23,8 @@ pl_filter_collect(
   matval = PFUPipelineTools::mat_meta_cols$matval,
   rowtype_colname = PFUPipelineTools::mat_meta_cols$rowtype,
   coltype_colname = PFUPipelineTools::mat_meta_cols$coltype,
-  valid_from_version_colname = PFUPipelineTools::version_cols$valid_from_version,
-  valid_to_version_colname = PFUPipelineTools::version_cols$valid_to_version
+  valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
+  valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname
 )
 }
 \arguments{
@@ -37,10 +37,12 @@ because they are applied prior to downloading from \code{conn}.
 If no rows match these conditions,
 a data frame with no rows is returned.}
 
-\item{version_string}{A string of length \code{1} that indicates the desired version.
+\item{version_string}{A string of length \code{1} or more
+that indicates the desired version(s).
 \code{NULL}, the default, means to download all versions available in
 \code{db_table_name}.
-An error will be emitted if \code{version_string} is unknown.}
+\code{c()} (an empty string) returns a zero-row table.
+If \code{version_string} is invalid, an error will be emitted.}
 
 \item{collect}{A boolean that tells whether to download the result.
 Default is \code{FALSE}.
@@ -94,15 +96,10 @@ respectively.}
 \item{valid_from_version_colname, valid_to_version_colname}{Names
 for columns containing version information.
 Defaults are
-\code{PFUPipelineTools::version_cols$valid_from_version}
+\code{PFUPipelineTools::dataset_info$valid_from_version_colname}
 and
-\code{PFUPipelineTools::version_cols$valid_to_version},
+\code{PFUPipelineTools::dataset_info$valid_to_version_colname},
 respectively.}
-
-\item{datasets}{A vector of dataset strings to be retained in the output.
-\code{NULL} (the default) returns all datasets.
-Another interesting option is
-\code{PFUPipelineTools::dataset_info$clpfu_iea}.}
 }
 \value{
 A filtered version of \code{db_table_name} downloaded from \code{conn}.

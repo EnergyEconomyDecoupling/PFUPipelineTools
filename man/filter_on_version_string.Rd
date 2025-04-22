@@ -12,14 +12,14 @@ filter_on_version_string(
   conn = NULL,
   schema = schema_from_conn(conn = conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
-  valid_from_version_colname = PFUPipelineTools::version_cols$valid_from_version,
-  valid_to_version_colname = PFUPipelineTools::version_cols$valid_to_version
+  valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
+  valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname
 )
 }
 \arguments{
 \item{tbl}{The \code{tbl} object that should be filtered.}
 
-\item{version_string}{A string of length 1 that indicates the desired version.}
+\item{version_string}{A vector of version strings to indicate the desired version(s).}
 
 \item{db_table_name}{The name of the table to be filtered.}
 
@@ -44,11 +44,11 @@ Default calls \code{get_all_fk_tables()}.}
 
 \item{valid_from_version_colname}{The name of the ValidFromVersion column.
 Default is
-\code{PFUPipelineTools::version_cols$valid_from_version}.}
+\code{PFUPipelineTools::dataset_info$valid_from_version_colname}.}
 
 \item{valid_to_version_colname}{The name of the ValidToVersion column.
 Default is
-\code{PFUPipelineTools::version_cols$valid_to_version}.}
+\code{PFUPipelineTools::dataset_info$valid_to_version_colname}.}
 }
 \value{
 A filtered version of \code{tbl}.
@@ -62,7 +62,8 @@ Rather, they are stored in a single row with the \code{ValidFromVersion}
 and \code{ValidToVersion} columns incremented appropriately.
 }
 \details{
-The desired version is supplied in the \code{version_string} argument.
+The desired version is supplied in the \code{version_string} argument,
+which can be a vector of any length.
 
 If both \code{tbl} and \code{db_table_name} are provided, \code{db_table_name} is
 ignored.

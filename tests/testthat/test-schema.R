@@ -465,3 +465,19 @@ test_that("pl_upsert() works for zero matrices", {
   # Clean up after ourselves
   DBI::dbRemoveTable(conn = conn, name = "testzeromatrix")
 })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

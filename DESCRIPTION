@@ -28,7 +28,7 @@ Imports:
     PFUSetup,
     pins,
     purrr,
-    Recca,
+    readr,
     readxl,
     rlang, 
     tidyr,

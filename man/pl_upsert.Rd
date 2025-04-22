@@ -13,6 +13,7 @@ pl_upsert(
   keep_single_unique_cols = TRUE,
   in_place = FALSE,
   encode_fks = TRUE,
+  compress = FALSE,
   index_map =
     magrittr::set_names(list(fk_parent_tables[[IEATools::row_col_types$industry]],
     fk_parent_tables[[IEATools::row_col_types$product]],
@@ -62,6 +63,10 @@ several requests.}
 \item{encode_fks}{A boolean that tells whether to code foreign keys in \code{.df}
 before upserting to \code{conn}.
 Default is \code{TRUE}.}
+
+\item{compress}{A boolean that tells whether to compress \code{db_table_name}
+in the database after uploading.
+Default is \code{FALSE}.}
 
 \item{index_map}{A list of 2 or more data frames that represent the
 mappings from inboard row and column indices in the database

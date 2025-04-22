@@ -21,12 +21,17 @@
 #'                        a matsindf data frame.
 #'                        Calls [decode_matsindf()] internally.
 #'                        Default is `TRUE`.
+#' @param index_map_name The name of the index map.
+#'                       Default is "Index".
 #' @param index_map A list of data frames to assist with decoding matrices.
 #'                  Passed to [decode_matsindf()] when `decode_matsindf` is `TRUE`
 #'                  but otherwise not needed.
+#'                  Default is `fk_parent_tables[[index_map_name]]`.
+#' @param rctype_table_name The name of the row and column types.
 #' @param rctypes A data frame of row and column types.
 #'                Passed to [decode_matsindf()] when `decode_matsindf` is `TRUE`
 #'                but otherwise not needed.
+#'                Default calls [decode_fks()].
 #' @param matrix_class One of "Matrix" (the default for sparse matrices)
 #'                     or ("matrix") for the native matrix form in `R`.
 #'                     Default is "Matrix".
@@ -40,9 +45,9 @@
 #' @param valid_from_version_colname,valid_to_version_colname Names
 #'              for columns containing version information.
 #'              Defaults are
-#'              `PFUPipelineTools::version_cols$valid_from_version`
+#'              `PFUPipelineTools::dataset_info$valid_from_version`
 #'              and
-#'              `PFUPipelineTools::version_cols$valid_to_version`,
+#'              `PFUPipelineTools::dataset_info$valid_to_version`,
 #'              respectively.
 #' @param conn The database connection.
 #' @param schema The database schema (a `dm` object).
@@ -72,8 +77,8 @@ pl_collect_from_hash <- function(hashed_table,
                                  tar_group_colname = PFUPipelineTools::hashed_table_colnames$tar_group_colname,
                                  matname_colname = PFUPipelineTools::mat_meta_cols$matname,
                                  matval_colname = PFUPipelineTools::mat_meta_cols$matval,
-                                 valid_from_version_colname = PFUPipelineTools::version_cols$valid_from_version,
-                                 valid_to_version_colname = PFUPipelineTools::version_cols$valid_to_version,
+                                 valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
+                                 valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname,
                                  conn,
                                  schema = schema_from_conn(conn = conn),
                                  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
@@ -216,14 +221,12 @@ pl_collect_from_hash <- function(hashed_table,
 #'            because they are applied prior to downloading from `conn`.
 #'            If no rows match these conditions,
 #'            a data frame with no rows is returned.
-#' @param version_string A string of length `1` that indicates the desired version.
+#' @param version_string A string of length `1` or more
+#'                       that indicates the desired version(s).
 #'                       `NULL`, the default, means to download all versions available in
 #'                       `db_table_name`.
-#'                       An error will be emitted if `version_string` is unknown.
-#' @param datasets A vector of dataset strings to be retained in the output.
-#'                 `NULL` (the default) returns all datasets.
-#'                 Another interesting option is
-#'                 `PFUPipelineTools::dataset_info$clpfu_iea`.
+#'                       `c()` (an empty string) returns a zero-row table.
+#'                       If `version_string` is invalid, an error will be emitted.
 #' @param collect A boolean that tells whether to download the result.
 #'                Default is `FALSE`.
 #'                See details.
@@ -263,9 +266,9 @@ pl_collect_from_hash <- function(hashed_table,
 #' @param valid_from_version_colname,valid_to_version_colname Names
 #'              for columns containing version information.
 #'              Defaults are
-#'              `PFUPipelineTools::version_cols$valid_from_version`
+#'              `PFUPipelineTools::dataset_info$valid_from_version_colname`
 #'              and
-#'              `PFUPipelineTools::version_cols$valid_to_version`,
+#'              `PFUPipelineTools::dataset_info$valid_to_version_colname`,
 #'              respectively.
 #'
 #' @return A filtered version of `db_table_name` downloaded from `conn`.
@@ -292,8 +295,8 @@ pl_filter_collect <- function(db_table_name,
                               matval = PFUPipelineTools::mat_meta_cols$matval,
                               rowtype_colname = PFUPipelineTools::mat_meta_cols$rowtype,
                               coltype_colname = PFUPipelineTools::mat_meta_cols$coltype,
-                              valid_from_version_colname = PFUPipelineTools::version_cols$valid_from_version,
-                              valid_to_version_colname = PFUPipelineTools::version_cols$valid_to_version) {
+                              valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
+                              valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname) {
 
   matrix_class <- match.arg(matrix_class)
 

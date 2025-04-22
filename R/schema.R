@@ -456,6 +456,9 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #' @param encode_fks A boolean that tells whether to code foreign keys in `.df`
 #'                   before upserting to `conn`.
 #'                   Default is `TRUE`.
+#' @param compress A boolean that tells whether to compress `db_table_name`
+#'                 in the database after uploading.
+#'                 Default is `FALSE`.
 #' @param index_map A list of 2 or more data frames that represent the
 #'                  mappings from inboard row and column indices in the database
 #'                  to outboard row and column names in the memory
@@ -494,6 +497,7 @@ pl_upsert <- function(.df,
                       keep_single_unique_cols = TRUE,
                       in_place = FALSE,
                       encode_fks = TRUE,
+                      compress = FALSE,
                       index_map = list(fk_parent_tables[[IEATools::row_col_types$industry]],
                                        fk_parent_tables[[IEATools::row_col_types$product]],
                                        fk_parent_tables[[IEATools::row_col_types$other]]) |>
@@ -555,11 +559,18 @@ pl_upsert <- function(.df,
                  fk_parent_tables = fk_parent_tables)
   }
 
+  # Perform the upload.
   dplyr::tbl(conn, db_table_name) |>
     dplyr::rows_upsert(df_to_upsert,
                        by = pk_str,
                        copy = TRUE,
                        in_place = in_place)
+
+  # Compress the table, if desired.
+  if (compress) {
+    compress_rows(db_table_name = db_table_name, conn = conn)
+  }
+
   # Return a hash of df_matsindf_encoded
   df_matsindf_encoded |>
     pl_hash(table_name = db_table_name,

@@ -694,6 +694,118 @@ encode_matsindf <- function(.matsindf,
 }
 
 
+#' Filter a database table based on a version string.
+#'
+#' Filtering a database table based on the version you wish to download
+#' is a common task.
+#' In the CL-PFU database, we store data in a compressed format where
+#' identical data points are not duplicated.
+#' Rather, they are stored in a single row with the `ValidFromVersion`
+#' and `ValidToVersion` columns incremented appropriately.
+#'
+#' The desired version is supplied in the `version_string` argument,
+#' which can be a vector of any length.
+#'
+#' If both `tbl` and `db_table_name` are provided, `db_table_name` is
+#' ignored.
+#'
+#' @param tbl The `tbl` object that should be filtered.
+#' @param version_string A vector of version strings to indicate the desired version(s).
+#' @param collect A boolean that tells whether to collect `tbl` from `conn`
+#'                before returning.
+#'                Default is `FALSE`.
+#' @param db_table_name The name of the table to be filtered.
+#' @param conn An optional database connection.
+#'             Necessary only for the default values of `schema` and `fk_parent_tables`.
+#'             Default is `NULL`.
+#' @param schema The database schema (a `dm` object).
+#'               Default calls `schema_from_conn()`, but
+#'               you can supply a pre-computed schema for speed.
+#'               Needed only when `decode_fks = TRUE` (the default).
+#'               If foreign keys are not being decoded,
+#'               setting `NULL` may improve speed.
+#' @param fk_parent_tables Foreign key parent tables to assist decoding
+#'                         foreign keys.
+#'                         Default calls `get_all_fk_tables()`.
+#' @param valid_from_version_colname The name of the ValidFromVersion column.
+#'                                   Default is
+#'                                   `PFUPipelineTools::dataset_info$valid_from_version_colname`.
+#' @param valid_to_version_colname The name of the ValidToVersion column.
+#'                                 Default is
+#'                                 `PFUPipelineTools::dataset_info$valid_to_version_colname`.
+#'
+#' @returns A filtered version of `tbl`.
+#'
+#' @export
+filter_on_version_string <- function(tbl,
+                                     version_string,
+                                     db_table_name,
+                                     collect = FALSE,
+                                     conn = NULL,
+                                     schema = schema_from_conn(conn = conn),
+                                     fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+                                     valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
+                                     valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname) {
+
+  version_string <- unique(version_string)
+
+  if (length(version_string) > 1) {
+    # Eliminate duplicates
+    out_list <- lapply(unique(version_string), function(this_version_string) {
+      # If we have more than one version_string,
+      # call ourselves recursively and stack the results.
+      filter_on_version_string(tbl = tbl,
+                               version_string = this_version_string,
+                               db_table_name = db_table_name,
+                               collect = collect,
+                               conn = conn,
+                               schema = schema,
+                               fk_parent_tables = fk_parent_tables,
+                               valid_from_version_colname = valid_from_version_colname,
+                               valid_to_version_colname = valid_to_version_colname)
+    })
+    # I would like to say
+    # out <- dplyr::rbind(out)
+    # but that doesn't work with objects that are not data frames.
+    # So, instead, use union_all(), which successfully stacks tbl objects.
+    out <- out_list[[1]]
+    for (i in 2:length(out_list)) {
+      out <- out |>
+        dplyr::union_all(out_list[[i]])
+    }
+    return(out)
+  }
+
+  # Make sure we have only one version_string.
+  assertthat::assert_that(length(version_string) == 1,
+                          msg = paste("version_string must be length 1 in",
+                                      "PFUPipelineTools::filter_on_version_string()"))
+
+  # Figure out the index for the version of interest to us.
+  tryCatch(
+    version_index <- encode_version_string(version_string = version_string,
+                                           table_name = db_table_name,
+                                           schema = schema,
+                                           fk_parent_tables = fk_parent_tables),
+    error = function(e) {
+      stop(paste0('Unknown version_string "', version_string, '".'))
+    }
+  )
+
+  # Filter the outgoing data frame according to the version_index
+  out <- tbl |>
+    dplyr::filter(.data[[valid_from_version_colname]] <= version_index) |>
+    dplyr::filter(.data[[valid_to_version_colname]] >= version_index)
+
+  if (collect) {
+    out <- out |>
+      dplyr::collect()
+  }
+
+  return(out)
+}
+
+
 #' Encode a version string
 #'
 #' This function encodes a version string,
@@ -710,8 +822,8 @@ encode_matsindf <- function(.matsindf,
 #'                         Default is `get_all_fk_tables(conn = conn, schema = schema)`.
 #' @param .version_colname A column in which versions are provided.
 #'                         This column is used internally.
-#'                         Default is `PFUPipelineTools::version_cols$valid_from_version`.
-#'                         `PFUPipelineTools::version_cols$valid_to_version`
+#'                         Default is `PFUPipelineTools::dataset_info$valid_from_version_colname`.
+#'                         `PFUPipelineTools::dataset_info$valid_to_version_colname`
 #'                         would also work.
 #'
 #' @export
@@ -722,7 +834,7 @@ encode_version_string <- function(version_string,
                                   conn = NULL,
                                   schema = schema_from_conn(conn = conn),
                                   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
-                                  .version_colname = PFUPipelineTools::version_cols$valid_from_version) {
+                                  .version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname) {
   # Make sure we have only 1 version
   assertthat::assert_that(length(version_string) == 1,
                           msg = paste("version_string must have length 1",
@@ -746,79 +858,8 @@ encode_version_string <- function(version_string,
 }
 
 
-#' Filter a database table based on a version string.
-#'
-#' Filtering a database table based on the version you wish to download
-#' is a common task.
-#' In the CL-PFU database, we store data in a compressed format where
-#' identical data points are not duplicated.
-#' Rather, they are stored in a single row with the `ValidFromVersion`
-#' and `ValidToVersion` columns incremented appropriately.
-#'
-#' The desired version is supplied in the `version_string` argument.
-#'
-#' If both `tbl` and `db_table_name` are provided, `db_table_name` is
-#' ignored.
-#'
-#' @param tbl The `tbl` object that should be filtered.
-#' @param version_string A string of length 1 that indicates the desired version.
-#' @param collect A boolean that tells whether to collect `tbl` from `conn`
-#'                before returning.
-#'                Default is `FALSE`.
-#' @param db_table_name The name of the table to be filtered.
-#' @param conn An optional database connection.
-#'             Necessary only for the default values of `schema` and `fk_parent_tables`.
-#'             Default is `NULL`.
-#' @param schema The database schema (a `dm` object).
-#'               Default calls `schema_from_conn()`, but
-#'               you can supply a pre-computed schema for speed.
-#'               Needed only when `decode_fks = TRUE` (the default).
-#'               If foreign keys are not being decoded,
-#'               setting `NULL` may improve speed.
-#' @param fk_parent_tables Foreign key parent tables to assist decoding
-#'                         foreign keys.
-#'                         Default calls `get_all_fk_tables()`.
-#' @param valid_from_version_colname The name of the ValidFromVersion column.
-#'                                   Default is
-#'                                   `PFUPipelineTools::version_cols$valid_from_version`.
-#' @param valid_to_version_colname The name of the ValidToVersion column.
-#'                                 Default is
-#'                                 `PFUPipelineTools::version_cols$valid_to_version`.
-#'
-#' @returns A filtered version of `tbl`.
-#'
-#' @export
-filter_on_version_string <- function(tbl,
-                                     version_string,
-                                     db_table_name,
-                                     collect = FALSE,
-                                     conn = NULL,
-                                     schema = schema_from_conn(conn = conn),
-                                     fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
-                                     valid_from_version_colname = PFUPipelineTools::version_cols$valid_from_version,
-                                     valid_to_version_colname = PFUPipelineTools::version_cols$valid_to_version) {
 
 
-  # Figure out the index for the version of interest to us.
-  tryCatch(
-    version_index <- encode_version_string(version_string = version_string,
-                                           table_name = db_table_name,
-                                           schema = schema,
-                                           fk_parent_tables = fk_parent_tables),
-    error = function(e) {
-      stop(paste0('Unknown version_string" "', version_string, '".'))
-    }
 
-  )
-  # Filter the outgoing data frame according to the version_index
-  out <- tbl |>
-    dplyr::filter(.data[[valid_from_version_colname]] <= version_index) |>
-    dplyr::filter(.data[[valid_to_version_colname]] >= version_index)
 
-  if (collect) {
-    out <- out |>
-      dplyr::collect()
-  }
 
-  return(out)
-}

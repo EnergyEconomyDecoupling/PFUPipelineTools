@@ -10,7 +10,7 @@ encode_version_string(
   conn = NULL,
   schema = schema_from_conn(conn = conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
-  .version_colname = PFUPipelineTools::version_cols$valid_from_version
+  .version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname
 )
 }
 \arguments{
@@ -30,8 +30,8 @@ Default is \code{get_all_fk_tables(conn = conn, schema = schema)}.}
 
 \item{.version_colname}{A column in which versions are provided.
 This column is used internally.
-Default is \code{PFUPipelineTools::version_cols$valid_from_version}.
-\code{PFUPipelineTools::version_cols$valid_to_version}
+Default is \code{PFUPipelineTools::dataset_info$valid_from_version_colname}.
+\code{PFUPipelineTools::dataset_info$valid_to_version_colname}
 would also work.}
 }
 \value{

@@ -15,8 +15,8 @@ pl_collect_from_hash(
   tar_group_colname = PFUPipelineTools::hashed_table_colnames$tar_group_colname,
   matname_colname = PFUPipelineTools::mat_meta_cols$matname,
   matval_colname = PFUPipelineTools::mat_meta_cols$matval,
-  valid_from_version_colname = PFUPipelineTools::version_cols$valid_from_version,
-  valid_to_version_colname = PFUPipelineTools::version_cols$valid_to_version,
+  valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
+  valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname,
   conn,
   schema = schema_from_conn(conn = conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
@@ -71,9 +71,9 @@ respectively.}
 \item{valid_from_version_colname, valid_to_version_colname}{Names
 for columns containing version information.
 Defaults are
-\code{PFUPipelineTools::version_cols$valid_from_version}
+\code{PFUPipelineTools::dataset_info$valid_from_version}
 and
-\code{PFUPipelineTools::version_cols$valid_to_version},
+\code{PFUPipelineTools::dataset_info$valid_to_version},
 respectively.}
 
 \item{conn}{The database connection.}
@@ -92,13 +92,20 @@ Needed only when \code{decode_fks = TRUE} (the default).
 If foreign keys are not being decoded,
 setting to \code{NULL} may improve speed.}
 
+\item{index_map_name}{The name of the index map.
+Default is "Index".}
+
 \item{index_map}{A list of data frames to assist with decoding matrices.
 Passed to \code{\link[=decode_matsindf]{decode_matsindf()}} when \code{decode_matsindf} is \code{TRUE}
-but otherwise not needed.}
+but otherwise not needed.
+Default is \code{fk_parent_tables[[index_map_name]]}.}
+
+\item{rctype_table_name}{The name of the row and column types.}
 
 \item{rctypes}{A data frame of row and column types.
 Passed to \code{\link[=decode_matsindf]{decode_matsindf()}} when \code{decode_matsindf} is \code{TRUE}
-but otherwise not needed.}
+but otherwise not needed.
+Default calls \code{\link[=decode_fks]{decode_fks()}}.}
 
 \item{.table_name_col, .nested_hash_col}{See \code{PFUPipelineTools::hashed_table_colnames}.}
 }
