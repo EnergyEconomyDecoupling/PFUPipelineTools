@@ -11,7 +11,7 @@ which always resolves to the latest release.
 * `pl_upsert()` gains new argument `compress`, 
   which defaults to `FALSE`.
   If set to `TRUE`, `compress_rows()` is called internally
-  to `pl_upsert()`.
+  within `pl_upsert()`.
 * New functions `install_compress_function()`, 
   `remove_compress_function()`, and 
   `compress_rows()` 
