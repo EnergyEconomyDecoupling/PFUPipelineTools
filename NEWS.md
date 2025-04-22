@@ -15,12 +15,13 @@ which always resolves to the latest release.
 * New functions `install_compress_function()`, 
   `remove_compress_function()`, and 
   `compress_rows()` 
-  assist with compressing rows in the database.
+  assist with compressing rows in the remote database.
 * `pl_filter_collect()` gains new argument `...`
   in which filtering expressions can be placed.
   `...` replaces the myriad other arguments that
   provided filtering for possible columns. 
-  This new approach provides significant
+  This is a breaking change, but the 
+  new approach provides significant
   flexibility for users of this function.
   Plus, the code is much cleaner inside `pl_filter_collect()`!
 * In several places, 
@@ -35,16 +36,26 @@ which always resolves to the latest release.
   The default value (`NULL`) downloads all versions.
   Multiple versions can be downloaded by passing
   a vector of strings.
-  Supplying `c()` downloads an empty table.
+  Supplying `c()` (an empty vector)
+  downloads a table with no rows.
 * `pl_collect_from_hash()` is now more convenient
-  with default arguments that pull values from `conn`.
-  This behavior of `pl_collect_from_hash()` is now consistent with
-  `pl_filter_collect()`.
+  with default arguments for `schema` and `fk_parent_tables`
+  that pull values from `conn`.
+  This new behavior for `pl_collect_from_hash()` 
+  is now consistent with `pl_filter_collect()`.
+* New tests for new features. 
+    - Now up to 195 tests, all passing
+    - Test coverage now reported to be 25.37%, but 
+      that's an undercount. 
+      Many functions are not tested on continuous integration
+      platforms and CRAN. 
+      When run with `Sys.setenv(NOT_CRAN = "true")`, 
+      test coverage is ...
 
 
 # PFUPipelineTools 0.1.12 (2024-12-09) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14589472.svg)](https://doi.org/10.5281/zenodo.14589472)
 
-* Improve defaults for `pl_filter_collect()`.
+* Improved defaults for arguments to `pl_filter_collect()`.
 * No new tests. 
     - Still at 143 tests, all passing
     - Test coverage now reported to be 27.37%
