@@ -8,6 +8,11 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+* `pl_upsert()` gains new arguments `round_double_columns` and `digits` 
+  and calls `round_double_cols()` if requested.
+* `round_double_cols()` rounds double-precision columns 
+  in a data frame to assist the `compress()` function 
+  in the database.
 * `pl_upsert()` gains new argument `compress`, 
   which defaults to `FALSE`.
   If set to `TRUE`, `compress_rows()` is called internally
