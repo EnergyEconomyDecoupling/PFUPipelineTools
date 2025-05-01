@@ -49,13 +49,11 @@ which always resolves to the latest release.
   This new behavior for `pl_collect_from_hash()` 
   is now consistent with `pl_filter_collect()`.
 * New tests for new features. 
-    - Now up to 195 tests, all passing
+    - Now up to 232 tests, all passing
     - Test coverage now reported to be 25.37%, but 
       that's an undercount. 
-      Many functions are not tested on continuous integration
-      platforms and CRAN. 
-      When run with `Sys.setenv(NOT_CRAN = "true")`, 
-      test coverage is ...
+      Many (most?) functions are not tested 
+      on continuous integration platforms and CRAN. 
 
 
 # PFUPipelineTools 0.1.12 (2024-12-09) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14589472.svg)](https://doi.org/10.5281/zenodo.14589472)
