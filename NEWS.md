@@ -49,7 +49,7 @@ which always resolves to the latest release.
   This new behavior for `pl_collect_from_hash()` 
   is now consistent with `pl_filter_collect()`.
 * New tests for new features. 
-    - Now up to 232 tests, all passing
+    - Now up to 233 tests, all passing
     - Test coverage now reported to be 25.37%, but 
       that's an undercount. 
       Many (most?) functions are not tested 
