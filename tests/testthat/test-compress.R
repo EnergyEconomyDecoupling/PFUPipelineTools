@@ -191,7 +191,17 @@ test_that("Compression works maunally and with pl_upsert()", {
 
   # Eliminate rows from db_table in preparation for compressing
   # an incompressible table, which should be successful but have no effect.
+  # Also, this time try the rounding function.
   incompressible_db_table <- tibble::tribble(
+    ~ValidFromVersion, ~ValidToVersion, ~Country, ~Year, ~val,
+    "v1", "v1", "USA", 1967L, 1.001, # Should become 1
+    "v1", "v1", "ZAF", 1967L, 1.96,  # Should become 2
+    "v2", "v2", "USA", 1968L, 5.001, # Should become 5
+    "v2", "v2", "ZAF", 1968L, 5.955, # Should become 6
+    "v3", "v3", "GHA", 2000L, 7.02,  # Should become 7
+    "v4", "v10", "GHA", 2000L, 7.99)  # Should become 8
+
+  expected_incompressible_db_table <- tibble::tribble(
     ~ValidFromVersion, ~ValidToVersion, ~Country, ~Year, ~val,
     "v1", "v1", "USA", 1967L, 1,
     "v1", "v1", "ZAF", 1967L, 2,
@@ -211,6 +221,8 @@ test_that("Compression works maunally and with pl_upsert()", {
               schema = schema,
               fk_parent_tables = fk_parent_tables,
               in_place = TRUE,
+              round_double_columns = TRUE,
+              digits = 2,
               compress = TRUE)
   # Make sure no compression happened.
   pl_filter_collect(db_table_name = db_table_name,
@@ -219,7 +231,7 @@ test_that("Compression works maunally and with pl_upsert()", {
                     schema = schema,
                     fk_parent_tables = fk_parent_tables) |>
     dplyr::arrange(val) |>
-    expect_equal(incompressible_db_table)
+    expect_equal(expected_incompressible_db_table)
 
   # Clean up after ourselves
   if (db_table_name %in% DBI::dbListTables(conn)) {
