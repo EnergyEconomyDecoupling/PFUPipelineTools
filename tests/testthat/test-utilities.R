@@ -397,6 +397,23 @@ test_that("round_double_cols() works as expected", {
   df2 |>
     round_double_cols() |>
     expect_equal(df2)
+
+  # What happens when an integer is stored as a double-precision?
+  # This could happen when we store metadata columns.
+  res3 <- data.frame(name = c("pi", "pi2"),
+                     # Have to make these integers ("L")
+                     # so that the function leaves this column alone.
+                     million = c(1000000, 1000001),
+                     pi = c(pi, pi+1)) |>
+    round_double_cols(digits = 15)
+  res3 |>
+    magrittr::extract2("million") |>
+    magrittr::extract2(1) |>
+    expect_equal(1000000)
+  res3 |>
+    magrittr::extract2("million") |>
+    magrittr::extract2(2) |>
+    expect_equal(1000001)
 })
 
 
