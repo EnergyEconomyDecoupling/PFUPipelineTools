@@ -2,8 +2,8 @@ Agg
 CMD
 ChopVar
 ChoppedMat
-ChoppedVar
 Codecov
+Colname
 DOI
 Despecified
 ECC
@@ -12,11 +12,12 @@ EnergyType
 EnergyTypeID
 Exergy
 FullName
-GrossNet
 IEA
 IndustryAggregation
+IsPK
 Lifecycle
 MexerDB
+OneDrive
 PFU
 PFUAggPipeline
 PSUT
@@ -36,6 +37,7 @@ colname
 conn
 csv
 datapoint
+dbcreator
 despecified
 doi
 ef
@@ -44,11 +46,13 @@ exergy
 fk
 fks
 incrementing
+isPK
 matname
 matnameRCType
 matsindf
 matval
 md
+mexer
 pinboard
 plpgsql
 pre
@@ -57,6 +61,7 @@ readme
 recoded
 recoding
 subtargets
+undercount
 ungroup
 ungroups
 upserted
