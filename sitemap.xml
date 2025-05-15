@@ -1,63 +1,68 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/404.html</loc>
-  </url>
-  <url>
-    <loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/CODE_OF_CONDUCT.html</loc>
-  </url>
-  <url>
-    <loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/CONTRIBUTING.html</loc>
-  </url>
-  <url>
-    <loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/LICENSE-text.html</loc>
-  </url>
-  <url>
-    <loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/LICENSE.html</loc>
-  </url>
-  <url>
-    <loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/authors.html</loc>
-  </url>
-  <url>
-    <loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/index.html</loc>
-  </url>
-  <url>
-    <loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/news/index.html</loc>
-  </url>
-  <url>
-    <loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/all_countries.html</loc>
-  </url>
-  <url>
-    <loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/canonical_countries.html</loc>
-  </url>
-  <url>
-    <loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/data.html</loc>
-  </url>
-  <url>
-    <loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/double_counted_countries.html</loc>
-  </url>
-  <url>
-    <loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/filter_countries_years.html</loc>
-  </url>
-  <url>
-    <loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/pipe.html</loc>
-  </url>
-  <url>
-    <loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/quasi-quote-assign.html</loc>
-  </url>
-  <url>
-    <loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/read_pin_version.html</loc>
-  </url>
-  <url>
-    <loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/release_target.html</loc>
-  </url>
-  <url>
-    <loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/stash_cache.html</loc>
-  </url>
-  <url>
-    <loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/tar_ungroup.html</loc>
-  </url>
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/404.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/CODE_OF_CONDUCT.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/CONTRIBUTING.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/LICENSE-text.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/LICENSE.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/authors.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/index.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/news/index.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/agg_metadata.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/aggregation_df_cols.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/aggregation_file_cols.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/aggregation_file_tab_names.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/all_countries.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/beatles_fk_tables.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/beatles_schema_table.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/canonical_countries.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/clean_up_beatles.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/compress_rows.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/data.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/dataset_info.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/decode_fk_keys.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/decode_fks.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/dm_fk_colnames.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/dm_pk_colnames.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/double_counted_countries.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/encode_decode_matsindf.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/encode_fk_values.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/encode_fks.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/encode_version_string.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/exemplar_names.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/filter_countries_years.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/filter_on_version_string.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/get_all_fk_tables.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/hashed_table_colnames.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/inboard_filter_copy.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/index.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/install_compress_function.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/key_col_info.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/load_fk_tables.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/load_schema_table.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/machine_constants.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/mat_colnames.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/mat_meta_cols.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/phi_sources.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/pipe.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/pl_collect_from_hash.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/pl_destroy.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/pl_filter_collect.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/pl_hash.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/pl_upload_schema_and_simple_tables.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/pl_upsert.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/quasi-quote-assign.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/read_pin_version.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/release_target.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/remove_compress_function.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/round_double_cols.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/schema_dm.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/schema_from_conn.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/schema_table_colnames.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/self_name.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/set_not_null_constraints_on_fk_cols.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/tar_ungroup.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/update_schema_table.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/upload_beatles.html</loc></url>
+<url><loc>https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/usual_hash_group_cols.html</loc></url>
 </urlset>
+
