@@ -50,7 +50,7 @@ which always resolves to the latest release.
   is now consistent with `pl_filter_collect()`.
 * New tests for new features. 
     - Now up to 233 tests, all passing
-    - Test coverage now reported to be 25.37%, but 
+    - Test coverage now reported to be 25.27%, but 
       that's an undercount. 
       Many (most?) functions are not tested 
       on continuous integration platforms and CRAN. 
