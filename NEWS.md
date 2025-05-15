@@ -8,6 +8,11 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+* `pl_upsert()` gains new arguments `round_double_columns` and `digits` 
+  and calls `round_double_cols()` if requested.
+* `round_double_cols()` rounds double-precision columns 
+  in a data frame to assist the `compress()` function 
+  in the database.
 * `pl_upsert()` gains new argument `compress`, 
   which defaults to `FALSE`.
   If set to `TRUE`, `compress_rows()` is called internally
@@ -44,13 +49,11 @@ which always resolves to the latest release.
   This new behavior for `pl_collect_from_hash()` 
   is now consistent with `pl_filter_collect()`.
 * New tests for new features. 
-    - Now up to 195 tests, all passing
+    - Now up to 233 tests, all passing
     - Test coverage now reported to be 25.37%, but 
       that's an undercount. 
-      Many functions are not tested on continuous integration
-      platforms and CRAN. 
-      When run with `Sys.setenv(NOT_CRAN = "true")`, 
-      test coverage is ...
+      Many (most?) functions are not tested 
+      on continuous integration platforms and CRAN. 
 
 
 # PFUPipelineTools 0.1.12 (2024-12-09) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14589472.svg)](https://doi.org/10.5281/zenodo.14589472)

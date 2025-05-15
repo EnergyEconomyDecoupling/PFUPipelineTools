@@ -859,6 +859,39 @@ encode_version_string <- function(version_string,
 
 
 
+#' Round double-precision columns
+#'
+#' When uploading a data frame to a Postgres database,
+#' there are times when numerical precision
+#' prevents compressing the table with [compress_rows()].
+#' This function rounds all double precision columns
+#' (but not integer columns)
+#' in `.df` to the specified precision (`digs`)
+#' and can be called before upserting `.df` to the database.
+#'
+#' @param .df A data frame whose double-precision columns are to be rounded.
+#' @param digits The number of digits of precision.
+#'               Default is `15`, to ensure rows are identical
+#'               for [compress_rows()].
+#'
+#' @returns A version of `.df` with double-precision columns rounded.
+#'
+#' @export
+#'
+#' @examples
+#' data.frame(name = c("pi", "pi+1"),
+#'   # Have to make these integers ("L")
+#'   # so they are left alone.
+#'   million = c(1000000L, 1000001L),
+#'   pi = c(pi, pi+1)) |>
+#'   round_double_cols(digits = 3)
+round_double_cols <- function(.df, digits = 15) {
+  # Find all double columns
+  double_cols <- sapply(.df, FUN = function(this_col) is.double(this_col))
+  .df[double_cols] <- lapply(.df[double_cols], FUN = signif, digits = digits)
+  return(.df)
+}
+
 
 
 

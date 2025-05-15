@@ -459,6 +459,14 @@ set_not_null_constraints_on_fk_cols <- function(schema,
 #' @param compress A boolean that tells whether to compress `db_table_name`
 #'                 in the database after uploading.
 #'                 Default is `FALSE`.
+#' @param round_double_columns A boolean that tells whether to
+#'                             round double-precision columns in `.df`.
+#'                             Default is `FALSE`.
+#' @param digits An integer that tells the number of significant digits.
+#'               `digits` has an effect only when `round_double_columns` is `TRUE`.
+#'               Default is `15`, which should
+#'               eliminate any numerical precision errors
+#'               for [compress_rows()].
 #' @param index_map A list of 2 or more data frames that represent the
 #'                  mappings from inboard row and column indices in the database
 #'                  to outboard row and column names in the memory
@@ -498,6 +506,8 @@ pl_upsert <- function(.df,
                       in_place = FALSE,
                       encode_fks = TRUE,
                       compress = FALSE,
+                      round_double_columns = FALSE,
+                      digits = 15,
                       index_map = list(fk_parent_tables[[IEATools::row_col_types$industry]],
                                        fk_parent_tables[[IEATools::row_col_types$product]],
                                        fk_parent_tables[[IEATools::row_col_types$other]]) |>
@@ -557,6 +567,12 @@ pl_upsert <- function(.df,
       encode_fks(db_table_name = db_table_name,
                  schema = schema,
                  fk_parent_tables = fk_parent_tables)
+  }
+
+  # Round double-precision columns, if desired
+  if (round_double_columns) {
+    df_to_upsert <- df_to_upsert |>
+      round_double_cols(digits = digits)
   }
 
   # Perform the upload.
@@ -918,3 +934,71 @@ decode_fks <- function(.df = NULL,
 }
 
 
+#' Update a schema table in a database.
+#'
+#' It is sometimes necessary to update a schema table in the database.
+#' The need can arise when additional rows are added to the Index table,
+#' for example.
+#' This function helps with that process.
+#'
+#' @param dbname The name of the database in which the table should be updated.
+#' @param db_table_name The name of the table to update.
+#' @param input_data_version A string representing the version of input data to be used.
+#' @param project_path The path to the schema excel file.
+#'                     Default is the OneDrive folder for this project.
+#' @param input_data_path The path from `project_path` to the input data folder.
+#' @param schema_path The path from `input_data_path` to the schema file.
+#' @param schema_sheet The name of the schema sheet in the schema file.
+#'                     Default is "Schema".
+#' @param table_colname,is_pk_colname,colname_colname Names of the table,
+#'                     isPK, and colname columns in the schema table.
+#'                     Defaults are "Table", "IsPK", and "Colname", respectively.
+#' @param drv The database driver to be used. Default is `RPostgres::Postgres()`.
+#' @param host The host for the database. Default is "mexer.site".
+#' @param port The port for accessing the database. Default is `6432`.
+#' @param user The user for the database. Default is "dbcreator".
+#' @param conn The connection to the database. Default is created from
+#'             `drv`, `dbname`, `host`, `port`, and `user` arguments.
+#'
+#' @returns `TRUE` if successful
+update_schema_table <- function(dbname,
+                                db_table_name,
+                                input_data_version,
+                                # Path information
+                                project_path = file.path("~",
+                                                         "OneDrive",
+                                                         "OneDrive - University of Leeds",
+                                                         "Fellowship 1960-2015 PFU database research"),
+
+                                input_data_path = file.path(project_path,
+                                                            "InputData",
+                                                            input_data_version),
+                                schema_path = file.path(input_data_path,
+                                                        "SchemaAndFKTables.xlsx"),
+                                schema_sheet = "Schema",
+                                table_colname = "Table",
+                                is_pk_colname = "IsPK",
+                                colname_colname = "Colname",
+                                # Database connection information
+                                drv = RPostgres::Postgres(),
+                                host = "mexer.site",
+                                port = 6432,
+                                user = "dbcreator",
+                                conn = DBI::dbConnect(drv = drv,
+                                                      dbname = dbname,
+                                                      host = host,
+                                                      port = port,
+                                                      user = user)) {
+
+  table_to_upsert <- readxl::read_excel(schema_path, sheet = db_table_name)
+
+  pk_str <- readxl::read_excel(schema_path, sheet = schema_sheet) |>
+    dplyr::filter(.data[[table_colname]] == db_table_name & .data[[is_pk_colname]]) |>
+    dplyr::pull(colname_colname)
+
+  dplyr::tbl(conn, db_table_name) |>
+    dplyr::rows_upsert(table_to_upsert,
+                       by = pk_str,
+                       copy = TRUE,
+                       in_place = TRUE)
+}

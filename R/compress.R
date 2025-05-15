@@ -96,3 +96,5 @@ compress_rows <- function(db_table_name,
                      ");")
   DBI::dbExecute(conn = conn, statement = sql_stmt)
 }
+
+

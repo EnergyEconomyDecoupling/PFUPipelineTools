@@ -303,4 +303,147 @@ test_that("encode_matsindf() works with a NULL matrix", {
 })
 
 
+test_that("round_double_cols() works as expected", {
+  # Try some rounding first, to understand how it works.
+  expect_true(signif(2, digits = 2) == 2)
+  expect_true(signif(2 + 1e-10, digits = 2) == 2)
+  expect_true(signif(1.5, digits = 2) == 1.5)
+  expect_false(signif(1.3, digits = 2) == 1.5)
+  expect_true(signif(1.5, digits = 1) == 2)
+
+  # These are not equal,
+  # because the trailing "1" is significant at 10 digits.
+  # So the test for equality fails.
+  expect_false(signif(1.500001, digits = 10) == 1.5)
+  expect_false(signif(1.5000001, digits = 10) == 1.5)
+  expect_false(signif(1.50000001, digits = 10) == 1.5)
+  expect_false(signif(1.500000001, digits = 10) == 1.5)
+  # Now the trailing "1" is in the 11th digit, so is insignificant.
+  # So the test for equality is now true.
+  expect_true( signif(1.5000000001, digits = 10) == 1.5)
+
+  # Let's find the sensitivity of the "==" operator.
+  expect_false(signif(1.5000000001, digits = 11) == 1.5)
+  expect_false(signif(1.50000000001, digits = 12) == 1.5)
+  expect_false(signif(1.500000000001, digits = 13) == 1.5)
+  expect_false(signif(1.5000000000001, digits = 14) == 1.5)
+  expect_false(signif(1.50000000000001, digits = 16) == 1.5)
+  expect_false(signif(1.500000000000001, digits = 17) == 1.5)
+  # Looks like the sensitivity for the "==" operator is 17 digits.
+  # When the trailing 1 is in the 17th digit
+  # and we compare at 18 digits of significance,
+  # the equality test is successful.
+  expect_true( signif(1.5000000000000001, digits = 18) == 1.5)
+  expect_true( signif(1.50000000000000001, digits = 19) == 1.5)
+  expect_true( signif(1.500000000000000001, digits = 20) == 1.5)
+  expect_true( signif(1.5000000000000000001, digits = 20) == 1.5)
+  expect_true( signif(1.50000000000000000001, digits = 21) == 1.5)
+  expect_true( signif(1.500000000000000000001, digits = 22) == 1.5)
+
+  # Now test some specific rounding
+  # We were getting these numbers in the pipeline.
+  expect_true(signif(42972.72604058508295565844, digits = 15) == 42972.7260405851)
+  expect_true(signif(42972.72604058508295565844, digits = 16) == 42972.72604058508)
+
+  expect_true(signif(42972.72604058507567970082, digits = 15) == 42972.7260405851)
+  expect_true(signif(42972.72604058507567970082, digits = 16) == 42972.72604058508)
+  expect_true(signif(42972.72604058507567970082, digits = 17) == 42972.726040585076)
+
+  # What happens with NA values?
+  expect_true(signif(NA, digits = 2) |> is.na())
+
+
+  # Now try the function with data frames.
+
+
+  data.frame(pi = pi) |>
+    round_double_cols(digits = 3) |>
+    magrittr::extract2("pi") |>
+    expect_equal(3.14)
+
+  res <- data.frame(name = "pi", pi = pi) |>
+    round_double_cols(digits = 3)
+  res |>
+    magrittr::extract2("pi") |>
+    expect_equal(3.14)
+  res |>
+    magrittr::extract2("name") |>
+    expect_equal("pi")
+
+
+  res2 <- data.frame(name = c("pi", "pi2"),
+                     # Have to make these integers ("L")
+                     # so that the function leaves this column alone.
+                     million = c(1000000L, 1000001L),
+                     pi = c(pi, pi+1)) |>
+    round_double_cols(digits = 3)
+  res2 |>
+    magrittr::extract2("pi") |>
+    magrittr::extract2(1) |>
+    expect_equal(3.14)
+  res2 |>
+    magrittr::extract2("pi") |>
+    magrittr::extract2(2) |>
+    expect_equal(4.14)
+  res2 |>
+    magrittr::extract2("million") |>
+    magrittr::extract2(1) |>
+    expect_equal(1000000)
+  res2 |>
+    magrittr::extract2("million") |>
+    magrittr::extract2(2) |>
+    expect_equal(1000001)
+
+  # Test a data frame without any double-precision columns
+  df2 <- tibble::tribble(~first, ~last,
+                         "John", "Lennon",
+                         "Paul", "McCartney",
+                         "George", "Harrison",
+                         "Ringo", "Starr")
+  df2 |>
+    round_double_cols() |>
+    expect_equal(df2)
+
+  # What happens when an integer is stored as a double-precision?
+  # This could happen when we store metadata columns.
+  res3 <- data.frame(name = c("pi", "pi2"),
+                     # Have to make these integers ("L")
+                     # so that the function leaves this column alone.
+                     million = c(1000000, 1000001),
+                     pi = c(pi, pi+1)) |>
+    round_double_cols(digits = 15)
+  res3 |>
+    magrittr::extract2("million") |>
+    magrittr::extract2(1) |>
+    expect_equal(1000000)
+  res3 |>
+    magrittr::extract2("million") |>
+    magrittr::extract2(2) |>
+    expect_equal(1000001)
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
