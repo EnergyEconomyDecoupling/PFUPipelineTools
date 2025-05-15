@@ -13,6 +13,9 @@ pl_upsert(
   keep_single_unique_cols = TRUE,
   in_place = FALSE,
   encode_fks = TRUE,
+  compress = FALSE,
+  round_double_columns = FALSE,
+  digits = 15,
   index_map =
     magrittr::set_names(list(fk_parent_tables[[IEATools::row_col_types$industry]],
     fk_parent_tables[[IEATools::row_col_types$product]],
@@ -62,6 +65,20 @@ several requests.}
 \item{encode_fks}{A boolean that tells whether to code foreign keys in \code{.df}
 before upserting to \code{conn}.
 Default is \code{TRUE}.}
+
+\item{compress}{A boolean that tells whether to compress \code{db_table_name}
+in the database after uploading.
+Default is \code{FALSE}.}
+
+\item{round_double_columns}{A boolean that tells whether to
+round double-precision columns in \code{.df}.
+Default is \code{FALSE}.}
+
+\item{digits}{An integer that tells the number of significant digits.
+\code{digits} has an effect only when \code{round_double_columns} is \code{TRUE}.
+Default is \code{15}, which should
+eliminate any numerical precision errors
+for \code{\link[=compress_rows]{compress_rows()}}.}
 
 \item{index_map}{A list of 2 or more data frames that represent the
 mappings from inboard row and column indices in the database

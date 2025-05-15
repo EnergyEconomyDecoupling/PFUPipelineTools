@@ -1,10 +1,11 @@
+
 test_that("pl_collect_from_hash() works as expected", {
 
   skip_on_ci()
   skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
                          dbname = "unit_testing",
-                         host = "eviz.cs.calvin.edu",
+                         host = "mexer.site",
                          port = 5432,
                          user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
@@ -155,7 +156,7 @@ test_that("pl_filter_collect() works as expected", {
   skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
                          dbname = "unit_testing",
-                         host = "eviz.cs.calvin.edu",
+                         host = "mexer.site",
                          port = 5432,
                          user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
@@ -180,14 +181,14 @@ test_that("pl_filter_collect() works as expected", {
                   columns = Country,
                   ref_table = PLFilterCollectTestCountry,
                   ref_columns = CountryID)
-  dm::copy_dm_to(conn, DM, set_key_constraints = TRUE, temporary = FALSE)
+  dm::copy_dm_to(dest = conn, dm = DM, set_key_constraints = TRUE, temporary = FALSE)
   Sys.sleep(0.5) # Make sure the database has time to put everything in place.
 
   expect_equal(DBI::dbReadTable(conn, "PLFilterCollectTestTable"), PLFilterCollectTestTable)
   expect_equal(DBI::dbReadTable(conn, "PLFilterCollectTestCountry"), PLFilterCollectTestCountry)
 
   pl_filter_collect("PLFilterCollectTestTable",
-                    countries = "USA",
+                    Country == "USA",
                     conn = conn,
                     collect = TRUE) |>
     expect_equal(tibble::tribble(~Country, ~MyValue,
@@ -196,8 +197,9 @@ test_that("pl_filter_collect() works as expected", {
 
   # Now try with the schema and fk tables pre-supplied
   fk_tables <- get_all_fk_tables(conn = conn, schema = DM)
+
   pl_filter_collect("PLFilterCollectTestTable",
-                    countries = "USA",
+                    Country == "USA",
                     conn = conn,
                     collect = TRUE,
                     schema = DM,
@@ -207,7 +209,7 @@ test_that("pl_filter_collect() works as expected", {
                                  "USA", 5.67e-8))
 
   pl_filter_collect("PLFilterCollectTestTable",
-                    countries = c("USA", "ZAF"),
+                    Country %in% c("USA", "ZAF"),
                     conn = conn,
                     collect = TRUE) |>
     expect_equal(tibble::tribble(~Country, ~MyValue,
@@ -217,7 +219,7 @@ test_that("pl_filter_collect() works as expected", {
 
   # Try without collecting
   uncollected <- pl_filter_collect(db_table_name = "PLFilterCollectTestTable",
-                                   countries = "USA",
+                                   Country == "USA",
                                    conn = conn,
                                    schema = DM,
                                    fk_parent_tables = fk_tables)
@@ -241,3 +243,397 @@ test_that("pl_filter_collect() works as expected", {
   DBI::dbRemoveTable(conn = conn, name = db_table_name)
   DBI::dbRemoveTable(conn = conn, name = db_country_name)
 })
+
+
+test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
+
+  skip_on_ci()
+  skip_on_cran()
+
+  conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
+                         dbname = "unit_testing",
+                         host = "mexer.site",
+                         port = 5432,
+                         user = "mkh2")
+  on.exit(DBI::dbDisconnect(conn))
+
+  # Database table with 2 version columns
+  # and 1 column of real data.
+  db_table_name <- "PLCollectFromHashVersionsTest"
+  if (db_table_name %in% DBI::dbListTables(conn)) {
+    DBI::dbRemoveTable(conn, db_table_name)
+  }
+  db_table <- tibble::tribble(
+    ~ValidFromVersion, ~ValidToVersion, ~Country, ~Year, ~val,
+    1L, 1L, 1L, 1967L, 1,
+    1L, 1L, 2L, 1967L, 2,
+    2L, 2L, 1L, 1967L, 3,
+    2L, 2L, 2L, 1967L, 4,
+    2L, 2L, 1L, 1968L, 5,
+    2L, 2L, 2L, 1968L, 6,
+    3L, 3L, 3L, 2000L, 7,
+    4L, 10L, 3L, 2000L, 8) |>
+    as.data.frame()
+  db_table_empty <- db_table[0, ]
+
+  # Version table with a VersionID column and a Version column.
+  version_table_name <- "VersionTableTest"
+  if (version_table_name %in% DBI::dbListTables(conn)) {
+    DBI::dbRemoveTable(conn, version_table_name)
+  }
+  version_table <- data.frame(VersionID = 1:10,
+                              Version = paste0("v", 1:10))
+  version_table_empty <- version_table[0, ]
+
+  # Country table with a CountryID column
+  country_table_name <- "CountryTableTest"
+  if (country_table_name %in% DBI::dbListTables(conn)) {
+    DBI::dbRemoveTable(conn, country_table_name)
+  }
+  country_table <- data.frame(CountryID = c(1, 2, 3),
+                              Country = c("USA", "ZAF", "GHA"))
+  country_table_empty <- country_table[0, ]
+
+  # Build the data model
+  DM <- list(db_table_empty, version_table_empty, country_table_empty) |>
+    magrittr::set_names(c(db_table_name, version_table_name, country_table_name)) |>
+    dm::as_dm() |>
+    # Add primary keys
+    dm::dm_add_pk({{db_table_name}}, c(ValidFromVersion,
+                                       ValidToVersion,
+                                       Country,
+                                       Year)) |>
+    dm::dm_add_pk({{version_table_name}}, VersionID) |>
+    dm::dm_add_pk({{country_table_name}}, CountryID) |>
+    # Add foreign keys
+    dm::dm_add_fk(table = PLCollectFromHashVersionsTest,
+                  columns = ValidFromVersion,
+                  ref_table = VersionTableTest,
+                  ref_columns = VersionID) |>
+    dm::dm_add_fk(table = PLCollectFromHashVersionsTest,
+                  columns = ValidToVersion,
+                  ref_table = VersionTableTest,
+                  ref_columns = VersionID) |>
+    dm::dm_add_fk(table = PLCollectFromHashVersionsTest,
+                  columns = Country,
+                  ref_table = CountryTableTest,
+                  ref_columns = CountryID)
+
+  dm::copy_dm_to(dest = conn, dm = DM, temporary = FALSE)
+
+  # Get these things here to reduce download time below.
+  schema <- schema_from_conn(conn = conn)
+  fk_parent_tables <- get_all_fk_tables(conn = conn, schema = schema)
+
+  # Upload tables
+  hash_vt <- version_table |>
+    pl_upsert(db_table_name = version_table_name,
+              conn = conn,
+              in_place = TRUE)
+  hash_ct <- country_table |>
+    pl_upsert(db_table_name = country_table_name,
+              conn = conn,
+              in_place = TRUE)
+  hash_dbt <- db_table |>
+    pl_upsert(db_table_name = db_table_name,
+              conn = conn,
+              in_place = TRUE)
+
+  # This is the expected result, all rows.
+  # Filter in specific tests below, when needed.
+  expected_all <- tibble::tribble(
+    ~ValidFromVersion, ~ValidToVersion, ~Country, ~Year, ~val,
+    "v1", "v1", "USA", 1967L, 1,
+    "v1", "v1", "ZAF", 1967L, 2,
+    "v2", "v2", "USA", 1967L, 3,
+    "v2", "v2", "ZAF", 1967L, 4,
+    "v2", "v2", "USA", 1968L, 5,
+    "v2", "v2", "ZAF", 1968L, 6,
+    "v3", "v3", "GHA", 2000L, 7,
+    "v4", "v10", "GHA", 2000L, 8
+  )
+
+
+  #### Test pl_filter_collect() with versions
+
+  # First attempt is with no filtering on versions.
+  # Make sure we download the whole table.
+  db_table_name |>
+    pl_filter_collect(conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all)
+
+  # Filter to get v1
+  db_table_name |>
+    pl_filter_collect(version_string = "v1",
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(ValidFromVersion == "v1"))
+
+  db_table_name |>
+    pl_filter_collect(version_string = "v2",
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(ValidFromVersion == "v2"))
+
+  db_table_name |>
+    pl_filter_collect(version_string = "v3",
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(ValidToVersion == "v3"))
+
+  for (i in 4:10) {
+    db_table_name |>
+      pl_filter_collect(version_string = paste0("v", i),
+                        conn = conn,
+                        schema = schema,
+                        fk_parent_tables = fk_parent_tables,
+                        collect = TRUE) |>
+      expect_equal(expected_all |> dplyr::filter(ValidFromVersion == "v4"))
+  }
+
+  #### Test pl_filter_collect() with versions and
+  #### additional filtering expression
+  db_table_name |>
+    pl_filter_collect(version_string = "v3",
+                      Country == "GHA",
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(ValidToVersion == "v3"))
+  # Try with different orders for arguments
+  db_table_name |>
+    pl_filter_collect(Country == "GHA",
+                      version_string = "v3",
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(ValidToVersion == "v3"))
+  pl_filter_collect(Country == "GHA",
+                    version_string = "v3",
+                    db_table_name = db_table_name,
+                    conn = conn,
+                    schema = schema,
+                    fk_parent_tables = fk_parent_tables,
+                    collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(ValidToVersion == "v3"))
+  pl_filter_collect(version_string = "v3",
+                    db_table_name = db_table_name,
+                    conn = conn,
+                    schema = schema,
+                    fk_parent_tables = fk_parent_tables,
+                    collect = TRUE,
+                    Country == "GHA") |>
+    expect_equal(expected_all |> dplyr::filter(ValidToVersion == "v3"))
+  pl_filter_collect(version_string = "v3",
+                    conn = conn,
+                    schema = schema,
+                    fk_parent_tables = fk_parent_tables,
+                    collect = TRUE,
+                    Country == "GHA",
+                    db_table_name = db_table_name) |>
+    expect_equal(expected_all |> dplyr::filter(ValidToVersion == "v3"))
+
+  # Try a filter in both version_string and ...
+  db_table_name |>
+    pl_filter_collect(Country == "USA",
+                      version_string = "v2",
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(ValidToVersion == "v2" &
+                                                 Country == "USA"))
+
+  # Try an inequality filter
+  db_table_name |>
+    pl_filter_collect(val <= 6,
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(val <= 6))
+
+  # Try an %in% filter
+  db_table_name |>
+    pl_filter_collect(Country %in% c("GHA", "USA"),
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(Country %in% c("GHA", "USA")))
+
+  # Add extra conditions
+  db_table_name |>
+    pl_filter_collect(val <= 6 & Year >= 1968,
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(val <= 6 & Year >= 1968))
+  # Split conditions
+  db_table_name |>
+    pl_filter_collect(val <= 6, Year >= 1968,
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(val <= 6 & Year >= 1968))
+  db_table_name |>
+    pl_filter_collect(val <= 6 & Year >= 1968,
+                      Country == "ZAF",
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(val <= 6 &
+                                                 Year >= 1968 &
+                                                 Country == "ZAF"))
+
+
+  #### Test multiple versions
+  db_table_name |>
+    pl_filter_collect(version_string = c("v1", "v2"),
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(ValidToVersion %in% c("v1", "v2")))
+
+  db_table_name |>
+    pl_filter_collect(version_string = c("v1", "v2"),
+                      Country == "USA",
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(ValidToVersion %in% c("v1", "v2"),
+                                               Country == "USA"))
+
+  db_table_name |>
+    pl_filter_collect(version_string = c("v5", "v2"),
+                      Country %in% c("USA", "GHA"),
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    dplyr::arrange(ValidFromVersion) |>
+    expect_equal(expected_all |> dplyr::filter(ValidFromVersion %in% c("v4", "v2"),
+                                               Country %in% c("GHA", "USA")))
+
+
+  #### Try degenerate cases
+  # Setting impossible filters in ... should return an empty data frame.
+  db_table_name |>
+    pl_filter_collect(val == 100,
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all[0, ])
+  db_table_name |>
+    pl_filter_collect(val == 100,
+                      version_string = "v1",
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all[0, ])
+  # Requesting a non-existent version should emit an error.
+  db_table_name |>
+    pl_filter_collect(version_string = "bogus",
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_error(regexp = 'Unknown version_string')
+  # Setting a zero-length vector for version_string
+  # should result in no rows.
+  db_table_name |>
+    pl_filter_collect(version_string = c(),
+                      val == 100,
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all[0, ])
+  # Passing the same version string twice should give
+  # only one copy of the relevant data.
+  db_table_name |>
+    pl_filter_collect(version_string = c("v3", "v3", "v3"),
+                      conn = conn,
+                      schema = schema,
+                      fk_parent_tables = fk_parent_tables,
+                      collect = TRUE) |>
+    expect_equal(expected_all |> dplyr::filter(ValidToVersion == "v3"))
+
+
+
+
+  #### Test pl_collect_from_hash() with versions
+
+  # Try to collect from the hashes without specifying a version
+  hash_dbt |>
+    pl_collect_from_hash(conn = conn,
+                         schema = schema,
+                         fk_parent_tables = fk_parent_tables,
+    ) |>
+    expect_equal(expected_all)
+
+  # Collect from hash while specifying a version
+  hash_dbt |>
+    pl_collect_from_hash(version_string = "v1",
+                         conn = conn,
+                         schema = schema,
+                         fk_parent_tables = fk_parent_tables) |>
+    expect_equal(expected_all |> dplyr::filter(ValidFromVersion == "v1"))
+
+  hash_dbt |>
+    pl_collect_from_hash(version_string = "v2",
+                         conn = conn,
+                         schema = schema,
+                         fk_parent_tables = fk_parent_tables) |>
+    expect_equal(expected_all |> dplyr::filter(ValidFromVersion == "v2"))
+
+  hash_dbt |>
+    pl_collect_from_hash(version_string = "v3",
+                         conn = conn,
+                         schema = schema,
+                         fk_parent_tables = fk_parent_tables) |>
+    expect_equal(expected_all |> dplyr::filter(ValidToVersion == "v3"))
+
+  for (i in 4:10) {
+    hash_dbt |>
+      pl_collect_from_hash(version_string = paste0("v", i),
+                           conn = conn,
+                           schema = schema,
+                           fk_parent_tables = fk_parent_tables) |>
+      expect_equal(expected_all |> dplyr::filter(ValidFromVersion == "v4"))
+  }
+
+
+
+  # Clean up
+  if (db_table_name %in% DBI::dbListTables(conn)) {
+    DBI::dbRemoveTable(conn, db_table_name)
+  }
+  if (version_table_name %in% DBI::dbListTables(conn)) {
+    DBI::dbRemoveTable(conn, version_table_name)
+  }
+  if (country_table_name %in% DBI::dbListTables(conn)) {
+    DBI::dbRemoveTable(conn, country_table_name)
+  }
+})
+
+
+

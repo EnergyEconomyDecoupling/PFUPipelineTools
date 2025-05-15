@@ -7,7 +7,7 @@
 encode_fks(
   .df,
   db_table_name,
-  conn,
+  conn = NULL,
   schema = schema_from_conn(conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
   .child_table = PFUPipelineTools::dm_fk_colnames$child_table,
@@ -23,7 +23,8 @@ encode_fks(
 \item{db_table_name}{The string name of the database table where \code{.df} is to be uploaded.}
 
 \item{conn}{An optional database connection.
-Necessary only for the default values of \code{schema} and \code{fk_parent_tables}.}
+Necessary only for the default values of \code{schema} and \code{fk_parent_tables}.
+Default is \code{NULL}.}
 
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
 See details.}

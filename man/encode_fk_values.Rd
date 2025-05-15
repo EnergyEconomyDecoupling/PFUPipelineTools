@@ -7,7 +7,7 @@
 encode_fk_values(
   v_val,
   fk_table_name,
-  conn,
+  conn = NULL,
   schema = schema_from_conn(conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema, collect = TRUE),
   pk_suffix = PFUPipelineTools::key_col_info$pk_suffix
@@ -22,7 +22,8 @@ that contains the mapping from fk values
 to fk keys.}
 
 \item{conn}{A connection to the CL-PFU database.
-Needed only if \code{fk_parent_tables} is not provided.}
+Needed only if \code{fk_parent_tables} is not provided.
+Default is \code{NULL}.}
 
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
 Default is \code{dm_from_con(conn, learn_keys = TRUE)}.

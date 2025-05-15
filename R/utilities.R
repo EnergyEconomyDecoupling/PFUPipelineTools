@@ -96,21 +96,16 @@ get_all_fk_tables <- function(conn,
 #' @param learn_keys A boolean that tells whether to include the definition
 #'                   of primary and final keys in the return value.
 #'                   Default is `TRUE`.
-#' @param .names See documentation for `dm_from_con()` in the `dm` package.
-#'               Default is `NULL`.
-#' @param table_type Gives the type of table to return.
-#'                   Default is "BASE TABLE", which means to return persistent tables,
-#'                   the normal table type.
 #'
 #' @return A `dm` object.
 #'
 #' @export
 schema_from_conn <- function(conn = NULL,
                              table_names = NULL,
-                             learn_keys = TRUE,
-                             .names = NULL,
-                             table_type = "BASE TABLE") {
-  dm::dm_from_con(conn, table_names = table_names, learn_keys = TRUE)
+                             learn_keys = TRUE) {
+  dm::dm_from_con(conn,
+                  table_names = table_names,
+                  learn_keys = TRUE)
 }
 
 
@@ -302,7 +297,6 @@ inboard_filter_copy <- function(source,
           usual_hash_group_cols = usual_hash_group_cols) |>
     # Decode the foreign keys, so they are human-readable.
     decode_fks(db_table_name = dest,
-               conn = conn,
                schema = schema,
                fk_parent_tables = fk_parent_tables)
 }
@@ -343,6 +337,7 @@ inboard_filter_copy <- function(source,
 #'                      to fk keys.
 #' @param conn A connection to the CL-PFU database.
 #'             Needed only if `fk_parent_tables` is not provided.
+#'             Default is `NULL`.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               Default is `dm_from_con(conn, learn_keys = TRUE)`.
 #'               Needed only if `fk_parent_tables` is not provided.
@@ -369,7 +364,7 @@ inboard_filter_copy <- function(source,
 #'                  fk_parent_tables = fk_parent_tables)
 encode_fk_values <- function(v_val,
                              fk_table_name,
-                             conn,
+                             conn = NULL,
                              schema = schema_from_conn(conn),
                              fk_parent_tables = get_all_fk_tables(conn = conn,
                                                                   schema = schema,
@@ -636,7 +631,7 @@ decode_matsindf <- function(.encoded,
                                     matrix_class = matrix_class,
                                     row_index_colname = row_index_colname,
                                     col_index_colname = col_index_colname,
-                                    val_colname = value_colname)
+                                    value_colname = value_colname)
     )
   if (wide_by_matrices) {
     out <- out |>
@@ -697,5 +692,207 @@ encode_matsindf <- function(.matsindf,
     ) |>
     tidyr::unnest(cols = dplyr::all_of(matval))
 }
+
+
+#' Filter a database table based on a version string.
+#'
+#' Filtering a database table based on the version you wish to download
+#' is a common task.
+#' In the CL-PFU database, we store data in a compressed format where
+#' identical data points are not duplicated.
+#' Rather, they are stored in a single row with the `ValidFromVersion`
+#' and `ValidToVersion` columns incremented appropriately.
+#'
+#' The desired version is supplied in the `version_string` argument,
+#' which can be a vector of any length.
+#'
+#' If both `tbl` and `db_table_name` are provided, `db_table_name` is
+#' ignored.
+#'
+#' @param tbl The `tbl` object that should be filtered.
+#' @param version_string A vector of version strings to indicate the desired version(s).
+#' @param collect A boolean that tells whether to collect `tbl` from `conn`
+#'                before returning.
+#'                Default is `FALSE`.
+#' @param db_table_name The name of the table to be filtered.
+#' @param conn An optional database connection.
+#'             Necessary only for the default values of `schema` and `fk_parent_tables`.
+#'             Default is `NULL`.
+#' @param schema The database schema (a `dm` object).
+#'               Default calls `schema_from_conn()`, but
+#'               you can supply a pre-computed schema for speed.
+#'               Needed only when `decode_fks = TRUE` (the default).
+#'               If foreign keys are not being decoded,
+#'               setting `NULL` may improve speed.
+#' @param fk_parent_tables Foreign key parent tables to assist decoding
+#'                         foreign keys.
+#'                         Default calls `get_all_fk_tables()`.
+#' @param valid_from_version_colname The name of the ValidFromVersion column.
+#'                                   Default is
+#'                                   `PFUPipelineTools::dataset_info$valid_from_version_colname`.
+#' @param valid_to_version_colname The name of the ValidToVersion column.
+#'                                 Default is
+#'                                 `PFUPipelineTools::dataset_info$valid_to_version_colname`.
+#'
+#' @returns A filtered version of `tbl`.
+#'
+#' @export
+filter_on_version_string <- function(tbl,
+                                     version_string,
+                                     db_table_name,
+                                     collect = FALSE,
+                                     conn = NULL,
+                                     schema = schema_from_conn(conn = conn),
+                                     fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+                                     valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
+                                     valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname) {
+
+  version_string <- unique(version_string)
+
+  if (length(version_string) > 1) {
+    # Eliminate duplicates
+    out_list <- lapply(unique(version_string), function(this_version_string) {
+      # If we have more than one version_string,
+      # call ourselves recursively and stack the results.
+      filter_on_version_string(tbl = tbl,
+                               version_string = this_version_string,
+                               db_table_name = db_table_name,
+                               collect = collect,
+                               conn = conn,
+                               schema = schema,
+                               fk_parent_tables = fk_parent_tables,
+                               valid_from_version_colname = valid_from_version_colname,
+                               valid_to_version_colname = valid_to_version_colname)
+    })
+    # I would like to say
+    # out <- dplyr::rbind(out)
+    # but that doesn't work with objects that are not data frames.
+    # So, instead, use union_all(), which successfully stacks tbl objects.
+    out <- out_list[[1]]
+    for (i in 2:length(out_list)) {
+      out <- out |>
+        dplyr::union_all(out_list[[i]])
+    }
+    return(out)
+  }
+
+  # Make sure we have only one version_string.
+  assertthat::assert_that(length(version_string) == 1,
+                          msg = paste("version_string must be length 1 in",
+                                      "PFUPipelineTools::filter_on_version_string()"))
+
+  # Figure out the index for the version of interest to us.
+  tryCatch(
+    version_index <- encode_version_string(version_string = version_string,
+                                           table_name = db_table_name,
+                                           schema = schema,
+                                           fk_parent_tables = fk_parent_tables),
+    error = function(e) {
+      stop(paste0('Unknown version_string "', version_string, '".'))
+    }
+  )
+
+  # Filter the outgoing data frame according to the version_index
+  out <- tbl |>
+    dplyr::filter(.data[[valid_from_version_colname]] <= version_index) |>
+    dplyr::filter(.data[[valid_to_version_colname]] >= version_index)
+
+  if (collect) {
+    out <- out |>
+      dplyr::collect()
+  }
+
+  return(out)
+}
+
+
+#' Encode a version string
+#'
+#' This function encodes a version string,
+#' returning the integer representation of the version string.
+#'
+#' @param version_string The version to be encoded.
+#' @param table_name The name of the table in which the `version_string` is found.
+#' @param conn An optional database connection.
+#'             Necessary only for the default values of `schema` and `fk_parent_tables`.
+#'             Default is `NULL`.
+#' @param schema The schema for the database.
+#'               Default is `schema_from_conn(conn = conn)`.
+#' @param fk_parent_tables The foreign key parent tables.
+#'                         Default is `get_all_fk_tables(conn = conn, schema = schema)`.
+#' @param .version_colname A column in which versions are provided.
+#'                         This column is used internally.
+#'                         Default is `PFUPipelineTools::dataset_info$valid_from_version_colname`.
+#'                         `PFUPipelineTools::dataset_info$valid_to_version_colname`
+#'                         would also work.
+#'
+#' @export
+#'
+#' @return An integer which is the index for `version_string`.
+encode_version_string <- function(version_string,
+                                  table_name,
+                                  conn = NULL,
+                                  schema = schema_from_conn(conn = conn),
+                                  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+                                  .version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname) {
+  # Make sure we have only 1 version
+  assertthat::assert_that(length(version_string) == 1,
+                          msg = paste("version_string must have length 1",
+                                      "in PFUPipelineTools:::encode_version_string()."))
+  # Make a small data frame that will be used to decode the version.
+  mini_df <- tibble::tribble(~c1,
+                             version_string) |>
+    magrittr::set_names(.version_colname)
+  # Encode the versions according to foreign keys
+  version_index <- mini_df |>
+    encode_fks(db_table_name = table_name,
+               schema = schema,
+               fk_parent_tables = fk_parent_tables) |>
+    # Pull out the only integer we find
+    magrittr::extract2(.version_colname)
+  # Do some error checking
+  assertthat::assert_that(length(version_index) != 0,
+                          msg = paste("Didn't find a version that matches", version,
+                                      "in PFUPipelineTools::pl_collect_from_hash()."))
+  return(version_index)
+}
+
+
+
+#' Round double-precision columns
+#'
+#' When uploading a data frame to a Postgres database,
+#' there are times when numerical precision
+#' prevents compressing the table with [compress_rows()].
+#' This function rounds all double precision columns
+#' (but not integer columns)
+#' in `.df` to the specified precision (`digs`)
+#' and can be called before upserting `.df` to the database.
+#'
+#' @param .df A data frame whose double-precision columns are to be rounded.
+#' @param digits The number of digits of precision.
+#'               Default is `15`, to ensure rows are identical
+#'               for [compress_rows()].
+#'
+#' @returns A version of `.df` with double-precision columns rounded.
+#'
+#' @export
+#'
+#' @examples
+#' data.frame(name = c("pi", "pi+1"),
+#'   # Have to make these integers ("L")
+#'   # so they are left alone.
+#'   million = c(1000000L, 1000001L),
+#'   pi = c(pi, pi+1)) |>
+#'   round_double_cols(digits = 3)
+round_double_cols <- function(.df, digits = 15) {
+  # Find all double columns
+  double_cols <- sapply(.df, FUN = function(this_col) is.double(this_col))
+  .df[double_cols] <- lapply(.df[double_cols], FUN = signif, digits = digits)
+  return(.df)
+}
+
+
+
 
 

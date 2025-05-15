@@ -1,7 +1,7 @@
 Package: PFUPipelineTools
 Title: Tools for CL-PFU Database Pipelines
-Version: 0.1.10
-Date: 2024-08-01
+Version: 0.1.13
+Date: 2025-05-15
 Authors@R: 
     person("Matthew", "Heun", , "matthew.heun@me.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-7438-214X"))
@@ -28,13 +28,13 @@ Imports:
     PFUSetup,
     pins,
     purrr,
-    Recca,
+    readr,
     readxl,
     rlang, 
     tidyr,
     tibble
 Depends: 
-    R (>= 2.10)
+    R (>= 3.5)
 LazyData: true
 Suggests:
     dbplyr,
