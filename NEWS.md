@@ -8,6 +8,8 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+# PFUPipelineTools 0.1.13 (2025-05-15)
+
 * `pl_upsert()` gains new arguments `round_double_columns` and `digits` 
   and calls `round_double_cols()` if requested.
 * `round_double_cols()` rounds double-precision columns 
