@@ -73,7 +73,7 @@ test_that("pl_hash() works with remote table", {
   skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
                          dbname = "unit_testing",
-                         host = "eviz.cs.calvin.edu",
+                         host = "mexer.site",
                          port = 5432,
                          user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))

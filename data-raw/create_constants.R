@@ -447,3 +447,5 @@ mat_meta_cols <- list(matname = "matname",
                       rowtype = "rowtype",
                       coltype = "coltype")
 usethis::use_data(mat_meta_cols, overwrite = TRUE)
+
+

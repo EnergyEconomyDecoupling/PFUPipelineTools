@@ -6,14 +6,10 @@
 \usage{
 pl_filter_collect(
   db_table_name,
-  datasets = NULL,
-  countries = NULL,
-  years = NULL,
-  methods = "PCM",
-  last_stages = c(IEATools::last_stages$final, IEATools::last_stages$useful),
-  energy_types = c(IEATools::energy_types$e, IEATools::energy_types$x),
-  includes_neu = TRUE,
+  ...,
+  version_string = NULL,
   collect = FALSE,
+  create_matsindf = collect,
   conn,
   schema = schema_from_conn(conn = conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
@@ -23,55 +19,40 @@ pl_filter_collect(
   rctypes = decode_fks(db_table_name = rctype_table_name, collect = TRUE, conn = conn,
     schema = schema, fk_parent_tables = fk_parent_tables),
   matrix_class = c("Matrix", "matrix"),
-  matname = "matname",
-  matval = "matval",
-  rowtype_colname = "rowtype",
-  coltype_colname = "coltype",
-  country = IEATools::iea_cols$country,
-  year = IEATools::iea_cols$year,
-  method = IEATools::iea_cols$method,
-  last_stage = IEATools::iea_cols$last_stage,
-  energy_type = IEATools::iea_cols$energy_type,
-  dataset_colname = PFUPipelineTools::dataset_info$dataset_colname,
-  includes_neu_col = Recca::psut_cols$includes_neu
+  matname = PFUPipelineTools::mat_meta_cols$matname,
+  matval = PFUPipelineTools::mat_meta_cols$matval,
+  rowtype_colname = PFUPipelineTools::mat_meta_cols$rowtype,
+  coltype_colname = PFUPipelineTools::mat_meta_cols$coltype,
+  valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
+  valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname
 )
 }
 \arguments{
 \item{db_table_name}{The string name of the database table to be filtered.}
 
-\item{datasets}{A vector of dataset strings to be retained in the output.
-\code{NULL} (the default) returns all datasets.
-Another interesting option is
-\code{PFUPipelineTools::dataset_info$clpfu_iea}.}
+\item{...}{Filter conditions on the data frame,
+such as \code{Country == "USA"} or \code{Year \%in\% 1960:2020}.
+These conditions reduce data volume,
+because they are applied prior to downloading from \code{conn}.
+If no rows match these conditions,
+a data frame with no rows is returned.}
 
-\item{countries}{A vector of country strings to be retained in the output.
-\code{NULL} (the default) returns all countries.
-Another useful option is \code{as.character(PFUPipelineTools::canonical_countries)}.}
-
-\item{years}{A vector of integers to be retained in the output.
-\code{NULL} (the default) returns all years.
-Another option is \code{1960:2020}.}
-
-\item{methods}{A vector of method strings to be retained in the output.
-At present, only "PCM" (physical content method) is implemented.
-Default is "PCM" (physical content method).}
-
-\item{last_stages}{A vector of last stage strings to be retained in the output.
-At present, only "Final" and "Useful" are implemented.
-Default is "Final". "Useful" is also a valid option.}
-
-\item{energy_types}{A vector of energy type strings to be retained in the output.
-At present, only "E" (energy) and "X" (exergy) are implemented.
-Default is "E" but "X" is also valid.}
-
-\item{includes_neu}{A vector of booleans that indicates what to retain in output.
-\code{TRUE} means non-energy use is included in the ECCs.
-\code{FALSE} means non-energy use is excluded from the ECCs.
-Default is \code{TRUE}.}
+\item{version_string}{A string of length \code{1} or more
+that indicates the desired version(s).
+\code{NULL}, the default, means to download all versions available in
+\code{db_table_name}.
+\code{c()} (an empty string) returns a zero-row table.
+If \code{version_string} is invalid, an error will be emitted.}
 
 \item{collect}{A boolean that tells whether to download the result.
 Default is \code{FALSE}.
 See details.}
+
+\item{create_matsindf}{A boolean that tells whether to create a matsindf data frame
+from the collected data frame.
+Default is the value of \code{collect},
+such that setting \code{collect = TRUE} also
+implies \code{create_matsindf}.}
 
 \item{conn}{The database connection.}
 
@@ -101,20 +82,24 @@ Default is \code{fk_parent_tables[[rctype_table_name]]}.}
 "matrix" (the base matrix representation in \code{R}) for non-sparse matrices.}
 
 \item{matname}{The name of the matrix name column.
-Default is "matname".}
+Default is \code{PFUPipelineTools::mat_meta_cols$matname}.}
 
 \item{matval}{The name of the matrix value column.
-Default is "matval".}
+Default is \code{PFUPipelineTools::mat_meta_cols$matval}.}
 
 \item{rowtype_colname, coltype_colname}{The names for row and column type columns in data frames.
-Defaults are "rowtype" and "coltype", respectively.}
+Defaults are
+\code{PFUPipelineTools::mat_meta_cols$rowtype} and
+\code{PFUPipelineTools::mat_meta_cols$coltype},
+respectively.}
 
-\item{dataset_colname, country, year, method, last_stage, energy_type}{Columns that are likely to be in db_table_name
-and may be filtered with \code{\%in\%}-style subsetting.}
-
-\item{includes_neu_col}{The name of a column that tells whether non-energy
-use (NEU) is included.
-Default is \code{Recca::psut_cols$includes_neu}.}
+\item{valid_from_version_colname, valid_to_version_colname}{Names
+for columns containing version information.
+Defaults are
+\code{PFUPipelineTools::dataset_info$valid_from_version_colname}
+and
+\code{PFUPipelineTools::dataset_info$valid_to_version_colname},
+respectively.}
 }
 \value{
 A filtered version of \code{db_table_name} downloaded from \code{conn}.
@@ -122,14 +107,16 @@ A filtered version of \code{db_table_name} downloaded from \code{conn}.
 \description{
 Often when collecting data from the database,
 filtering is desired.
-But filtering based on foreign keys (as stored in the database)
+But filtering based on foreign keys
+(fks, as stored in the database)
 is effectively impossible, because of foreign key encoding.
 This function filters based on
 fk values (typically strings),
 not fk keys (typically integers),
 thereby simplifying the filtering process,
 with optional downloading thereafter.
-By default, a \code{tbl} is returned
+By default (\code{collect = FALSE}),
+a \code{tbl} is returned
 (and data are not downloaded from the database).
 Use \code{dplyr::collect()} to execute the resulting SQL query
 and obtain an in-memory data frame.
@@ -137,11 +124,6 @@ Or, set \code{collect = TRUE} to execute the SQL and
 return an in-memory data frame.
 }
 \details{
-To obtain \code{db_table_name} \emph{without} filtering
-but with fk keys (typically integers)
-decoded to fk values (typically strings),
-call this function with nothing in the \code{...} argument.
-
 \code{schema} is a data model (\code{dm} object) for the CL-PFU database.
 It can be obtained from calling \code{schema_from_conn()}.
 If minimal interaction with the database is desired,
@@ -161,11 +143,4 @@ If minimal interaction with the database is desired,
 be sure to override the default value for \code{fk_parent_tables}
 by supplying a pre-computed named list of
 foreign key tables.
-
-Setting any of the filtering arguments
-(\code{countries}, \code{years}, \code{methods}, \code{last_stages}, \code{energy_types}, \code{includes_neu})
-to \code{NULL} turns off filtering and returns all values.
-
-When \code{collect = TRUE},
-\code{\link[=decode_matsindf]{decode_matsindf()}} is called on the downloaded data frame.
 }

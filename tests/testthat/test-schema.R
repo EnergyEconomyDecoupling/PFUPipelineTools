@@ -69,7 +69,7 @@ test_that("pl_upload_schema_and_simple_tables() works as expected", {
   skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
                          dbname = "unit_testing",
-                         host = "eviz.cs.calvin.edu",
+                         host = "mexer.site",
                          port = 5432,
                          user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
@@ -169,7 +169,7 @@ test_that("encode_fks() works with re-routed foreign keys", {
   skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
                          dbname = "unit_testing",
-                         host = "eviz.cs.calvin.edu",
+                         host = "mexer.site",
                          port = 5432,
                          user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
@@ -195,7 +195,7 @@ test_that("encode_fks() works with re-routed foreign keys", {
     dm::dm_add_pk(ECCStage, ECCStageID) |>
     dm::dm_add_fk(TestUpsertTable, LastStage, ECCStage, ECCStageID)
   dm::copy_dm_to(conn, DM, temporary = FALSE, set_key_constraints = TRUE)
-  Sys.sleep(0.5) # Make sure the database has time to put everything in place.
+  # Sys.sleep(0.5) # Make sure the database has time to put everything in place.
   pl_upsert(TestUpsertTable,
             conn = conn,
             db_table_name = "TestUpsertTable",
@@ -203,8 +203,7 @@ test_that("encode_fks() works with re-routed foreign keys", {
   # Get the table to make sure it worked
   retrieved <- DBI::dbReadTable(conn, "TestUpsertTable")
   expect_equal(retrieved, TestUpsertTable)
-  decoded <- pl_filter_collect("TestUpsertTable", last_stages = NULL, conn = conn, collect = TRUE)
-  Sys.sleep(0.5) # Make sure the database has time to put everything in place.
+  decoded <- pl_filter_collect("TestUpsertTable", conn = conn, collect = TRUE)
   expect_equal(decoded, TestUpsertTable2, ignore_attr = TRUE)
   # Now try with decoding
   pl_upsert(TestUpsertTable2,
@@ -212,12 +211,11 @@ test_that("encode_fks() works with re-routed foreign keys", {
             db_table_name = "TestUpsertTable",
             in_place = TRUE,
             encode_fks = TRUE)
-  Sys.sleep(0.5) # Make sure the database has time to put everything in place.
+  # Sys.sleep(0.5) # Make sure the database has time to put everything in place.
   retrieved2 <- DBI::dbReadTable(conn, "TestUpsertTable")
   expect_equal(retrieved2, TestUpsertTable)
-  Sys.sleep(0.5) # Make sure the database has time to put everything in place.
   # Retrieve with decoding
-  decoded2 <- pl_filter_collect("TestUpsertTable", last_stages = NULL, conn = conn, collect = TRUE)
+  decoded2 <- pl_filter_collect("TestUpsertTable", conn = conn, collect = TRUE)
   expect_equal(decoded2, TestUpsertTable2, ignore_attr = TRUE)
 
   # Clean up after ourselves
@@ -231,7 +229,7 @@ test_that("decode_fks() works as expected", {
   skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
                          dbname = "unit_testing",
-                         host = "eviz.cs.calvin.edu",
+                         host = "mexer.site",
                          port = 5432,
                          user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
@@ -288,7 +286,7 @@ test_that("decode_fks() and encode_fks() work with tbls", {
   skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
                          dbname = "unit_testing",
-                         host = "eviz.cs.calvin.edu",
+                         host = "mexer.site",
                          port = 5432,
                          user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
@@ -302,13 +300,14 @@ test_that("decode_fks() and encode_fks() work with tbls", {
     pl_upsert(conn = conn,
               db_table_name = "MemberRole",
               in_place = TRUE)
-  schema <- schema_from_conn(conn)
   # This next call should download MemberRole as a tbl, because
   # (a) .df is not specified and
   # (b) collect = FALSE (the default)
+  # decoded_tbl <- decode_fks(db_table_name = "MemberRole",
+  #                           conn = conn,
+  #                           schema = schema)
   decoded_tbl <- decode_fks(db_table_name = "MemberRole",
-                            conn = conn,
-                            schema = schema)
+                            conn = conn)
   expect_true(dplyr::is.tbl(decoded_tbl))
   expect_equal(dplyr::collect(decoded_tbl),
                tibble::tribble(~Member, ~Role,
@@ -338,7 +337,7 @@ test_that("pl_collect_from_hash() decodes correctly", {
   skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
                          dbname = "unit_testing",
-                         host = "eviz.cs.calvin.edu",
+                         host = "mexer.site",
                          port = 5432,
                          user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
@@ -379,7 +378,7 @@ test_that("pl_upsert() works for zero matrices", {
   skip_on_cran()
   conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
                          dbname = "unit_testing",
-                         host = "eviz.cs.calvin.edu",
+                         host = "mexer.site",
                          port = 5432,
                          user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
@@ -466,3 +465,19 @@ test_that("pl_upsert() works for zero matrices", {
   # Clean up after ourselves
   DBI::dbRemoveTable(conn = conn, name = "testzeromatrix")
 })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

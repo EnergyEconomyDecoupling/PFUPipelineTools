@@ -3,6 +3,8 @@
 #' If `hashed_table` has `0` rows, `NULL` is returned.
 #'
 #' @param hashed_table A table created by `pl_hash()`.
+#' @param version_string A string of length 1 indicating the version to be downloaded.
+#'                       `NULL`, the default, means to download all versions.
 #' @param decode_fks A boolean that tells whether to decode foreign keys
 #'                   before returning.
 #'                   Default is `TRUE`.
@@ -19,19 +21,34 @@
 #'                        a matsindf data frame.
 #'                        Calls [decode_matsindf()] internally.
 #'                        Default is `TRUE`.
+#' @param index_map_name The name of the index map.
+#'                       Default is "Index".
 #' @param index_map A list of data frames to assist with decoding matrices.
 #'                  Passed to [decode_matsindf()] when `decode_matsindf` is `TRUE`
 #'                  but otherwise not needed.
+#'                  Default is `fk_parent_tables[[index_map_name]]`.
+#' @param rctype_table_name The name of the row and column types.
 #' @param rctypes A data frame of row and column types.
 #'                Passed to [decode_matsindf()] when `decode_matsindf` is `TRUE`
 #'                but otherwise not needed.
+#'                Default calls [decode_fks()].
 #' @param matrix_class One of "Matrix" (the default for sparse matrices)
 #'                     or ("matrix") for the native matrix form in `R`.
 #'                     Default is "Matrix".
 #' @param tar_group_colname The name of the `tar_group` column.
 #'                          default is `PFUPipelineTools::hashed_table_colnames$tar_group_colname`.
 #' @param matname_colname,matval_colname Names used for matrix names and matrix values.
-#'                                       Defaults are "matname" and "matval".
+#'                                       Defaults are
+#'                                       `PFUPipelineTools::mat_meta_cols$matname` and
+#'                                       `PFUPipelineTools::mat_meta_cols$matval`,
+#'                                       respectively.
+#' @param valid_from_version_colname,valid_to_version_colname Names
+#'              for columns containing version information.
+#'              Defaults are
+#'              `PFUPipelineTools::dataset_info$valid_from_version`
+#'              and
+#'              `PFUPipelineTools::dataset_info$valid_to_version`,
+#'              respectively.
 #' @param conn The database connection.
 #' @param schema The database schema (a `dm` object).
 #'               Default calls `schema_from_conn()`, but
@@ -44,28 +61,38 @@
 #'                         Default calls `get_all_fk_tables()`.
 #'                         Needed only when `decode_fks = TRUE` (the default).
 #'                         If foreign keys are not being decoded,
-#'                         setting `NULL` may improve speed.
+#'                         setting to `NULL` may improve speed.
 #' @param .table_name_col,.nested_hash_col  See `PFUPipelineTools::hashed_table_colnames`.
 #'
 #' @return The downloaded data frame described by `hashed_table`.
 #'
 #' @export
 pl_collect_from_hash <- function(hashed_table,
+                                 version_string = NULL,
                                  decode_fks = TRUE,
                                  retain_table_name_col = FALSE,
                                  set_tar_group = TRUE,
                                  decode_matsindf = TRUE,
-                                 index_map,
-                                 rctypes,
                                  matrix_class = c("Matrix", "matrix"),
                                  tar_group_colname = PFUPipelineTools::hashed_table_colnames$tar_group_colname,
-                                 matname_colname = "matname",
-                                 matval_colname = "matval",
+                                 matname_colname = PFUPipelineTools::mat_meta_cols$matname,
+                                 matval_colname = PFUPipelineTools::mat_meta_cols$matval,
+                                 valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
+                                 valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname,
                                  conn,
                                  schema = schema_from_conn(conn = conn),
                                  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+                                 index_map_name = "Index",
+                                 index_map = fk_parent_tables[[index_map_name]],
+                                 rctype_table_name = "matnameRCType",
+                                 rctypes = decode_fks(db_table_name = rctype_table_name,
+                                                      collect = TRUE,
+                                                      conn = conn,
+                                                      schema = schema,
+                                                      fk_parent_tables = fk_parent_tables),
                                  .table_name_col = PFUPipelineTools::hashed_table_colnames$db_table_name,
                                  .nested_hash_col = PFUPipelineTools::hashed_table_colnames$nested_hash_colname) {
+
   matrix_class <- match.arg(matrix_class)
   if (nrow(hashed_table) == 0) {
     return(NULL)
@@ -78,21 +105,38 @@ pl_collect_from_hash <- function(hashed_table,
     unique()
   assertthat::assert_that(length(table_name) == 1,
                           msg = "More than 1 table received in pl_collect_from_hash()")
+
+  out <- dplyr::tbl(conn, table_name)
+
+  # Filter on any foreign keys
   filter_tbl <- hashed_table |>
     PFUPipelineTools::tar_ungroup() |>
     dplyr::select(!dplyr::all_of(c(.table_name_col, .nested_hash_col))) |>
     # Need to encode foreign keys, because the table in the database has
     # encoded foreign keys
     encode_fks(db_table_name = table_name,
-               conn = conn,
                schema = schema,
                fk_parent_tables = fk_parent_tables)
-  out <- dplyr::tbl(conn, table_name)
+
   if (ncol(filter_tbl) > 0) {
     out <- out |>
       # Perform a semi_join to keep only the rows in x that have a match in y
       dplyr::semi_join(filter_tbl, copy = TRUE, by = colnames(filter_tbl))
   }
+
+  # Filter on the version, if requested
+  if (!is.null(version_string)) {
+    out <- out |>
+      filter_on_version_string(version_string = version_string,
+                               db_table_name = table_name,
+                               collect = FALSE,
+                               conn = conn,
+                               schema = schema,
+                               fk_parent_tables = fk_parent_tables,
+                               valid_from_version_colname = valid_from_version_colname,
+                               valid_to_version_colname = valid_to_version_colname)
+  }
+
   out <- out |>
     dplyr::collect()
   if (decode_fks) {
@@ -134,24 +178,21 @@ pl_collect_from_hash <- function(hashed_table,
 #'
 #' Often when collecting data from the database,
 #' filtering is desired.
-#' But filtering based on foreign keys (as stored in the database)
+#' But filtering based on foreign keys
+#' (fks, as stored in the database)
 #' is effectively impossible, because of foreign key encoding.
 #' This function filters based on
 #' fk values (typically strings),
 #' not fk keys (typically integers),
 #' thereby simplifying the filtering process,
 #' with optional downloading thereafter.
-#' By default, a `tbl` is returned
+#' By default (`collect = FALSE`),
+#' a `tbl` is returned
 #' (and data are not downloaded from the database).
 #' Use `dplyr::collect()` to execute the resulting SQL query
 #' and obtain an in-memory data frame.
 #' Or, set `collect = TRUE` to execute the SQL and
 #' return an in-memory data frame.
-#'
-#' To obtain `db_table_name` _without_ filtering
-#' but with fk keys (typically integers)
-#' decoded to fk values (typically strings),
-#' call this function with nothing in the `...` argument.
 #'
 #' `schema` is a data model (`dm` object) for the CL-PFU database.
 #' It can be obtained from calling `schema_from_conn()`.
@@ -173,40 +214,27 @@ pl_collect_from_hash <- function(hashed_table,
 #' by supplying a pre-computed named list of
 #' foreign key tables.
 #'
-#' Setting any of the filtering arguments
-#' (`countries`, `years`, `methods`, `last_stages`, `energy_types`, `includes_neu`)
-#' to `NULL` turns off filtering and returns all values.
-#'
-#' When `collect = TRUE`,
-#' [decode_matsindf()] is called on the downloaded data frame.
-#'
 #' @param db_table_name The string name of the database table to be filtered.
-#' @param datasets A vector of dataset strings to be retained in the output.
-#'                 `NULL` (the default) returns all datasets.
-#'                 Another interesting option is
-#'                 `PFUPipelineTools::dataset_info$clpfu_iea`.
-#' @param countries A vector of country strings to be retained in the output.
-#'                  `NULL` (the default) returns all countries.
-#'                  Another useful option is `as.character(PFUPipelineTools::canonical_countries)`.
-#' @param years A vector of integers to be retained in the output.
-#'              `NULL` (the default) returns all years.
-#'              Another option is `1960:2020`.
-#' @param methods A vector of method strings to be retained in the output.
-#'                At present, only "PCM" (physical content method) is implemented.
-#'                Default is "PCM" (physical content method).
-#' @param last_stages A vector of last stage strings to be retained in the output.
-#'                    At present, only "Final" and "Useful" are implemented.
-#'                    Default is "Final". "Useful" is also a valid option.
-#' @param energy_types A vector of energy type strings to be retained in the output.
-#'                     At present, only "E" (energy) and "X" (exergy) are implemented.
-#'                     Default is "E" but "X" is also valid.
-#' @param includes_neu A vector of booleans that indicates what to retain in output.
-#'                     `TRUE` means non-energy use is included in the ECCs.
-#'                     `FALSE` means non-energy use is excluded from the ECCs.
-#'                     Default is `TRUE`.
+#' @param ... Filter conditions on the data frame,
+#'            such as `Country == "USA"` or `Year %in% 1960:2020`.
+#'            These conditions reduce data volume,
+#'            because they are applied prior to downloading from `conn`.
+#'            If no rows match these conditions,
+#'            a data frame with no rows is returned.
+#' @param version_string A string of length `1` or more
+#'                       that indicates the desired version(s).
+#'                       `NULL`, the default, means to download all versions available in
+#'                       `db_table_name`.
+#'                       `c()` (an empty string) returns a zero-row table.
+#'                       If `version_string` is invalid, an error will be emitted.
 #' @param collect A boolean that tells whether to download the result.
 #'                Default is `FALSE`.
 #'                See details.
+#' @param create_matsindf A boolean that tells whether to create a matsindf data frame
+#'                        from the collected data frame.
+#'                        Default is the value of `collect`,
+#'                        such that setting `collect = TRUE` also
+#'                        implies `create_matsindf`.
 #' @param conn The database connection.
 #' @param schema The data model (`dm` object) for the database in `conn`.
 #'               Default is `schema_from_conn(conn = conn)`.
@@ -227,31 +255,30 @@ pl_collect_from_hash <- function(hashed_table,
 #' @param matrix_class One of "Matrix" (the default) for sparse matrices or
 #'                     "matrix" (the base matrix representation in `R`) for non-sparse matrices.
 #' @param matname The name of the matrix name column.
-#'                Default is "matname".
+#'                Default is `PFUPipelineTools::mat_meta_cols$matname`.
 #' @param matval The name of the matrix value column.
-#'               Default is "matval".
+#'               Default is `PFUPipelineTools::mat_meta_cols$matval`.
 #' @param rowtype_colname,coltype_colname The names for row and column type columns in data frames.
-#'                                        Defaults are "rowtype" and "coltype", respectively.
-#' @param dataset_colname,country,year,method,last_stage,energy_type Columns that are likely to be in db_table_name
-#'                                                                   and may be filtered with `%in%`-style subsetting.
-#' @param includes_neu_col The name of a column that tells whether non-energy
-#'                         use (NEU) is included.
-#'                         Default is `Recca::psut_cols$includes_neu`.
+#'                                        Defaults are
+#'                                        `PFUPipelineTools::mat_meta_cols$rowtype` and
+#'                                        `PFUPipelineTools::mat_meta_cols$coltype`,
+#'                                        respectively.
+#' @param valid_from_version_colname,valid_to_version_colname Names
+#'              for columns containing version information.
+#'              Defaults are
+#'              `PFUPipelineTools::dataset_info$valid_from_version_colname`
+#'              and
+#'              `PFUPipelineTools::dataset_info$valid_to_version_colname`,
+#'              respectively.
 #'
 #' @return A filtered version of `db_table_name` downloaded from `conn`.
 #'
 #' @export
 pl_filter_collect <- function(db_table_name,
-                              datasets = NULL,
-                              countries = NULL,
-                              years = NULL,
-                              methods = "PCM",
-                              last_stages = c(IEATools::last_stages$final,
-                                              IEATools::last_stages$useful),
-                              energy_types = c(IEATools::energy_types$e,
-                                               IEATools::energy_types$x),
-                              includes_neu = TRUE,
+                              ...,
+                              version_string = NULL,
                               collect = FALSE,
+                              create_matsindf = collect,
                               conn,
                               schema = schema_from_conn(conn = conn),
                               fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
@@ -264,73 +291,51 @@ pl_filter_collect <- function(db_table_name,
                                                    schema = schema,
                                                    fk_parent_tables = fk_parent_tables),
                               matrix_class = c("Matrix", "matrix"),
-                              matname = "matname",
-                              matval = "matval",
-                              rowtype_colname = "rowtype",
-                              coltype_colname = "coltype",
-                              country = IEATools::iea_cols$country,
-
-                              year = IEATools::iea_cols$year,
-                              method = IEATools::iea_cols$method,
-                              last_stage = IEATools::iea_cols$last_stage,
-                              energy_type = IEATools::iea_cols$energy_type,
-                              dataset_colname = PFUPipelineTools::dataset_info$dataset_colname,
-                              includes_neu_col = Recca::psut_cols$includes_neu) {
+                              matname = PFUPipelineTools::mat_meta_cols$matname,
+                              matval = PFUPipelineTools::mat_meta_cols$matval,
+                              rowtype_colname = PFUPipelineTools::mat_meta_cols$rowtype,
+                              coltype_colname = PFUPipelineTools::mat_meta_cols$coltype,
+                              valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
+                              valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname) {
 
   matrix_class <- match.arg(matrix_class)
 
-  out <- dplyr::tbl(src = conn, db_table_name) |>
-    # First, decode the foreign keys with
-    # collect = FALSE to ensure a tbl is returned.
+  out <- dplyr::tbl(src = conn, db_table_name)
+
+  # First, filter the tbl according to version string,
+  # if desired.
+  if (!is.null(version_string)) {
+    out <- out |>
+      filter_on_version_string(version_string = version_string,
+                               db_table_name = db_table_name,
+                               schema = schema,
+                               fk_parent_tables = fk_parent_tables,
+                               valid_from_version_colname = valid_from_version_colname,
+                               valid_to_version_colname = valid_to_version_colname)
+  }
+
+  # Next, decode the foreign keys in the tbl with
+  # collect = FALSE to ensure a tbl is returned.
+  out <- out |>
     decode_fks(db_table_name = db_table_name,
                schema = schema,
                fk_parent_tables = fk_parent_tables,
                collect = FALSE)
 
-  cnames <- colnames(out)
-  if (!is.null(datasets) & dataset_colname %in% cnames) {
-    # %in% seemingly works only on vectors, not lists
-    # And the vectors need to be previously defined.
-    # They can't appear inline as unlist(X)
-    dsets <- unlist(datasets)
-    out <- out |>
-      dplyr::filter(.data[[dataset_colname]] %in% dsets)
-  }
-  if (!is.null(countries) & country %in% cnames) {
-    couns <- unlist(countries)
-    out <- out |>
-      dplyr::filter(.data[[country]] %in% couns)
-  }
-  if (!is.null(years) & year %in% cnames) {
-    yrs <- unlist(years)
-    out <- out |>
-      dplyr::filter(.data[[year]] %in% yrs)
-  }
-  if (!is.null(methods) & method %in% cnames) {
-    meths <- unlist(methods)
-    out <- out |>
-      dplyr::filter(.data[[method]] %in% meths)
-  }
-  if (!is.null(last_stages) & last_stage %in% cnames) {
-    lstages <- unlist(last_stages)
-    out <- out |>
-      dplyr::filter(.data[[last_stage]] %in% lstages)
-  }
-  if (!is.null(energy_types) & energy_type %in% cnames) {
-    etypes <- unlist(energy_types)
-    out <- out |>
-      dplyr::filter(.data[[energy_type]] %in% etypes)
-  }
-  if (!is.null(includes_neu) & includes_neu_col %in% cnames) {
-    ineu <- unlist(includes_neu)
-    out <- out |>
-      dplyr::filter(.data[[includes_neu_col]] %in% ineu)
-  }
+
+  # Finally, filter the foreign keys in the tbl based on the expressions in ...
+  filter_args <- rlang::enquos(...)
+  out <- out |>
+    dplyr::filter(!!!filter_args)
 
   if (collect) {
     # Collect (execute the SQL), if desired.
     out <- out |>
-      dplyr::collect() |>
+      dplyr::collect()
+  }
+
+  if (create_matsindf) {
+    out <- out |>
       # Now decode the matsindf data frame
       decode_matsindf(index_map = index_map,
                       rctypes = rctypes,
@@ -343,17 +348,3 @@ pl_filter_collect <- function(db_table_name,
 
   return(out)
 }
-
-
-# vars_in_dots <- function(enquos_dots) {
-#   enquos_dots |>
-#     # as.character(enquos_dots) turns the quosure into a string
-#     # in which table column names are prefixed by "~" and
-#     # terminated with a white space.
-#     as.character() |>
-#     # This pattern extracts for all characters between "~" and whitespace,
-#     # namely the column names to be decoded.
-#     stringr::str_extract("(?<=~)([^\\s]+)") |>
-#     # Make sure we have no duplicates.
-#     unique()
-# }
