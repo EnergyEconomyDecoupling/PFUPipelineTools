@@ -734,6 +734,8 @@ decode_fks <- function(.df = NULL,
 #'             `drv`, `dbname`, `host`, `port`, and `user` arguments.
 #'
 #' @returns `TRUE` if successful
+#'
+#' @export
 update_schema_table <- function(dbname,
                                 db_table_name,
                                 input_data_version,

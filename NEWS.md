@@ -8,6 +8,9 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+* `update_schema_table()` is now an exported function.
+
+
 # PFUPipelineTools 0.1.13 (2025-05-15) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15427749.svg)](https://doi.org/10.5281/zenodo.15427749)
 
 * `pl_upsert()` gains new arguments `round_double_columns` and `digits` 
