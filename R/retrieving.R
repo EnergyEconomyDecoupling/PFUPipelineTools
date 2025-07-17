@@ -189,13 +189,13 @@ pl_collect_from_hash <- function(hashed_table,
 #' By default (`collect = FALSE`),
 #' a `tbl` is returned
 #' (and data are not downloaded from the database).
-#' Use `dplyr::collect()` to execute the resulting SQL query
+#' Use [dplyr::collect()] to execute the resulting SQL query
 #' and obtain an in-memory data frame.
 #' Or, set `collect = TRUE` to execute the SQL and
 #' return an in-memory data frame.
 #'
 #' `schema` is a data model (`dm` object) for the CL-PFU database.
-#' It can be obtained from calling `schema_from_conn()`.
+#' It can be obtained from calling [schema_from_conn()].
 #' If minimal interaction with the database is desired,
 #' be sure to override the default value for `schema`
 #' by supplying a pre-computed `dm` object.
@@ -208,7 +208,7 @@ pl_collect_from_hash <- function(hashed_table,
 #' `fk_parent_tables` is treated as a store from which foreign key tables
 #' are retrieved by name when needed.
 #' An appropriate value for `fk_parent_tables` can be obtained
-#' from `get_all_fk_tables()`.
+#' from [get_all_fk_tables()].
 #' If minimal interaction with the database is desired,
 #' be sure to override the default value for `fk_parent_tables`
 #' by supplying a pre-computed named list of

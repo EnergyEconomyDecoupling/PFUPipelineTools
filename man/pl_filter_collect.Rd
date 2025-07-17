@@ -118,14 +118,14 @@ with optional downloading thereafter.
 By default (\code{collect = FALSE}),
 a \code{tbl} is returned
 (and data are not downloaded from the database).
-Use \code{dplyr::collect()} to execute the resulting SQL query
+Use \code{\link[dplyr:compute]{dplyr::collect()}} to execute the resulting SQL query
 and obtain an in-memory data frame.
 Or, set \code{collect = TRUE} to execute the SQL and
 return an in-memory data frame.
 }
 \details{
 \code{schema} is a data model (\code{dm} object) for the CL-PFU database.
-It can be obtained from calling \code{schema_from_conn()}.
+It can be obtained from calling \code{\link[=schema_from_conn]{schema_from_conn()}}.
 If minimal interaction with the database is desired,
 be sure to override the default value for \code{schema}
 by supplying a pre-computed \code{dm} object.
@@ -138,7 +138,7 @@ for \code{db_table_name}.
 \code{fk_parent_tables} is treated as a store from which foreign key tables
 are retrieved by name when needed.
 An appropriate value for \code{fk_parent_tables} can be obtained
-from \code{get_all_fk_tables()}.
+from \code{\link[=get_all_fk_tables]{get_all_fk_tables()}}.
 If minimal interaction with the database is desired,
 be sure to override the default value for \code{fk_parent_tables}
 by supplying a pre-computed named list of
