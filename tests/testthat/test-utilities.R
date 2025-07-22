@@ -347,7 +347,8 @@ test_that("round_double_cols() works as expected", {
 
   expect_true(signif(42972.72604058507567970082, digits = 15) == 42972.7260405851)
   expect_true(signif(42972.72604058507567970082, digits = 16) == 42972.72604058508)
-  expect_true(signif(42972.72604058507567970082, digits = 17) == 42972.726040585076)
+  # The next one is beneath the sifnificance threshold.
+  expect_false(signif(42972.72604058507567970082, digits = 17) == 42972.726040585076)
 
   # What happens with NA values?
   expect_true(signif(NA, digits = 2) |> is.na())
