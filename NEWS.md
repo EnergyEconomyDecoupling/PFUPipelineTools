@@ -8,7 +8,7 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
-# PFUPipelineTools 0.1.14 (2025-07-22) 
+# PFUPipelineTools 0.1.14 (2025-07-22) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.16323795.svg)](https://doi.org/10.5281/zenodo.16323795)
 
 * New `get_*db_conn()` functions assist creating
   database connections to https://mexer.site.
