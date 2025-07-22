@@ -4,7 +4,6 @@ ChopVar
 ChoppedMat
 Codecov
 Colname
-DOI
 Despecified
 ECC
 EIOU
@@ -16,6 +15,7 @@ IEA
 IndustryAggregation
 IsPK
 Lifecycle
+Mexer
 MexerDB
 OneDrive
 PFU
@@ -24,7 +24,10 @@ PSUT
 Postgres
 ProductAggregation
 README
+SandboxDB
 SchemaAndSimpleTables
+ScratchEDB
+ScratchMDB
 Ungrouped
 Ungroups
 Upsert
@@ -55,11 +58,10 @@ md
 mexer
 pinboard
 plpgsql
+pooler
 pre
 rds
 readme
-recoded
-recoding
 subtargets
 undercount
 ungroup

@@ -8,7 +8,20 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
-# PFUPipelineTools 0.1.13 (2025-05-15)
+# PFUPipelineTools 0.1.14 (2025-07-22) 
+
+* New `get_*db_conn()` functions assist creating
+  database connections to https://mexer.site.
+* `update_schema_table()` is now an exported function.
+* New tests for new features. 
+    - Now up to 238 tests, all passing
+    - Test coverage now reported to be 24.64%, but 
+      that's an undercount. 
+      Many (most?) functions are not tested 
+      on continuous integration platforms and CRAN. 
+
+
+# PFUPipelineTools 0.1.13 (2025-05-15) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15427749.svg)](https://doi.org/10.5281/zenodo.15427749)
 
 * `pl_upsert()` gains new arguments `round_double_columns` and `digits` 
   and calls `round_double_cols()` if requested.
