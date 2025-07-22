@@ -8,6 +8,8 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+* Added `get_*db_conn()` functions to assist creating
+  database connections to https://mexer.site.
 * `update_schema_table()` is now an exported function.
 
 

@@ -27,10 +27,10 @@ Default is "MexerDB" for \code{\link[=get_mexerdb_conn]{get_mexerdb_conn()}},
 "ScratchEDB" for \code{\link[=get_scratchedb_conn]{get_scratchedb_conn()}}.}
 
 \item{user}{The string username at \code{host}.
-Default is set to "dbcreator" for
+Default is "dbcreator" for
 \code{\link[=get_sandboxdb_conn]{get_sandboxdb_conn()}},
 \code{\link[=get_scratchmdb_conn]{get_scratchmdb_conn()}}, and
-\code{\link[=get_scratchedb_conn]{get_scratchedb_conn()}}.
+\code{\link[=get_scratchedb_conn]{get_scratchedb_conn()}},
 appropriate for development.}
 
 \item{host}{The string site of the database.
@@ -51,8 +51,8 @@ with little fuss and a single line of code.
 }
 \details{
 Note, the password for \code{user} must be set
-in a \code{.pgpass} or similar file.
+in \code{.pgpass} or a similar file.
 
-The returned connection is set to auto-close internally
-with \code{on.exit(DBI::dbDisconnect(conn))}.
+The returned connection should be closed by the caller
+with \code{\link[DBI:dbDisconnect]{DBI::dbDisconnect()}}.
 }

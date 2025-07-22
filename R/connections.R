@@ -6,10 +6,10 @@
 #' with little fuss and a single line of code.
 #'
 #' Note, the password for `user` must be set
-#' in a `.pgpass` or similar file.
+#' in `.pgpass` or a similar file.
 #'
-#' The returned connection is set to auto-close internally
-#' with `on.exit(DBI::dbDisconnect(conn))`.
+#' The returned connection should be closed by the caller
+#' with [DBI::dbDisconnect()].
 #'
 #' @param dbname The string name of a database at `host`.
 #'               Default is "MexerDB" for [get_mexerdb_conn()],
@@ -17,10 +17,10 @@
 #'               "ScratchMDB" for [get_scratchmdb_conn()], and
 #'               "ScratchEDB" for [get_scratchedb_conn()].
 #' @param user The string username at `host`.
-#'             Default is set to "dbcreator" for
+#'             Default is "dbcreator" for
 #'             [get_sandboxdb_conn()],
 #'             [get_scratchmdb_conn()], and
-#'             [get_scratchedb_conn()].
+#'             [get_scratchedb_conn()],
 #'             appropriate for development.
 #' @param host The string site of the database.
 #'             Default is "mexer.site".
