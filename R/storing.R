@@ -290,6 +290,12 @@ pl_upsert <- function(.df,
 upsert_and_compress <- function(.df,
                                 db_table_name) {
 
+  # Get names of foreign key columns
+
+
+  # Do comparisons
+
+
 }
 
 
