@@ -109,3 +109,160 @@ test_that("pl_hash() works with remote table", {
   DBI::dbRemoveTable(conn, "TestPLHash")
 })
 
+
+test_that("pl_upsert() works for zero matrices", {
+  skip_on_ci()
+  skip_on_cran()
+  conn <- get_unit_testing_conn()
+  on.exit(DBI::dbDisconnect(conn))
+
+  # Start with a fresh slate
+  if (DBI::dbExistsTable(conn = conn, name = "testzeromatrix")) {
+    DBI::dbRemoveTable(conn = conn, name = "testzeromatrix")
+  }
+
+  # Create data model
+  dm <- list(testzeromatrix = data.frame(matname = "zerom",
+                                         i = as.integer(1),
+                                         j = as.integer(1),
+                                         value = 3.1415926) |>
+               # Delete all rows, but keep names and column types
+               dplyr::filter(FALSE)) |>
+    dm::new_dm() |>
+    dm::dm_add_pk(testzeromatrix, columns = c(matname, i, j))
+  dm::copy_dm_to(conn, dm = dm, temporary = FALSE)
+  # Create index map
+  index_map <- list(row = data.frame(IndexID = as.integer(1:3),
+                                     Index = c("r1", "r2", "r3")),
+                    col = data.frame(IndexID = as.integer(1:2),
+                                     Index = c("c1", "c2")))
+
+  # Create a zero matrix
+  zerom <- matrix(c(0, 0,
+                    0, 0,
+                    0, 0), nrow = 3, dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
+    matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
+  # Create a matsindf data frame
+  midf <- tibble::tibble(matname = c("zerom1", "zerom2"),
+                         matval = list(zerom, zerom))
+  no_rows <- midf |>
+    pl_upsert(conn = conn,
+              db_table_name = "testzeromatrix",
+              index_map = index_map)
+  # Check that there are no rows in the hashed table
+  expect_equal(nrow(no_rows), 0)
+  # Check that there are no rows in the table
+  should_be_no_rows <- DBI::dbReadTable(conn, name = "testzeromatrix")
+  expect_equal(nrow(should_be_no_rows), 0)
+
+  # Now upsert zerom while preserving rows
+  twelve_rows <- midf |>
+    pl_upsert(conn = conn,
+              db_table_name = "testzeromatrix",
+              index_map = index_map,
+              in_place = TRUE,
+              retain_zero_structure = TRUE)
+  # The hash should come back with 1 row
+  expect_equal(nrow(twelve_rows), 1)
+  # Check that there are twelve rows in the table
+  should_be_twelve_rows <- DBI::dbReadTable(conn, name = "testzeromatrix")
+  expect_equal(nrow(should_be_twelve_rows), 12)
+
+  # Now try to use pl_filter_collect() to get the data.
+  rctypes <- tibble::tribble(~matname, ~rowtype, ~coltype,
+                             "zerom1", "row", "col",
+                             "zerom2", "row", "col")
+
+
+
+  # The following should give zero matrices with
+  # row and column names
+  filter_collected <- pl_filter_collect(db_table_name = "testzeromatrix",
+                                        conn = conn,
+                                        collect = TRUE,
+                                        index_map = index_map,
+                                        rctypes = rctypes)
+  expect_equal(nrow(filter_collected), 1)
+  expect_equal(colnames(filter_collected), c("zerom1", "zerom2"))
+  expect_equal(nrow(filter_collected$zerom1[[1]]), 3)
+  expect_equal(ncol(filter_collected$zerom1[[1]]), 2)
+  expect_equal(nrow(filter_collected$zerom2[[1]]), 3)
+  expect_equal(ncol(filter_collected$zerom2[[1]]), 2)
+  expect_true(matsbyname::iszero_byname(filter_collected$zerom1[[1]]))
+  expect_true(matsbyname::iszero_byname(filter_collected$zerom2[[1]]))
+  expect_equal(rownames(filter_collected$zerom1[[1]]), c("r1", "r2", "r3"))
+  expect_equal(colnames(filter_collected$zerom1[[1]]), c("c1", "c2"))
+  expect_equal(rownames(filter_collected$zerom2[[1]]), c("r1", "r2", "r3"))
+  expect_equal(colnames(filter_collected$zerom2[[1]]), c("c1", "c2"))
+
+  # Clean up after ourselves
+  DBI::dbRemoveTable(conn = conn, name = "testzeromatrix")
+})
+
+
+test_that("pl_upsert() works with local table compression", {
+  conn <- get_unit_testing_conn()
+  on.exit(DBI::dbDisconnect(conn))
+
+  # Set the name of the table so we can use the variable in several places
+  tname <- "testlocalcompression"
+
+  # Start with a fresh slate
+  if (DBI::dbExistsTable(conn = conn, name = tname)) {
+    DBI::dbRemoveTable(conn = conn, name = tname)
+  }
+
+  # Create data model
+  dm <- list(testlocalcompression = data.frame(ValidFromVersion = as.integer(1),
+                                               ValidToVersion = as.integer(2),
+                                               matname = "pimat",
+                                               i = as.integer(1),
+                                               j = as.integer(1),
+                                               value = 3.1415926) |>
+               # Delete all rows, but keep names and column types
+               dplyr::filter(FALSE)) |>
+    dm::new_dm() |>
+    dm::dm_add_pk(testlocalcompression, columns = c(ValidFromVersion, ValidToVersion,
+                                                    matname, i, j))
+  dm::copy_dm_to(conn, dm = dm, temporary = FALSE)
+  # Create index map
+  index_map <- list(ValidFromVersion = data.frame(IndexID = as.integer(1:3),
+                                                  Index = c("v1", "v2", "v3")),
+                    ValidToVersion = data.frame(IndexID = as.integer(1:3),
+                                                Index = c("v1", "v2", "v3")),
+                    row = data.frame(IndexID = as.integer(1:3),
+                                     Index = c("r1", "r2", "r3")),
+                    col = data.frame(IndexID = as.integer(1:2),
+                                     Index = c("c1", "c2")))
+  # Create a couple matrices
+  # matv1 is the original matrix
+  matv1 <- matrix(c(1, 2,
+                    3, 4,
+                    5, 6), nrow = 3, dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
+    matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
+  # matv2 is a modified matrix with the r3, c1 different
+  matv2 <- matrix(c(1, 2,
+                    3, 4,
+                    42, 6), nrow = 3, dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
+    matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
+  # Create a matsindf data frame
+  midf <- tibble::tibble(ValidFromVersion = 1,
+                         ValidToVersion = 1,
+                         matname = c("mat"),
+                         matval = list(matv1))
+  # Upsert the original matrix, without compression.
+  # Default is compress = FALSE
+  rows <- midf |>
+    pl_upsert(conn = conn,
+              db_table_name = "testlocalcompression",
+              index_map = index_map,
+              in_place = TRUE)
+  # Check that there are 6 rows in remote table
+  should_be_six_rows <- DBI::dbReadTable(conn, name = "testlocalcompression")
+  expect_equal(nrow(should_be_six_rows), 6)
+
+
+
+  # Clean up after ourselves
+  DBI::dbRemoveTable(conn = conn, name = "testlocalcompression")
+})

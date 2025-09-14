@@ -549,6 +549,30 @@ unique_cols_in_tbl <- function(table_name, conn) {
 
 
 
+#' Upsert and compress rows for a remote table
+#'
+#' The CL-PFU database uses columns named
+#' `ValidFromVersion` and `ValidToVersion`.
+#' This function
+#'
+#' @param .df
+#' @param db_table_name
+#' @param valid_from_version_colname
+#' @param valid_to_version_colname
+#' @param conn
+#'
+#' @returns
+#' @export
+#'
+#' @examples
+pl_upsert_and_compress <- function(.df,
+                                   db_table_name,
+                                   valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
+                                   valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname,
+                                   conn) {
+
+}
+
 
 
 
