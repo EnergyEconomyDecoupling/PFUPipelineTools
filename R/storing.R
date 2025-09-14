@@ -204,17 +204,30 @@ pl_upsert <- function(.df,
       round_double_cols(digits = digits)
   }
 
-  # Perform the upload.
-  dplyr::tbl(conn, db_table_name) |>
-    dplyr::rows_upsert(df_to_upsert,
-                       by = pk_str,
-                       copy = TRUE,
-                       in_place = in_place)
+  # # Perform the upload.
+  # dplyr::tbl(conn, db_table_name) |>
+  #   dplyr::rows_upsert(df_to_upsert,
+  #                      by = pk_str,
+  #                      copy = TRUE,
+  #                      in_place = in_place)
+  #
+  # # Compress the table, if desired.
+  # if (compress) {
+  #   compress_rows(db_table_name = db_table_name, conn = conn)
+  # }
 
-  # Compress the table, if desired.
   if (compress) {
-    compress_rows(db_table_name = db_table_name, conn = conn)
+    # Call another function for the complicated
+    # work of upserting and compressing
+    upsert_and_compress(conn, df_to_upsert)
+  } else {
+    dplyr::tbl(conn, db_table_name) |>
+      dplyr::rows_upsert(df_to_upsert,
+                         by = pk_str,
+                         copy = TRUE,
+                         in_place = in_place)
   }
+
 
   # Return a hash of df_matsindf_encoded
   df_matsindf_encoded |>
@@ -222,6 +235,61 @@ pl_upsert <- function(.df,
             keep_single_unique_cols = keep_single_unique_cols,
             additional_hash_group_cols = additional_hash_group_cols,
             usual_hash_group_cols = usual_hash_group_cols)
+}
+
+
+#' Upsert and compress rows from a data frame
+#'
+#' This function updates a remote database table
+#' with `ValidFromVersion` and `ValidToVersion` columns
+#' by data in `.df` with its
+#' `ValidFromVersion` and `ValidToVersion`
+#' columns set to `working_version`.
+#'
+#' This function assumes the `ValidToVersion` column contains
+#' `2147483647` (the largest possible integer in both PostgreSQL and `R`)
+#' for the most current version of the data.
+#'
+#' There are only a few possibilities for rows of data
+#' in the local data frame and the remote datbase table:
+#' * Same: Rows in the local data frame match rows in the remote database table
+#'         for all foreign key columns except ValidFromVersion and ValidToVersion
+#'         and within `tol` for the `value` column.
+#'         In this case, there is nothing to be done, because the
+#'         `ValidToVersion` column in the remote database table
+#'         should already be `2147483647`.
+#' * Old/New:
+#'     * Remote (Old): Rows in the remote database table with foreign key columns
+#'                     (except `ValidFromVersion` and `ValidToVersion`)
+#'                     that have no match in the local data frame.
+#'                     In this case, we change the `ValidToVersion` column
+#'                     in the the unmatched rows of the
+#'                     remote database table to `working_version - 1`.
+#'     * Local (New): Rows in the local data frame with foreign key columns
+#'                    (except `ValidFromVersion` and `ValidToVersion`)
+#'                    that have no match in the remote database table.
+#'                    In this case, we change the
+#'                    `ValidToVersion` column of the unmatched rows in the
+#'                    local data frame to `2147483647` and
+#'                    insert into the remote database table.
+#' * Updated: Rows in the local data frame match rows in the remote database table
+#'            for all foreign key columns except `ValidFromVersion` and `ValidToVersion`
+#'            but outside of `tol` for the `value` column.
+#'            In this case, we change the `ValidToVersion` column
+#'            in the the unmatched rows of the
+#'            remote database table to `working_version - 1`.
+#'            We also change the
+#'            `ValidToVersion` column of the unmatched rows in the
+#'            local data frame to `2147483647` and
+#'            insert into the remote database table.
+#'
+#' @returns
+#' @export
+#'
+#' @examples
+upsert_and_compress <- function(.df,
+                                db_table_name) {
+
 }
 
 
@@ -537,40 +605,6 @@ unique_cols_in_tbl <- function(table_name, conn) {
   count_df <- DBI::dbGetQuery(conn, query)
   # Finally, get the names of the columns where the value is 1
   names(count_df)[count_df == 1]
-}
-
-
-
-
-
-
-
-
-
-
-
-#' Upsert and compress rows for a remote table
-#'
-#' The CL-PFU database uses columns named
-#' `ValidFromVersion` and `ValidToVersion`.
-#' This function
-#'
-#' @param .df
-#' @param db_table_name
-#' @param valid_from_version_colname
-#' @param valid_to_version_colname
-#' @param conn
-#'
-#' @returns
-#' @export
-#'
-#' @examples
-pl_upsert_and_compress <- function(.df,
-                                   db_table_name,
-                                   valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
-                                   valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname,
-                                   conn) {
-
 }
 
 

@@ -20,11 +20,6 @@ test_that("Compression works maunally and with pl_upsert()", {
   skip_on_cran()
 
   conn <- get_unit_testing_conn()
-  # conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
-  #                        dbname = "unit_testing",
-  #                        host = "mexer.site",
-  #                        port = 5432,
-  #                        user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
 
   db_table_name <- "PLUpsertTest"

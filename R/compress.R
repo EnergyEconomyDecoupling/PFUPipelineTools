@@ -30,6 +30,15 @@ install_compress_function <- function(conn,
                                                                          "compress.sql",
                                                                          package = "PFUPipelineTools") |>
                                         readr::read_file()) {
+  lifecycle::deprecate_warn(
+    when = "0.1.14",
+    what = "install_compress_function()",
+    details = c(
+      i = "Remote compression has been replaced by local compression.",
+      i = "There is no need to install the compress function.",
+      i = "This function will be removed in the next minor revision."
+    )
+  )
 
   DBI::dbExecute(conn = conn,
                  statement = compress_func_string)
@@ -56,6 +65,15 @@ install_compress_function <- function(conn,
 #'
 #' @export
 remove_compress_function <- function(conn) {
+  lifecycle::deprecate_warn(
+    when = "0.1.14",
+    what = "remove_compress_function()",
+    details = c(
+      i = "Remote compression has been replaced by local compression.",
+      i = "The in-database compress function should no loonger be used.",
+      i = "This function will be removed in the next minor revision."
+    )
+  )
   DBI::dbExecute(conn = conn,
                  statement = "DROP PROCEDURE compress")
 }

@@ -314,12 +314,13 @@ test_that("pl_upsert() works with local table compression", {
     dplyr::filter(ValidToVersion == 2) |>
     dplyr::collect() |>
     dplyr::arrange(i, j)
-  expected_resv1 <- tibble::tibble(ValidFromVersion = c(1, 1, 1, 1, 2, 1),
+  expected_resv2 <- tibble::tibble(ValidFromVersion = c(1, 1, 1, 1, 2, 1),
                                    ValidToVersion = 2,
                                    matname = "mat",
                                    i = c(1, 1, 2, 2, 3, 3),
                                    j = c(1, 2, 1, 2, 1, 2),
-                                   value = 1:6)
+                                   value = c(1, 2, 3, 4, 42, 6))
+  testthat::expect_equal(resv2, expected_resv2)
 
 
 
