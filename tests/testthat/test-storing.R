@@ -238,28 +238,88 @@ test_that("pl_upsert() works with local table compression", {
   # matv1 is the original matrix
   matv1 <- matrix(c(1, 2,
                     3, 4,
-                    5, 6), nrow = 3, dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
+                    5, 6),
+                  byrow = TRUE,
+                  nrow = 3,
+                  dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
     matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
   # matv2 is a modified matrix with the r3, c1 different
   matv2 <- matrix(c(1, 2,
                     3, 4,
-                    42, 6), nrow = 3, dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
+                    42, 6),
+                  byrow = TRUE,
+                  nrow = 3,
+                  dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
     matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
-  # Create a matsindf data frame
-  midf <- tibble::tibble(ValidFromVersion = 1,
-                         ValidToVersion = 1,
-                         matname = c("mat"),
-                         matval = list(matv1))
+  # Create a matsindf data frame for the v1 matrix
+  midfv1 <- tibble::tibble(ValidFromVersion = 1,
+                           ValidToVersion = 1,
+                           matname = c("mat"),
+                           matval = list(matv1))
   # Upsert the original matrix, without compression.
   # Default is compress = FALSE
-  rows <- midf |>
+  rowsv1 <- midfv1 |>
     pl_upsert(conn = conn,
-              db_table_name = "testlocalcompression",
+              db_table_name = tname,
               index_map = index_map,
               in_place = TRUE)
   # Check that there are 6 rows in remote table
-  should_be_six_rows <- DBI::dbReadTable(conn, name = "testlocalcompression")
+  should_be_six_rows <- DBI::dbReadTable(conn, name = tname)
   expect_equal(nrow(should_be_six_rows), 6)
+
+  # Create a matsindf data frame for the v2 matrix
+  midfv2 <- tibble::tibble(ValidFromVersion = 2,
+                           ValidToVersion = 2,
+                           matname = c("mat"),
+                           matval = list(matv2))
+
+  # Upsert v2 without compression
+  rowsv2 <- midfv2 |>
+    pl_upsert(conn = conn,
+              db_table_name = tname,
+              index_map = index_map,
+              in_place = TRUE)
+  # Check that there are 12 rows in remote table
+  should_be_twelve_rows <- DBI::dbReadTable(conn, name = tname)
+  expect_equal(nrow(should_be_twelve_rows), 12)
+
+  # Remove the rows with v2
+  conn |>
+    DBI::dbExecute('DELETE FROM testlocalcompression WHERE "ValidFromVersion" = 2 AND "ValidToVersion" = 2;')
+
+  # Now upsert with compression
+  rowsv2 <- midfv2 |>
+    pl_upsert(conn = conn,
+              db_table_name = tname,
+              index_map = index_map,
+              in_place = TRUE,
+              compress = TRUE)
+
+  # Check that we have 7 rows
+  should_be_seven_rows <- DBI::dbReadTable(conn, name = tname)
+  expect_equal(nrow(should_be_seven_rows), 7)
+  # Check that the original rows are present
+  resv1 <- dplyr::tbl(conn, "testlocalcompression") |>
+    dplyr::filter(ValidFromVersion == 1) |>
+    dplyr::collect() |>
+    dplyr::arrange(i, j)
+  expected_resv1 <- tibble::tibble(ValidFromVersion = 1,
+                                   ValidToVersion = c(2, 2, 2, 2, 1, 2),
+                                   matname = "mat",
+                                   i = c(1, 1, 2, 2, 3, 3),
+                                   j = c(1, 2, 1, 2, 1, 2),
+                                   value = 1:6)
+  testthat::expect_equal(resv1, expected_resv1)
+  resv2 <- dplyr::tbl(conn, "testlocalcompression") |>
+    dplyr::filter(ValidToVersion == 2) |>
+    dplyr::collect() |>
+    dplyr::arrange(i, j)
+  expected_resv1 <- tibble::tibble(ValidFromVersion = c(1, 1, 1, 1, 2, 1),
+                                   ValidToVersion = 2,
+                                   matname = "mat",
+                                   i = c(1, 1, 2, 2, 3, 3),
+                                   j = c(1, 2, 1, 2, 1, 2),
+                                   value = 1:6)
 
 
 
