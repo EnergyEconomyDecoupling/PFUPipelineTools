@@ -47,4 +47,14 @@ test_that("get_scratchedb_conn() works as expected", {
 })
 
 
+test_that("get_unit_testing_conn() works as expected", {
+  testthat::skip_on_ci()
+  testthat::skip_on_cran()
+  testthat::skip_on_covr()
+  conn <- get_unit_testing_conn()
+  expect_true(DBI::dbIsValid(conn))
+  DBI::dbDisconnect(conn)
+})
+
+
 

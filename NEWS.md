@@ -8,6 +8,16 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+* Added new function `get_unit_testing_conn()` 
+  for convenience during unit testing.
+* New tests for new features. 
+    - Now up to 239 tests, all passing
+    - Test coverage now reported to be 24.64%, but 
+      that's an undercount. 
+      Many (most?) functions are not tested 
+      on continuous integration platforms and CRAN. 
+
+
 # PFUPipelineTools 0.1.14 (2025-07-22) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.16323795.svg)](https://doi.org/10.5281/zenodo.16323795)
 
 * New `get_*db_conn()` functions assist creating
