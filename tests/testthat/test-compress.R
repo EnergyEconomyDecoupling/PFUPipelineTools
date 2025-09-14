@@ -3,11 +3,7 @@ test_that("install_compress_function() and remove_compress_function() both work"
   skip_on_ci()
   skip_on_cran()
 
-  conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
-                         dbname = "unit_testing",
-                         host = "mexer.site",
-                         port = 5432,
-                         user = "mkh2")
+  conn <- get_unit_testing_conn()
   on.exit(DBI::dbDisconnect(conn))
 
   install_compress_function(conn = conn) |>
@@ -23,11 +19,12 @@ test_that("Compression works maunally and with pl_upsert()", {
   skip_on_ci()
   skip_on_cran()
 
-  conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
-                         dbname = "unit_testing",
-                         host = "mexer.site",
-                         port = 5432,
-                         user = "mkh2")
+  conn <- get_unit_testing_conn()
+  # conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
+  #                        dbname = "unit_testing",
+  #                        host = "mexer.site",
+  #                        port = 5432,
+  #                        user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
 
   db_table_name <- "PLUpsertTest"
