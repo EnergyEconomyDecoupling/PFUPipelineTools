@@ -283,8 +283,16 @@ pl_upsert <- function(.df,
 #'            local data frame to `2147483647` and
 #'            insert into the remote database table.
 #'
-#' @param .df
-#' @param db_table_name
+#' Note that `mat_colnames` is used to discriminate data and metadata columns.
+#' Columns of `.df` (local) and `db_table_name` (remote)
+#' in `mat_colnames` are considered to be data columns.
+#' All other columns are considered to be metadata columns.
+#' The calling function should supply the complete data
+#' for each unique combination metadata column values.
+#'
+#' @param .df The data frame to be upserted (and compressed by default).
+#' @param db_table_name The name of the table in the database at `conn`
+#'                      into which `.df` will be upserted (and compressed by default).
 #' @param mat_colnames String names of columns in `.df` that contain matrix information,
 #'                     namely, rowname (or index), colname (or index), and value.
 #'                     Default is [PFUPipelineTools::mat_colnames] (as a vector).
@@ -298,10 +306,11 @@ pl_upsert <- function(.df,
 #' @examples
 pl_upsert_and_compress <- function(.df,
                                    db_table_name,
+                                   compress = TRUE,
                                    mat_colnames = unlist(PFUPipelineTools::mat_colnames),
                                    valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
                                    valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname,
-                                   current_version = PFUPipelineTools::current_version,
+                                   current_version = PFUPipelineTools::current_version_int,
                                    conn) {
 
 
