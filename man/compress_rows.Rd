@@ -27,6 +27,9 @@ The number of rows affected by the call to \code{compress}
 \code{db_table_name}, which should always be \code{0}.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+}
+\details{
 During the execution of the pipeline,
 we compress the rows of a table if identical data
 exist for multiple versions.

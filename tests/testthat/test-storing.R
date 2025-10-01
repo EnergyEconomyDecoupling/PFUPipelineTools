@@ -110,7 +110,7 @@ test_that("pl_hash() works with remote table", {
 })
 
 
-test_that("pl_upsert() works for zero matrices", {
+test_that("pl_upsert_and_compress() works for zero matrices", {
   skip_on_ci()
   skip_on_cran()
   conn <- get_unit_testing_conn()
@@ -146,9 +146,10 @@ test_that("pl_upsert() works for zero matrices", {
   midf <- tibble::tibble(matname = c("zerom1", "zerom2"),
                          matval = list(zerom, zerom))
   no_rows <- midf |>
-    pl_upsert(conn = conn,
-              db_table_name = "testzeromatrix",
-              index_map = index_map)
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = "testzeromatrix",
+                           index_map = index_map,
+                           compress = FALSE)
   # Check that there are no rows in the hashed table
   expect_equal(nrow(no_rows), 0)
   # Check that there are no rows in the table
@@ -157,11 +158,12 @@ test_that("pl_upsert() works for zero matrices", {
 
   # Now upsert zerom while preserving rows
   twelve_rows <- midf |>
-    pl_upsert(conn = conn,
-              db_table_name = "testzeromatrix",
-              index_map = index_map,
-              in_place = TRUE,
-              retain_zero_structure = TRUE)
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = "testzeromatrix",
+                           index_map = index_map,
+                           in_place = TRUE,
+                           retain_zero_structure = TRUE,
+                           compress = FALSE)
   # The hash should come back with 1 row
   expect_equal(nrow(twelve_rows), 1)
   # Check that there are twelve rows in the table
@@ -200,7 +202,7 @@ test_that("pl_upsert() works for zero matrices", {
 })
 
 
-test_that("pl_upsert() works with local table compression", {
+test_that("pl_upsert_and_compress() works with local table compression", {
   conn <- get_unit_testing_conn()
   on.exit(DBI::dbDisconnect(conn))
 
@@ -257,12 +259,12 @@ test_that("pl_upsert() works with local table compression", {
                            matname = c("mat"),
                            matval = list(matv1))
   # Upsert the original matrix, without compression.
-  # Default is compress = FALSE
   rowsv1 <- midfv1 |>
-    pl_upsert(conn = conn,
-              db_table_name = tname,
-              index_map = index_map,
-              in_place = TRUE)
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE,
+                           compress = FALSE)
   # Check that there are 6 rows in remote table
   should_be_six_rows <- DBI::dbReadTable(conn, name = tname)
   expect_equal(nrow(should_be_six_rows), 6)
@@ -275,10 +277,11 @@ test_that("pl_upsert() works with local table compression", {
 
   # Upsert v2 without compression
   rowsv2 <- midfv2 |>
-    pl_upsert(conn = conn,
-              db_table_name = tname,
-              index_map = index_map,
-              in_place = TRUE)
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE,
+                           compress = FALSE)
   # Check that there are 12 rows in remote table
   should_be_twelve_rows <- DBI::dbReadTable(conn, name = tname)
   expect_equal(nrow(should_be_twelve_rows), 12)
@@ -288,12 +291,12 @@ test_that("pl_upsert() works with local table compression", {
     DBI::dbExecute('DELETE FROM testlocalcompression WHERE "ValidFromVersion" = 2 AND "ValidToVersion" = 2;')
 
   # Now upsert with compression
+  # compress = TRUE is the default
   rowsv2 <- midfv2 |>
-    pl_upsert(conn = conn,
-              db_table_name = tname,
-              index_map = index_map,
-              in_place = TRUE,
-              compress = TRUE)
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE)
 
   # Check that we have 7 rows
   should_be_seven_rows <- DBI::dbReadTable(conn, name = tname)

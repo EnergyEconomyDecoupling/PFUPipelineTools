@@ -114,13 +114,15 @@ Default is "md5".}
 A hash of \code{.df} according to \code{.algo}.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+}
+\details{
 Upserts
 (inserts or updates,
 depending on whether the private keys in \code{.df}
 already exist in \code{db_table_name})
 \code{.df} into \code{db_table_name} at \code{conn}.
-}
-\details{
+
 This function decodes foreign keys (fks), when possible,
 assuming that all fks are integers.
 If non-integers (typically, character strings)

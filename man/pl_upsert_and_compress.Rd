@@ -6,41 +6,205 @@
 \usage{
 pl_upsert_and_compress(
   .df,
-  db_table_name,
+  conn,
+  db_table_name = NULL,
+  additional_hash_group_cols = NULL,
+  usual_hash_group_cols = PFUPipelineTools::usual_hash_group_cols,
+  keep_single_unique_cols = TRUE,
+  in_place = FALSE,
+  encode_fks = TRUE,
   compress = TRUE,
+  round_double_columns = FALSE,
+  digits = 15,
+  index_map =
+    magrittr::set_names(list(fk_parent_tables[[IEATools::row_col_types$industry]],
+    fk_parent_tables[[IEATools::row_col_types$product]],
+    fk_parent_tables[[IEATools::row_col_types$other]]),
+    c(IEATools::row_col_types$industry, IEATools::row_col_types$product,
+    IEATools::row_col_types$other)),
+  retain_zero_structure = FALSE,
+  schema = schema_from_conn(conn),
+  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema, collect = TRUE),
+  .db_table_name = PFUPipelineTools::hashed_table_colnames$db_table_name,
+  .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col,
+  .algo = "md5",
   mat_colnames = unlist(PFUPipelineTools::mat_colnames),
   valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
   valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname,
-  current_version = PFUPipelineTools::current_version_int,
-  conn
+  current_version_int = PFUPipelineTools::current_version_int
 )
 }
 \arguments{
 \item{.df}{The data frame to be upserted (and compressed by default).}
 
-\item{db_table_name}{The name of the table in the database at \code{conn}
+\item{conn}{A connection to the CL-PFU database.}
+
+\item{db_table_name}{A string identifying the destination for \code{.df} in \code{conn},
+i.e. the name of a remote database table.
+Default is \code{NULL}, meaning that the value for this argument
+will be taken from the \code{.db_table_name} column of \code{.df}.}
+
+\item{additional_hash_group_cols}{A vector or list of additional columns
+by which \code{.df} will be grouped
+before hashing and, therefore, appear in the output.
+Default is \code{NULL}.
+Passed to \code{\link[=pl_hash]{pl_hash()}}.}
+
+\item{usual_hash_group_cols}{A vector of columns by which \code{.df} will be grouped
+before hashing and, therefore, appear in the output.
+Default is \code{PFUPipelineTools::additional_hash_group_cols}
+but can be set to \code{NULL} to disable.
+Passed to \code{\link[=pl_hash]{pl_hash()}}.}
+
+\item{keep_single_unique_cols}{A boolean that tells whether to keep
+columns with a single unique value
+in the output.
+Default is \code{TRUE}.
+Passed to \code{\link[=pl_hash]{pl_hash()}}.}
+
+\item{in_place}{A boolean that tells whether to modify the database at \code{conn}.
+Default is \code{FALSE}, which is helpful if you want to chain
+several requests.}
+
+\item{encode_fks}{A boolean that tells whether to code foreign keys in \code{.df}
+before upserting to \code{conn}.
+Default is \code{TRUE}.}
+
+\item{compress}{A boolean that tells whether to compress \code{db_table_name}
+in the database after uploading.
+Default is \code{TRUE}.}
+
+\item{round_double_columns}{A boolean that tells whether to
+round double-precision columns in \code{.df}.
+Default is \code{FALSE}.}
+
+\item{digits}{An integer that tells the number of significant digits.
+\code{digits} has an effect only when \code{round_double_columns} is \code{TRUE}.
+Default is \code{15}, which should
+eliminate any numerical precision errors
+for \code{\link[=compress_rows]{compress_rows()}}.}
+
+\item{index_map}{A list of 2 or more data frames that represent the
+mappings from inboard row and column indices in the database
+to outboard row and column names in the memory
+of the local computer.
+See documentation for \code{\link[=encode_matsindf]{encode_matsindf()}} and
+\code{\link[matsbyname:to_named_triplet]{matsbyname::to_triplet()}}.
+Default is a \code{list} that contains the \code{industry}, \code{product}, and \code{other}
+members of \code{fk_parent_tables}.}
+
+\item{retain_zero_structure}{A boolean that tells whether to retain the structure
+of zero matrices.
+See details.}
+
+\item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
+Default is \code{dm_from_con(conn, learn_keys = TRUE)}.
+See details.}
+
+\item{fk_parent_tables}{A named list of all parent tables
+for the foreign keys in \code{db_table_name}.
+See details.}
+
+\item{.db_table_name}{The name of the table name column in \code{.df}.
+Default is \code{PFUPipelineTools::hashed_table_colnames$db_table_name}.}
+
+\item{.pk_col}{The name of the primary key column in a primary key table.
+See \code{PFUPipelineTools::dm_pk_colnames}.}
+
+\item{.algo}{The hashing algorithm.
+Default is "md5".#' @param db_table_name The name of the table in the database at \code{conn}
 into which \code{.df} will be upserted (and compressed by default).}
 
 \item{mat_colnames}{String names of columns in \code{.df} that contain matrix information,
 namely, rowname (or index), colname (or index), and value.
 Default is \link{mat_colnames} (as a vector).}
 
-\item{conn}{}
+\item{valid_from_version_colname}{The string name of the valid from version column.
+Default is \link{dataset_info$valid_from_version_colname}.}
+
+\item{valid_to_version_colname}{The string name of the valid to version column.
+Default is \link{dataset_info$valid_to_version_colname}.}
+
+\item{current_version_int}{An integer that indicates the current version in the remote table.
+Default is \link{current_version_int}.
+It is probably a \emph{very bad} idea to supply
+a different value from the default.}
+}
+\value{
+A hash of \code{.df} according to \code{.algo}.
 }
 \description{
-This function updates a remote database table
-with \code{ValidFromVersion} and \code{ValidToVersion} columns
-by data in \code{.df} with its
-\code{ValidFromVersion} and \code{ValidToVersion}
-columns set to \code{working_version}.
+Upserts
+(inserts or updates,
+depending on whether the private keys in \code{.df}
+already exist in \code{db_table_name})
+\code{.df} into \code{db_table_name} at \code{conn}.
 }
 \details{
-This function assumes the \code{ValidToVersion} column contains
+This function decodes foreign keys (fks), when possible,
+assuming that all fks are integers.
+If non-integers (typically, character strings)
+are provided in fk columns of \code{.df},
+the non-integers will be recoded to their appropriate integer key values.
+
+This function knows about CL-PFU database tables that contain
+matrix information.
+In particular, if \code{.df} contains matrices,
+they are expanded into row-col-val format
+before uploading.
+
+The output of this function is a special data frame that
+contains the following columns:
+\itemize{
+\item All single-valued columns columns in \code{.df},
+columns given in \code{additional_hash_group_cols}
+(default \code{NULL}), and
+columns given in \code{usual_hash_group_cols}
+(default \code{PFUPipelineTools::usual_hash_group_cols}).
+\item Hash: A column with a hash of all non-foreign-key columns.
+}
+
+\code{schema} is a data model (\code{dm} object) for the database in \code{conn}.
+Its default value (\code{schema_from_conn(conn)})
+extracts the data model for the database at \code{conn} automatically.
+However, if the caller already has the data model,
+supplying it in the \code{schema} argument will save time.
+
+\code{fk_parent_tables} is a named list of tables,
+one of which (the one named \code{db_table_name})
+contains the foreign keys for \code{db_table_name}.
+\code{fk_parent_tables} is treated as a store from which foreign key tables
+are retrieved by name when needed.
+The default value (which calls \code{get_all_fk_tables()}
+with \code{collect = TRUE} because decoding of foreign keys
+is done outboard of the database)
+retrieves all possible foreign key parent tables from \code{conn},
+potentially a time-consuming process.
+For speed, pre-compute all foreign key parent tables once
+(via \code{get_all_fk_tables(collect = TRUE)})
+and pass the list to the \code{fk_parent_tables} argument
+of this function.
+
+The user in \code{conn} must have write access to the database.
+
+By default, \code{\link[=pl_upsert]{pl_upsert()}} will delete all zero entries
+in matrices before upserting.
+But for some countries and years,
+that could result in missing matrices, such as \strong{U_EIOU}.
+Set \code{retain_zero_structure = TRUE}
+to preserve all entries in a zero matrix.
+
+Optionally (and by default), this function
+compresses the remote data in \code{db_table_name}
+by setting appropriate values in the
+\code{ValidFromVersion} and \code{ValidToVersion} columns.
+
+This function assumes the \code{ValidToVersion} column in the remote contains
 \code{2147483647} (the largest possible integer in both PostgreSQL and \code{R})
 for the most current version of the data.
 
 There are only a few possibilities for rows of data
-in the local data frame and the remote datbase table:
+in the local data frame and the remote database table:
 \itemize{
 \item Same: Rows in the local data frame match rows in the remote database table
 for all foreign key columns except ValidFromVersion and ValidToVersion
@@ -80,6 +244,6 @@ Note that \code{mat_colnames} is used to discriminate data and metadata columns.
 Columns of \code{.df} (local) and \code{db_table_name} (remote)
 in \code{mat_colnames} are considered to be data columns.
 All other columns are considered to be metadata columns.
-The calling function should supply the complete data
+The calling function should supply the complete data in \code{.df}
 for each unique combination metadata column values.
 }
