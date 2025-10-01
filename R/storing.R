@@ -529,6 +529,8 @@ pl_upsert_and_compress <- function(.df,
 
 
 
+
+
     # Perform the upload.
     dplyr::tbl(conn, db_table_name) |>
       dplyr::rows_upsert(df_to_upsert,

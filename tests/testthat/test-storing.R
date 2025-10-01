@@ -347,23 +347,64 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   }
 
   # Create data model
-  dm <- list(testlocalcompression = data.frame(ValidFromVersion = as.integer(1),
+  dm <- list(testlocalcompression = data.frame(Dataset = "CL-PFU IEA",
+                                               ValidFromVersion = as.integer(1),
                                                ValidToVersion = as.integer(2),
+                                               Country = "GHA",
+                                               Year = 1971,
                                                matname = "pimat",
                                                i = as.integer(1),
                                                j = as.integer(1),
                                                value = 3.1415926) |>
                # Delete all rows, but keep names and column types
-               dplyr::filter(FALSE)) |>
+               dplyr::filter(FALSE),
+             Dataset = data.frame(DatasetID = 5,
+                                  Dataset = "CL-PFU IEA"),
+             Version = data.frame(VersionID = as.integer(1, 2, 3),
+                                  Version = c("v1.0", "v2.0", "v3.0")),
+             Country = data.frame(CountryID = c(49, 146),
+                                  Country = c("GHA", "USA")),
+             Year = data.frame(YearID = c(1971, 1972),
+                               Year = c(1971, 1972)),
+             matname = data.frame(matnameID = c(2, 3, 7, 8),
+                                  matname = c("R", "U", "V", "Y")),
+             Index = data.frame(IndexID = c(1, 2, 3, 4, 5),
+                                Index = c("Hard coal (if no detail) [from Resources]",
+                                          "Brown coal (if no detail) [from Resources]",
+                                          "Anthracite [from Resources]",
+                                          "Coking coal [from Resources]",
+                                          "Other bituminous coal [from Resources]"))) |>
     dm::new_dm() |>
     dm::dm_add_pk(testlocalcompression, columns = c(ValidFromVersion, ValidToVersion,
-                                                    matname, i, j))
+                                                    matname, i, j)) |>
+    dm::dm_add_pk(Dataset, columns = c(DatasetID)) |>
+    dm::dm_add_pk(Version, columns = c(VersionID)) |>
+    dm::dm_add_pk(Country, columns = c(CountryID)) |>
+    dm::dm_add_pk(Year, columns = c(YearID)) |>
+    dm::dm_add_pk(matname, columns = c(matnameID)) |>
+    dm::dm_add_pk(Index, columns = c(IndexID)) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = Dataset,
+                  ref_table = Dataset, ref_columns = DatasetID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = ValidFromVersion,
+                  ref_table = Version, ref_columns = VersionID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = ValidToVersion,
+                  ref_table = Version, ref_columns = VersionID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = Country,
+                  ref_table = Country, ref_columns = CountryID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = Year,
+                  ref_table = Year, ref_columns = YearID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = matname,
+                  ref_table = matname, ref_columns = matnameID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = i,
+                  ref_table = Index, ref_columns = IndexID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = j,
+                  ref_table = Index, ref_columns = IndexID)
+
   dm::copy_dm_to(conn, dm = dm, temporary = FALSE)
   # Create index map
-  index_map <- list(ValidFromVersion = data.frame(IndexID = as.integer(1:3),
-                                                  Index = c("v1", "v2", "v3")),
-                    ValidToVersion = data.frame(IndexID = as.integer(1:3),
-                                                Index = c("v1", "v2", "v3")),
+  index_map <- list(ValidFromVersion = ,
+                    ValidToVersion = data.frame(IndexID = as.integer(1, 2, 3),
+                                                Index = c("v1.0", "v2.0", "v3.0")),
                     row = data.frame(IndexID = as.integer(1:3),
                                      Index = c("r1", "r2", "r3")),
                     col = data.frame(IndexID = as.integer(1:2),
