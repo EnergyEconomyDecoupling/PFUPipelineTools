@@ -239,3 +239,17 @@ test_that("Compression works maunally and with pl_upsert()", {
   remove_compress_function(conn = conn) |>
     expect_equal(0)
 })
+
+
+test_that("remove_compress_function() gives a warning", {
+  remove_compress_function() |>
+    expect_warning(regexp = "Remote compression has been replaced by local compression.") |>
+    expect_error('argument "conn" is missing, with no default')
+})
+
+
+test_that("install_compress_function() gives a warning", {
+  install_compress_function() |>
+    expect_warning(regexp = "Remote compression has been replaced by local compression.") |>
+    expect_error('argument "conn" is missing, with no default')
+})

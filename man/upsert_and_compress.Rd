@@ -4,7 +4,7 @@
 \alias{upsert_and_compress}
 \title{Upsert and compress rows from a data frame}
 \usage{
-upsert_and_compress(.df, working_version)
+upsert_and_compress(.df, db_table_name)
 }
 \description{
 This function updates a remote database table
@@ -23,7 +23,7 @@ in the local data frame and the remote datbase table:
 \itemize{
 \item Same: Rows in the local data frame match rows in the remote database table
 for all foreign key columns except ValidFromVersion and ValidToVersion
-and to within \code{tol} for the \code{value} column.
+and within \code{tol} for the \code{value} column.
 In this case, there is nothing to be done, because the
 \code{ValidToVersion} column in the remote database table
 should already be \code{2147483647}.

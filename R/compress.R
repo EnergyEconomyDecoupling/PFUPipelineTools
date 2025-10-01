@@ -1,5 +1,7 @@
 #' Install the `compress` function to a database
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
 #' When running the pipeline,
 #' we compress identical rows of the table using the version columns.
 #' This plpgsql function in `compress_func_string`
@@ -46,6 +48,8 @@ install_compress_function <- function(conn,
 
 
 #' Remove the compress function from a database
+#'
+#' `r lifecycle::badge("deprecated")`
 #'
 #' The database at `conn` may have the `compress` function installed
 #' by `unpload_compress_function()`.
