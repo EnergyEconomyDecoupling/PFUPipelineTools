@@ -1,3 +1,10 @@
+# All tests in this file are for deprecated functions.
+# Remove this file when
+# * install_compress_function(),
+# * remove_compress_function(), and
+# * compress_rows()
+# are removed from this package.
+
 test_that("install_compress_function() and remove_compress_function() both work", {
 
   skip_on_ci()
