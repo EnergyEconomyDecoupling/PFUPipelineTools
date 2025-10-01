@@ -388,3 +388,19 @@
 #' @examples
 #' mat_meta_cols
 "mat_meta_cols"
+
+
+#' Integer for the current version of the database
+#'
+#' When storing updated data in the database,
+#' we need to identify the current version.
+#' To make this easier, we use a big integer.
+#'
+#' @format An integer vector with `r length(current_version_int)` entry.
+#' \describe{
+#' \item{current_version_int}{The integer that represents the current version.}
+#' }
+#'
+#' @examples
+#' current_version_int
+"current_version_int"

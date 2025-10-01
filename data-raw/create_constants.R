@@ -449,3 +449,11 @@ mat_meta_cols <- list(matname = "matname",
 usethis::use_data(mat_meta_cols, overwrite = TRUE)
 
 
+#
+# The integer of length 1 that represents the current version
+# of the database in ValidFromVersion and ValidToVersion columns.
+#
+
+current_version_int <- 2147483647L
+usethis::use_data(current_version_int, overwrite = TRUE)
+

@@ -283,12 +283,29 @@ pl_upsert <- function(.df,
 #'            local data frame to `2147483647` and
 #'            insert into the remote database table.
 #'
+#' @param .df
+#' @param db_table_name
+#' @param mat_colnames String names of columns in `.df` that contain matrix information,
+#'                     namely, rowname (or index), colname (or index), and value.
+#'                     Default is [PFUPipelineTools::mat_colnames] (as a vector).
+#' @param valid_from_version_colname
+#' @param valid_to_version_colname
+#' @param conn
+#'
 #' @returns
 #' @export
 #'
 #' @examples
-upsert_and_compress <- function(.df,
-                                db_table_name) {
+pl_upsert_and_compress <- function(.df,
+                                   db_table_name,
+                                   mat_colnames = unlist(PFUPipelineTools::mat_colnames),
+                                   valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
+                                   valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname,
+                                   current_version = PFUPipelineTools::current_version,
+                                   conn) {
+
+
+
 
   # Get names of foreign key columns
 
