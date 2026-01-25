@@ -3,6 +3,7 @@
 export("%>%")
 export(":=")
 export(.data)
+export(compress_helper)
 export(compress_rows)
 export(decode_fk_keys)
 export(decode_fks)

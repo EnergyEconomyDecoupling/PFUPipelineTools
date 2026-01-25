@@ -233,9 +233,20 @@
 #' \item{dataset_colname}{The string name of the dataset column, "Dataset".}
 #' \item{valid_from_version_colname}{The string name of the column that gives the initial version for which this datapoint is valid, "ValidFromVersion".}
 #' \item{valid_to_version_colname}{The string name of the column that gives the last version for which this datapoint is valid, "ValidToVersion".}
-#' \item{iea}{A string identifying that ECC data are from the IEA exclusively.}
-#' \item{mw}{A string identifying that ECC data are for muscle work (MW) exclusively.}
-#' \item{both}{A string identifying that ECC data include both IEA and muscle work.}
+#' \item{clpfu_iea}{A string identifying that ECC data are from the IEA exclusively.}
+#' \item{clpfu_mw}{A string identifying that ECC data are for muscle work (MW) exclusively.}
+#' \item{clpfu_iea_mw}{A string identifying that ECC data include both IEA and muscle work.}
+#' \item{clpfu}{A string identifying the CL-PFU dataset.}
+#' \item{ieaeweb}{A string identifying the IEA's Extended World Energy Balance dataset.}
+#' \item{faostat}{A string identifying the UN's Food and Agriculture Organization dataset.}
+#' \item{ilostat}{A string identifying the UN's International Labour Organization dataset.}
+#' \item{wlrpfu}{A string identifying the World Long Run Primary Final Useful dataset.}
+#' \item{wlrpfu_elect}{A string identifying the electricity portion of the World Long Run Primary Final Useful dataset.}
+#' \item{wlrpfu_trans}{A string identifying the transport portion of the World Long Run Primary Final Useful dataset.}
+#' \item{wlrpfu_mw}{A string identifying the muscle work portion of the World Long Run Primary Final Useful dataset.}
+#' \item{what_to_do}{The string name of a column that tells what to do  with updated data for the remote database. Options are `change_remote` and `upload_new`.}
+#' \item{change_remote}{A string indicating that the remote database should be changed when updating the remote database.}
+#' \item{upload_new}{A string indicating that rows of a dataframe should be uploaded to the remote database, because they are new, i.e., they do not yet exist in the remote database.}
 #' }
 #'
 #' @examples

@@ -355,7 +355,10 @@ dataset_info <- list(dataset_colname = "Dataset",
                      wlrpfu = "WLR-PFU",
                      wlrpfu_elect = "WLR-PFU Electricity",
                      wlrpfu_trans = "WLR-PFU Transport",
-                     wlrpfu_mw = "WLR-PFU Muscle work")
+                     wlrpfu_mw = "WLR-PFU Muscle work",
+                     what_to_do = "WhatToDo",
+                     change_remote = "Change remote",
+                     upload_new = "Upload new")
 usethis::use_data(dataset_info, overwrite = TRUE)
 
 
