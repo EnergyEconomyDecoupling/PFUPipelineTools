@@ -198,6 +198,9 @@ compress_helper <- function(remote_df, local_df,
       # to the current version
       "{valid_to_version_colname}" := current_version_int
     )
+  # Add to the outgoing data frame
+  out <- out |>
+    dplyr::bind_rows(unequal_upload_new)
 
   # Find all rows where remote valid from and valid to columns are missing.
   # This indicates that the corresponding local rows contain new information.
@@ -205,5 +208,5 @@ compress_helper <- function(remote_df, local_df,
     dplyr::filter(is.na(.data[[new_remote_from_name]]) &
                     is.na(.data[[new_remote_to_name]]))
 
-  # Build outgoing data frame
+  return(out)
 }

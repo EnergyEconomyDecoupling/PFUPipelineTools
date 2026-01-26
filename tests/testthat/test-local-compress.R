@@ -31,17 +31,57 @@ test_that("local_compress() works as expected", {
     dplyr::mutate(ValidFromVersion = 3,
                   ValidToVersion = 3)
 
-  compress_helper(remote_df = remote_df, local_df = local_df)
-
-  # There should be no rows in the change_remote list
-
-
+  # There should be no rows in this one.
+  # Everything is same, so no need to make changes
+  no_rows <- compress_helper(remote_df = remote_df, local_df = local_df)
+  expect_equal(nrow(no_rows), 0)
 
   # Try with one new value (change to negative value)
   local_df_one_new_value <- local_df
   local_df_one_new_value[3, "value"] <- -13
-  compress_helper(remote_df = remote_df,
-                  local_df = local_df_one_new_value)
+  changed_1_row <- compress_helper(remote_df = remote_df,
+                                   local_df = local_df_one_new_value)
+  # We should have 2 rows here,
+  # one to change the remote, one to upload new
+  expect_equal(nrow(changed_1_row), 2)
+  # Check we got the right information
+  change_remote <- changed_1_row |>
+    dplyr::filter(.data[[PFUPipelineTools::dataset_info$what_to_do]] == PFUPipelineTools::dataset_info$change_remote)
+  # The value should still be the original value (13)
+  change_remote |>
+    magrittr::extract2(PFUPipelineTools::mat_colnames$value) |>
+    magrittr::extract2(1) |>
+    expect_equal(13)
+  # Leave ValidFromVersion at 2
+  change_remote |>
+    magrittr::extract2(PFUPipelineTools::dataset_info$valid_from_version_colname) |>
+    magrittr::extract2(1) |>
+    expect_equal(2)
+  # But ValidToVersion should be reset from current_version_int to 2
+  change_remote |>
+    magrittr::extract2(PFUPipelineTools::dataset_info$valid_to_version_colname) |>
+    magrittr::extract2(1) |>
+    expect_equal(2)
+  # Now look at the upload_new row
+  upload_new <- changed_1_row |>
+    dplyr::filter(.data[[PFUPipelineTools::dataset_info$what_to_do]] == PFUPipelineTools::dataset_info$upload_new)
+  # The value should be the changed value (-13)
+  upload_new |>
+    magrittr::extract2(PFUPipelineTools::mat_colnames$value) |>
+    magrittr::extract2(1) |>
+    expect_equal(-13)
+  # The ValidFromVersion column should be 3 (the new version)
+  upload_new |>
+    magrittr::extract2(PFUPipelineTools::dataset_info$valid_from_version_colname) |>
+    magrittr::extract2(1) |>
+    expect_equal(3)
+  # The ValidToVersion column should be 3 (the new version)
+  upload_new |>
+    magrittr::extract2(PFUPipelineTools::dataset_info$valid_to_version_colname) |>
+    magrittr::extract2(1) |>
+    expect_equal(current_version_int)
+
+
 })
 
 
