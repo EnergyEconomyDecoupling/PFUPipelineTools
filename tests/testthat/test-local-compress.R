@@ -80,8 +80,6 @@ test_that("local_compress() works as expected", {
     magrittr::extract2(PFUPipelineTools::dataset_info$valid_to_version_colname) |>
     magrittr::extract2(1) |>
     expect_equal(current_version_int)
-
-
 })
 
 

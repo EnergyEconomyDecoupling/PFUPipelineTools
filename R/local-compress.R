@@ -92,15 +92,15 @@ compress_helper <- function(remote_df, local_df,
   # Replace version column names prior to joining
   remote_df_new_names <- remote_df |>
     dplyr::rename(
-      "{new_remote_from_name}" := valid_from_version_colname,
-      "{new_remote_to_name}" := valid_to_version_colname,
-      "{new_remote_value_name}" := value_colname
+      "{new_remote_from_name}" := dplyr::all_of(valid_from_version_colname),
+      "{new_remote_to_name}" := dplyr::all_of(valid_to_version_colname),
+      "{new_remote_value_name}" := dplyr::all_of(value_colname)
     )
   local_df_new_names <- local_df |>
     dplyr::rename(
-      "{new_local_from_name}" := valid_from_version_colname,
-      "{new_local_to_name}" := valid_to_version_colname,
-      "{new_local_value_name}" := value_colname
+      "{new_local_from_name}" := dplyr::all_of(valid_from_version_colname),
+      "{new_local_to_name}" := dplyr::all_of(valid_to_version_colname),
+      "{new_local_value_name}" := dplyr::all_of(value_colname)
     )
   # Figure out columns by which to join
   join_cols <- c(colnames(remote_df_new_names), colnames(local_df_new_names)) |>
@@ -159,9 +159,9 @@ compress_helper <- function(remote_df, local_df,
     dplyr::rename(
       # Rename the remote valid and value columns
       # back to their original names
-      "{valid_from_version_colname}" := new_remote_from_name,
-      "{valid_to_version_colname}" := new_remote_to_name,
-      "{value_colname}" := new_remote_value_name
+      "{valid_from_version_colname}" := dplyr::all_of(new_remote_from_name),
+      "{valid_to_version_colname}" := dplyr::all_of(new_remote_to_name),
+      "{value_colname}" := dplyr::all_of(new_remote_value_name)
     ) |>
     dplyr::mutate(
       # Set the what to do column name
@@ -184,9 +184,9 @@ compress_helper <- function(remote_df, local_df,
     dplyr::rename(
       # Rename the local valid and value columns
       # back to their original names
-      "{valid_from_version_colname}" := new_local_from_name,
-      "{valid_to_version_colname}" := new_local_to_name,
-      "{value_colname}" := new_local_value_name
+      "{valid_from_version_colname}" := dplyr::all_of(new_local_from_name),
+      "{valid_to_version_colname}" := dplyr::all_of(new_local_to_name),
+      "{value_colname}" := dplyr::all_of(new_local_value_name)
     ) |>
     dplyr::mutate(
       # Set the what to do column name
