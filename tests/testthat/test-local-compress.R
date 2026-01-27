@@ -174,9 +174,6 @@ test_that("compress_helper() works with no rows in remote_df and local_df", {
 })
 
 
-# Test when there are no rows in remote_df
-
-# Test when there are no rows in local_df
 
 # Test when local and remote or one are NULL
 
