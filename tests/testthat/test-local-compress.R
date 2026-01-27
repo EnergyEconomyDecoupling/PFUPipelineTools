@@ -38,7 +38,7 @@ test_that("local_compress() works as expected", {
 
   # Try with one new value (change to negative value)
   local_df_one_new_value <- local_df
-  local_df_one_new_value[3, "value"] <- -13
+  local_df_one_new_value[3, PFUPipelineTools::mat_colnames$value] <- -13
   changed_1_row <- compress_helper(remote_df = remote_df,
                                    local_df = local_df_one_new_value)
   # We should have 2 rows here,
@@ -57,7 +57,8 @@ test_that("local_compress() works as expected", {
     magrittr::extract2(PFUPipelineTools::dataset_info$valid_from_version_colname) |>
     magrittr::extract2(1) |>
     expect_equal(2)
-  # But ValidToVersion should be reset from current_version_int to 2
+  # But ValidToVersion should be reset from current_version_int (huge number)
+  # to 2 (one less than the version columns in the local_df)
   change_remote |>
     magrittr::extract2(PFUPipelineTools::dataset_info$valid_to_version_colname) |>
     magrittr::extract2(1) |>
@@ -75,11 +76,27 @@ test_that("local_compress() works as expected", {
     magrittr::extract2(PFUPipelineTools::dataset_info$valid_from_version_colname) |>
     magrittr::extract2(1) |>
     expect_equal(3)
-  # The ValidToVersion column should be 3 (the new version)
+  # The ValidToVersion column should be current_version_int,
+  # a huge number
   upload_new |>
     magrittr::extract2(PFUPipelineTools::dataset_info$valid_to_version_colname) |>
     magrittr::extract2(1) |>
     expect_equal(current_version_int)
+
+  # Test when 2 rows change
+  local_df_two_new_values <- local_df
+  local_df_two_new_values[3, PFUPipelineTools::mat_colnames$value] <- -13
+  local_df_two_new_values[12, PFUPipelineTools::mat_colnames$value] <- -21000
+  changed_2_rows <- compress_helper(remote_df = remote_df,
+                                    local_df = local_df_two_new_values)
+  expected_changed_2_rows <- tibble::tribble(
+    ~Dataset, ~ValidFromVersion, ~ValidToVersion, ~Country, ~Year, ~matname, ~i, ~j, ~value, ~WhatToDo,
+    5, 2, 2, 49, 1971, 2, 1, 3, 13, "Change ValidToVersion in remote",
+    5, 2, 2, 146, 1972, 8, 2, 1, 21000, "Change ValidToVersion in remote",
+    5, 3, current_version_int, 49, 1971, 2, 1, 3, -13, "Upload new",
+    5, 3, current_version_int, 146, 1972, 8, 2, 1, -21000, "Upload new"
+  )
+  expect_equal(changed_2_rows, expected_changed_2_rows)
 })
 
 

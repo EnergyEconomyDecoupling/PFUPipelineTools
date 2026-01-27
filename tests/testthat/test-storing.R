@@ -338,42 +338,67 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   conn <- get_unit_testing_conn()
   on.exit(DBI::dbDisconnect(conn))
 
-  # Set the name of the table so we can use the variable in several places
+  # Set the names of the table so we can use the variable in several places
   tname <- "testlocalcompression"
+  dataset <- "Dataset"
+  version <- "Version"
+  country <- "Country"
+  year <- "Year"
+  matname <- "matname"
+  index <- "Index"
 
-  # Start with a fresh slate
+  # Start with a clean slate
   if (DBI::dbExistsTable(conn = conn, name = tname)) {
     DBI::dbRemoveTable(conn = conn, name = tname)
   }
+  if (DBI::dbExistsTable(conn = conn, name = dataset)) {
+    DBI::dbRemoveTable(conn = conn, name = dataset)
+  }
+  if (DBI::dbExistsTable(conn = conn, name = version)) {
+    DBI::dbRemoveTable(conn = conn, name = version)
+  }
+  if (DBI::dbExistsTable(conn = conn, name = country)) {
+    DBI::dbRemoveTable(conn = conn, name = country)
+  }
+  if (DBI::dbExistsTable(conn = conn, name = year)) {
+    DBI::dbRemoveTable(conn = conn, name = year)
+  }
+  if (DBI::dbExistsTable(conn = conn, name = matname)) {
+    DBI::dbRemoveTable(conn = conn, name = matname)
+  }
+  if (DBI::dbExistsTable(conn = conn, name = index)) {
+    DBI::dbRemoveTable(conn = conn, name = index)
+  }
 
   # Create data model
-  dm <- list(testlocalcompression = data.frame(Dataset = "CL-PFU IEA",
+  dm <- list(testlocalcompression = data.frame(Dataset = as.integer(5),
                                                ValidFromVersion = as.integer(1),
                                                ValidToVersion = as.integer(2),
-                                               Country = "GHA",
-                                               Year = 1971,
-                                               matname = "pimat",
+                                               Country = as.integer(49),
+                                               Year = as.integer(1971),
+                                               matname = as.integer(2),
                                                i = as.integer(1),
                                                j = as.integer(1),
                                                value = 3.1415926) |>
                # Delete all rows, but keep names and column types
                dplyr::filter(FALSE),
-             Dataset = data.frame(DatasetID = 5,
+             Dataset = data.frame(DatasetID = as.integer(5),
                                   Dataset = "CL-PFU IEA"),
-             Version = data.frame(VersionID = as.integer(1, 2, 3),
+             Version = data.frame(VersionID = as.integer(c(1, 2, 3)),
                                   Version = c("v1.0", "v2.0", "v3.0")),
-             Country = data.frame(CountryID = c(49, 146),
+             Country = data.frame(CountryID = as.integer(c(49, 146)),
                                   Country = c("GHA", "USA")),
-             Year = data.frame(YearID = c(1971, 1972),
-                               Year = c(1971, 1972)),
-             matname = data.frame(matnameID = c(2, 3, 7, 8),
+             Year = data.frame(YearID = as.integer(c(1971, 1972)),
+                               Year = as.integer(c(1971, 1972))),
+             matname = data.frame(matnameID = as.integer(c(2, 3, 7, 8)),
                                   matname = c("R", "U", "V", "Y")),
-             Index = data.frame(IndexID = c(1, 2, 3, 4, 5),
+             Index = data.frame(IndexID = as.integer(c(1, 2, 3, 4, 5)),
                                 Index = c("Hard coal (if no detail) [from Resources]",
                                           "Brown coal (if no detail) [from Resources]",
                                           "Anthracite [from Resources]",
                                           "Coking coal [from Resources]",
-                                          "Other bituminous coal [from Resources]"))) |>
+                                          "Other bituminous coal [from Resources]"))
+  ) |>
     dm::new_dm() |>
     dm::dm_add_pk(testlocalcompression, columns = c(ValidFromVersion, ValidToVersion,
                                                     matname, i, j)) |>
@@ -402,8 +427,9 @@ test_that("pl_upsert_and_compress() works with local table compression", {
 
   dm::copy_dm_to(conn, dm = dm, temporary = FALSE)
   # Create index map
-  index_map <- list(ValidFromVersion = ,
-                    ValidToVersion = data.frame(IndexID = as.integer(1, 2, 3),
+  index_map <- list(ValidFromVersion = data.frame(IndexID = as.integer(c(1, 2, 3)),
+                                                  Index = c("v1.0", "v2.0", "v3.0")),
+                    ValidToVersion = data.frame(IndexID = as.integer(c(1, 2, 3)),
                                                 Index = c("v1.0", "v2.0", "v3.0")),
                     row = data.frame(IndexID = as.integer(1:3),
                                      Index = c("r1", "r2", "r3")),
@@ -499,6 +525,13 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   testthat::expect_equal(resv2, expected_resv2)
 
   # Clean up after ourselves
+  DBI::dbRemoveTable(conn = conn, name = "Country")
+  DBI::dbRemoveTable(conn = conn, name = "Dataset")
+  DBI::dbRemoveTable(conn = conn, name = "Index")
+  DBI::dbRemoveTable(conn = conn, name = "matname")
+  DBI::dbRemoveTable(conn = conn, name = "Version")
+  DBI::dbRemoveTable(conn = conn, name = "Year")
   DBI::dbRemoveTable(conn = conn, name = "testlocalcompression")
+  DBI::dbDisconnect(conn)
 })
 

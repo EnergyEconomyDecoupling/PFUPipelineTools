@@ -114,7 +114,8 @@ Default is "md5".}
 A hash of \code{.df} according to \code{.algo}.
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#superseded}{\figure{lifecycle-superseded.svg}{options: alt='[Superseded]'}}}{\strong{[Superseded]}}
+Use \link{pl_upsert_and_compress(compress = FALSE)} instead.
 }
 \details{
 Upserts

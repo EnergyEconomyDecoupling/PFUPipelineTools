@@ -1,6 +1,7 @@
 #' Upsert a data frame with optional encoding of foreign keys
 #'
-#' `r lifecycle::badge("deprecated")`
+#' `r lifecycle::badge("superseded")`
+#' Use [PFUPipelineTools::pl_upsert_and_compress(compress = FALSE)] instead.
 #'
 #' Upserts
 #' (inserts or updates,
@@ -153,16 +154,6 @@ pl_upsert <- function(.df,
                       .db_table_name = PFUPipelineTools::hashed_table_colnames$db_table_name,
                       .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col,
                       .algo = "md5") {
-
-  lifecycle::deprecate_warn(
-    when = "0.1.15",
-    what = "pl_upsert()",
-    details = c(
-      i = "With compression now being performed locally instead of remotely,",
-      i = "This function has been deprecated in favor of pl_upsert_and_compress().",
-      i = "This function will be removed in the next minor revision."
-    )
-  )
 
   if (is.null(db_table_name)) {
     db_table_name <- .df[[.db_table_name]] |>
