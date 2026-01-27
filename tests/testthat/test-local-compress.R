@@ -97,6 +97,28 @@ test_that("local_compress() works as expected", {
     5, 3, current_version_int, 146, 1972, 8, 2, 1, -21000, "Upload new"
   )
   expect_equal(changed_2_rows, expected_changed_2_rows)
+
+  # Test when all rows change
+  local_df_all_new_values <- local_df |>
+    dplyr::mutate(
+      "{PFUPipelineTools::mat_colnames$value}" := -.data[[PFUPipelineTools::mat_colnames$value]]
+    )
+  expected_all_new_values <- dplyr::bind_rows(
+    remote_df |>
+      dplyr::mutate(
+        "{PFUPipelineTools::dataset_info$valid_to_version}" := 2,
+        "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$change_remote
+      ),
+    local_df |>
+      dplyr::mutate(
+        "{PFUPipelineTools::mat_colnames$value}" := -.data[[PFUPipelineTools::mat_colnames$value]],
+        "{PFUPipelineTools::dataset_info$valid_to_version}" := 3,
+        "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
+      )
+  )
+  changed_all_rows <- compress_helper(remote_df = remote_df,
+                                      local_df = local_df_all_new_values)
+  expect_equal(changed_all_rows, expected_all_new_values)
 })
 
 
