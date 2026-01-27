@@ -183,6 +183,7 @@ test_that("compress_helper() works with no rows in remote_df and local_df", {
 
 # Test when local has same metadata but different values,
 # as when we are developing a new version.
+# In the remote, should replace remote value with local value.
 
 # Test a case where names are not same for both data frames.
 
