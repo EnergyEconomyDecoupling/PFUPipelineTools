@@ -5,28 +5,33 @@
 #' via the use of `ValidFromVersion` and `ValidToVersion` columns.
 #' This function contains the logic for that work.
 #'
-#' This function doesn't change any rows in the remote database.
-#' Rather, it returns a data frame with same columns as
-#' `remote_df` and an additional column
-#' named with the value of `what_to_do_colname`
-#' (default is "WhatToDo") that tells
-#' what must be done with each row.
-#' The possible values of the `what_to_do_colname` are
-#'
-#'
-#'
-#' The first data frame (named "change_remote")
-#' contains rows that need to be changed in the remote.
-#' All columns should be the same as the remote, but
-#' `valid_from_version_colname` and
-#' `valid_to_version_colname` may be different.
-#' The second data frame (named "upload_to_remote")
-#' contains rows that need to be added to the remote table.
-#'
 #' In the context of this function,
 #' `remote` means (usually older) data from the remote database.
 #' `local` means new data calculated locally and meant to be uploaded
 #' to the remote database.
+#'
+#' This function doesn't change any rows in the remote database.
+#' Rather, it returns a data frame with same columns as
+#' `remote_df` and an additional column
+#' named with the value of `what_to_do_colname`
+#' (by default
+#' [PFUPipelineTools::dataset_info]`$what_to_do` or
+#' "`r PFUPipelineTools::dataset_info$what_to_do`") that tells
+#' what must be done with each row.
+#' The possible values of the `what_to_do_colname` are
+#' [PFUPipelineTools::dataset_info]`$change_remote` and
+#' [PFUPipelineTools::dataset_info]`$upload_new`
+#' that indicate whether to change the remote table's
+#' `ValidToVersion` value or
+#' upload a new row, respectively.
+#' The values are
+#' "`r PFUPipelineTools::dataset_info$change_remote`" and
+#' "`r PFUPipelineTools::dataset_info$upload_new`",
+#' respectively.
+#'
+#' Functions that call [compress_helper()] should query the value
+#' of the `what_to_do_colname` to decide how to handle
+#' each row.
 #'
 #' @param remote_df A remote version of the rows contained in `local_df`.
 #' @param local_df A new data frame computed locally that
@@ -204,9 +209,65 @@ compress_helper <- function(remote_df, local_df,
 
   # Find all rows where remote valid from and valid to columns are missing.
   # This indicates that the corresponding local rows contain new information.
+  # All of these rows should be uploaded.
   new_local_to_upload <- joined |>
     dplyr::filter(is.na(.data[[new_remote_from_name]]) &
-                    is.na(.data[[new_remote_to_name]]))
+                    is.na(.data[[new_remote_to_name]])) |>
+    prep_upload_new(value_diff_name = value_diff_name,
+                    new_remote_from_name = new_remote_from_name,
+                    new_remote_to_name = new_remote_to_name,
+                    new_remote_value_name = new_remote_value_name,
+                    valid_from_version_colname = valid_from_version_colname,
+                    valid_to_version_colname = valid_to_version_colname,
+                    value_colname = value_colname,
+                    new_local_from_name = new_local_from_name,
+                    new_local_to_name = new_local_to_name,
+                    new_local_value_name = new_local_value_name,
+                    what_to_do_colname = what_to_do_colname,
+                    upload_new = upload_new,
+                    current_version_int = current_version_int)
+  out <- out |>
+    dplyr::bind_rows(new_local_to_upload)
 
   return(out)
+}
+
+
+
+prep_upload_new <- function(.df,
+                            value_diff_name,
+                            new_remote_from_name,
+                            new_remote_to_name,
+                            new_remote_value_name,
+                            valid_from_version_colname,
+                            valid_to_version_colname,
+                            value_colname,
+                            new_local_from_name,
+                            new_local_to_name,
+                            new_local_value_name,
+                            what_to_do_colname,
+                            upload_new,
+                            current_version_int) {
+  .df |>
+    dplyr::mutate(
+      # Remove the diff and remote columns
+      "{value_diff_name}" := NULL,
+      "{new_remote_from_name}" := NULL,
+      "{new_remote_to_name}" := NULL,
+      "{new_remote_value_name}" := NULL,
+    ) |>
+    dplyr::rename(
+      # Rename the local valid and value columns
+      # back to their original names
+      "{valid_from_version_colname}" := dplyr::all_of(new_local_from_name),
+      "{valid_to_version_colname}" := dplyr::all_of(new_local_to_name),
+      "{value_colname}" := dplyr::all_of(new_local_value_name)
+    ) |>
+    dplyr::mutate(
+      # Set the what to do column name
+      "{what_to_do_colname}" := upload_new,
+      # Set the value of the ValidToVersion column
+      # to the current version
+      "{valid_to_version_colname}" := current_version_int
+    )
 }

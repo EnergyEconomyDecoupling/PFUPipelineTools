@@ -1,6 +1,6 @@
-test_that("local_compress() works as expected", {
-  # Set up test data frames
-  remote_df <- tibble::tribble(
+# Create a data frame for testing purposes
+remote_df_func <- function() {
+  tibble::tribble(
     ~Dataset, ~ValidFromVersion, ~ValidToVersion, ~Country, ~Year, ~matname, ~i, ~j, ~value,
     # Dataset = 5 is CL-PFU IEA
     # Country = 49 is GHA
@@ -23,13 +23,25 @@ test_that("local_compress() works as expected", {
     5, 2, current_version_int, 146, 1972, 8, 2, 1, 21000,
     5, 2, current_version_int, 146, 1972, 8, 1, 2, 12000
   )
+}
+
+local_df_func <- function() {
+  remote_df_func() |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$valid_from_version_colname}" := 3,
+      "{PFUPipelineTools::dataset_info$valid_to_version_colname}" := 3
+    )
+}
+
+
+test_that("local_compress() works as expected", {
+  # Set up test data frames
+  remote_df <- remote_df_func()
 
   # Everything same as new_df but with older
   # ValidVersionFrom and ValidVersionTo equal to
   # current_version_int
-  local_df <- remote_df |>
-    dplyr::mutate(ValidFromVersion = 3,
-                  ValidToVersion = 3)
+  local_df <- local_df_func()
 
   # There should be no rows in this one.
   # Everything is same, so no need to make changes
@@ -112,17 +124,35 @@ test_that("local_compress() works as expected", {
     local_df |>
       dplyr::mutate(
         "{PFUPipelineTools::mat_colnames$value}" := -.data[[PFUPipelineTools::mat_colnames$value]],
-        "{PFUPipelineTools::dataset_info$valid_to_version}" := 3,
+        "{PFUPipelineTools::dataset_info$valid_to_version}" := current_version_int,
         "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
       )
   )
   changed_all_rows <- compress_helper(remote_df = remote_df,
                                       local_df = local_df_all_new_values)
+  expect_equal(nrow(changed_all_rows), 2*nrow(remote_df))
   expect_equal(changed_all_rows, expected_all_new_values)
 })
 
 
+test_that("compress_helper() works with no rows in remote_df and local_df", {
+  remote_df <- remote_df_func() |>
+    dplyr::filter(FALSE)
+  local_df <- local_df_func()
+  res_no_rows_remote <- compress_helper(remote_df = remote_df, local_df = local_df)
+
+  expected_no_rows_remote <- local_df |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$valid_to_version}" := current_version_int,
+      "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
+    )
+  expect_equal(res_no_rows_remote, expected_no_rows_remote)
+})
+
+
 # Test when there are no rows in remote_df
+
+# Test when there are no rows in local_df
 
 # Test when remote has several old versions.
 # Remote should be filtered for all rows with

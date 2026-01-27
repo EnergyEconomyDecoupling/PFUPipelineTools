@@ -50,24 +50,31 @@ via the use of \code{ValidFromVersion} and \code{ValidToVersion} columns.
 This function contains the logic for that work.
 }
 \details{
-This function doesn't change any rows in the remote database.
-Rather, it returns a data frame with same columns as
-\code{remote_df} and an additional column
-named with the value of \code{what_to_do_colname}
-(default is "WhatToDo") that tells
-what must be done with each row.
-The possible values of the \code{what_to_do_colname} are
-
-The first data frame (named "change_remote")
-contains rows that need to be changed in the remote.
-All columns should be the same as the remote, but
-\code{valid_from_version_colname} and
-\code{valid_to_version_colname} may be different.
-The second data frame (named "upload_to_remote")
-contains rows that need to be added to the remote table.
-
 In the context of this function,
 \code{remote} means (usually older) data from the remote database.
 \code{local} means new data calculated locally and meant to be uploaded
 to the remote database.
+
+This function doesn't change any rows in the remote database.
+Rather, it returns a data frame with same columns as
+\code{remote_df} and an additional column
+named with the value of \code{what_to_do_colname}
+(by default
+\link{dataset_info}\verb{$what_to_do} or
+"WhatToDo") that tells
+what must be done with each row.
+The possible values of the \code{what_to_do_colname} are
+\link{dataset_info}\verb{$change_remote} and
+\link{dataset_info}\verb{$upload_new}
+that indicate whether to change the remote table's
+\code{ValidToVersion} value or
+upload a new row, respectively.
+The values are
+"Change ValidToVersion in remote" and
+"Upload new",
+respectively.
+
+Functions that call \code{\link[=compress_helper]{compress_helper()}} should query the value
+of the \code{what_to_do_colname} to decide how to handle
+each row.
 }
