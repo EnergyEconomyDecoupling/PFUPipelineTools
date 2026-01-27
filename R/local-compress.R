@@ -33,6 +33,12 @@
 #' of the `what_to_do_colname` to decide how to handle
 #' each row.
 #'
+#' If both `remote_df` and `local_df` are `NULL`, `NULL` is returned.
+#' If only `remote_df` is `NULL`, all rows in `local_df` are assumed to require
+#' uploading to the remote.
+#' If only `local_df` is `NULL`, no rows need to be uploaded to the remote and
+#' no rows in the remote need to be changed.
+#'
 #' @param remote_df A remote version of the rows contained in `local_df`.
 #' @param local_df A new data frame computed locally that
 #'                 contains new values for `remote_df`.
@@ -50,7 +56,10 @@
 #'            assumed same as the remote value.
 #'            Default is `1e-6`.
 #'
-#' @returns A list of two data frames
+#' @returns A data frame with same columns as `remote_df` and `local_df` and an
+#'          added column (`what_to_do_colname`).
+#'          If `local_df` has no rows, `NULL`.
+#'
 #' @export
 #'
 #' @examples
@@ -63,6 +72,70 @@ compress_helper <- function(remote_df, local_df,
                             upload_new = PFUPipelineTools::dataset_info$upload_new,
                             current_version_int = PFUPipelineTools::current_version_int,
                             tol = 1e-6) {
+
+  # Establish some names
+  remote <- "Remote"
+  local <- "Local"
+  diff <- "Diff"
+  new_remote_from_name <- paste0(valid_from_version_colname, remote)
+  new_remote_to_name <- paste0(valid_to_version_colname, remote)
+  new_remote_value_name <- paste0(value_colname, remote)
+  new_local_from_name <- paste0(valid_from_version_colname, local)
+  new_local_to_name <- paste0(valid_to_version_colname, local)
+  new_local_value_name <- paste0(value_colname, local)
+  value_diff_name <- paste0(value_colname, diff)
+
+
+  if (is.null(remote_df) & is.null(local_df)) {
+    return(NULL)
+  }
+
+  # If we have NULL for local_df, nothing should change.
+  if (is.null(local_df)) {
+    return(remote_df |>
+             dplyr::mutate(
+               "{what_to_do_colname}" := upload_new
+             ) |>
+             dplyr::filter(FALSE)
+           )
+  }
+
+  # If local_df has no rows, no need to do anything else.
+  if (nrow(local_df) == 0) {
+    return(remote_df |>
+             dplyr::mutate(
+               "{what_to_do_colname}" := upload_new
+             ) |>
+             dplyr::filter(FALSE)
+           )
+  }
+
+  # If remote_df is NULL, all rows of local_df should be uploaded.
+  if (is.null(remote_df)) {
+    return(local_df |>
+             dplyr::mutate(
+               "{what_to_do_colname}" := upload_new
+             )
+           )
+  }
+
+  # If remote_df has no rows, all rows of local_df should be uploaded.
+  if (nrow(remote_df) == 0) {
+    local_df |>
+      prep_upload_new(value_diff_name = value_diff_name,
+                      new_remote_from_name = new_remote_from_name,
+                      new_remote_to_name = new_remote_to_name,
+                      new_remote_value_name = new_remote_value_name,
+                      valid_from_version_colname = valid_from_version_colname,
+                      valid_to_version_colname = valid_to_version_colname,
+                      value_colname = value_colname,
+                      new_local_from_name = new_local_from_name,
+                      new_local_to_name = new_local_to_name,
+                      new_local_value_name = new_local_value_name,
+                      what_to_do_colname = what_to_do_colname,
+                      upload_new = upload_new,
+                      current_version_int = current_version_int)
+  }
 
   # Decide the latest and previous versions
   latest_version <- local_df[[valid_to_version_colname]] |>
@@ -83,16 +156,6 @@ compress_helper <- function(remote_df, local_df,
   # If not, almost certainly an error.
   assertthat::assert_that(setequal(colnames(remote_df), colnames(local_df)))
 
-  remote <- "Remote"
-  local <- "Local"
-  diff <- "Diff"
-  new_remote_from_name <- paste0(valid_from_version_colname, remote)
-  new_remote_to_name <- paste0(valid_to_version_colname, remote)
-  new_remote_value_name <- paste0(value_colname, remote)
-  new_local_from_name <- paste0(valid_from_version_colname, local)
-  new_local_to_name <- paste0(valid_to_version_colname, local)
-  new_local_value_name <- paste0(value_colname, local)
-  value_diff_name <- paste0(value_colname, diff)
 
   # Replace version column names prior to joining
   remote_df_new_names <- remote_df |>
@@ -240,9 +303,9 @@ prep_change_remote <- function(.df,
     dplyr::rename(
       # Rename the remote valid and value columns
       # back to their original names
-      "{valid_from_version_colname}" := dplyr::all_of(new_remote_from_name),
-      "{valid_to_version_colname}" := dplyr::all_of(new_remote_to_name),
-      "{value_colname}" := dplyr::all_of(new_remote_value_name)
+      "{valid_from_version_colname}" := dplyr::any_of(new_remote_from_name),
+      "{valid_to_version_colname}" := dplyr::any_of(new_remote_to_name),
+      "{value_colname}" := dplyr::any_of(new_remote_value_name)
     ) |>
     dplyr::mutate(
       # Set the what to do column name
@@ -279,9 +342,9 @@ prep_upload_new <- function(.df,
     dplyr::rename(
       # Rename the local valid and value columns
       # back to their original names
-      "{valid_from_version_colname}" := dplyr::all_of(new_local_from_name),
-      "{valid_to_version_colname}" := dplyr::all_of(new_local_to_name),
-      "{value_colname}" := dplyr::all_of(new_local_value_name)
+      "{valid_from_version_colname}" := dplyr::any_of(new_local_from_name),
+      "{valid_to_version_colname}" := dplyr::any_of(new_local_to_name),
+      "{value_colname}" := dplyr::any_of(new_local_value_name)
     ) |>
     dplyr::mutate(
       # Set the what to do column name

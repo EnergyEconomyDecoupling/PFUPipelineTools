@@ -154,6 +154,23 @@ test_that("compress_helper() works with no rows in remote_df and local_df", {
   local_df <- local_df_func() |>
     dplyr::filter(FALSE)
   res_no_rows_local <- compress_helper(remote_df = remote_df, local_df = local_df)
+  expect_equal(res_no_rows_local, remote_df |>
+                 dplyr::mutate(
+                   "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new,
+                 ) |>
+                 dplyr::filter(FALSE))
+
+  # Try with no rows in both
+  remote_df <- remote_df_func() |>
+    dplyr::filter(FALSE)
+  local_df <- local_df_func() |>
+    dplyr::filter(FALSE)
+  res_no_rows_remote_local <- compress_helper(remote_df = remote_df, local_df = local_df)
+  expect_equal(res_no_rows_remote_local, remote_df |>
+                 dplyr::mutate(
+                   "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new,
+                 ) |>
+                 dplyr::filter(FALSE))
 })
 
 
@@ -161,7 +178,7 @@ test_that("compress_helper() works with no rows in remote_df and local_df", {
 
 # Test when there are no rows in local_df
 
-# Test when local and remote are NULL
+# Test when local and remote or one are NULL
 
 # Test when remote has several old versions.
 # Remote should be filtered for all rows with

@@ -41,7 +41,9 @@ assumed same as the remote value.
 Default is \code{1e-6}.}
 }
 \value{
-A list of two data frames
+A data frame with same columns as \code{remote_df} and \code{local_df} and an
+added column (\code{what_to_do_colname}).
+If \code{local_df} has no rows, \code{NULL}.
 }
 \description{
 We decide before uploading to the remote database
@@ -77,4 +79,10 @@ respectively.
 Functions that call \code{\link[=compress_helper]{compress_helper()}} should query the value
 of the \code{what_to_do_colname} to decide how to handle
 each row.
+
+If both \code{remote_df} and \code{local_df} are \code{NULL}, \code{NULL} is returned.
+If only \code{remote_df} is \code{NULL}, all rows in \code{local_df} are assumed to require
+uploading to the remote.
+If only \code{local_df} is \code{NULL}, no rows need to be uploaded to the remote and
+no rows in the remote need to be changed.
 }
