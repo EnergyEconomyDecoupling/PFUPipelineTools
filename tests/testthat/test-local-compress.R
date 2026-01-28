@@ -179,28 +179,33 @@ test_that("compress_helper() works with NULL remote_df or local_df or both", {
   # Should get local_df with ValidToVersion set to the big int
   remote_df <- remote_df_func()
   local_df <- local_df_func()
+  res_NULL_remote <- compress_helper(remote_df = NULL,
+                                     local_df = local_df)
   expected_NULL_remote <- local_df |>
     dplyr::mutate(
       "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new,
       "{PFUPipelineTools::dataset_info$valid_to_version_colname}" := current_version_int
     )
-  res_NULL_remote <- compress_helper(remote_df = NULL,
-                                     local_df = local_df)
   expect_equal(res_NULL_remote, expected_NULL_remote)
 
+  # Try with NULL local_df
+  res_NULL_local <- compress_helper(remote_df = remote_df,
+                                    local_df = NULL)
   expected_NULL_local <- remote_df |>
     dplyr::mutate(
       "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$change_remote
     ) |>
     dplyr::filter(FALSE)
-  res_NULL_local <- compress_helper(remote_df = remote_df,
-                                    local_df = NULL)
   expect_equal(res_NULL_local, expected_NULL_local)
+
+  # Try when both remote_df and local_df are NULL
+  res_NULL_both <- compress_helper(remote_df = NULL,
+                                   local_df = NULL)
+  expect_null(res_NULL_both)
 })
 
 
 
-# Test when local and remote or one are NULL
 
 # Test when remote has several old versions.
 # Remote should be filtered for all rows with
