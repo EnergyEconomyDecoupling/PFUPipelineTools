@@ -174,6 +174,31 @@ test_that("compress_helper() works with no rows in remote_df and local_df", {
 })
 
 
+test_that("compress_helper() works with NULL remote_df or local_df or both", {
+  # Try with NULL remote_df.
+  # Should get local_df with ValidToVersion set to the big int
+  remote_df <- remote_df_func()
+  local_df <- local_df_func()
+  expected_NULL_remote <- local_df |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new,
+      "{PFUPipelineTools::dataset_info$valid_to_version_colname}" := current_version_int
+    )
+  res_NULL_remote <- compress_helper(remote_df = NULL,
+                                     local_df = local_df)
+  expect_equal(res_NULL_remote, expected_NULL_remote)
+
+  expected_NULL_local <- remote_df |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$change_remote
+    ) |>
+    dplyr::filter(FALSE)
+  res_NULL_local <- compress_helper(remote_df = remote_df,
+                                    local_df = NULL)
+  expect_equal(res_NULL_local, expected_NULL_local)
+})
+
+
 
 # Test when local and remote or one are NULL
 

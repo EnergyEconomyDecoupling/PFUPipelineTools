@@ -85,7 +85,6 @@ compress_helper <- function(remote_df, local_df,
   new_local_value_name <- paste0(value_colname, local)
   value_diff_name <- paste0(value_colname, diff)
 
-
   if (is.null(remote_df) & is.null(local_df)) {
     return(NULL)
   }
@@ -114,6 +113,7 @@ compress_helper <- function(remote_df, local_df,
   if (is.null(remote_df)) {
     return(local_df |>
              dplyr::mutate(
+               "{valid_to_version_colname}" := current_version_int,
                "{what_to_do_colname}" := upload_new
              )
            )
