@@ -205,6 +205,21 @@ test_that("compress_helper() works with NULL remote_df or local_df or both", {
 })
 
 
+test_that("compress_helper() works when local has same metadata but different values", {
+  remote_df <- remote_df_func()
+  local_df <- local_df_func() |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$valid_from_version}" := 2,
+      "{PFUPipelineTools::dataset_info$valid_to_version}" := 2,
+      "{PFUPipelineTools::mat_colnames$value}" := .data[[PFUPipelineTools::mat_colnames$value]] * 10
+    )
+  compress_helper(remote_df = remote_df, local_df = local_df)
+  # This doesn't work, because ValidToVersion becomes 1.
+  # Need to check for this case and act appropriately in
+  # compress_helper()
+
+})
+
 
 
 # Test when remote has several old versions.
