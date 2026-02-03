@@ -58,7 +58,7 @@ test_that("local_compress() works as expected", {
   expect_equal(nrow(changed_1_row), 2)
   # Check we got the right information
   change_remote <- changed_1_row |>
-    dplyr::filter(.data[[PFUPipelineTools::dataset_info$what_to_do]] == PFUPipelineTools::dataset_info$change_remote)
+    dplyr::filter(.data[[PFUPipelineTools::dataset_info$what_to_do]] == PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote)
   # The value should still be the original value (13)
   change_remote |>
     magrittr::extract2(PFUPipelineTools::mat_colnames$value) |>
@@ -103,10 +103,14 @@ test_that("local_compress() works as expected", {
                                     local_df = local_df_two_new_values)
   expected_changed_2_rows <- tibble::tribble(
     ~Dataset, ~ValidFromVersion, ~ValidToVersion, ~Country, ~Year, ~matname, ~i, ~j, ~value, ~WhatToDo,
-    5, 2, 2, 49, 1971, 2, 1, 3, 13, "Change ValidToVersion in remote",
-    5, 2, 2, 146, 1972, 8, 2, 1, 21000, "Change ValidToVersion in remote",
-    5, 3, current_version_int, 49, 1971, 2, 1, 3, -13, "Upload new",
-    5, 3, current_version_int, 146, 1972, 8, 2, 1, -21000, "Upload new"
+    5, 2, 2, 49, 1971, 2, 1, 3, 13,
+                    PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote,
+    5, 2, 2, 146, 1972, 8, 2, 1, 21000,
+                    PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote,
+    5, 3, current_version_int, 49, 1971, 2, 1, 3, -13,
+                    PFUPipelineTools::dataset_info$upload_new,
+    5, 3, current_version_int, 146, 1972, 8, 2, 1, -21000,
+                    PFUPipelineTools::dataset_info$upload_new
   )
   expect_equal(changed_2_rows, expected_changed_2_rows)
 
@@ -119,7 +123,8 @@ test_that("local_compress() works as expected", {
     remote_df |>
       dplyr::mutate(
         "{PFUPipelineTools::dataset_info$valid_to_version}" := 2,
-        "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$change_remote
+        "{PFUPipelineTools::dataset_info$what_to_do}" :=
+          PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote
       ),
     local_df |>
       dplyr::mutate(
@@ -193,7 +198,8 @@ test_that("compress_helper() works with NULL remote_df or local_df or both", {
                                     local_df = NULL)
   expected_NULL_local <- remote_df |>
     dplyr::mutate(
-      "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$change_remote
+      "{PFUPipelineTools::dataset_info$what_to_do}" :=
+        PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote
     ) |>
     dplyr::filter(FALSE)
   expect_equal(res_NULL_local, expected_NULL_local)
@@ -213,11 +219,18 @@ test_that("compress_helper() works when local has same metadata but different va
       "{PFUPipelineTools::dataset_info$valid_to_version}" := 2,
       "{PFUPipelineTools::mat_colnames$value}" := .data[[PFUPipelineTools::mat_colnames$value]] * 10
     )
-  compress_helper(remote_df = remote_df, local_df = local_df)
+  expected <- remote_df
+  expected[[PFUPipelineTools::mat_colnames$value]] <-
+    local_df[[PFUPipelineTools::mat_colnames$value]]
+  expected <- expected |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$replace_value_in_remote
+    )
+  res <- compress_helper(remote_df = remote_df, local_df = local_df)
   # This doesn't work, because ValidToVersion becomes 1.
   # Need to check for this case and act appropriately in
   # compress_helper()
-
+  expect_equal(res, expected)
 })
 
 

@@ -11,7 +11,9 @@ compress_helper(
   valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname,
   value_colname = PFUPipelineTools::mat_colnames$value,
   what_to_do_colname = PFUPipelineTools::dataset_info$what_to_do,
-  change_remote = PFUPipelineTools::dataset_info$change_remote,
+  change_valid_to_version_in_remote =
+    PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote,
+  replace_value_in_remote = PFUPipelineTools::dataset_info$replace_value_in_remote,
   upload_new = PFUPipelineTools::dataset_info$upload_new,
   current_version_int = PFUPipelineTools::current_version_int,
   tol = 1e-06
@@ -72,7 +74,7 @@ that indicate whether to change the remote table's
 \code{ValidToVersion} value or
 upload a new row, respectively.
 The values are
-"Change ValidToVersion in remote" and
+"" and
 "Upload new",
 respectively.
 
