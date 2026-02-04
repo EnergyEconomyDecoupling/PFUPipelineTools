@@ -453,9 +453,12 @@ test_that("pl_upsert_and_compress() works with local table compression", {
                   dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
     matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
   # Create a matsindf data frame for the v1 matrix
-  midfv1 <- tibble::tibble(ValidFromVersion = 1,
-                           ValidToVersion = 1,
-                           matname = c("mat"),
+  midfv1 <- tibble::tibble(Dataset = "CL-PFU IEA",
+                           ValidFromVersion = c("v1.0"),
+                           ValidToVersion = c("v1.0"),
+                           Country = "USA",
+                           Year = 1971,
+                           matname = c("Y"),
                            matval = list(matv1))
   # Upsert the original matrix, without compression.
   rowsv1 <- midfv1 |>
@@ -469,9 +472,12 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   expect_equal(nrow(should_be_six_rows), 6)
 
   # Create a matsindf data frame for the v2 matrix
-  midfv2 <- tibble::tibble(ValidFromVersion = 2,
-                           ValidToVersion = 2,
-                           matname = c("mat"),
+  midfv2 <- tibble::tibble(Dataset = "CL-PFU IEA",
+                           ValidFromVersion = "v2.0",
+                           ValidToVersion = "v2.0",
+                           Country = "GHA",
+                           Year = 1972,
+                           matname = "V",
                            matval = list(matv2))
 
   # Upsert v2 without compression
@@ -505,9 +511,12 @@ test_that("pl_upsert_and_compress() works with local table compression", {
     dplyr::filter(ValidFromVersion == 1) |>
     dplyr::collect() |>
     dplyr::arrange(i, j)
-  expected_resv1 <- tibble::tibble(ValidFromVersion = 1,
+  expected_resv1 <- tibble::tibble(Dataset = 5,
+                                   ValidFromVersion = 1,
                                    ValidToVersion = c(2, 2, 2, 2, 1, 2),
-                                   matname = "mat",
+                                   Country = 146,
+                                   Year = 1971,
+                                   matname = 8,
                                    i = c(1, 1, 2, 2, 3, 3),
                                    j = c(1, 2, 1, 2, 1, 2),
                                    value = 1:6)
@@ -516,9 +525,12 @@ test_that("pl_upsert_and_compress() works with local table compression", {
     dplyr::filter(ValidToVersion == 2) |>
     dplyr::collect() |>
     dplyr::arrange(i, j)
-  expected_resv2 <- tibble::tibble(ValidFromVersion = c(1, 1, 1, 1, 2, 1),
+  expected_resv2 <- tibble::tibble(Dataset = 5,
+                                   ValidFromVersion = c(1, 1, 1, 1, 2, 1),
                                    ValidToVersion = 2,
-                                   matname = "mat",
+                                   Country = 146,
+                                   Year = 1971,
+                                   matname = 8,
                                    i = c(1, 1, 2, 2, 3, 3),
                                    j = c(1, 2, 1, 2, 1, 2),
                                    value = c(1, 2, 3, 4, 42, 6))
