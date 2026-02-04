@@ -19,13 +19,16 @@
 #' "`r PFUPipelineTools::dataset_info$what_to_do`") that tells
 #' what must be done with each row.
 #' The possible values of the `what_to_do_colname` are
-#' [PFUPipelineTools::dataset_info]`$change_remote` and
+#' [PFUPipelineTools::dataset_info]`$replace_valid_to_version_in_remote`,
+#' [PFUPipelineTools::dataset_info]`$replace_value_in_remote`, and
 #' [PFUPipelineTools::dataset_info]`$upload_new`
 #' that indicate whether to change the remote table's
-#' `ValidToVersion` value or
+#' `ValidToVersion` value,
+#' replace the value in the `value` column, or
 #' upload a new row, respectively.
 #' The values are
-#' "`r PFUPipelineTools::dataset_info$change_remote`" and
+#' "`r PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote`",
+#' "`r PFUPipelineTools::dataset_info$replace_value_in_remote`" and
 #' "`r PFUPipelineTools::dataset_info$upload_new`",
 #' respectively.
 #'
@@ -58,7 +61,6 @@
 #'
 #' @returns A data frame with same columns as `remote_df` and `local_df` and an
 #'          added column (`what_to_do_colname`).
-#'          If `local_df` has no rows, `NULL`.
 #'
 #' @export
 #'

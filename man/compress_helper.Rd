@@ -45,7 +45,6 @@ Default is \code{1e-6}.}
 \value{
 A data frame with same columns as \code{remote_df} and \code{local_df} and an
 added column (\code{what_to_do_colname}).
-If \code{local_df} has no rows, \code{NULL}.
 }
 \description{
 We decide before uploading to the remote database
@@ -68,13 +67,16 @@ named with the value of \code{what_to_do_colname}
 "WhatToDo") that tells
 what must be done with each row.
 The possible values of the \code{what_to_do_colname} are
-\link{dataset_info}\verb{$change_remote} and
+\link{dataset_info}\verb{$replace_valid_to_version_in_remote},
+\link{dataset_info}\verb{$replace_value_in_remote}, and
 \link{dataset_info}\verb{$upload_new}
 that indicate whether to change the remote table's
-\code{ValidToVersion} value or
+\code{ValidToVersion} value,
+replace the value in the \code{value} column, or
 upload a new row, respectively.
 The values are
-"" and
+"Replace ValidToVersion in remote",
+"Replace value in remote" and
 "Upload new",
 respectively.
 
