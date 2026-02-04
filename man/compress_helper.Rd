@@ -114,4 +114,8 @@ If only \code{remote_df} is \code{NULL}, all rows in \code{local_df} are assumed
 uploading to the remote.
 If only \code{local_df} is \code{NULL}, no rows need to be uploaded to the remote and
 no rows in the remote need to be changed.
+
+Note that both \code{remote_df} and \code{local_df} should be
+encoded data frames, i.e.
+their foreign key columns should all be ID integers.
 }
