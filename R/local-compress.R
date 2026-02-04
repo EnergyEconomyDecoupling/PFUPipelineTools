@@ -227,10 +227,10 @@ compress_helper <- function(remote_df, local_df,
   assertthat::assert_that(all(join_cols %in% colnames(joined)))
 
   # Check that local_df is not younger than remote_df
-  too_young <- joined |>
+  local_df_older <- joined |>
     dplyr::filter(.data[[new_local_from_name]] <
                     .data[[new_remote_from_name]])
-  if (nrow(too_young) > 0) {
+  if (nrow(local_df_older) > 0) {
     stop("local_df contains older versions than remote_df in compress_helper()")
   }
 

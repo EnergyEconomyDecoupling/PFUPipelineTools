@@ -26,6 +26,8 @@ remote_df_func <- function() {
 }
 
 local_df_func <- function() {
+  # Same data with updated version.
+  # Modify in tests as required.
   remote_df_func() |>
     dplyr::mutate(
       "{PFUPipelineTools::dataset_info$valid_from_version_colname}" := 3,
@@ -265,9 +267,49 @@ test_that("compress_helper() throws an error when local_df has older data than r
 })
 
 
-# Test when remote has several old versions.
-# Remote should be filtered for all rows with
-# ValidToVersion == current_version_int
+test_that("compress_helper() works when remote has lines of old versions.", {
+  remote_df <- dplyr::bind_rows(
+    # Add some old data (with small values)
+    remote_df_func() |>
+      dplyr::mutate(
+        "{PFUPipelineTools::dataset_info$valid_from_version}" := 1,
+        "{PFUPipelineTools::dataset_info$valid_to_version}" := 1,
+        "{PFUPipelineTools::mat_colnames$value}" := .data[[PFUPipelineTools::mat_colnames$value]] / 1000
+      ),
+    # Add some current data
+    remote_df_func()
+  )
+  # Generate some new local data with the same values
+  local_df <- local_df_func()
+
+  res <- compress_helper(remote_df = remote_df, local_df = local_df)
+
+  # In this event, the current values in remote
+  # can remain current, as we are using the trick that ValidToVersion
+  # is a big number
+  expect_equal(nrow(res), 0)
+
+  # now try with one value changed in local_df
+  local_df2 <- local_df
+  local_df2[2, PFUPipelineTools::mat_colnames$value] <- 42
+  res2 <- compress_helper(remote_df = remote_df, local_df = local_df2)
+  expected <- remote_df[15, ] |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$valid_to_version}" := 2,
+      "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote
+    ) |>
+    dplyr::bind_rows(
+      local_df[2, ] |>
+        dplyr::mutate(
+          "{PFUPipelineTools::dataset_info$valid_to_version}" := current_version_int,
+          "{PFUPipelineTools::mat_colnames$value}" := 42,
+          "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
+        )
+    )
+  expect_equal(res2, expected)
+})
+
+
 
 # Test a case where names are not same for both data frames.
 
@@ -276,3 +318,7 @@ test_that("compress_helper() throws an error when local_df has older data than r
 
 # Test a case when local has an older version than remote,
 # which should be an error.
+
+
+# Test a case where completely new information (new country, new i, new j)
+# is in local_df.
