@@ -253,7 +253,7 @@ test_that("compress_helper() works when local has same metadata but different va
 })
 
 
-test_that("compress_helper() throws an error when local_df has younger data than remote_df", {
+test_that("compress_helper() throws an error when local_df has older data than remote_df", {
   remote_df <- remote_df_func()
   local_df <- remote_df |>
     dplyr::mutate(
