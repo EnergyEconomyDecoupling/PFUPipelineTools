@@ -60,20 +60,20 @@
 #'                           what to do with the row.
 #'                           Default is [PFUPipelineTools::dataset_info]`$what_to_do` or
 #'                           "`r PFUPipelineTools::dataset_info$what_to_do`".
-#' @param change_valid_to_version_in_remote The string value that
-#'              indicates the value in the `valid_to_version` column
-#'              in the remote should be changed.
+#' @param change_valid_to_version_in_remote The string that
+#'              indicates the value in the remote's
+#'              `valid_to_version` column
+#'              should be changed.
 #'              Default is [PFUPipelineTools::dataset_info]`$replace_valid_to_version_in_remote` or
 #'              "`r PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote`".
-#' @param replace_value_in_remote The string value that
-#'              indicates the value of the `value` column
-#'              in the remote
+#' @param replace_value_in_remote The string that
+#'              indicates the value of remote's `value` column
 #'              should be changed.
 #'              Default is [PFUPipelineTools::dataset_info]`$replace_value_in_remote` or
 #'              "`r PFUPipelineTools::dataset_info$replace_value_in_remote`".
-#' @param upload_new The string value that
-#'              indicates the local rows
-#'              should be uploaded to the remote.
+#' @param upload_new The string that
+#'              indicates local rows
+#'              to be uploaded to the remote.
 #'              Default is [PFUPipelineTools::dataset_info]`$upload_new` or
 #'              "`r PFUPipelineTools::dataset_info$upload_new`".
 #' @param current_version_int The integer representing the current version.
@@ -121,8 +121,9 @@ compress_helper <- function(remote_df, local_df,
   if (is.null(local_df)) {
     return(remote_df |>
              dplyr::mutate(
-               "{what_to_do_colname}" := upload_new
+               "{what_to_do_colname}" := "bogus"
              ) |>
+             # We want no rows in this data frame
              dplyr::filter(FALSE)
            )
   }
@@ -132,8 +133,9 @@ compress_helper <- function(remote_df, local_df,
   if (nrow(local_df) == 0) {
     return(remote_df |>
              dplyr::mutate(
-               "{what_to_do_colname}" := upload_new
+               "{what_to_do_colname}" := "bogus"
              ) |>
+             # We want no rows in this data frame
              dplyr::filter(FALSE)
            )
   }
@@ -223,6 +225,14 @@ compress_helper <- function(remote_df, local_df,
   # in the column names of the two data frames.
   # Check for this error.
   assertthat::assert_that(all(join_cols %in% colnames(joined)))
+
+  # Check that local_df is not younger than remote_df
+  too_young <- joined |>
+    dplyr::filter(.data[[new_local_from_name]] <
+                    .data[[new_remote_from_name]])
+  if (nrow(too_young) > 0) {
+    stop("local_df contains older versions than remote_df in compress_helper()")
+  }
 
 
   # Find all rows where the remote and local values both exist

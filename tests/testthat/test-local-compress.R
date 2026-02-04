@@ -227,23 +227,52 @@ test_that("compress_helper() works when local has same metadata but different va
       "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$replace_value_in_remote
     )
   res <- compress_helper(remote_df = remote_df, local_df = local_df)
-  # This doesn't work, because ValidToVersion becomes 1.
-  # Need to check for this case and act appropriately in
-  # compress_helper()
   expect_equal(res, expected)
 })
 
+
+test_that("compress_helper() works when local has same metadata but different values for only some rows", {
+  remote_df <- remote_df_func()
+  local_df <- local_df_func() |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$valid_from_version}" := 2,
+      "{PFUPipelineTools::dataset_info$valid_to_version}" := 2,
+      "{PFUPipelineTools::mat_colnames$value}" := .data[[PFUPipelineTools::mat_colnames$value]] * c(rep(1, 5), rep(10, 8))
+    )
+
+  expected <- remote_df[6:13,]
+
+  expected[[PFUPipelineTools::mat_colnames$value]] <-
+    local_df[[PFUPipelineTools::mat_colnames$value]][6:13]
+  expected <- expected |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$replace_value_in_remote
+    )
+  res <- compress_helper(remote_df = remote_df, local_df = local_df)
+  expect_equal(res, expected)
+})
+
+
+test_that("compress_helper() throws an error when local_df has younger data than remote_df", {
+  remote_df <- remote_df_func()
+  local_df <- remote_df |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$valid_from_version}" := 1,
+      "{PFUPipelineTools::dataset_info$valid_to_version}" := 1
+    )
+  compress_helper(remote_df = remote_df, local_df = local_df) |>
+    expect_error("local_df contains older versions than remote_df in compress_helper")
+})
 
 
 # Test when remote has several old versions.
 # Remote should be filtered for all rows with
 # ValidToVersion == current_version_int
 
-# Test when local has same metadata but different values,
-# as when we are developing a new version.
-# In the remote, should replace remote value with local value.
-
 # Test a case where names are not same for both data frames.
 
 # Test a case where the remote contains NO rows that have
 # ValidToVersion == current_version_int
+
+# Test a case when local has an older version than remote,
+# which should be an error.

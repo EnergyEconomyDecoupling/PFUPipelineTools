@@ -39,22 +39,22 @@ what to do with the row.
 Default is \link{dataset_info}\verb{$what_to_do} or
 "WhatToDo".}
 
-\item{change_valid_to_version_in_remote}{The string value that
-indicates the value in the \code{valid_to_version} column
-in the remote should be changed.
+\item{change_valid_to_version_in_remote}{The string that
+indicates the value in the remote's
+\code{valid_to_version} column
+should be changed.
 Default is \link{dataset_info}\verb{$replace_valid_to_version_in_remote} or
 "Replace ValidToVersion in remote".}
 
-\item{replace_value_in_remote}{The string value that
-indicates the value of the \code{value} column
-in the remote
+\item{replace_value_in_remote}{The string that
+indicates the value of remote's \code{value} column
 should be changed.
 Default is \link{dataset_info}\verb{$replace_value_in_remote} or
 "Replace value in remote".}
 
-\item{upload_new}{The string value that
-indicates the local rows
-should be uploaded to the remote.
+\item{upload_new}{The string that
+indicates local rows
+to be uploaded to the remote.
 Default is \link{dataset_info}\verb{$upload_new} or
 "Upload new".}
 
