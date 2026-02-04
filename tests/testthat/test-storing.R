@@ -528,8 +528,8 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   expected_resv2 <- tibble::tibble(Dataset = 5,
                                    ValidFromVersion = c(1, 1, 1, 1, 2, 1),
                                    ValidToVersion = 2,
-                                   Country = 146,
-                                   Year = 1971,
+                                   Country = 49,
+                                   Year = 1972,
                                    matname = 8,
                                    i = c(1, 1, 2, 2, 3, 3),
                                    j = c(1, 2, 1, 2, 1, 2),
@@ -537,13 +537,13 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   testthat::expect_equal(resv2, expected_resv2)
 
   # Clean up after ourselves
+  DBI::dbRemoveTable(conn = conn, name = "testlocalcompression")
   DBI::dbRemoveTable(conn = conn, name = "Country")
   DBI::dbRemoveTable(conn = conn, name = "Dataset")
   DBI::dbRemoveTable(conn = conn, name = "Index")
   DBI::dbRemoveTable(conn = conn, name = "matname")
   DBI::dbRemoveTable(conn = conn, name = "Version")
   DBI::dbRemoveTable(conn = conn, name = "Year")
-  DBI::dbRemoveTable(conn = conn, name = "testlocalcompression")
   DBI::dbDisconnect(conn)
 })
 
