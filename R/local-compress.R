@@ -48,9 +48,30 @@
 #' @param valid_from_version_colname,valid_to_version_colname See
 #'            [PFUPipelineTools::dataset_info].
 #'            Defaults are [PFUPipelineTools::dataset_info]`$valid_from_version_colname` and [PFUPipelineTools::dataset_info]`$valid_to_version_colname` or
-#'            `r PFUPipelineTools::dataset_info$valid_from_version_colname` and
-#'            `r PFUPipelineTools::dataset_info$valid_to_version_colname`
-#' @param value_colname See [PFUPipelineTools::mat_colnames$value].
+#'            "`r PFUPipelineTools::dataset_info$valid_from_version_colname`" and
+#'            "`r PFUPipelineTools::dataset_info$valid_to_version_colname`".
+#' @param value_colname The name of the value column.
+#'                      Default is [PFUPipelineTools::mat_colnames]`$value` or "`r PFUPipelineTools::mat_colnames$value`".
+#' @param what_to_do_colname The name of the column that tells
+#'                           what to do with the row.
+#'                           Default is [PFUPipelineTools::dataset_info]`$what_to_do` or
+#'                           "`r PFUPipelineTools::dataset_info$what_to_do`".
+#' @param change_valid_to_version_in_remote The string value that
+#'              indicates the value in the `valid_to_version` column
+#'              in the remote should be changed.
+#'              Default is [PFUPipelineTools::dataset_info]`$replace_valid_to_version_in_remote` or
+#'              "`r PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote`".
+#' @param replace_value_in_remote The string value that
+#'              indicates the value of the `value` column
+#'              in the remote
+#'              should be changed.
+#'              Default is [PFUPipelineTools::dataset_info]`$replace_value_in_remote` or
+#'              "`r PFUPipelineTools::dataset_info$replace_value_in_remote`".
+#' @param upload_new The string value that
+#'              indicates the local rows
+#'              should be uploaded to the remote.
+#'              Default is [PFUPipelineTools::dataset_info]`$upload_new` or
+#'              "`r PFUPipelineTools::dataset_info$upload_new`".
 #' @param current_version_int The integer representing the current version.
 #'                            Default is
 #'                            [PFUPipelineTools::current_version_int] or

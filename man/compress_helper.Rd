@@ -28,10 +28,35 @@ contains new values for \code{remote_df}.}
 \item{valid_from_version_colname, valid_to_version_colname}{See
 \link{dataset_info}.
 Defaults are \link{dataset_info}\verb{$valid_from_version_colname} and \link{dataset_info}\verb{$valid_to_version_colname} or
-ValidFromVersion and
-ValidToVersion}
+"ValidFromVersion" and
+"ValidToVersion".}
 
-\item{value_colname}{See \link{mat_colnames$value}.}
+\item{value_colname}{The name of the value column.
+Default is \link{mat_colnames}\verb{$value} or "value".}
+
+\item{what_to_do_colname}{The name of the column that tells
+what to do with the row.
+Default is \link{dataset_info}\verb{$what_to_do} or
+"WhatToDo".}
+
+\item{change_valid_to_version_in_remote}{The string value that
+indicates the value in the \code{valid_to_version} column
+in the remote should be changed.
+Default is \link{dataset_info}\verb{$replace_valid_to_version_in_remote} or
+"Replace ValidToVersion in remote".}
+
+\item{replace_value_in_remote}{The string value that
+indicates the value of the \code{value} column
+in the remote
+should be changed.
+Default is \link{dataset_info}\verb{$replace_value_in_remote} or
+"Replace value in remote".}
+
+\item{upload_new}{The string value that
+indicates the local rows
+should be uploaded to the remote.
+Default is \link{dataset_info}\verb{$upload_new} or
+"Upload new".}
 
 \item{current_version_int}{The integer representing the current version.
 Default is
