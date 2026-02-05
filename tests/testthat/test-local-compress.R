@@ -267,7 +267,7 @@ test_that("compress_helper() throws an error when local_df has older data than r
 })
 
 
-test_that("compress_helper() works when remote has lines of old versions.", {
+test_that("compress_helper() works when remote has lines of old versions", {
   remote_df <- dplyr::bind_rows(
     # Add some old data (with small values)
     remote_df_func() |>
@@ -310,6 +310,16 @@ test_that("compress_helper() works when remote has lines of old versions.", {
 })
 
 
+test_that("compress_helper() works with completely new information", {
+  remote_df <- remote_df_func()
+  local_df <- local_df_func()[1, ] |>
+    dplyr::mutate(
+      "{PFUPipelineTools::mat_colnames$value}" := 42,
+      "{Recca::psut_cols$country}" := 10000,
+      "{Recca::psut_cols$year}" := 10000
+    )
+  compress_helper(remote_df = remote_df, local_df = local_df)
+})
 
 # Test a case where names are not same for both data frames.
 
@@ -320,5 +330,6 @@ test_that("compress_helper() works when remote has lines of old versions.", {
 # which should be an error.
 
 
-# Test a case where completely new information (new country, new i, new j)
+# Test a case where completely new information
+# (new country, new i, new j)
 # is in local_df.

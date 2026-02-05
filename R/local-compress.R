@@ -325,6 +325,33 @@ compress_helper <- function(remote_df, local_df,
       dplyr::bind_rows(new_version_upload_new)
   }
 
+  # Look for cases where there is new data altogether, i.e.
+  # a new combination of values in metadata columns.
+  # In this case, the joined table will have
+  # valueRemote NA
+  # and
+  # valueLocal !NA
+  # For this circumstance, the local rows should be uploaded
+  # directly.
+  completely_new_data <- joined |>
+    dplyr::filter(is.na(.data[[new_remote_value_name]]) &
+                    !is.na(.data[[new_local_value_name]])) |>
+    prep_upload_new(value_diff_name = value_diff_name,
+                    new_remote_from_name = new_remote_from_name,
+                    new_remote_to_name = new_remote_to_name,
+                    new_remote_value_name = new_remote_value_name,
+                    valid_from_version_colname = valid_from_version_colname,
+                    valid_to_version_colname = valid_to_version_colname,
+                    value_colname = value_colname,
+                    new_local_from_name = new_local_from_name,
+                    new_local_to_name = new_local_to_name,
+                    new_local_value_name = new_local_value_name,
+                    what_to_do_colname = what_to_do_colname,
+                    upload_new = upload_new,
+                    current_version_int)
+  out <- out |>
+    dplyr::bind_rows(completely_new_data)
+
   return(out)
 }
 
