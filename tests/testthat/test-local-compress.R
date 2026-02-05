@@ -318,18 +318,49 @@ test_that("compress_helper() works with completely new information", {
       "{Recca::psut_cols$country}" := 10000,
       "{Recca::psut_cols$year}" := 10000
     )
-  compress_helper(remote_df = remote_df, local_df = local_df)
+  res <- compress_helper(remote_df = remote_df, local_df = local_df)
+  expected <- local_df |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$valid_to_version}" := current_version_int,
+      "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
+    )
+  expect_equal(res, expected)
 })
 
-# Test a case where names are not same for both data frames.
 
-# Test a case where the remote contains NO rows that have
-# ValidToVersion == current_version_int
+test_that("compress_helper() works when there are new row and column names", {
+  remote_df <- remote_df_func()
+  local_df <- local_df_func()[2, ] |>
+    dplyr::mutate(
+      # By changing the integers in the i and j columns,
+      # we're changing the row and column names
+      "{PFUPipelineTools::mat_colnames$i}" := 1000,
+      "{PFUPipelineTools::mat_colnames$j}" := 1000
+    )
+  res <- compress_helper(remote_df = remote_df, local_df = local_df)
+  expected <- local_df |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$valid_to_version}" := current_version_int,
+      "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
+    )
+  expect_equal(res, expected)
+})
 
-# Test a case when local has an older version than remote,
-# which should be an error.
 
-
-# Test a case where completely new information
-# (new country, new i, new j)
-# is in local_df.
+test_that("compress_helper() works when there are no remote_df rows for the current version", {
+  remote_df <- remote_df_func() |>
+    dplyr::mutate(
+      # Doesn't go to current version.
+      # Only from version 2 and to version 2.
+      "{PFUPipelineTools::dataset_info$valid_to_version}" := 2
+    )
+  local_df <- local_df_func()
+  res <- compress_helper(remote_df = remote_df, local_df = local_df)
+  # In this case, all of the local rows should be uploaded.
+  expected <- local_df |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$valid_to_version}" := current_version_int,
+      "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
+    )
+    expect_equal(res, expected)
+})

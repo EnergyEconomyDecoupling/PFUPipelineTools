@@ -177,9 +177,11 @@ compress_helper <- function(remote_df, local_df,
     return(out)
   }
 
-  # If we get here, remote_df and local_df have rows with same metadata
-  # but possibly different values in the
-  # valid_from_version and valid_to_version columns.
+  # If we get here, remote_df and local_df have a non-zero
+  # number of rows.
+  # Ensure that column names in both data frames are same.
+  # If not, almost certainly an error.
+  assertthat::assert_that(setequal(colnames(remote_df), colnames(local_df)))
 
   # Decide the local and previous versions
   local_version <- local_df[[valid_to_version_colname]] |>
@@ -190,10 +192,6 @@ compress_helper <- function(remote_df, local_df,
   local_version_check <- local_df[[valid_from_version_colname]] |>
     unique()
   assertthat::assert_that(local_version == local_version_check)
-
-  # Ensure that names are same.
-  # If not, almost certainly an error.
-  assertthat::assert_that(setequal(colnames(remote_df), colnames(local_df)))
 
   # Replace version column names prior to joining
   remote_df_new_names <- remote_df |>
@@ -208,7 +206,10 @@ compress_helper <- function(remote_df, local_df,
       "{new_local_to_name}" := dplyr::all_of(valid_to_version_colname),
       "{new_local_value_name}" := dplyr::all_of(value_colname)
     )
-  # Figure out columns by which to join
+  # Figure out columns by which to join.
+  # We want to join by all columns EXCEPT
+  # the valid_from_version, valid_to_version, and value columns.
+  # This approach will use all metadata columns for joining.
   join_cols <- c(colnames(remote_df_new_names), colnames(local_df_new_names)) |>
     setdiff(c(new_remote_from_name, new_remote_to_name, new_remote_value_name,
               new_local_from_name, new_local_to_name, new_local_value_name))
@@ -221,19 +222,13 @@ compress_helper <- function(remote_df, local_df,
       "{value_diff_name}" := .data[[new_local_value_name]] - .data[[new_remote_value_name]]
     )
 
-  # Note the join will rename the columns if there is inconsistency
-  # in the column names of the two data frames.
-  # Check for this error.
-  assertthat::assert_that(all(join_cols %in% colnames(joined)))
-
   # Check that local_df is not younger than remote_df
   local_df_older <- joined |>
-    dplyr::filter(.data[[new_local_from_name]] <
-                    .data[[new_remote_from_name]])
+    dplyr::filter(.data[[new_remote_from_name]] >
+                    .data[[new_local_from_name]])
   if (nrow(local_df_older) > 0) {
     stop("local_df contains older versions than remote_df in compress_helper()")
   }
-
 
   # Find all rows where the remote and local values both exist
   # and are same within tol.
@@ -250,17 +245,46 @@ compress_helper <- function(remote_df, local_df,
   # with the same columns names as the remote
   out <- remote_df[0, ]
 
+  # Look for cases where local_df contains new data altogether, i.e.
+  # a new combination of values in metadata columns.
+  # In this case, the joined table will have
+  # valueRemote NA
+  # and
+  # valueLocal not NA
+  # For this circumstance, the local rows should be uploaded
+  # directly.
+  # Nothing needs to be changed in existing rows of remote_df.
+  completely_new_data_in_local_df <- joined |>
+    dplyr::filter(is.na(.data[[new_remote_value_name]]) &
+                    !is.na(.data[[new_local_value_name]])) |>
+    prep_upload_new(value_diff_name = value_diff_name,
+                    new_remote_from_name = new_remote_from_name,
+                    new_remote_to_name = new_remote_to_name,
+                    new_remote_value_name = new_remote_value_name,
+                    valid_from_version_colname = valid_from_version_colname,
+                    valid_to_version_colname = valid_to_version_colname,
+                    value_colname = value_colname,
+                    new_local_from_name = new_local_from_name,
+                    new_local_to_name = new_local_to_name,
+                    new_local_value_name = new_local_value_name,
+                    what_to_do_colname = what_to_do_colname,
+                    upload_new = upload_new,
+                    current_version_int)
+  out <- out |>
+    dplyr::bind_rows(completely_new_data_in_local_df)
+
+
   # Find all rows where
   # (a) the remote and local values both exist and
   # (b) the remote and local values differ more than tol
-  unequal_rows <- joined |>
+  unequal_vals <- joined |>
     dplyr::filter(abs(.data[[value_diff_name]]) > tol)
 
   # What to do with these rows depends on the version information.
 
   # If the local_version is same as the remote's valid_from_version,
   # we need to simply update the value in the remote.
-  replace_remote_value <- unequal_rows |>
+  replace_remote_value <- unequal_vals |>
     dplyr::filter(.data[[new_remote_from_name]] == local_version) |>
     prep_replace_value_in_remote(new_remote_value_name = new_remote_value_name,
                                  new_local_from_name = new_local_from_name,
@@ -278,11 +302,15 @@ compress_helper <- function(remote_df, local_df,
     dplyr::bind_rows(replace_remote_value)
 
   # If local_version is greater than the remote's valid_from_version,
-  # we need to upload local_df as new information and
-  # set remote's valid_to_version to one less than local_df's valid_from_version.
+  # we need to
+  # (a) set remote's valid_to_version to
+  #     one less than local_version
+  # and
+  # (b) upload local_df as new information.
 
-  new_version <- unequal_rows |>
-    dplyr::filter(.data[[new_local_from_name]] > .data[[new_remote_from_name]])
+  new_version <- unequal_vals |>
+    dplyr::filter(.data[[new_remote_from_name]] <
+                    .data[[new_local_from_name]])
 
   if (nrow(new_version) > 0) {
     previous_version <- local_version - 1
@@ -325,32 +353,6 @@ compress_helper <- function(remote_df, local_df,
       dplyr::bind_rows(new_version_upload_new)
   }
 
-  # Look for cases where there is new data altogether, i.e.
-  # a new combination of values in metadata columns.
-  # In this case, the joined table will have
-  # valueRemote NA
-  # and
-  # valueLocal !NA
-  # For this circumstance, the local rows should be uploaded
-  # directly.
-  completely_new_data <- joined |>
-    dplyr::filter(is.na(.data[[new_remote_value_name]]) &
-                    !is.na(.data[[new_local_value_name]])) |>
-    prep_upload_new(value_diff_name = value_diff_name,
-                    new_remote_from_name = new_remote_from_name,
-                    new_remote_to_name = new_remote_to_name,
-                    new_remote_value_name = new_remote_value_name,
-                    valid_from_version_colname = valid_from_version_colname,
-                    valid_to_version_colname = valid_to_version_colname,
-                    value_colname = value_colname,
-                    new_local_from_name = new_local_from_name,
-                    new_local_to_name = new_local_to_name,
-                    new_local_value_name = new_local_value_name,
-                    what_to_do_colname = what_to_do_colname,
-                    upload_new = upload_new,
-                    current_version_int)
-  out <- out |>
-    dplyr::bind_rows(completely_new_data)
 
   return(out)
 }
