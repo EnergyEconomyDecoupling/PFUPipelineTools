@@ -535,13 +535,16 @@ pl_upsert_and_compress <- function(.df,
     what_to_do_df <- compress_helper(remote_df = remote_df, local_df = df_to_upsert)
     # Replace ValidToVersion in remote when needed
     # Replace Value in remote when needed
+
+
+
+
+
     # Upload new when needed.
-
-
-
-    # Perform the upload.
+    df_to_upsert_new <- df_to_upsert |>
+      dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$upload_new)
     dplyr::tbl(conn, db_table_name) |>
-      dplyr::rows_upsert(df_to_upsert,
+      dplyr::rows_upsert(df_to_upsert_new,
                          by = pk_str,
                          copy = TRUE,
                          in_place = in_place)
