@@ -9,6 +9,9 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+* New function `compress_helper()` encapsulates the logic
+  for deciding which rows to change when uploading to 
+  the database.
 * Added new function `get_unit_testing_conn()` 
   for convenience during unit testing.
 * New tests for new features. 
