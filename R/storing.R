@@ -493,16 +493,17 @@ pl_upsert_and_compress <- function(.df,
     magrittr::extract2(.pk_col) |>
     magrittr::extract2(1)
 
+  # Encode for upload using the index_map
   df_matsindf_encoded <- .df |>
-    # Encode for upload using the index_map
     encode_matsindf(index_map = index_map,
                     retain_zero_structure = retain_zero_structure)
 
-  # Encode fk column values in .df with integer keys, if requested.
+  # The database shouldn't care about targets groups, so
+  # remove any targets grouping.
   df_to_upsert <- df_matsindf_encoded |>
-    # The database shouldn't care about targets groups, so
-    # remove any targets grouping.
     tar_ungroup()
+
+    # Encode fk column values in .df with integer keys, if requested.
   if (encode_fks) {
     df_to_upsert <- df_to_upsert |>
       encode_fks(db_table_name = db_table_name,
@@ -518,7 +519,23 @@ pl_upsert_and_compress <- function(.df,
 
   if (compress) {
 
+    # Download any existing data starting with df_to_upsert.
+    # We should ignore any values in the ValidFromVersion column.
+    # We should ignore any values in the value column.
+    # We should download only those rows with ValidToVersion == current_version_int.
+    join_cols <- setdiff(colnames(df_to_upsert), c(valid_from_version_colname,
+                                                   valid_to_version_colname,
+                                                   mat_colnames[["value"]]))
+    remote_df <- dplyr::tbl(src = conn, db_table_name) |>
+      dplyr::filter(.data[[valid_to_version_colname]] == current_version_int) |>
+      dplyr::semi_join(df_to_upsert, by = join_cols, copy = TRUE) |>
+      dplyr::collect()
 
+    # Compare to new data via compress_helper()
+    what_to_do_df <- compress_helper(remote_df = remote_df, local_df = df_to_upsert)
+    # Replace ValidToVersion in remote when needed
+    # Replace Value in remote when needed
+    # Upload new when needed.
 
 
 

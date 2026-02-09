@@ -334,6 +334,16 @@ test_that("pl_upsert() works with local table compression", {
 })
 
 
+
+
+
+
+
+
+
+
+
+
 test_that("pl_upsert_and_compress() works with local table compression", {
   conn <- get_unit_testing_conn()
   on.exit(DBI::dbDisconnect(conn))
@@ -384,8 +394,8 @@ test_that("pl_upsert_and_compress() works with local table compression", {
                dplyr::filter(FALSE),
              Dataset = data.frame(DatasetID = as.integer(5),
                                   Dataset = "CL-PFU IEA"),
-             Version = data.frame(VersionID = as.integer(c(1, 2, 3)),
-                                  Version = c("v1.0", "v2.0", "v3.0")),
+             Version = data.frame(VersionID = as.integer(c(1, 2, 3, current_version_int)),
+                                  Version = c("v1.0", "v2.0", "v3.0", "current")),
              Country = data.frame(CountryID = as.integer(c(49, 146)),
                                   Country = c("GHA", "USA")),
              Year = data.frame(YearID = as.integer(c(1971, 1972)),
@@ -427,10 +437,12 @@ test_that("pl_upsert_and_compress() works with local table compression", {
 
   dm::copy_dm_to(conn, dm = dm, temporary = FALSE)
   # Create index map
-  index_map <- list(ValidFromVersion = data.frame(IndexID = as.integer(c(1, 2, 3)),
-                                                  Index = c("v1.0", "v2.0", "v3.0")),
-                    ValidToVersion = data.frame(IndexID = as.integer(c(1, 2, 3)),
-                                                Index = c("v1.0", "v2.0", "v3.0")),
+  index_map <- list(ValidFromVersion = data.frame(IndexID = as.integer(c(1, 2, 3,
+                                                                         current_version_int)),
+                                                  Index = c("v1.0", "v2.0", "v3.0", "current")),
+                    ValidToVersion = data.frame(IndexID = as.integer(c(1, 2, 3,
+                                                                       current_version_int)),
+                                                Index = c("v1.0", "v2.0", "v3.0", "current")),
                     row = data.frame(IndexID = as.integer(1:3),
                                      Index = c("r1", "r2", "r3")),
                     col = data.frame(IndexID = as.integer(1:2),
@@ -455,7 +467,7 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   # Create a matsindf data frame for the v1 matrix
   midfv1 <- tibble::tibble(Dataset = "CL-PFU IEA",
                            ValidFromVersion = c("v1.0"),
-                           ValidToVersion = c("v1.0"),
+                           ValidToVersion = c("current"),
                            Country = "USA",
                            Year = 1971,
                            matname = c("Y"),
