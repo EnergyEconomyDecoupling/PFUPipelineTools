@@ -637,8 +637,8 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   # Create a Y matrix with a slightly different value
   # to test pl_upsert_and_compress() when we are within tol.
   matv3 <- matv1
-  matv3[3, 2] = matv3[3,2] + 1e-10
-  expect_equal(matv3[3, 2] - 6, 1e-10)
+  matv3[3, 2] = matv3[3,2] - 1.0e-7
+  expect_equal(matv3[3, 2] - 6, -1e-7)
   midfv5 <- tibble::tibble(Dataset = "CL-PFU IEA",
                            ValidFromVersion = c("v2.0"),
                            ValidToVersion = c("v2.0"),
@@ -664,10 +664,25 @@ test_that("pl_upsert_and_compress() works with local table compression", {
     magrittr::subtract(6) |>
     expect_equal(0)
 
-
-
-
-
+  # Now try with a smaller value for tol
+  # This should make changes.
+  rowsv6 <- midfv5 |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           # Smaller than 1e-10, so the modification of 1e-10
+                           # should show up as a modification to the
+                           # database.
+                           tol = 1.0e-8,
+                           in_place = TRUE)
+  resv6 <- dplyr::tbl(conn, tname) |>
+    dplyr::collect() |>
+    dplyr::arrange(value)
+  resv6 |>
+    dplyr::filter(ValidFromVersion == 2, i == 3, j == 2) |>
+    dplyr::pull(value) |>
+    magrittr::subtract(6) |>
+    expect_equal(-1.0e-7)
 
 
   # Add a test with more metadata columns

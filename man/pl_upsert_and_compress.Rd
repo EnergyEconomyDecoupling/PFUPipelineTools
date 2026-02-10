@@ -14,6 +14,7 @@ pl_upsert_and_compress(
   in_place = FALSE,
   encode_fks = TRUE,
   compress = TRUE,
+  tol = 1e-06,
   round_double_columns = FALSE,
   digits = 15,
   index_map =
@@ -31,6 +32,7 @@ pl_upsert_and_compress(
   mat_colnames = unlist(PFUPipelineTools::mat_colnames),
   valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
   valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname,
+  value_colname = PFUPipelineTools::mat_colnames$value,
   what_to_do_colname = PFUPipelineTools::dataset_info$what_to_do,
   current_version_int = PFUPipelineTools::current_version_int
 )
@@ -74,6 +76,11 @@ Default is \code{TRUE}.}
 \item{compress}{A boolean that tells whether to compress \code{db_table_name}
 in the database after uploading.
 Default is \code{TRUE}.}
+
+\item{tol}{The tolerance within which a local value will be
+assumed same as the remote value.
+This value is passed to \code{\link[=compress_helper]{compress_helper()}}.
+Default is \code{1e-6}.}
 
 \item{round_double_columns}{A boolean that tells whether to
 round double-precision columns in \code{.df}.
@@ -125,6 +132,10 @@ Default is \link{dataset_info$valid_from_version_colname}.}
 
 \item{valid_to_version_colname}{The string name of the valid to version column.
 Default is \link{dataset_info$valid_to_version_colname}.}
+
+\item{value_colname}{The string name of the value column in \code{.df}.
+Default is \link{mat_colnames}\verb{$value} or
+"value".}
 
 \item{what_to_do_colname}{The string name of a column that tells what to do
 with various rows of \code{.df}.
