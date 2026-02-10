@@ -559,7 +559,9 @@ pl_upsert_and_compress <- function(.df,
                            # ValidFromVersion and value.
                            # However, value is a double, so don't include it in the join.
                            by = c(join_cols, valid_from_version_colname),
-                           in_place = TRUE)
+                           unmatched = "ignore",
+                           copy = TRUE,
+                           in_place = in_place)
     }
 
     # (2) Replace Value in remote when needed
@@ -578,7 +580,7 @@ pl_upsert_and_compress <- function(.df,
                                   valid_from_version_colname),
                            unmatched = "ignore",
                            copy = TRUE,
-                           in_place = TRUE)
+                           in_place = in_place)
     }
 
     # (3) Upload new when needed.

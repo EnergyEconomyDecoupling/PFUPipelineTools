@@ -503,7 +503,7 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   should_be_twelve_rows <- DBI::dbReadTable(conn, name = tname)
   expect_equal(nrow(should_be_twelve_rows), 12)
 
-  # Remove the rows with v2
+  # Remove rows with v2
   conn |>
     DBI::dbExecute('DELETE FROM testlocalcompression WHERE "ValidFromVersion" = 2 AND "ValidToVersion" = 2;')
 
@@ -549,12 +549,14 @@ test_that("pl_upsert_and_compress() works with local table compression", {
                                    value = c(1, 2, 3, 4, 42, 6))
   testthat::expect_equal(resv2, expected_resv2)
 
-  # Remove the rows with v2
+  # Remove rows with v2
   conn |>
     DBI::dbExecute('DELETE FROM testlocalcompression WHERE "ValidFromVersion" = 2;')
 
-  # Add a row with a modified value and a new version
-  # but all other metadata same
+  # Add a matrix with a modified value in the same version
+  # but all other metadata same.
+  # This should update the value in the table but
+  # leave everything else unchanged.
   midfv3 <- tibble::tibble(Dataset = "CL-PFU IEA",
                            ValidFromVersion = c("v1.0"),
                            ValidToVersion = c("v1.0"),
@@ -575,11 +577,62 @@ test_that("pl_upsert_and_compress() works with local table compression", {
                                    ValidFromVersion = 1,
                                    ValidToVersion = current_version_int,
                                    Country = 146,
-                                   Year = 1972,
-                                   matname = 7,
+                                   Year = 1971,
+                                   matname = 8,
                                    i = c(1, 1, 2, 2, 3, 3),
                                    j = c(1, 2, 1, 2, 1, 2),
                                    value = c(1, 2, 3, 4, 42, 6))
+  expect_equal(resv3, expected_resv3)
+
+  # Put v1 back the way it was
+  foo <- midfv1 |>
+    dplyr::mutate(ValidToVersion = "v1.0") |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE)
+
+  # Now add an updated matrix with a new version.
+  # So same as the previous test but with new version.
+  midfv4 <- tibble::tibble(Dataset = "CL-PFU IEA",
+                           ValidFromVersion = c("v2.0"),
+                           ValidToVersion = c("v2.0"),
+                           Country = "USA",
+                           Year = 1971,
+                           matname = c("Y"),
+                           matval = list(matv2))
+  rowsv4 <- midfv4 |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE)
+  resv4 <- dplyr::tbl(conn, tname) |>
+    dplyr::collect() |>
+    dplyr::arrange(value)
+  expected_resv4 <- tibble::tibble(Dataset = 5,
+                                   ValidFromVersion = c(1, 1, 1, 1, 1, 1, 2),
+                                   ValidToVersion = c(current_version_int,
+                                                      current_version_int,
+                                                      current_version_int,
+                                                      current_version_int,
+                                                      1,
+                                                      current_version_int,
+                                                      current_version_int),
+                                   Country = 146,
+                                   Year = 1971,
+                                   matname = 8,
+                                   i = c(1, 1, 2, 2, 3, 3, 3),
+                                   j = c(1, 2, 1, 2, 1, 2, 1),
+                                   value = c(1, 2, 3, 4, 5, 6, 42)) |>
+    dplyr::arrange(value)
+  expect_equal(resv4, expected_resv4)
+
+
+  # Add a test with more metadata columns
+
+
+  # Add tests for values that are only slightly different.
+  # Add tests that have a new value with a new version.
 
 
 
