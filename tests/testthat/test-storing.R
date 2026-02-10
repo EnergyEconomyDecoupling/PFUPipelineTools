@@ -632,7 +632,8 @@ test_that("pl_upsert_and_compress() works with local table compression", {
 
 
   # Add tests for values that are only slightly different.
-  # Add tests that have a new value with a new version.
+
+  # Add tests for retriving with a version string.
 
 
 
@@ -644,6 +645,5 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   DBI::dbRemoveTable(conn = conn, name = "matname")
   DBI::dbRemoveTable(conn = conn, name = "Version")
   DBI::dbRemoveTable(conn = conn, name = "Year")
-  # DBI::dbDisconnect(conn)
 })
 
