@@ -539,33 +539,61 @@ pl_upsert_and_compress <- function(.df,
 
     # Compare to new data via compress_helper()
     what_to_do_df <- compress_helper(remote_df = remote_df, local_df = df_to_upsert)
-    # Replace ValidToVersion in remote when needed
-    # Replace Value in remote when needed
 
+    # There are three possibilities:
+    # (1) Need up replace the value in the ValidToVersion column,
+    # (2) Need to replace the value in the value column, or
+    # (3) Need to upload entirely new data.
+    # The WhatToDo column in what_to_do_df tells how to proceed.
 
+    # (1) Replace ValidToVersion in remote when needed
+    df_replace_valid_to_version_in_remote <- what_to_do_df |>
+      dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote) |>
+      dplyr::mutate(
+        "{what_to_do_colname}" := NULL
+      )
+    if (nrow(df_replace_valid_to_version_in_remote) > 0) {
+      dplyr::tbl(src = conn, db_table_name) |>
+        dplyr::rows_update(df_replace_valid_to_version_in_remote,
+                           # Need to update by all the join_cols and
+                           # ValidFromVersion and value.
+                           # However, value is a double, so don't include it in the join.
+                           by = c(join_cols, valid_from_version_colname),
+                           in_place = TRUE)
+    }
 
+    # (2) Replace Value in remote when needed
+    df_replace_value_in_remote <- what_to_do_df |>
+      dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$replace_value_in_remote) |>
+      dplyr::mutate(
+        "{what_to_do_colname}" := NULL
+      )
+    if (nrow(df_replace_value_in_remote) > 0) {
+      dplyr::tbl(src = conn, db_table_name) |>
+        dplyr::rows_update(df_replace_value_in_remote,
+                           # Need to update by all the join_cols and
+                           # ValidFromVersion and ValidToVersion.
+                           by = c(join_cols,
+                                  valid_from_version_colname,
+                                  valid_from_version_colname),
+                           unmatched = "ignore",
+                           copy = TRUE,
+                           in_place = TRUE)
+    }
 
-
-    # Upload new when needed.
-    df_to_upsert_new <- what_to_do_df |>
+    # (3) Upload new when needed.
+    df_new <- what_to_do_df |>
       dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$upload_new) |>
       dplyr::mutate(
         "{what_to_do_colname}" := NULL
       )
-    dplyr::tbl(conn, db_table_name) |>
-      dplyr::rows_upsert(df_to_upsert_new,
-                         by = pk_str,
-                         copy = TRUE,
-                         in_place = in_place)
-
-    # Compress the table, if desired.
-    # if (compress) {
-    #   compress_rows(db_table_name = db_table_name, conn = conn)
-    # }
-
-
-
-
+    if (nrow(df_new) > 0) {
+      dplyr::tbl(conn, db_table_name) |>
+        dplyr::rows_upsert(df_new,
+                           by = pk_str,
+                           copy = TRUE,
+                           in_place = in_place)
+    }
 
   } else {
     dplyr::tbl(conn, db_table_name) |>

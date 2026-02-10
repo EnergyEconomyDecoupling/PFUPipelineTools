@@ -549,6 +549,40 @@ test_that("pl_upsert_and_compress() works with local table compression", {
                                    value = c(1, 2, 3, 4, 42, 6))
   testthat::expect_equal(resv2, expected_resv2)
 
+  # Remove the rows with v2
+  conn |>
+    DBI::dbExecute('DELETE FROM testlocalcompression WHERE "ValidFromVersion" = 2;')
+
+  # Add a row with a modified value and a new version
+  # but all other metadata same
+  midfv3 <- tibble::tibble(Dataset = "CL-PFU IEA",
+                           ValidFromVersion = c("v1.0"),
+                           ValidToVersion = c("v1.0"),
+                           Country = "USA",
+                           Year = 1971,
+                           matname = c("Y"),
+                           matval = list(matv2))
+  rowsv3 <- midfv3 |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE)
+  resv3 <- dplyr::tbl(conn, tname) |>
+    dplyr::filter(ValidFromVersion == 1, ValidToVersion == current_version_int) |>
+    dplyr::collect() |>
+    dplyr::arrange(i, j)
+  expected_resv3 <- tibble::tibble(Dataset = 5,
+                                   ValidFromVersion = 1,
+                                   ValidToVersion = current_version_int,
+                                   Country = 146,
+                                   Year = 1972,
+                                   matname = 7,
+                                   i = c(1, 1, 2, 2, 3, 3),
+                                   j = c(1, 2, 1, 2, 1, 2),
+                                   value = c(1, 2, 3, 4, 42, 6))
+
+
+
   # Clean up after ourselves
   DBI::dbRemoveTable(conn = conn, name = "testlocalcompression")
   DBI::dbRemoveTable(conn = conn, name = "Country")
