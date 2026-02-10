@@ -515,17 +515,18 @@ test_that("pl_upsert_and_compress() works with local table compression", {
                            index_map = index_map,
                            in_place = TRUE)
 
-  # Check that we have 7 rows
-  should_be_seven_rows <- DBI::dbReadTable(conn, name = tname)
-  expect_equal(nrow(should_be_seven_rows), 7)
+  # We added data with a new country.
+  # Check that we have 12 rows now.
+  should_be_twelve_rows2 <- DBI::dbReadTable(conn, name = tname)
+  expect_equal(nrow(should_be_twelve_rows2), 12)
   # Check that the original rows are present
-  resv1 <- dplyr::tbl(conn, "testlocalcompression") |>
+  resv1 <- dplyr::tbl(conn, tname) |>
     dplyr::filter(ValidFromVersion == 1) |>
     dplyr::collect() |>
     dplyr::arrange(i, j)
   expected_resv1 <- tibble::tibble(Dataset = 5,
                                    ValidFromVersion = 1,
-                                   ValidToVersion = c(2, 2, 2, 2, 1, 2),
+                                   ValidToVersion = current_version_int,
                                    Country = 146,
                                    Year = 1971,
                                    matname = 8,
@@ -533,16 +534,16 @@ test_that("pl_upsert_and_compress() works with local table compression", {
                                    j = c(1, 2, 1, 2, 1, 2),
                                    value = 1:6)
   testthat::expect_equal(resv1, expected_resv1)
-  resv2 <- dplyr::tbl(conn, "testlocalcompression") |>
-    dplyr::filter(ValidToVersion == 2) |>
+  resv2 <- dplyr::tbl(conn, tname) |>
+    dplyr::filter(ValidFromVersion == 2, ValidToVersion == current_version_int) |>
     dplyr::collect() |>
     dplyr::arrange(i, j)
   expected_resv2 <- tibble::tibble(Dataset = 5,
-                                   ValidFromVersion = c(1, 1, 1, 1, 2, 1),
-                                   ValidToVersion = 2,
+                                   ValidFromVersion = 2,
+                                   ValidToVersion = current_version_int,
                                    Country = 49,
                                    Year = 1972,
-                                   matname = 8,
+                                   matname = 7,
                                    i = c(1, 1, 2, 2, 3, 3),
                                    j = c(1, 2, 1, 2, 1, 2),
                                    value = c(1, 2, 3, 4, 42, 6))
@@ -556,6 +557,6 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   DBI::dbRemoveTable(conn = conn, name = "matname")
   DBI::dbRemoveTable(conn = conn, name = "Version")
   DBI::dbRemoveTable(conn = conn, name = "Year")
-  DBI::dbDisconnect(conn)
+  # DBI::dbDisconnect(conn)
 })
 

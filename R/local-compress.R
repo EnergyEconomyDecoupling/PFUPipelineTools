@@ -55,7 +55,8 @@
 #'            "`r PFUPipelineTools::dataset_info$valid_from_version_colname`" and
 #'            "`r PFUPipelineTools::dataset_info$valid_to_version_colname`".
 #' @param value_colname The name of the value column.
-#'                      Default is [PFUPipelineTools::mat_colnames]`$value` or "`r PFUPipelineTools::mat_colnames$value`".
+#'                      Default is [PFUPipelineTools::mat_colnames]`$value` or
+#'                      "`r PFUPipelineTools::mat_colnames$value`".
 #' @param what_to_do_colname The name of the column that tells
 #'                           what to do with the row.
 #'                           Default is [PFUPipelineTools::dataset_info]`$what_to_do` or

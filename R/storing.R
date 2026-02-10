@@ -426,6 +426,11 @@ pl_upsert <- function(.df,
 #'                                   Default is [PFUPipelineTools::dataset_info$valid_from_version_colname].
 #' @param valid_to_version_colname The string name of the valid to version column.
 #'                                 Default is [PFUPipelineTools::dataset_info$valid_to_version_colname].
+#' @param what_to_do_colname The string name of a column that tells what to do
+#'                           with various rows of `.df`.
+#'                           This column is used internally.
+#'                           Default is [PFUPipelineTools::dataset_info]`$what_to_do` or
+#'                          "`r PFUPipelineTools::dataset_info$what_to_do`".
 #' @param current_version_int An integer that indicates the current version in the remote table.
 #'                            Default is [PFUPipelineTools::current_version_int].
 #'                            It is probably a _very bad_ idea to supply
@@ -462,6 +467,7 @@ pl_upsert_and_compress <- function(.df,
                                    mat_colnames = unlist(PFUPipelineTools::mat_colnames),
                                    valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
                                    valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname,
+                                   what_to_do_colname = PFUPipelineTools::dataset_info$what_to_do,
                                    current_version_int = PFUPipelineTools::current_version_int) {
 
   if (is.null(db_table_name)) {
@@ -541,8 +547,11 @@ pl_upsert_and_compress <- function(.df,
 
 
     # Upload new when needed.
-    df_to_upsert_new <- df_to_upsert |>
-      dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$upload_new)
+    df_to_upsert_new <- what_to_do_df |>
+      dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$upload_new) |>
+      dplyr::mutate(
+        "{what_to_do_colname}" := NULL
+      )
     dplyr::tbl(conn, db_table_name) |>
       dplyr::rows_upsert(df_to_upsert_new,
                          by = pk_str,

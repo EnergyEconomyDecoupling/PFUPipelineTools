@@ -31,6 +31,7 @@ pl_upsert_and_compress(
   mat_colnames = unlist(PFUPipelineTools::mat_colnames),
   valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
   valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname,
+  what_to_do_colname = PFUPipelineTools::dataset_info$what_to_do,
   current_version_int = PFUPipelineTools::current_version_int
 )
 }
@@ -124,6 +125,12 @@ Default is \link{dataset_info$valid_from_version_colname}.}
 
 \item{valid_to_version_colname}{The string name of the valid to version column.
 Default is \link{dataset_info$valid_to_version_colname}.}
+
+\item{what_to_do_colname}{The string name of a column that tells what to do
+with various rows of \code{.df}.
+This column is used internally.
+Default is \link{dataset_info}\verb{$what_to_do} or
+"WhatToDo".}
 
 \item{current_version_int}{An integer that indicates the current version in the remote table.
 Default is \link{current_version_int}.

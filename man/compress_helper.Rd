@@ -32,7 +32,8 @@ Defaults are \link{dataset_info}\verb{$valid_from_version_colname} and \link{dat
 "ValidToVersion".}
 
 \item{value_colname}{The name of the value column.
-Default is \link{mat_colnames}\verb{$value} or "value".}
+Default is \link{mat_colnames}\verb{$value} or
+"value".}
 
 \item{what_to_do_colname}{The name of the column that tells
 what to do with the row.
