@@ -550,9 +550,9 @@ pl_upsert_and_compress <- function(.df,
                          in_place = in_place)
 
     # Compress the table, if desired.
-    if (compress) {
-      compress_rows(db_table_name = db_table_name, conn = conn)
-    }
+    # if (compress) {
+    #   compress_rows(db_table_name = db_table_name, conn = conn)
+    # }
 
 
 
