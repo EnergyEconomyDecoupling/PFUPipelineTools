@@ -387,6 +387,10 @@ pl_upsert <- function(.df,
 #' @param compress A boolean that tells whether to compress `db_table_name`
 #'                 in the database after uploading.
 #'                 Default is `TRUE`.
+#' @param tol The tolerance within which a local value will be
+#'            assumed same as the remote value.
+#'            This value is passed to [compress_helper()].
+#'            Default is `1e-6`.
 #' @param round_double_columns A boolean that tells whether to
 #'                             round double-precision columns in `.df`.
 #'                             Default is `FALSE`.
@@ -448,6 +452,7 @@ pl_upsert_and_compress <- function(.df,
                                    in_place = FALSE,
                                    encode_fks = TRUE,
                                    compress = TRUE,
+                                   tol = 1e-6,
                                    round_double_columns = FALSE,
                                    digits = 15,
                                    index_map = list(fk_parent_tables[[IEATools::row_col_types$industry]],
@@ -559,6 +564,10 @@ pl_upsert_and_compress <- function(.df,
                            # ValidFromVersion and value.
                            # However, value is a double, so don't include it in the join.
                            by = c(join_cols, valid_from_version_colname),
+                           # Normally, I would be concerned about unmatched = "ignore" here,
+                           # because it could fail silently.
+                           # However, we just downloaded the data a few lines above,
+                           # so we can be sure the rows are present in the remote database.
                            unmatched = "ignore",
                            copy = TRUE,
                            in_place = in_place)
@@ -578,6 +587,10 @@ pl_upsert_and_compress <- function(.df,
                            by = c(join_cols,
                                   valid_from_version_colname,
                                   valid_from_version_colname),
+                           # Normally, I would be concerned about unmatched = "ignore" here,
+                           # because it could fail silently.
+                           # However, we just downloaded the data a few lines above,
+                           # so we can be sure the rows are present in the remote database.
                            unmatched = "ignore",
                            copy = TRUE,
                            in_place = in_place)

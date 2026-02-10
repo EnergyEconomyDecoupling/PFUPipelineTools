@@ -627,11 +627,51 @@ test_that("pl_upsert_and_compress() works with local table compression", {
     dplyr::arrange(value)
   expect_equal(resv4, expected_resv4)
 
+  # Put things back the way they were
+  DBI::dbExecute(conn, "DELETE FROM testlocalcompression")
+  foo <- midfv1 |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE)
+  # Create a Y matrix with a slightly different value
+  # to test pl_upsert_and_compress() when we are within tol.
+  matv3 <- matv1
+  matv3[3, 2] = matv3[3,2] + 1e-10
+  expect_equal(matv3[3, 2] - 6, 1e-10)
+  midfv5 <- tibble::tibble(Dataset = "CL-PFU IEA",
+                           ValidFromVersion = c("v2.0"),
+                           ValidToVersion = c("v2.0"),
+                           Country = "USA",
+                           Year = 1971,
+                           matname = c("Y"),
+                           matval = list(matv3))
+  rowsv5 <- midfv5 |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE)
+  resv5 <- dplyr::tbl(conn, tname) |>
+    dplyr::collect() |>
+    dplyr::arrange(value)
+  # No rows should have been added.
+  expect_equal(nrow(resv5), 6)
+  # Nothing should have changed, because the value of
+  # matv3[3, 2] is within tol (1e-6) of the original.
+  resv5 |>
+    dplyr::filter(i == 3, j == 2) |>
+    dplyr::pull(value) |>
+    magrittr::subtract(6) |>
+    expect_equal(0)
+
+
+
+
+
+
 
   # Add a test with more metadata columns
 
-
-  # Add tests for values that are only slightly different.
 
   # Add tests for retriving with a version string.
 
