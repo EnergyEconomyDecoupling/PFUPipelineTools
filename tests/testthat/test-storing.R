@@ -334,16 +334,6 @@ test_that("pl_upsert() works with local table compression", {
 })
 
 
-
-
-
-
-
-
-
-
-
-
 test_that("pl_upsert_and_compress() works with local table compression", {
   conn <- get_unit_testing_conn()
   on.exit(DBI::dbDisconnect(conn))
@@ -684,14 +674,6 @@ test_that("pl_upsert_and_compress() works with local table compression", {
     magrittr::subtract(6) |>
     expect_equal(-1.0e-7)
 
-
-  # Add a test with more metadata columns
-
-
-  # Add tests for retriving with a version string.
-
-
-
   # Clean up after ourselves
   DBI::dbRemoveTable(conn = conn, name = "testlocalcompression")
   DBI::dbRemoveTable(conn = conn, name = "Country")
@@ -702,3 +684,247 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   DBI::dbRemoveTable(conn = conn, name = "Year")
 })
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+test_that("local compression works with more metadata columns and new rows/cols", {
+  conn <- get_unit_testing_conn()
+  on.exit(DBI::dbDisconnect(conn))
+
+  # Set the names of the table so we can use the variable in several places
+  tname <- "testlocalcompression"
+  dataset <- "Dataset"
+  version <- "Version"
+  country <- "Country"
+  energy_type <- "EnergyType"
+  year <- "Year"
+  matname <- "matname"
+  index <- "Index"
+
+  # Start with a clean slate
+  if (DBI::dbExistsTable(conn = conn, name = tname)) {
+    DBI::dbRemoveTable(conn = conn, name = tname)
+  }
+  if (DBI::dbExistsTable(conn = conn, name = dataset)) {
+    DBI::dbRemoveTable(conn = conn, name = dataset)
+  }
+  if (DBI::dbExistsTable(conn = conn, name = version)) {
+    DBI::dbRemoveTable(conn = conn, name = version)
+  }
+  if (DBI::dbExistsTable(conn = conn, name = country)) {
+    DBI::dbRemoveTable(conn = conn, name = country)
+  }
+  if (DBI::dbExistsTable(conn = conn, name = energy_type)) {
+    DBI::dbRemoveTable(conn = conn, name = energy_type)
+  }
+  if (DBI::dbExistsTable(conn = conn, name = year)) {
+    DBI::dbRemoveTable(conn = conn, name = year)
+  }
+  if (DBI::dbExistsTable(conn = conn, name = matname)) {
+    DBI::dbRemoveTable(conn = conn, name = matname)
+  }
+  if (DBI::dbExistsTable(conn = conn, name = index)) {
+    DBI::dbRemoveTable(conn = conn, name = index)
+  }
+
+  # Create data model
+  dm <- list(testlocalcompression = data.frame(Dataset = as.integer(5),
+                                               ValidFromVersion = as.integer(1),
+                                               ValidToVersion = as.integer(2),
+                                               Country = as.integer(49),
+                                               EnergyType = as.integer(1),
+                                               Year = as.integer(1971),
+                                               matname = as.integer(2),
+                                               i = as.integer(1),
+                                               j = as.integer(1),
+                                               value = 3.1415926) |>
+               # Delete all rows, but keep names and column types
+               dplyr::filter(FALSE),
+             Dataset = data.frame(DatasetID = as.integer(5),
+                                  Dataset = "CL-PFU IEA"),
+             Version = data.frame(VersionID = as.integer(c(1, 2, 3, current_version_int)),
+                                  Version = c("v1.0", "v2.0", "v3.0", "current")),
+             Country = data.frame(CountryID = as.integer(c(49, 146)),
+                                  Country = c("GHA", "USA")),
+             EnergyType = data.frame(EnergyTypeID = as.integer(c(1, 2)),
+                                     EnergyType = c("E", "X")),
+             Year = data.frame(YearID = as.integer(c(1971, 1972)),
+                               Year = as.integer(c(1971, 1972))),
+             matname = data.frame(matnameID = as.integer(c(2, 3, 7, 8)),
+                                  matname = c("R", "U", "V", "Y")),
+             Index = data.frame(IndexID = as.integer(c(1, 2, 3, 4, 5)),
+                                Index = c("Hard coal (if no detail) [from Resources]",
+                                          "Brown coal (if no detail) [from Resources]",
+                                          "Anthracite [from Resources]",
+                                          "Coking coal [from Resources]",
+                                          "Other bituminous coal [from Resources]"))
+  ) |>
+    dm::new_dm() |>
+    dm::dm_add_pk(testlocalcompression, columns = c(ValidFromVersion, ValidToVersion,
+                                                    matname, i, j)) |>
+    dm::dm_add_pk(Dataset, columns = c(DatasetID)) |>
+    dm::dm_add_pk(Version, columns = c(VersionID)) |>
+    dm::dm_add_pk(Country, columns = c(CountryID)) |>
+    dm::dm_add_pk(EnergyType, columns = c(EnergyTypeID)) |>
+    dm::dm_add_pk(Year, columns = c(YearID)) |>
+    dm::dm_add_pk(matname, columns = c(matnameID)) |>
+    dm::dm_add_pk(Index, columns = c(IndexID)) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = Dataset,
+                  ref_table = Dataset, ref_columns = DatasetID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = ValidFromVersion,
+                  ref_table = Version, ref_columns = VersionID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = ValidToVersion,
+                  ref_table = Version, ref_columns = VersionID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = Country,
+                  ref_table = Country, ref_columns = CountryID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = EnergyType,
+                  ref_table = EnergyType, ref_columns = EnergyTypeID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = Year,
+                  ref_table = Year, ref_columns = YearID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = matname,
+                  ref_table = matname, ref_columns = matnameID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = i,
+                  ref_table = Index, ref_columns = IndexID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = j,
+                  ref_table = Index, ref_columns = IndexID)
+
+  dm::copy_dm_to(conn, dm = dm, temporary = FALSE)
+  # Create index map
+  index_map <- list(ValidFromVersion = data.frame(IndexID = as.integer(c(1, 2, 3,
+                                                                         current_version_int)),
+                                                  Index = c("v1.0", "v2.0", "v3.0", "current")),
+                    ValidToVersion = data.frame(IndexID = as.integer(c(1, 2, 3,
+                                                                       current_version_int)),
+                                                Index = c("v1.0", "v2.0", "v3.0", "current")),
+                    row = data.frame(IndexID = as.integer(1:4),
+                                     Index = c("r1", "r2", "r3", "r4")),
+                    col = data.frame(IndexID = as.integer(1:3),
+                                     Index = c("c1", "c2", "c3")))
+
+  # Create a couple matrices
+  # matv1 is the original matrix
+  matv1 <- matrix(c(1, 2,
+                    3, 4,
+                    5, 6),
+                  byrow = TRUE,
+                  nrow = 3,
+                  dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
+    matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
+  # matv2 is a modified matrix with the r3, c1 different
+  # And one more row and column.
+  # matv2 has new data (and new row, col names) compared to matv1.
+  matv2 <- matrix(c(1, 2, 0,
+                    3, 4, 0,
+                    31, 6, 0,
+                    41, 42, 43),
+                  byrow = TRUE,
+                  nrow = 4,
+                  dimnames = list(c("r1", "r2", "r3", "r4"),
+                                  c("c1", "c2", "c3"))) |>
+    matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
+  # Create a matsindf data frame for the v1 matrix
+  midfv1 <- tibble::tibble(Dataset = "CL-PFU IEA",
+                           ValidFromVersion = c("v1.0"),
+                           ValidToVersion = c("v1.0"),
+                           Country = "USA",
+                           EnergyType = "X",
+                           Year = 1971,
+                           matname = c("V"),
+                           matval = list(matv1))
+
+  # Upsert the original matrix, without compression.
+  rowsv1 <- midfv1 |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE)
+  # Verify that we have 6 rows, one for each entry in the matrix
+  should_be_six_rows <- DBI::dbReadTable(conn, name = tname)
+  expect_equal(nrow(should_be_six_rows), 6)
+
+  # Try adding a new matrix with more rows/cols
+  midfv2 <- midfv1 |>
+    dplyr::bind_rows(
+      tibble::tibble(Dataset = "CL-PFU IEA",
+                     ValidFromVersion = c("v1.0"),
+                     ValidToVersion = c("v1.0"),
+                     Country = "USA",
+                     EnergyType = "X",
+                     Year = 1971,
+                     matname = c("V"),
+                     matval = list(matv2))
+      )
+  rowsv2 <- midfv2 |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE)
+  should_be_nine_rows <- DBI::dbReadTable(conn, name = tname)
+  expect_equal(nrow(should_be_nine_rows), 9)
+  # Verify that the new data are in place
+  should_be_nine_rows |>
+    dplyr::filter(i == 3, j == 1) |>
+    dplyr::pull(value) |>
+    expect_equal(31)
+  should_be_nine_rows |>
+    dplyr::filter(i == 4, j == 1) |>
+    dplyr::pull(value) |>
+    expect_equal(41)
+  should_be_nine_rows |>
+    dplyr::filter(i == 4, j == 2) |>
+    dplyr::pull(value) |>
+    expect_equal(42)
+  should_be_nine_rows |>
+    dplyr::filter(i == 4, j == 3) |>
+    dplyr::pull(value) |>
+    expect_equal(43)
+
+  # Add another matrix with decimals
+  matv3 <- matv2
+  matv3[2, 3] <- 3.1415926
+  midfv3 <- midfv2 |>
+    dplyr::bind_rows(
+      tibble::tibble(Dataset = "CL-PFU IEA",
+                     ValidFromVersion = c("v1.0"),
+                     ValidToVersion = c("v1.0"),
+                     Country = "USA",
+                     EnergyType = "X",
+                     Year = 1971,
+                     matname = c("V"),
+                     matval = list(matv3))
+    )
+
+  rowsv3 <- midfv3 |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE)
+  should_be_ten_rows <- DBI::dbReadTable(conn, name = tname)
+  expect_equal(nrow(should_be_ten_rows), 10)
+  # Verify that the new data are in place
+  should_be_ten_rows |>
+    dplyr::filter(i == 2, j == 3) |>
+    dplyr::pull(value) |>
+    expect_equal(3.1415926)
+
+  # Clean up after ourselves
+  DBI::dbRemoveTable(conn = conn, name = "testlocalcompression")
+  DBI::dbRemoveTable(conn = conn, name = "Country")
+  DBI::dbRemoveTable(conn = conn, name = "EnergyType")
+  DBI::dbRemoveTable(conn = conn, name = "Dataset")
+  DBI::dbRemoveTable(conn = conn, name = "Index")
+  DBI::dbRemoveTable(conn = conn, name = "matname")
+  DBI::dbRemoveTable(conn = conn, name = "Version")
+  DBI::dbRemoveTable(conn = conn, name = "Year")
+})
