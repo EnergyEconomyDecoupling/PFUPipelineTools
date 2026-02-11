@@ -928,3 +928,9 @@ test_that("local compression works with more metadata columns and new rows/cols"
   DBI::dbRemoveTable(conn = conn, name = "Version")
   DBI::dbRemoveTable(conn = conn, name = "Year")
 })
+
+
+
+
+# Try a test where we remove rows/cols from a matrix
+# in an existing version.
