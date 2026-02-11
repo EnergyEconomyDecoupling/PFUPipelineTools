@@ -554,10 +554,11 @@ pl_upsert_and_compress <- function(.df,
                                      valid_to_version_colname = valid_to_version_colname,
                                      value_colname = value_colname)
 
-    # There are three possibilities:
+    # There are four possibilities:
     # (1) Need up replace the value in the ValidToVersion column,
     # (2) Need to replace the value in the value column, or
     # (3) Need to upload entirely new data.
+    # (4) Need to remove rows from the remote.
     # The WhatToDo column in what_to_do_df tells how to proceed.
 
     # (1) Replace ValidToVersion in remote when needed
@@ -618,6 +619,9 @@ pl_upsert_and_compress <- function(.df,
                            copy = TRUE,
                            in_place = in_place)
     }
+
+    # (4) Remove rows from remote
+    ############# Code here ##############
 
   } else {
     # No compression, just upsert.
