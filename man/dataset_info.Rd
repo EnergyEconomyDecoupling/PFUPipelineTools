@@ -5,7 +5,7 @@
 \alias{dataset_info}
 \title{Column name for datasets}
 \format{
-A string list with 18 entries.
+A string list with 19 entries.
 \describe{
 \item{dataset_colname}{The string name of the dataset column, "Dataset".}
 \item{valid_from_version_colname}{The string name of the column that gives the initial version for which this datapoint is valid, "ValidFromVersion".}
@@ -24,6 +24,7 @@ A string list with 18 entries.
 \item{what_to_do}{The string name of a column that tells what to do  with updated data for the remote database. Options are \code{change_remote} and \code{upload_new}.}
 \item{replace_valid_to_version_in_remote}{A string indicating that valid to version column should be changed in the remote database when updating values.}
 \item{replace_value_in_remote}{A string that indicates the value should be replaced in the remote database.}
+\item}{delete_row_in_remote}{A string that indicates a row to be deleted from the remote database.}
 \item{upload_new}{A string indicating that rows of a dataframe should be uploaded to the remote database, because they are new, i.e., they do not yet exist in the remote database.}
 }
 }

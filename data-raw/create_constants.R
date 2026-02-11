@@ -359,6 +359,7 @@ dataset_info <- list(dataset_colname = "Dataset",
                      what_to_do = "WhatToDo",
                      replace_valid_to_version_in_remote = "Replace ValidToVersion in remote",
                      replace_value_in_remote = "Replace value in remote",
+                     delete_row_in_remote = "Delete row in remote",
                      upload_new = "Upload new")
 usethis::use_data(dataset_info, overwrite = TRUE)
 

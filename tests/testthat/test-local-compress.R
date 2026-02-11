@@ -364,3 +364,17 @@ test_that("compress_helper() works when there are no remote_df rows for the curr
     )
     expect_equal(res, expected)
 })
+
+
+test_that("compress_helper() correctly identifies rows that should be removed from remote_df", {
+  remote_df <- remote_df_func()
+  local_df <- local_df_func()
+  local_df <- local_df[c(-7, -13), ]
+  res <- compress_helper(remote_df = remote_df, local_df = local_df)
+  # Check that we have 2 rows to remove from remote in res
+  res |>
+    dplyr::filter(.data[[PFUPipelineTools::dataset_info$what_to_do]] == PFUPipelineTools::dataset_info$delete_row_in_remote) |>
+    nrow() |>
+    expect_equal(2)
+
+})
