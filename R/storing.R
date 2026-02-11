@@ -621,7 +621,14 @@ pl_upsert_and_compress <- function(.df,
     }
 
     # (4) Remove rows from remote
-    ############# Code here ##############
+    df_remove_rows_from_remote <- what_to_do_df |>
+      dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$delete_row_in_remote) |>
+      dplyr::mutate(
+        "{what_to_do_colname}" := NULL
+      )
+    if (nrow(df_remove_rows_from_remote) > 0) {
+      ############# Code here to remove rows in remote ##############
+    }
 
   } else {
     # No compression, just upsert.
