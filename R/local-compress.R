@@ -46,14 +46,27 @@
 #' encoded data frames, i.e.
 #' their foreign key columns should all be ID integers.
 #'
+#' Important: `local_df` is assumed to contain
+#' a complete set of information for metadata columns
+#' (columns excluding `i`, `j`, and `value`).
+#' Thus, if for the same metadata and the current version,
+#' `local_df` is lacking some rows that are present in `remote_df`,
+#' rows will be removed from `remote_df`.
+#'
 #' @param remote_df A remote version of the rows contained in `local_df`.
 #' @param local_df A new data frame computed locally that
-#'                 contains new values for `remote_df`.
+#'                 contains a new set of values for `remote_df`.
 #' @param valid_from_version_colname,valid_to_version_colname See
 #'            [PFUPipelineTools::dataset_info].
 #'            Defaults are [PFUPipelineTools::dataset_info]`$valid_from_version_colname` and [PFUPipelineTools::dataset_info]`$valid_to_version_colname` or
 #'            "`r PFUPipelineTools::dataset_info$valid_from_version_colname`" and
 #'            "`r PFUPipelineTools::dataset_info$valid_to_version_colname`".
+#' @param i_colname The name of the column containing row indices for matrices.
+#'                  Default is [PFUPipelineTools::mat_colnames]`$i` or
+#'                  "`r PFUPipelineTools::mat_colnames$i`".
+#' @param j_colname The name of the column containing column indices for matrices.
+#'                  Default is [PFUPipelineTools::mat_colnames]`$j` or
+#'                  "`r PFUPipelineTools::mat_colnames$j`".
 #' @param value_colname The name of the value column.
 #'                      Default is [PFUPipelineTools::mat_colnames]`$value` or
 #'                      "`r PFUPipelineTools::mat_colnames$value`".

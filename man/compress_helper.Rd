@@ -23,7 +23,7 @@ compress_helper(
 \item{remote_df}{A remote version of the rows contained in \code{local_df}.}
 
 \item{local_df}{A new data frame computed locally that
-contains new values for \code{remote_df}.}
+contains a new set of values for \code{remote_df}.}
 
 \item{valid_from_version_colname, valid_to_version_colname}{See
 \link{dataset_info}.
@@ -67,6 +67,14 @@ Default is
 \item{tol}{The tolerance within which a local value will be
 assumed same as the remote value.
 Default is \code{1e-6}.}
+
+\item{i_colname}{The name of the column containing row indices for matrices.
+Default is \link{mat_colnames}\verb{$i} or
+"i".}
+
+\item{j_colname}{The name of the column containing column indices for matrices.
+Default is \link{mat_colnames}\verb{$j} or
+"j".}
 }
 \value{
 A data frame with same columns as \code{remote_df} and \code{local_df} and an
@@ -119,6 +127,13 @@ no rows in the remote need to be changed.
 Note that both \code{remote_df} and \code{local_df} should be
 encoded data frames, i.e.
 their foreign key columns should all be ID integers.
+
+Important: \code{local_df} is assumed to contain
+a complete set of information for metadata columns
+(columns excluding \code{i}, \code{j}, and \code{value}).
+Thus, if for the same metadata and the current version,
+\code{local_df} is lacking some rows that are present in \code{remote_df},
+rows will be removed from \code{remote_df}.
 }
 \examples{
 remote_df <- tibble::tribble(

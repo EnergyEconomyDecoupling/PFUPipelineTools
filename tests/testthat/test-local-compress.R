@@ -368,8 +368,10 @@ test_that("compress_helper() works when there are no remote_df rows for the curr
 
 test_that("compress_helper() correctly identifies rows that should be removed from remote_df", {
   remote_df <- remote_df_func()
-  local_df <- local_df_func()
-  local_df <- local_df[c(-7, -13), ]
+  local_df <- remote_df[c(-7, -13), ] |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$valid_to_version_colname}" := 2
+    )
   res <- compress_helper(remote_df = remote_df, local_df = local_df)
   # Check that we have 2 rows to remove from remote in res
   res |>
