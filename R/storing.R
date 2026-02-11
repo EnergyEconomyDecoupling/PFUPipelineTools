@@ -620,6 +620,7 @@ pl_upsert_and_compress <- function(.df,
     }
 
   } else {
+    # No compression, just upsert.
     dplyr::tbl(conn, db_table_name) |>
       dplyr::rows_upsert(df_to_upsert,
                          by = pk_str,
