@@ -359,21 +359,18 @@ compress_helper <- function(remote_df, local_df,
     # In this case, we need to delete the row from remote.
     add_to_out <- delete_rows_in_remote_df |>
       dplyr::filter(.data[[new_remote_from_name]] == local_version) |>
-      # prep_delete_row_in_remote()
-      dplyr::mutate(
-        "{new_local_from_name}" := NULL,
-        "{new_local_to_name}" := NULL,
-        "{new_local_value_name}" := NULL,
-        "{value_diff_name}" := NULL
-      ) |>
-      dplyr::rename(
-        "{valid_from_version_colname}" := dplyr::any_of(new_remote_from_name),
-        "{valid_to_version_colname}" := dplyr::any_of(new_remote_to_name),
-        "{value_colname}" := dplyr::any_of(new_remote_value_name)
-      ) |>
-      dplyr::mutate(
-        "{what_to_do_colname}" := PFUPipelineTools::dataset_info$delete_row_in_remote
-      )
+      prep_delete_row_in_remote(new_local_from_name = new_local_from_name,
+                                new_local_to_name = new_local_to_name,
+                                new_local_value_name = new_local_value_name,
+                                value_diff_name = value_diff_name,
+                                valid_from_version_colname = valid_from_version_colname,
+                                valid_to_version_colname = valid_to_version_colname,
+                                value_colname = value_colname,
+                                new_remote_from_name = new_remote_from_name,
+                                new_remote_to_name = new_remote_to_name,
+                                new_remote_value_name = new_remote_value_name,
+                                what_to_do_colname = what_to_do_colname,
+                                delete_row_in_remote = delete_row_in_remote)
     out <- out |>
       dplyr::bind_rows(add_to_out)
 
@@ -590,3 +587,36 @@ prep_upload_new <- function(.df,
       "{valid_to_version_colname}" := current_version_int
     )
 }
+
+
+prep_delete_row_in_remote <- function(.df,
+                                      new_local_from_name,
+                                      new_local_to_name,
+                                      new_local_value_name,
+                                      value_diff_name,
+                                      valid_from_version_colname,
+                                      valid_to_version_colname,
+                                      value_colname,
+                                      new_remote_from_name,
+                                      new_remote_to_name,
+                                      new_remote_value_name,
+                                      what_to_do_colname,
+                                      delete_row_in_remote) {
+  .df |>
+    dplyr::mutate(
+      "{new_local_from_name}" := NULL,
+      "{new_local_to_name}" := NULL,
+      "{new_local_value_name}" := NULL,
+      "{value_diff_name}" := NULL
+    ) |>
+    dplyr::rename(
+      "{valid_from_version_colname}" := dplyr::any_of(new_remote_from_name),
+      "{valid_to_version_colname}" := dplyr::any_of(new_remote_to_name),
+      "{value_colname}" := dplyr::any_of(new_remote_value_name)
+    ) |>
+    dplyr::mutate(
+      "{what_to_do_colname}" := delete_row_in_remote
+    )
+
+}
+
