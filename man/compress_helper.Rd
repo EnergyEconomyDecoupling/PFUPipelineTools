@@ -13,6 +13,7 @@ compress_helper(
   what_to_do_colname = PFUPipelineTools::dataset_info$what_to_do,
   change_valid_to_version_in_remote =
     PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote,
+  delete_row_in_remote = PFUPipelineTools::dataset_info$delete_row_in_remote,
   replace_value_in_remote = PFUPipelineTools::dataset_info$replace_value_in_remote,
   upload_new = PFUPipelineTools::dataset_info$upload_new,
   current_version_int = PFUPipelineTools::current_version_int,
@@ -46,6 +47,11 @@ indicates the value in the remote's
 should be changed.
 Default is \link{dataset_info}\verb{$replace_valid_to_version_in_remote} or
 "Replace ValidToVersion in remote".}
+
+\item{delete_row_in_remote}{The string that indicates the row should be
+deleted from the remote database.
+Default is \link{dataset_info}\verb{$delete_row_in_remote} or
+"Delete row in remote".}
 
 \item{replace_value_in_remote}{The string that
 indicates the value of remote's \code{value} column
@@ -102,7 +108,8 @@ named with the value of \code{what_to_do_colname}
 what must be done with each row.
 The possible values of the \code{what_to_do_colname} are
 \link{dataset_info}\verb{$replace_valid_to_version_in_remote},
-\link{dataset_info}\verb{$replace_value_in_remote}, and
+\link{dataset_info}\verb{$replace_value_in_remote},
+\link{dataset_info}\verb{$delete_row_in_remote}, and
 \link{dataset_info}\verb{$upload_new}
 that indicate whether to change the remote table's
 \code{ValidToVersion} value,
@@ -110,7 +117,8 @@ replace the value in the \code{value} column, or
 upload a new row, respectively.
 The values are
 "Replace ValidToVersion in remote",
-"Replace value in remote" and
+"Replace value in remote",
+"Delete row in remote", and
 "Upload new",
 respectively.
 
@@ -127,6 +135,12 @@ no rows in the remote need to be changed.
 Note that both \code{remote_df} and \code{local_df} should be
 encoded data frames, i.e.
 their foreign key columns should all be ID integers.
+
+Note: \code{local_df} should have the same values in both
+\code{valid_from_version_colname} and
+\code{valid_to_version_colname}
+to clearly indicate intent by the caller.
+If not, an error is thrown.
 
 Important: \code{local_df} is assumed to contain
 a complete set of information for metadata columns

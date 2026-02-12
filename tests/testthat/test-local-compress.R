@@ -310,7 +310,7 @@ test_that("compress_helper() works when remote has lines of old versions", {
 })
 
 
-test_that("compress_helper() works with completely new information", {
+test_that("compress_helper() works with completely new information with updated version", {
   remote_df <- remote_df_func()
   local_df <- local_df_func()[1, ] |>
     dplyr::mutate(
@@ -323,7 +323,14 @@ test_that("compress_helper() works with completely new information", {
     dplyr::mutate(
       "{PFUPipelineTools::dataset_info$valid_to_version}" := current_version_int,
       "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
-    )
+    ) |>
+    dplyr::bind_rows(
+      remote_df |>
+        dplyr::mutate(
+          "{PFUPipelineTools::dataset_info$valid_to_version}" := 2,
+          "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote
+        )
+      )
   expect_equal(res, expected)
 })
 
@@ -342,6 +349,13 @@ test_that("compress_helper() works when there are new row and column names", {
     dplyr::mutate(
       "{PFUPipelineTools::dataset_info$valid_to_version}" := current_version_int,
       "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
+    ) |>
+    dplyr::bind_rows(
+      remote_df |>
+        dplyr::mutate(
+          "{PFUPipelineTools::dataset_info$valid_to_version}" := 2,
+          "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote
+        )
     )
   expect_equal(res, expected)
 })
@@ -380,3 +394,8 @@ test_that("compress_helper() correctly identifies rows that should be removed fr
     expect_equal(2)
 
 })
+
+
+
+# Test a case where we delete a row from remote then put it back
+# when the remote_df was more than 1 older than current_version.
