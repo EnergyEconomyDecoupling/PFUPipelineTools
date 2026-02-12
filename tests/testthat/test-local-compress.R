@@ -392,7 +392,11 @@ test_that("compress_helper() correctly identifies rows that should be removed fr
     dplyr::filter(.data[[PFUPipelineTools::dataset_info$what_to_do]] == PFUPipelineTools::dataset_info$delete_row_in_remote) |>
     nrow() |>
     expect_equal(2)
-
+  expected <- remote_df[c(7, 13), ] |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$delete_row_in_remote
+    )
+  expect_equal(res, expected)
 })
 
 
