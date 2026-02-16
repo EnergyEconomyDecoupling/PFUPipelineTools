@@ -6,7 +6,7 @@
 #' This function contains the logic for that work.
 #'
 #' In the context of this function,
-#' `remote` means (usually older) data from the remote database.
+#' `remote` means (sometimes older) data from the remote database.
 #' `local` means new data calculated locally and meant to be uploaded
 #' to the remote database.
 #'
@@ -25,7 +25,8 @@
 #' [PFUPipelineTools::dataset_info]`$upload_new`
 #' that indicate whether to change the remote table's
 #' `ValidToVersion` value,
-#' replace the value in the `value` column, or
+#' replace the value in the `value` column,
+#' delete the remote row, or
 #' upload a new row, respectively.
 #' The values are
 #' "`r PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote`",
@@ -58,8 +59,8 @@
 #' a complete set of information for metadata columns
 #' (columns excluding `i`, `j`, and `value`).
 #' Thus, if for the same metadata and the current version,
-#' `local_df` is lacking some rows that are present in `remote_df`,
-#' rows will be removed from `remote_df`.
+#' `local_df` is lacking some rows present in `remote_df`,
+#' those rows will be removed from `remote_df`.
 #'
 #' @param remote_df A remote version of the rows contained in `local_df`.
 #' @param local_df A new data frame computed locally that
@@ -298,7 +299,9 @@ compress_helper <- function(remote_df, local_df,
   # Find all rows where the remote and local values both exist
   # and are same within tol.
   # Actually, don't need to do this, as these rows
-  # will not be changed in the remote.
+  # do not need to be changed in the remote,
+  # as they already are valid from
+  # whatever version to current_version_int.
   # Their ValidToVersion column already contains current_version_int.
   # equal_rows <- joined |>
   #   dplyr::filter(abs(.data[[value_diff_name]]) <= tol) |>
@@ -342,8 +345,11 @@ compress_helper <- function(remote_df, local_df,
       dplyr::bind_rows(add_to_out)
   }
 
-  # Look for cases where remote_df lacks data that is present in local_df.
-  # These are cases where we should delete the remote rows.
+  # Look for cases where local_df lacks data that is present in remote_df.
+  # These are cases where we should delete the remote row.
+  # Remembering that we already filtered on current_version_int,
+  # this condition will occur only if we have a new run
+  # that no longer has a certain combination of metadata.
   # In this case, the joined table will have
   # valueRemote not NA
   # and

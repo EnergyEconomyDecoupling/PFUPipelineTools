@@ -400,6 +400,40 @@ test_that("compress_helper() correctly identifies rows that should be removed fr
 })
 
 
+test_that("compress_helper() works as expected when the current version in remote_df started several versions ago", {
+  remote_df <- remote_df_func()
+  local_df <- remote_df_func() |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$valid_from_version}" :=
+        .data[[PFUPipelineTools::dataset_info$valid_from_version]] + 10,
+      "{PFUPipelineTools::dataset_info$valid_to_version}" :=
+        .data[[PFUPipelineTools::dataset_info$valid_from_version]],
+      "{PFUPipelineTools::mat_colnames$value}" := .data[[PFUPipelineTools::mat_colnames$value]] + 100
+    )
+  res <- compress_helper(remote_df = remote_df, local_df = local_df)
+  expected <- dplyr::bind_rows(
+    remote_df |>
+      dplyr::mutate(
+        "{PFUPipelineTools::dataset_info$valid_to_version}" := 11,
+        "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote
+      ),
+    local_df |>
+      dplyr::mutate(
+        "{PFUPipelineTools::dataset_info$valid_to_version}" := current_version_int,
+        "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
+      )
+  )
+  expect_equal(res, expected)
+})
+
+
+# Write a test that is same as above, but with a couple missing rows is local_df.
+
+
+# Write a test that deletes rows when the version in the database is more than one
+# older than the version being worked upon.
+
+
 
 # Test a case where we delete a row from remote then put it back
 # when the remote_df was more than 1 older than current_version.
