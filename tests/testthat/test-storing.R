@@ -698,7 +698,7 @@ test_that("pl_upsert_and_compress() works with local table compression", {
 
 
 
-test_that("local compression works with more metadata columns and new rows/cols", {
+test_that("pl_upsert_and_compress() works with more metadata columns and new rows/cols", {
   conn <- get_unit_testing_conn()
   on.exit(DBI::dbDisconnect(conn))
 
@@ -821,8 +821,8 @@ test_that("local compression works with more metadata columns and new rows/cols"
                   nrow = 3,
                   dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
     matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
-  # matv2 is a modified matrix with the r3, c1 different
-  # And one more row and column.
+  # matv2 is a modified matrix with the r3, c1 value different and
+  # adding an additional row and column.
   # matv2 has new data (and new row, col names) compared to matv1.
   matv2 <- matrix(c(1, 2, 0,
                     3, 4, 0,
@@ -917,6 +917,42 @@ test_that("local compression works with more metadata columns and new rows/cols"
     dplyr::filter(i == 2, j == 3) |>
     dplyr::pull(value) |>
     expect_equal(3.1415926)
+
+  # Add a smaller matrix but with the same version number.
+  # This should delete some rows.
+  matv4 <- matv3[-c(1, 3, 4), -1, drop = FALSE] |>
+    matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
+  midfv4 <- tibble::tibble(Dataset = "CL-PFU IEA",
+                           ValidFromVersion = c("v1.0"),
+                           ValidToVersion = c("v1.0"),
+                           Country = "USA",
+                           EnergyType = "X",
+                           Year = 1971,
+                           matname = c("V"),
+                           matval = list(matv4))
+
+  rowsv4 <- midfv4 |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE)
+
+
+
+  # Figure out why we get extra
+  # Ignoring extra `y` columns: `Dataset`, `Country`, `EnergyType`, `Year`, `value`
+  # on the previous call.
+
+
+
+
+  should_be_two_rows <- DBI::dbReadTable(conn, name = tname)
+  expect_equal(nrow(should_be_two_rows), 2)
+
+  # Add test to verify we received the correct data.
+
+
+
 
   # Clean up after ourselves
   DBI::dbRemoveTable(conn = conn, name = "testlocalcompression")

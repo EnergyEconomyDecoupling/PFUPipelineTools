@@ -546,7 +546,14 @@ pl_upsert_and_compress <- function(.df,
     # We should download only those rows with ValidToVersion == current_version_int.
     join_cols <- setdiff(colnames(df_to_upsert), c(valid_from_version_colname,
                                                    valid_to_version_colname,
+                                                   # Ignore row, col, and val
+                                                   # columns when joining.
+                                                   mat_colnames[["row"]],
+                                                   mat_colnames[["col"]],
                                                    mat_colnames[["value"]]))
+    # When updating, we need to include row and column
+    update_cols <- c(join_cols, mat_colnames[["row"]], mat_colnames[["col"]])
+
     remote_df <- remote_tbl |>
       dplyr::filter(.data[[valid_to_version_colname]] == current_version_int) |>
       dplyr::semi_join(df_to_upsert, by = join_cols, copy = TRUE) |>
@@ -579,7 +586,7 @@ pl_upsert_and_compress <- function(.df,
                            # Need to update by all the join_cols and
                            # ValidFromVersion and value.
                            # However, value is a double, so don't include it in the join.
-                           by = c(join_cols, valid_from_version_colname),
+                           by = c(update_cols, valid_from_version_colname),
                            # Normally, I would be concerned about unmatched = "ignore" here,
                            # because it could fail silently.
                            # However, we just downloaded the data a few lines above,
@@ -600,7 +607,7 @@ pl_upsert_and_compress <- function(.df,
         dplyr::rows_update(df_replace_value_in_remote,
                            # Need to update by all the join_cols and
                            # ValidFromVersion and ValidToVersion.
-                           by = c(join_cols,
+                           by = c(update_cols,
                                   valid_from_version_colname,
                                   valid_from_version_colname),
                            # Normally, I would be concerned about unmatched = "ignore" here,
@@ -622,6 +629,7 @@ pl_upsert_and_compress <- function(.df,
       remote_tbl |>
         dplyr::rows_delete(df_remove_rows_from_remote,
                            by = pk_str,
+                           unmatched = "ignore",
                            copy = TRUE,
                            in_place = in_place)
     }
