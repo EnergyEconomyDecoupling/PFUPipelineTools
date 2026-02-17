@@ -115,7 +115,7 @@ A hash of \code{.df} according to \code{.algo}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#superseded}{\figure{lifecycle-superseded.svg}{options: alt='[Superseded]'}}}{\strong{[Superseded]}}
-Use \link{pl_upsert_and_compress(compress = FALSE)} instead.
+Use \link{pl_upsert_and_compress}\code{(compress = FALSE)} instead.
 }
 \details{
 Upserts

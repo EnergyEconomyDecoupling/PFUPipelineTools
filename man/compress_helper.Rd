@@ -94,7 +94,7 @@ This function contains the logic for that work.
 }
 \details{
 In the context of this function,
-\code{remote} means (usually older) data from the remote database.
+\code{remote} means (sometimes older) data from the remote database.
 \code{local} means new data calculated locally and meant to be uploaded
 to the remote database.
 
@@ -113,7 +113,8 @@ The possible values of the \code{what_to_do_colname} are
 \link{dataset_info}\verb{$upload_new}
 that indicate whether to change the remote table's
 \code{ValidToVersion} value,
-replace the value in the \code{value} column, or
+replace the value in the \code{value} column,
+delete the remote row, or
 upload a new row, respectively.
 The values are
 "Replace ValidToVersion in remote",
@@ -146,8 +147,8 @@ Important: \code{local_df} is assumed to contain
 a complete set of information for metadata columns
 (columns excluding \code{i}, \code{j}, and \code{value}).
 Thus, if for the same metadata and the current version,
-\code{local_df} is lacking some rows that are present in \code{remote_df},
-rows will be removed from \code{remote_df}.
+\code{local_df} is lacking some rows present in \code{remote_df},
+those rows will be removed from \code{remote_df}.
 }
 \examples{
 remote_df <- tibble::tribble(

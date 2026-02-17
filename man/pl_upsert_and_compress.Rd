@@ -128,10 +128,13 @@ namely, rowname (or index), colname (or index), and value.
 Default is \link{mat_colnames} (as a vector).}
 
 \item{valid_from_version_colname}{The string name of the valid from version column.
-Default is \link{dataset_info$valid_from_version_colname}.}
+Default is \link{dataset_info}\verb{$valid_from_version_colname} or
+"ValidFromVersion".}
 
 \item{valid_to_version_colname}{The string name of the valid to version column.
-Default is \link{dataset_info$valid_to_version_colname}.}
+Default is \link{dataset_info}\verb{$valid_to_version_colname}
+or
+"ValidToVersion".}
 
 \item{value_colname}{The string name of the value column in \code{.df}.
 Default is \link{mat_colnames}\verb{$value} or

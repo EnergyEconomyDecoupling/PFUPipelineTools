@@ -1,7 +1,7 @@
 #' Upsert a data frame with optional encoding of foreign keys
 #'
 #' `r lifecycle::badge("superseded")`
-#' Use [PFUPipelineTools::pl_upsert_and_compress(compress = FALSE)] instead.
+#' Use [PFUPipelineTools::pl_upsert_and_compress]`(compress = FALSE)` instead.
 #'
 #' Upserts
 #' (inserts or updates,
@@ -427,9 +427,12 @@ pl_upsert <- function(.df,
 #'                     namely, rowname (or index), colname (or index), and value.
 #'                     Default is [PFUPipelineTools::mat_colnames] (as a vector).
 #' @param valid_from_version_colname The string name of the valid from version column.
-#'                                   Default is [PFUPipelineTools::dataset_info$valid_from_version_colname].
+#'                                   Default is [PFUPipelineTools::dataset_info]`$valid_from_version_colname` or
+#'                                   "`r PFUPipelineTools::dataset_info$valid_from_version_colname`".
 #' @param valid_to_version_colname The string name of the valid to version column.
-#'                                 Default is [PFUPipelineTools::dataset_info$valid_to_version_colname].
+#'                                 Default is [PFUPipelineTools::dataset_info]`$valid_to_version_colname`
+#'                                 or
+#'                                 "`r PFUPipelineTools::dataset_info$valid_to_version_colname`".
 #' @param value_colname The string name of the value column in `.df`.
 #'                      Default is [PFUPipelineTools::mat_colnames]`$value` or
 #'                      "`r PFUPipelineTools::mat_colnames$value`".

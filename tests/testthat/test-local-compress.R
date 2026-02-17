@@ -427,19 +427,20 @@ test_that("compress_helper() works as expected when the current version in remot
 })
 
 
-test_that("compress_helper() works as expected when the current version in remote_df started several versions ago and some data from remote_df do not appear in local_df", {
+test_that("compress_helper() works as expected when the current version in remote_df started several versions ago, some data from remote_df do not appear in local_df, but later reappear", {
   remote_df <- remote_df_func()
-  local_df <- remote_df_func() |>
+  local_df_orig <- remote_df_func() |>
     dplyr::mutate(
       "{PFUPipelineTools::dataset_info$valid_from_version}" :=
         .data[[PFUPipelineTools::dataset_info$valid_from_version]] + 10,
       "{PFUPipelineTools::dataset_info$valid_to_version}" :=
         .data[[PFUPipelineTools::dataset_info$valid_from_version]],
       "{PFUPipelineTools::mat_colnames$value}" := .data[[PFUPipelineTools::mat_colnames$value]] + 100
-    ) |>
+    )
     # Get rid of the 3rd row in local_df.
     # So should delete it from remote_df by adjusting the ValidToVersion column
     # but not by deleting it from remote_df.
+  local_df <- local_df_orig |>
     dplyr::slice(-3)
   res <- compress_helper(remote_df = remote_df, local_df = local_df)
   expected <- dplyr::bind_rows(
@@ -464,11 +465,37 @@ test_that("compress_helper() works as expected when the current version in remot
         )
     )
   expect_equal(res, expected)
+
+  # Now, re-add the deleted row in local_df and try again.
+  # In this scenario, remote_df will be different
+  remote_df2 <- res |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$what_to_do}" := NULL
+    )
+  local_df2 <- local_df_orig
+  # Set back to original value
+  local_df2[3, "value"] <- 13
+  res2 <- compress_helper(remote_df = remote_df2, local_df = local_df2)
+  # res2 should now have the original row (with value 13),
+  # but with new version.
+  # This shows that the algorithm implemented in compress_helper()
+  # will result in duplication of SOME data in the database
+  # under the following conditions:
+  # (1) A new run of the pipeline has missing rows in local_df
+  #     compared to remote_df for same metadata.
+  # (2) Subsequent run of the pipeline restores the missing rows.
+  # This condition is expected to be very rare, because
+  # repeated local runs are expected to be conducted
+  # in a sandbox or testing database.
+  # The "final run" for a version will put everything into MexerDB
+  # and is expected to happen infrequently
+  # (maybe only once)
+  # for any version of the database.
+  expected2 <- local_df2 |>
+    dplyr::slice(3) |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$valid_to_version_colname}" := current_version_int,
+      "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
+    )
+  expect_equal(res2, expected2)
 })
-
-
-
-
-
-# Test a case where we delete a row from remote then put it back
-# when the remote_df was more than 1 older than current_version.
