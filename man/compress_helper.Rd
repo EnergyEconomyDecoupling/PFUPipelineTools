@@ -73,14 +73,6 @@ Default is
 \item{tol}{The tolerance within which a local value will be
 assumed same as the remote value.
 Default is \code{1e-6}.}
-
-\item{i_colname}{The name of the column containing row indices for matrices.
-Default is \link{mat_colnames}\verb{$i} or
-"i".}
-
-\item{j_colname}{The name of the column containing column indices for matrices.
-Default is \link{mat_colnames}\verb{$j} or
-"j".}
 }
 \value{
 A data frame with same columns as \code{remote_df} and \code{local_df} and an

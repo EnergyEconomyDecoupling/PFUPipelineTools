@@ -315,8 +315,8 @@ test_that("compress_helper() works with completely new information with updated 
   local_df <- local_df_func()[1, ] |>
     dplyr::mutate(
       "{PFUPipelineTools::mat_colnames$value}" := 42,
-      "{Recca::psut_cols$country}" := 10000,
-      "{Recca::psut_cols$year}" := 10000
+      "{PFUPipelineTools::usual_hash_group_cols[['country']]}" := 10000,
+      "{PFUPipelineTools::usual_hash_group_cols[['year']]}" := 10000
     )
   res <- compress_helper(remote_df = remote_df, local_df = local_df)
   expected <- local_df |>

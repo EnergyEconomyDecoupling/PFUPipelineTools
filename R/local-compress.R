@@ -70,12 +70,6 @@
 #'            Defaults are [PFUPipelineTools::dataset_info]`$valid_from_version_colname` and [PFUPipelineTools::dataset_info]`$valid_to_version_colname` or
 #'            "`r PFUPipelineTools::dataset_info$valid_from_version_colname`" and
 #'            "`r PFUPipelineTools::dataset_info$valid_to_version_colname`".
-#' @param i_colname The name of the column containing row indices for matrices.
-#'                  Default is [PFUPipelineTools::mat_colnames]`$i` or
-#'                  "`r PFUPipelineTools::mat_colnames$i`".
-#' @param j_colname The name of the column containing column indices for matrices.
-#'                  Default is [PFUPipelineTools::mat_colnames]`$j` or
-#'                  "`r PFUPipelineTools::mat_colnames$j`".
 #' @param value_colname The name of the value column.
 #'                      Default is [PFUPipelineTools::mat_colnames]`$value` or
 #'                      "`r PFUPipelineTools::mat_colnames$value`".

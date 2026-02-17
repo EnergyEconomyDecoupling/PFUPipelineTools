@@ -36,7 +36,7 @@ Default is "dbcreator" for
 \code{\link[=get_scratchmdb_conn]{get_scratchmdb_conn()}}, and
 \code{\link[=get_scratchedb_conn]{get_scratchedb_conn()}}
 appropriate for development.
-The default for \code{\link[=get_unit_testing_conn]{get_unit_testing_conn()}} is "mkh2".}
+The default user for \code{\link[=get_unit_testing_conn]{get_unit_testing_conn()}} is "mkh2".}
 
 \item{host}{The string site of the database.
 Default is "mexer.site".}
