@@ -535,6 +535,9 @@ pl_upsert_and_compress <- function(.df,
       round_double_cols(digits = digits)
   }
 
+  # Get the remote table
+  remote_tbl <- dplyr::tbl(src = conn, db_table_name)
+
   if (compress) {
 
     # Download any existing data starting with df_to_upsert.
@@ -544,7 +547,7 @@ pl_upsert_and_compress <- function(.df,
     join_cols <- setdiff(colnames(df_to_upsert), c(valid_from_version_colname,
                                                    valid_to_version_colname,
                                                    mat_colnames[["value"]]))
-    remote_df <- dplyr::tbl(src = conn, db_table_name) |>
+    remote_df <- remote_tbl |>
       dplyr::filter(.data[[valid_to_version_colname]] == current_version_int) |>
       dplyr::semi_join(df_to_upsert, by = join_cols, copy = TRUE) |>
       dplyr::collect()
@@ -559,9 +562,9 @@ pl_upsert_and_compress <- function(.df,
 
     # There are four possibilities:
     # (1) Need up replace the value in the ValidToVersion column,
-    # (2) Need to replace the value in the value column, or
-    # (3) Need to upload entirely new data.
-    # (4) Need to remove rows from the remote.
+    # (2) Need to replace the value in the value column,
+    # (3) Need to delete rows from the remote, or
+    # (4) Need to upload entirely new data.
     # The WhatToDo column in what_to_do_df tells how to proceed.
 
     # (1) Replace ValidToVersion in remote when needed
@@ -571,7 +574,7 @@ pl_upsert_and_compress <- function(.df,
         "{what_to_do_colname}" := NULL
       )
     if (nrow(df_replace_valid_to_version_in_remote) > 0) {
-      dplyr::tbl(src = conn, db_table_name) |>
+      remote_tbl |>
         dplyr::rows_update(df_replace_valid_to_version_in_remote,
                            # Need to update by all the join_cols and
                            # ValidFromVersion and value.
@@ -593,7 +596,7 @@ pl_upsert_and_compress <- function(.df,
         "{what_to_do_colname}" := NULL
       )
     if (nrow(df_replace_value_in_remote) > 0) {
-      dplyr::tbl(src = conn, db_table_name) |>
+      remote_tbl |>
         dplyr::rows_update(df_replace_value_in_remote,
                            # Need to update by all the join_cols and
                            # ValidFromVersion and ValidToVersion.
@@ -609,33 +612,38 @@ pl_upsert_and_compress <- function(.df,
                            in_place = in_place)
     }
 
-    # (3) Upload new when needed.
-    df_new <- what_to_do_df |>
-      dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$upload_new) |>
-      dplyr::mutate(
-        "{what_to_do_colname}" := NULL
-      )
-    if (nrow(df_new) > 0) {
-      dplyr::tbl(conn, db_table_name) |>
-        dplyr::rows_upsert(df_new,
-                           by = pk_str,
-                           copy = TRUE,
-                           in_place = in_place)
-    }
-
-    # (4) Remove rows from remote
+    # (3) Remove rows from remote
     df_remove_rows_from_remote <- what_to_do_df |>
       dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$delete_row_in_remote) |>
       dplyr::mutate(
         "{what_to_do_colname}" := NULL
       )
     if (nrow(df_remove_rows_from_remote) > 0) {
-      ############# Code here to remove rows in remote ##############
+      remote_tbl |>
+        dplyr::rows_delete(df_remove_rows_from_remote,
+                           by = pk_str,
+                           copy = TRUE,
+                           in_place = in_place)
     }
+
+    # (4) Upload new when needed.
+    df_new <- what_to_do_df |>
+      dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$upload_new) |>
+      dplyr::mutate(
+        "{what_to_do_colname}" := NULL
+      )
+    if (nrow(df_new) > 0) {
+      remote_tbl |>
+        dplyr::rows_upsert(df_new,
+                           by = pk_str,
+                           copy = TRUE,
+                           in_place = in_place)
+    }
+
 
   } else {
     # No compression, just upsert.
-    dplyr::tbl(conn, db_table_name) |>
+    remote_tbl |>
       dplyr::rows_upsert(df_to_upsert,
                          by = pk_str,
                          copy = TRUE,
