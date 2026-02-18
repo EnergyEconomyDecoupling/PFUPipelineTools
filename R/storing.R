@@ -583,10 +583,11 @@ pl_upsert_and_compress <- function(.df,
     if (nrow(df_replace_valid_to_version_in_remote) > 0) {
       remote_tbl |>
         dplyr::rows_update(df_replace_valid_to_version_in_remote,
-                           # Need to update by all the join_cols and
+                           # Need to update by all the update_cols and
                            # ValidFromVersion and value.
                            # However, value is a double, so don't include it in the join.
-                           by = c(update_cols, valid_from_version_colname),
+                           by = c(update_cols,
+                                  valid_from_version_colname),
                            # Normally, I would be concerned about unmatched = "ignore" here,
                            # because it could fail silently.
                            # However, we just downloaded the data a few lines above,
@@ -605,11 +606,11 @@ pl_upsert_and_compress <- function(.df,
     if (nrow(df_replace_value_in_remote) > 0) {
       remote_tbl |>
         dplyr::rows_update(df_replace_value_in_remote,
-                           # Need to update by all the join_cols and
+                           # Need to update by all the update_cols and
                            # ValidFromVersion and ValidToVersion.
                            by = c(update_cols,
                                   valid_from_version_colname,
-                                  valid_from_version_colname),
+                                  valid_to_version_colname),
                            # Normally, I would be concerned about unmatched = "ignore" here,
                            # because it could fail silently.
                            # However, we just downloaded the data a few lines above,
@@ -628,7 +629,10 @@ pl_upsert_and_compress <- function(.df,
     if (nrow(df_remove_rows_from_remote) > 0) {
       remote_tbl |>
         dplyr::rows_delete(df_remove_rows_from_remote,
-                           by = pk_str,
+                           by = c(update_cols,
+                                  valid_from_version_colname,
+                                  valid_to_version_colname,
+                                  value_colname),
                            unmatched = "ignore",
                            copy = TRUE,
                            in_place = in_place)
@@ -642,8 +646,9 @@ pl_upsert_and_compress <- function(.df,
       )
     if (nrow(df_new) > 0) {
       remote_tbl |>
-        dplyr::rows_upsert(df_new,
+        dplyr::rows_insert(df_new,
                            by = pk_str,
+                           conflict = "ignore",
                            copy = TRUE,
                            in_place = in_place)
     }

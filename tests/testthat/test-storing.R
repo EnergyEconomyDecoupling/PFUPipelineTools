@@ -920,7 +920,7 @@ test_that("pl_upsert_and_compress() works with more metadata columns and new row
 
   # Add a smaller matrix but with the same version number.
   # This should delete some rows.
-  matv4 <- matv3[-c(1, 3, 4), -1, drop = FALSE] |>
+  matv4 <- matv3[-c(1, 2, 4), -1, drop = FALSE] |>
     matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
   midfv4 <- tibble::tibble(Dataset = "CL-PFU IEA",
                            ValidFromVersion = c("v1.0"),
@@ -937,24 +937,22 @@ test_that("pl_upsert_and_compress() works with more metadata columns and new row
                            index_map = index_map,
                            in_place = TRUE)
 
+  should_be_one_row <- DBI::dbReadTable(conn, name = tname)
+  expect_equal(nrow(should_be_one_row), 1)
+  expected <- tibble::tibble(Dataset = 5,
+                             ValidFromVersion = 1,
+                             ValidToVersion = current_version_int,
+                             Country = 146,
+                             EnergyType = 2,
+                             Year = 1971,
+                             matname = 7,
+                             i = 3,
+                             j = 2,
+                             value = 6) |>
+    as.data.frame()
+  expect_equal(should_be_one_row, expected)
 
-
-  # Figure out why we get extra
-  # Ignoring extra `y` columns: `Dataset`, `Country`, `EnergyType`, `Year`, `value`
-  # on the previous call.
-
-
-
-
-  should_be_two_rows <- DBI::dbReadTable(conn, name = tname)
-  expect_equal(nrow(should_be_two_rows), 2)
-
-  # Add test to verify we received the correct data.
-
-
-
-
-  # Clean up after ourselves
+    # Clean up after ourselves
   DBI::dbRemoveTable(conn = conn, name = "testlocalcompression")
   DBI::dbRemoveTable(conn = conn, name = "Country")
   DBI::dbRemoveTable(conn = conn, name = "EnergyType")
@@ -964,9 +962,3 @@ test_that("pl_upsert_and_compress() works with more metadata columns and new row
   DBI::dbRemoveTable(conn = conn, name = "Version")
   DBI::dbRemoveTable(conn = conn, name = "Year")
 })
-
-
-
-
-# Try a test where we remove rows/cols from a matrix
-# in an existing version.
