@@ -952,7 +952,7 @@ test_that("pl_upsert_and_compress() works with more metadata columns and new row
     as.data.frame()
   expect_equal(should_be_one_row, expected)
 
-    # Clean up after ourselves
+  # Clean up after ourselves
   DBI::dbRemoveTable(conn = conn, name = "testlocalcompression")
   DBI::dbRemoveTable(conn = conn, name = "Country")
   DBI::dbRemoveTable(conn = conn, name = "EnergyType")
