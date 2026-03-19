@@ -31,7 +31,6 @@ Default is "MexerDB" for \code{\link[=get_mexerdb_conn]{get_mexerdb_conn()}},
 
 \item{user}{The string username at \code{host}.
 Default is "dbcreator" for
-\code{\link[=get_mexerdb_conn]{get_mexerdb_conn()}},
 \code{\link[=get_sandboxdb_conn]{get_sandboxdb_conn()}},
 \code{\link[=get_scratchmdb_conn]{get_scratchmdb_conn()}}, and
 \code{\link[=get_scratchedb_conn]{get_scratchedb_conn()}}

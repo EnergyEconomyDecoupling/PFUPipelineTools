@@ -18,7 +18,6 @@
 #'               "ScratchEDB" for [get_scratchedb_conn()].
 #' @param user The string username at `host`.
 #'             Default is "dbcreator" for
-#'             [get_mexerdb_conn()],
 #'             [get_sandboxdb_conn()],
 #'             [get_scratchmdb_conn()], and
 #'             [get_scratchedb_conn()]
