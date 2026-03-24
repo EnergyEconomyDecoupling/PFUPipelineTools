@@ -221,7 +221,9 @@ by setting appropriate values in the
 \code{ValidFromVersion} and \code{ValidToVersion} columns.
 
 This function assumes the \code{ValidToVersion} column in the remote contains
-\code{2147483647} (the largest possible integer in both PostgreSQL and \code{R})
+\code{2147483647}
+(the largest possible integer in both PostgreSQL and \code{R}
+and equal to \code{PFUPipelineTools::current_version_int})
 for the most current version of the data.
 
 There are only a few possibilities for rows of data

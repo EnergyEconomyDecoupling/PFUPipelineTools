@@ -313,7 +313,9 @@ pl_upsert <- function(.df,
 #' `ValidFromVersion` and `ValidToVersion` columns.
 #'
 #' This function assumes the `ValidToVersion` column in the remote contains
-#' `2147483647` (the largest possible integer in both PostgreSQL and `R`)
+#' `2147483647`
+#' (the largest possible integer in both PostgreSQL and `R`
+#' and equal to `PFUPipelineTools::current_version_int`)
 #' for the most current version of the data.
 #'
 #' There are only a few possibilities for rows of data

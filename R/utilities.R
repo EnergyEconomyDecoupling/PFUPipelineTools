@@ -893,6 +893,145 @@ round_double_cols <- function(.df, digits = 15) {
 }
 
 
+#' Create a database for testing table compression
+#'
+#' This function is used for testing.
+#'
+#' @param conn The connection to the database.
+#'
+#' @returns The `index_map` for the database.
+#'
+#' @export
+create_compression_testing_db <- function(conn) {
+  # Set the names of the table so we can use the variable in several places
+  tname <- "testlocalcompression"
+  dataset <- "Dataset"
+  version <- "Version"
+  country <- "Country"
+  energy_type <- "EnergyType"
+  year <- "Year"
+  matname <- "matname"
+  index <- "Index"
+
+  # Start with a clean slate
+  clean_compression_testing_db(conn)
+
+  # Create data model
+  dm <- list(testlocalcompression = data.frame(Dataset = as.integer(5),
+                                               ValidFromVersion = as.integer(1),
+                                               ValidToVersion = as.integer(2),
+                                               Country = as.integer(49),
+                                               EnergyType = as.integer(1),
+                                               Year = as.integer(1971),
+                                               matname = as.integer(2),
+                                               i = as.integer(1),
+                                               j = as.integer(1),
+                                               value = 3.1415926) |>
+               # Delete all rows, but keep names and column types
+               dplyr::filter(FALSE),
+             Dataset = data.frame(DatasetID = as.integer(5),
+                                  Dataset = "CL-PFU IEA"),
+             Version = data.frame(VersionID = as.integer(c(1, 2, 3, current_version_int)),
+                                  Version = c("v1.0", "v2.0", "v3.0", "current")),
+             Country = data.frame(CountryID = as.integer(c(49, 146)),
+                                  Country = c("GHA", "USA")),
+             EnergyType = data.frame(EnergyTypeID = as.integer(c(1, 2)),
+                                     EnergyType = c("E", "X")),
+             Year = data.frame(YearID = as.integer(c(1971, 1972)),
+                               Year = as.integer(c(1971, 1972))),
+             matname = data.frame(matnameID = as.integer(c(2, 3, 7, 8)),
+                                  matname = c("R", "U", "V", "Y")),
+             RCType = data.frame(RCTypeID	= c(1, 2),
+                                 RCType	= c("Industry", "Product"),
+                                 FullName = c("Industry", "Product"),
+                                 Description = c("Resource reservoirs, indistries, and final demand",
+                                                 "Energy carriers")),
+             matnameRCType = data.frame(matname = c(1, 2, 3, 4),
+                                        rowtype = c(1, 2, 1, 2),
+                                        coltype = c(2, 1, 2, 1)),
+             Index = data.frame(IndexID = as.integer(c(1, 2, 3, 4, 5)),
+                                Index = c("Hard coal (if no detail) [from Resources]",
+                                          "Brown coal (if no detail) [from Resources]",
+                                          "Anthracite [from Resources]",
+                                          "Coking coal [from Resources]",
+                                          "Other bituminous coal [from Resources]"))
+  ) |>
+    dm::new_dm() |>
+    dm::dm_add_pk(testlocalcompression, columns = c(ValidFromVersion, ValidToVersion,
+                                                    matname, i, j)) |>
+    dm::dm_add_pk(Dataset, columns = c(DatasetID)) |>
+    dm::dm_add_pk(Version, columns = c(VersionID)) |>
+    dm::dm_add_pk(Country, columns = c(CountryID)) |>
+    dm::dm_add_pk(EnergyType, columns = c(EnergyTypeID)) |>
+    dm::dm_add_pk(Year, columns = c(YearID)) |>
+    dm::dm_add_pk(matname, columns = c(matnameID)) |>
+    dm::dm_add_pk(RCType, columns = c(RCTypeID)) |>
+    dm::dm_add_pk(matnameRCType, columns = c(matname)) |>
+    dm::dm_add_pk(Index, columns = c(IndexID)) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = Dataset,
+                  ref_table = Dataset, ref_columns = DatasetID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = ValidFromVersion,
+                  ref_table = Version, ref_columns = VersionID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = ValidToVersion,
+                  ref_table = Version, ref_columns = VersionID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = Country,
+                  ref_table = Country, ref_columns = CountryID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = EnergyType,
+                  ref_table = EnergyType, ref_columns = EnergyTypeID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = Year,
+                  ref_table = Year, ref_columns = YearID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = matname,
+                  ref_table = matname, ref_columns = matnameID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = i,
+                  ref_table = Index, ref_columns = IndexID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = j,
+                  ref_table = Index, ref_columns = IndexID) |>
+    dm::dm_add_fk(table = matnameRCType, columns = rowtype,
+                  ref_table = RCType, ref_columns = RCTypeID) |>
+    dm::dm_add_fk(table = matnameRCType, columns = coltype,
+                  ref_table = RCType, ref_columns = RCTypeID)
+  dm::copy_dm_to(conn, dm = dm, temporary = FALSE)
+  # Create index map
+  index_map <- list(ValidFromVersion = data.frame(IndexID = as.integer(c(1, 2, 3,
+                                                                         current_version_int)),
+                                                  Index = c("v1.0", "v2.0", "v3.0", "current")),
+                    ValidToVersion = data.frame(IndexID = as.integer(c(1, 2, 3,
+                                                                       current_version_int)),
+                                                Index = c("v1.0", "v2.0", "v3.0", "current")),
+                    row = data.frame(IndexID = as.integer(1:4),
+                                     Index = c("r1", "r2", "r3", "r4")),
+                    col = data.frame(IndexID = as.integer(1:3),
+                                     Index = c("c1", "c2", "c3")))
+  return(index_map)
+}
 
 
+
+#' Cleans up after a table compression test
+#'
+#' @param conn The connection to the database.
+#'
+#' @returns `TRUE` invisibly.
+#'
+#' @export
+clean_compression_testing_db <- function(conn) {
+  # Get the name of the database.
+  db_name <- DBI::dbGetQuery(conn, "SELECT current_database();")
+  # It should be "unit_testing".  If not, throw an error.
+  assertthat::assert_that(db_name == "unit_testing",
+                          msg = paste0("You can only clean tables from the 'unit_testing' database. ",
+                                       "You attempted to clean tables from ",
+                                       db_name,
+                                       ", which is illegal."))
+
+  # Avoid unwanted messages
+  DBI::dbExecute(conn, "SET client_min_messages TO WARNING;")
+
+  for (tname in  DBI::dbListTables(conn)) {
+    DBI::dbExecute(conn, paste0('DROP TABLE IF EXISTS "', tname, '" CASCADE;'))
+  }
+
+  # Set back to original message level
+  DBI::dbExecute(conn, "SET client_min_messages TO NOTICE;")
+}
 

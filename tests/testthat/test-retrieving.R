@@ -637,3 +637,76 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
 
 
 
+test_that("pl_filter_collect() works with compressed remote tables", {
+  conn <- get_unit_testing_conn()
+  on.exit(DBI::dbDisconnect(conn))
+
+  index_map <- create_compression_testing_db(conn)
+
+
+  # Set the names of the table so we can use the variable in several places
+  tname <- "testlocalcompression"
+
+  # Add a few matrices
+  # matv1 is the original matrix
+  matv1 <- matrix(c(1, 2,
+                    3, 4,
+                    5, 6),
+                  byrow = TRUE,
+                  nrow = 3,
+                  dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
+    matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
+  # Create a matsindf data frame for the v1 matrix
+  midfv1 <- tibble::tibble(Dataset = "CL-PFU IEA",
+                           ValidFromVersion = c("v1.0"),
+                           ValidToVersion = c("current"),
+                           Country = "USA",
+                           EnergyType = "E",
+                           Year = 1971,
+                           matname = c("Y"),
+                           matval = list(matv1))
+  # Upsert the original matrix, without compression.
+  rowsv1 <- midfv1 |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE,
+                           compress = FALSE)
+
+  # matv2 is a modified matrix with the r3, c1 different
+  matv2 <- matrix(c(1, 2,
+                    3, 4,
+                    42, 6),
+                  byrow = TRUE,
+                  nrow = 3,
+                  dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
+    matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
+  # Create a matsindf data frame for the v2 matrix
+  midfv2 <- tibble::tibble(Dataset = "CL-PFU IEA",
+                           ValidFromVersion = "v2.0",
+                           ValidToVersion = "v2.0",
+                           Country = "GHA",
+                           EnergyType = "E",
+                           Year = 1972,
+                           matname = "V",
+                           matval = list(matv2))
+  # Upsert v2 without compression
+  rowsv2 <- midfv2 |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE,
+                           compress = FALSE)
+
+  # Check that we can get v1 back successfully
+  v1_retrieved <- pl_filter_collect(db_table_name = tname, version_string = "v1.0",
+                                    collect = TRUE,
+                                    conn = conn)
+
+
+
+  clean_compression_testing_db(conn)
+
+})
+
+
