@@ -699,7 +699,8 @@ test_that("pl_filter_collect() works with compressed remote tables", {
                            compress = FALSE)
 
   # Check that we can get v1 back successfully
-  v1_retrieved <- pl_filter_collect(db_table_name = tname, version_string = "v1.0",
+  v1_retrieved <- pl_filter_collect(db_table_name = tname,
+                                    version_string = "v1.0",
                                     collect = TRUE,
                                     conn = conn)
 
