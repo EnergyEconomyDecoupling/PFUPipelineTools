@@ -751,7 +751,7 @@ filter_on_version_string <- function(tbl,
 
   if (length(version_string) > 1) {
     # Eliminate duplicates
-    out_list <- lapply(unique(version_string), function(this_version_string) {
+    out_list <- lapply(version_string, function(this_version_string) {
       # If we have more than one version_string,
       # call ourselves recursively and stack the results.
       filter_on_version_string(tbl = tbl,
