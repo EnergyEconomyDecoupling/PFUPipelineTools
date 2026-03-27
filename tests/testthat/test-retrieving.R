@@ -154,11 +154,7 @@ test_that("passing filters in ... works as expected", {
 test_that("pl_filter_collect() works as expected", {
   skip_on_ci()
   skip_on_cran()
-  conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
-                         dbname = "unit_testing",
-                         host = "mexer.site",
-                         port = 5432,
-                         user = "mkh2")
+  conn <- get_unit_testing_conn()
   on.exit(DBI::dbDisconnect(conn))
 
   db_table_name <- "PLFilterCollectTestTable"
@@ -638,6 +634,10 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
 
 
 test_that("pl_filter_collect() works with compressed remote tables", {
+
+  skip_on_ci()
+  skip_on_cran()
+
   conn <- get_unit_testing_conn()
   on.exit(DBI::dbDisconnect(conn))
 
