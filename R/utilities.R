@@ -475,7 +475,9 @@ decode_fk_keys <- function(v_key,
     # Set the colname to be the name of the fk key column.
     magrittr::set_names(fk_key_col_in_fk_table_name) |>
     # Join with the fk parent table
-    dplyr::left_join(this_fk_parent_table, by = fk_key_col_in_fk_table_name) |>
+    dplyr::left_join(this_fk_parent_table,
+                     by = fk_key_col_in_fk_table_name,
+                     copy = TRUE) |>
     # Extract the column that we want to return
     magrittr::extract2(fk_value_col_in_fk_table_name)
   # Check for errors
@@ -747,10 +749,10 @@ filter_on_version_string <- function(tbl,
                                      valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
                                      valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname) {
 
+  # Eliminate duplicates
   version_string <- unique(version_string)
 
   if (length(version_string) > 1) {
-    # Eliminate duplicates
     out_list <- lapply(version_string, function(this_version_string) {
       # If we have more than one version_string,
       # call ourselves recursively and stack the results.
