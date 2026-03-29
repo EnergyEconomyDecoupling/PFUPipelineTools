@@ -136,16 +136,24 @@ upload_beatles <- function(conn) {
 #' @return A list of tables deleted
 clean_up_beatles <- function(conn) {
 
+
   beatles_tables <- c("MemberRole", "Member", "Role")
   # Only drop tables that exist
   db_tables <- DBI::dbListTables(conn)
   db_tables_in_beatles_tables <- which(db_tables %in% beatles_tables)
   to_drop <- db_tables[db_tables_in_beatles_tables]
 
+  # Avoid unwanted messages
+  DBI::dbExecute(conn, "SET client_min_messages TO WARNING;")
+
   to_drop |>
     purrr::map(function(this_table_name) {
       DBI::dbExecute(conn, paste0('DROP TABLE "', this_table_name, '" CASCADE;'))
     })
+
+  # Set back to original message level
+  DBI::dbExecute(conn, "SET client_min_messages TO NOTICE;")
+
   return(to_drop)
 }
 
