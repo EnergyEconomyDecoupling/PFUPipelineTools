@@ -701,9 +701,11 @@ test_that("pl_filter_collect() works with compressed remote tables", {
   # Check that we can get v1 back successfully
   v1_retrieved <- pl_filter_collect(db_table_name = tname,
                                     version_string = "v1.0",
+                                    index_map = index_map,
                                     collect = TRUE,
-                                    conn = conn)
-  expect_equal(v1_retrieved$Y[[1]] |> as.matrix(), matv1)
+                                    conn = conn,
+                                    matrix_class = "matrix")
+  expect_equal(v1_retrieved$Y[[1]], matv1)
 
 
 
