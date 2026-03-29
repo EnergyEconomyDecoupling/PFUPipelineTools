@@ -703,6 +703,7 @@ test_that("pl_filter_collect() works with compressed remote tables", {
                                     version_string = "v1.0",
                                     collect = TRUE,
                                     conn = conn)
+  expect_equal(v1_retrieved$Y[[1]] |> as.matrix(), matv1)
 
 
 

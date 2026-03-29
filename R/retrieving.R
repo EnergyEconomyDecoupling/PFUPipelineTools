@@ -283,7 +283,6 @@ pl_filter_collect <- function(db_table_name,
                               ...,
                               version_string = NULL,
                               collect = FALSE,
-                              decode_fks = TRUE,
                               create_matsindf = collect,
                               conn,
                               schema = schema_from_conn(conn = conn),
@@ -291,13 +290,18 @@ pl_filter_collect <- function(db_table_name,
                               index_map_name = "Index",
                               index_map = fk_parent_tables[[index_map_name]],
                               rctype_table_name = "matnameRCType",
-                              # Probably need to delete the rctypes argument.
-                              # Will calculate it internally
                               rctypes = decode_fks(db_table_name = rctype_table_name,
                                                    collect = TRUE,
                                                    conn = conn,
                                                    schema = schema,
-                                                   fk_parent_tables = fk_parent_tables),
+                                                   fk_parent_tables = fk_parent_tables) |>
+                                dplyr::mutate(
+                                  "{matname}" := decode_fk_keys(.data[[matname]],
+                                                                fk_table_name = "matname",
+                                                                conn = conn,
+                                                                schema = schema,
+                                                                fk_parent_tables = fk_parent_tables,
+                                                                pk_suffix = PFUPipelineTools::key_col_info$pk_suffix)),
                               matrix_class = c("Matrix", "matrix"),
                               matname = PFUPipelineTools::mat_meta_cols$matname,
                               matval = PFUPipelineTools::mat_meta_cols$matval,
@@ -330,43 +334,6 @@ pl_filter_collect <- function(db_table_name,
                fk_parent_tables = fk_parent_tables,
                collect = FALSE)
 
-  # Get rctypes encoded here
-  # rctypes <- DBI::dbReadTable(conn, name = rctype_table_name)
-
-  if (decode_fks) {
-    # Decode all of rctypes.
-    rctypes <- rctypes # |>
-      # Decode all foreign keys.
-
-
-      # Decode the matname column
-
-
-
-
-      # decode_fks(db_table_name = rctype_table_name,
-      #                    collect = TRUE,
-      #                    conn = conn,
-      #                    schema = schema,
-      #                    fk_parent_tables = fk_parent_tables) |>
-      # dplyr::mutate(
-      #   "{matname}" := decode_fk_keys(.data[[matname]],
-      #                                 fk_table_name = "matname",
-      #                                 conn = conn,
-      #                                 schema = schema,
-      #                                 fk_parent_tables = fk_parent_tables,
-      #                                 pk_suffix = PFUPipelineTools::key_col_info$pk_suffix)),
-
-
-
-    # Decode foreign keys of the outgoing data frame,
-    # but without collecting to ensure a tbl is returned..
-    # out <- out |>
-    #   decode_fks(db_table_name = db_table_name,
-    #              schema = schema,
-    #              fk_parent_tables = fk_parent_tables,
-    #              collect = FALSE)
-  }
 
   # Finally, filter the foreign keys in the tbl based on the expressions in ...
   filter_args <- rlang::enquos(...)

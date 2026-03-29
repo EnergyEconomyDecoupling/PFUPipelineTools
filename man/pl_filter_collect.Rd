@@ -16,8 +16,11 @@ pl_filter_collect(
   index_map_name = "Index",
   index_map = fk_parent_tables[[index_map_name]],
   rctype_table_name = "matnameRCType",
-  rctypes = decode_fks(db_table_name = rctype_table_name, collect = TRUE, conn = conn,
-    schema = schema, fk_parent_tables = fk_parent_tables),
+  rctypes = dplyr::mutate(decode_fks(db_table_name = rctype_table_name, collect = TRUE,
+    conn = conn, schema = schema, fk_parent_tables = fk_parent_tables), `:=`("{matname}",
+    decode_fk_keys(.data[[matname]], fk_table_name = "matname", conn = conn, schema =
+    schema, fk_parent_tables = fk_parent_tables, pk_suffix =
+    PFUPipelineTools::key_col_info$pk_suffix))),
   matrix_class = c("Matrix", "matrix"),
   matname = PFUPipelineTools::mat_meta_cols$matname,
   matval = PFUPipelineTools::mat_meta_cols$matval,
@@ -100,6 +103,12 @@ Defaults are
 and
 \code{PFUPipelineTools::dataset_info$valid_to_version_colname},
 respectively.}
+
+\item{decode_fks}{A boolean that tells whether to decode foreign keys in the result.
+Must be \code{TRUE} if \code{...} contains filtering expressions
+with decoded, human-readable values
+(instead of encoded database integers).
+Default is \code{TRUE}.}
 }
 \value{
 A filtered version of \code{db_table_name} downloaded from \code{conn}.

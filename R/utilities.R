@@ -948,7 +948,7 @@ create_compression_testing_db <- function(conn) {
                                  FullName = c("Industry", "Product"),
                                  Description = c("Resource reservoirs, indistries, and final demand",
                                                  "Energy carriers")),
-             matnameRCType = data.frame(matname = c(1, 2, 3, 4),
+             matnameRCType = data.frame(matname = c(2, 3, 7, 8),
                                         rowtype = c(1, 2, 1, 2),
                                         coltype = c(2, 1, 2, 1)),
              Index = data.frame(IndexID = as.integer(c(1, 2, 3, 4, 5)),
