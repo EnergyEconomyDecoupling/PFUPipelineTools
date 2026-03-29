@@ -334,7 +334,6 @@ pl_filter_collect <- function(db_table_name,
                fk_parent_tables = fk_parent_tables,
                collect = FALSE)
 
-
   # Finally, filter the foreign keys in the tbl based on the expressions in ...
   filter_args <- rlang::enquos(...)
   out <- out |>
@@ -344,6 +343,15 @@ pl_filter_collect <- function(db_table_name,
     # Collect (execute the SQL), if desired.
     out <- out |>
       dplyr::collect()
+  }
+
+  if (!is.null(version_string)) {
+    # Set the version columns to the version_string, if requested.
+    out <- out |>
+      dplyr::mutate(
+        "{valid_from_version_colname}" := version_string,
+        "{valid_to_version_colname}" := version_string
+      )
   }
 
   if (create_matsindf) {

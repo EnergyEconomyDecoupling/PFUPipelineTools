@@ -245,12 +245,7 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
 
   skip_on_ci()
   skip_on_cran()
-
-  conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
-                         dbname = "unit_testing",
-                         host = "mexer.site",
-                         port = 5432,
-                         user = "mkh2")
+  conn <- get_unit_testing_conn()
   on.exit(DBI::dbDisconnect(conn))
 
   # Database table with 2 version columns
@@ -393,7 +388,12 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
                         schema = schema,
                         fk_parent_tables = fk_parent_tables,
                         collect = TRUE) |>
-      expect_equal(expected_all |> dplyr::filter(ValidFromVersion == "v4"))
+      expect_equal(expected_all |>
+                     dplyr::filter(ValidFromVersion == "v4") |>
+                     dplyr::mutate(
+                       ValidFromVersion = paste0("v", i),
+                       ValidToVersion = paste0("v", i)
+                     ))
   }
 
   #### Test pl_filter_collect() with versions and
@@ -683,7 +683,7 @@ test_that("pl_filter_collect() works with compressed remote tables", {
   midfv2 <- tibble::tibble(Dataset = "CL-PFU IEA",
                            ValidFromVersion = "v2.0",
                            ValidToVersion = "v2.0",
-                           Country = "GHA",
+                           Country = "USA",
                            EnergyType = "E",
                            Year = 1971,
                            matname = "Y",
@@ -704,6 +704,7 @@ test_that("pl_filter_collect() works with compressed remote tables", {
                                     conn = conn,
                                     matrix_class = "matrix")
   expect_equal(v1_retrieved$Y[[1]], matv1)
+  # Check that the version columns are correct
 
   # Check that we can get v2 back successfully
   v2_retrieved <- pl_filter_collect(db_table_name = tname,
@@ -713,8 +714,14 @@ test_that("pl_filter_collect() works with compressed remote tables", {
                                     conn = conn,
                                     matrix_class = "matrix")
   expect_equal(v2_retrieved$Y[[1]], matv2)
+  # Check that the version columns are correct
 
 
+
+  # Test retrieving without specifying a version string
+  # Do we get the right answer?
+  # Can we still filter on the version string columns after the fact,
+  # if we do not create matsindf?
 
   clean_compression_testing_db(conn)
 
