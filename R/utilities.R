@@ -804,8 +804,8 @@ filter_on_version_string <- function(tbl,
 
   # Filter the outgoing data frame according to the version_index
   out <- tbl |>
-    dplyr::filter(.data[[valid_from_version_colname]] <= version_index) |>
-    dplyr::filter(.data[[valid_to_version_colname]] >= version_index)
+    dplyr::filter(.data[[valid_from_version_colname]] <= version_index &
+                    version_index <= .data[[valid_to_version_colname]])
 
   if (collect) {
     out <- out |>
