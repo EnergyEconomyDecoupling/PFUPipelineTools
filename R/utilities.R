@@ -951,12 +951,8 @@ create_compression_testing_db <- function(conn) {
              matnameRCType = data.frame(matname = c(2, 3, 7, 8),
                                         rowtype = c(1, 2, 1, 2),
                                         coltype = c(2, 1, 2, 1)),
-             Index = data.frame(IndexID = as.integer(c(1, 2, 3, 4, 5)),
-                                Index = c("Hard coal (if no detail) [from Resources]",
-                                          "Brown coal (if no detail) [from Resources]",
-                                          "Anthracite [from Resources]",
-                                          "Coking coal [from Resources]",
-                                          "Other bituminous coal [from Resources]"))
+             Index = data.frame(IndexID = as.integer(c(1, 2, 3, 4, 5, 6, 7)),
+                                Index = c("r1", "r2", "r3", "r4", "c1", "c2", "c3"))
   ) |>
     dm::new_dm() |>
     dm::dm_add_pk(testlocalcompression, columns = c(ValidFromVersion, ValidToVersion,
