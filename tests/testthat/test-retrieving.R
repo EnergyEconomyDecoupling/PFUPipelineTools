@@ -655,7 +655,7 @@ test_that("pl_filter_collect() works with compressed remote tables", {
                   byrow = TRUE,
                   nrow = 3,
                   dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
-    matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
+    matsbyname::setrowtype("Product") |> matsbyname::setcoltype("Industry")
   # Create a matsindf data frame for the v1 matrix
   midfv1 <- tibble::tibble(Dataset = "CL-PFU IEA",
                            ValidFromVersion = c("v1.0"),
@@ -680,7 +680,7 @@ test_that("pl_filter_collect() works with compressed remote tables", {
                   byrow = TRUE,
                   nrow = 3,
                   dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
-    matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
+    matsbyname::setrowtype("Product") |> matsbyname::setcoltype("Industry")
   # Create a matsindf data frame for the v2 matrix
   midfv2 <- tibble::tibble(Dataset = "CL-PFU IEA",
                            ValidFromVersion = "v2.0",

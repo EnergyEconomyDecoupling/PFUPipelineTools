@@ -132,16 +132,16 @@ test_that("pl_upsert_and_compress() works for zero matrices", {
     dm::dm_add_pk(testzeromatrix, columns = c(matname, i, j))
   dm::copy_dm_to(conn, dm = dm, temporary = FALSE)
   # Create index map
-  index_map <- list(row = data.frame(IndexID = as.integer(1:3),
+  index_map <- list(Product = data.frame(IndexID = as.integer(1:3),
                                      Index = c("r1", "r2", "r3")),
-                    col = data.frame(IndexID = as.integer(1:2),
+                    Industry = data.frame(IndexID = as.integer(1:2),
                                      Index = c("c1", "c2")))
 
   # Create a zero matrix
   zerom <- matrix(c(0, 0,
                     0, 0,
                     0, 0), nrow = 3, dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
-    matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
+    matsbyname::setrowtype("Product") |> matsbyname::setcoltype("Industry")
   # Create a matsindf data frame
   midf <- tibble::tibble(matname = c("zerom1", "zerom2"),
                          matval = list(zerom, zerom))
@@ -172,8 +172,8 @@ test_that("pl_upsert_and_compress() works for zero matrices", {
 
   # Now try to use pl_filter_collect() to get the data.
   rctypes <- tibble::tribble(~matname, ~rowtype, ~coltype,
-                             "zerom1", "row", "col",
-                             "zerom2", "row", "col")
+                             "zerom1", "Product", "Industry",
+                             "zerom2", "Product", "Industry")
 
 
 
@@ -231,14 +231,10 @@ test_that("pl_upsert() works with local table compression", {
                                                     matname, i, j))
   dm::copy_dm_to(conn, dm = dm, temporary = FALSE)
   # Create index map
-  index_map <- list(ValidFromVersion = data.frame(IndexID = as.integer(1:3),
-                                                  Index = c("v1", "v2", "v3")),
-                    ValidToVersion = data.frame(IndexID = as.integer(1:3),
-                                                Index = c("v1", "v2", "v3")),
-                    row = data.frame(IndexID = as.integer(1:3),
-                                     Index = c("r1", "r2", "r3")),
-                    col = data.frame(IndexID = as.integer(1:2),
-                                     Index = c("c1", "c2")))
+  index_map <- list(Product = data.frame(IndexID = as.integer(1:3),
+                                         Index = c("r1", "r2", "r3")),
+                    Industry = data.frame(IndexID = as.integer(1:2),
+                                          Index = c("c1", "c2")))
   # Create a couple matrices
   # matv1 is the original matrix
   matv1 <- matrix(c(1, 2,
@@ -247,7 +243,7 @@ test_that("pl_upsert() works with local table compression", {
                   byrow = TRUE,
                   nrow = 3,
                   dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
-    matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
+    matsbyname::setrowtype("Product") |> matsbyname::setcoltype("Industry")
   # matv2 is a modified matrix with the r3, c1 different
   matv2 <- matrix(c(1, 2,
                     3, 4,
@@ -255,7 +251,7 @@ test_that("pl_upsert() works with local table compression", {
                   byrow = TRUE,
                   nrow = 3,
                   dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
-    matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
+    matsbyname::setrowtype("Product") |> matsbyname::setcoltype("Industry")
   # Create a matsindf data frame for the v1 matrix
   midfv1 <- tibble::tibble(ValidFromVersion = 1,
                            ValidToVersion = 1,
@@ -350,7 +346,7 @@ test_that("pl_upsert_and_compress() works with local table compression", {
                   byrow = TRUE,
                   nrow = 3,
                   dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
-    matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
+    matsbyname::setrowtype("Product") |> matsbyname::setcoltype("Industry")
   # matv2 is a modified matrix with the r3, c1 different
   matv2 <- matrix(c(1, 2,
                     3, 4,
@@ -358,7 +354,7 @@ test_that("pl_upsert_and_compress() works with local table compression", {
                   byrow = TRUE,
                   nrow = 3,
                   dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
-    matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
+    matsbyname::setrowtype("Product") |> matsbyname::setcoltype("Industry")
   # Create a matsindf data frame for the v1 matrix
   midfv1 <- tibble::tibble(Dataset = "CL-PFU IEA",
                            ValidFromVersion = c("v1.0"),
@@ -429,7 +425,7 @@ test_that("pl_upsert_and_compress() works with local table compression", {
                                    Year = 1971,
                                    matname = 8,
                                    i = c(1, 1, 2, 2, 3, 3),
-                                   j = c(1, 2, 1, 2, 1, 2),
+                                   j = c(5, 6, 5, 6, 5, 6),
                                    value = 1:6)
   testthat::expect_equal(resv1, expected_resv1)
   resv2 <- dplyr::tbl(conn, tname) |>
@@ -444,7 +440,7 @@ test_that("pl_upsert_and_compress() works with local table compression", {
                                    Year = 1972,
                                    matname = 7,
                                    i = c(1, 1, 2, 2, 3, 3),
-                                   j = c(1, 2, 1, 2, 1, 2),
+                                   j = c(5, 6, 5, 6, 5, 6),
                                    value = c(1, 2, 3, 4, 42, 6))
   testthat::expect_equal(resv2, expected_resv2)
 
@@ -481,7 +477,7 @@ test_that("pl_upsert_and_compress() works with local table compression", {
                                    Year = 1971,
                                    matname = 8,
                                    i = c(1, 1, 2, 2, 3, 3),
-                                   j = c(1, 2, 1, 2, 1, 2),
+                                   j = c(5, 6, 5, 6, 5, 6),
                                    value = c(1, 2, 3, 4, 42, 6))
   expect_equal(resv3, expected_resv3)
 
@@ -525,7 +521,7 @@ test_that("pl_upsert_and_compress() works with local table compression", {
                                    Year = 1971,
                                    matname = 8,
                                    i = c(1, 1, 2, 2, 3, 3, 3),
-                                   j = c(1, 2, 1, 2, 1, 2, 1),
+                                   j = c(5, 6, 5, 6, 5, 6, 5),
                                    value = c(1, 2, 3, 4, 5, 6, 42)) |>
     dplyr::arrange(value)
   expect_equal(resv4, expected_resv4)
@@ -563,7 +559,7 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   # Nothing should have changed, because the value of
   # matv3[3, 2] is within tol (1e-6) of the original.
   resv5 |>
-    dplyr::filter(i == 3, j == 2) |>
+    dplyr::filter(i == 3, j == 6) |>
     dplyr::pull(value) |>
     magrittr::subtract(6) |>
     expect_equal(0)
@@ -583,7 +579,7 @@ test_that("pl_upsert_and_compress() works with local table compression", {
     dplyr::collect() |>
     dplyr::arrange(value)
   resv6 |>
-    dplyr::filter(ValidFromVersion == 2, i == 3, j == 2) |>
+    dplyr::filter(ValidFromVersion == 2, i == 3, j == 6) |>
     dplyr::pull(value) |>
     magrittr::subtract(6) |>
     expect_equal(-1.0e-7)
@@ -622,7 +618,7 @@ test_that("pl_upsert_and_compress() works with more metadata columns and new row
                   byrow = TRUE,
                   nrow = 3,
                   dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
-    matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
+    matsbyname::setrowtype("Product") |> matsbyname::setcoltype("Industry")
   # matv2 is a modified matrix with the r3, c1 value different and
   # adding an additional row and column.
   # matv2 has new data (and new row, col names) compared to matv1.
@@ -634,7 +630,7 @@ test_that("pl_upsert_and_compress() works with more metadata columns and new row
                   nrow = 4,
                   dimnames = list(c("r1", "r2", "r3", "r4"),
                                   c("c1", "c2", "c3"))) |>
-    matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
+    matsbyname::setrowtype("Product") |> matsbyname::setcoltype("Industry")
   # Create a matsindf data frame for the v1 matrix
   midfv1 <- tibble::tibble(Dataset = "CL-PFU IEA",
                            ValidFromVersion = c("v1.0"),
@@ -676,19 +672,19 @@ test_that("pl_upsert_and_compress() works with more metadata columns and new row
   expect_equal(nrow(should_be_nine_rows), 9)
   # Verify that the new data are in place
   should_be_nine_rows |>
-    dplyr::filter(i == 3, j == 1) |>
+    dplyr::filter(i == 3, j == 5) |>
     dplyr::pull(value) |>
     expect_equal(31)
   should_be_nine_rows |>
-    dplyr::filter(i == 4, j == 1) |>
+    dplyr::filter(i == 4, j == 5) |>
     dplyr::pull(value) |>
     expect_equal(41)
   should_be_nine_rows |>
-    dplyr::filter(i == 4, j == 2) |>
+    dplyr::filter(i == 4, j == 6) |>
     dplyr::pull(value) |>
     expect_equal(42)
   should_be_nine_rows |>
-    dplyr::filter(i == 4, j == 3) |>
+    dplyr::filter(i == 4, j == 7) |>
     dplyr::pull(value) |>
     expect_equal(43)
 
@@ -716,14 +712,14 @@ test_that("pl_upsert_and_compress() works with more metadata columns and new row
   expect_equal(nrow(should_be_ten_rows), 10)
   # Verify that the new data are in place
   should_be_ten_rows |>
-    dplyr::filter(i == 2, j == 3) |>
+    dplyr::filter(i == 2, j == 7) |>
     dplyr::pull(value) |>
     expect_equal(3.1415926)
 
   # Add a smaller matrix but with the same version number.
   # This should delete some rows.
   matv4 <- matv3[-c(1, 2, 4), -1, drop = FALSE] |>
-    matsbyname::setrowtype("row") |> matsbyname::setcoltype("col")
+    matsbyname::setrowtype("Product") |> matsbyname::setcoltype("Industry")
   midfv4 <- tibble::tibble(Dataset = "CL-PFU IEA",
                            ValidFromVersion = c("v1.0"),
                            ValidToVersion = c("v1.0"),
@@ -749,7 +745,7 @@ test_that("pl_upsert_and_compress() works with more metadata columns and new row
                              Year = 1971,
                              matname = 7,
                              i = 3,
-                             j = 2,
+                             j = 6,
                              value = 6) |>
     as.data.frame()
   expect_equal(should_be_one_row, expected)

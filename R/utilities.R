@@ -990,16 +990,8 @@ create_compression_testing_db <- function(conn) {
                   ref_table = RCType, ref_columns = RCTypeID)
   dm::copy_dm_to(conn, dm = dm, temporary = FALSE)
   # Create index map
-  index_map <- list(ValidFromVersion = data.frame(IndexID = as.integer(c(1, 2, 3,
-                                                                         current_version_int)),
-                                                  Index = c("v1.0", "v2.0", "v3.0", "current")),
-                    ValidToVersion = data.frame(IndexID = as.integer(c(1, 2, 3,
-                                                                       current_version_int)),
-                                                Index = c("v1.0", "v2.0", "v3.0", "current")),
-                    row = data.frame(IndexID = as.integer(1:4),
-                                     Index = c("r1", "r2", "r3", "r4")),
-                    col = data.frame(IndexID = as.integer(1:3),
-                                     Index = c("c1", "c2", "c3")))
+  index_map <- list(Product = dm$Index |> dplyr::filter(IndexID %in% 1:4),
+                    Industry = dm$Index |> dplyr::filter(IndexID %in% 5:7))
   return(index_map)
 }
 
