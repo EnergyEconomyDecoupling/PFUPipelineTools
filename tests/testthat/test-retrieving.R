@@ -722,6 +722,8 @@ test_that("pl_filter_collect() works with compressed remote tables", {
                                     matrix_class = "matrix")
   expect_equal(v1_retrieved$Y[[1]], matv1)
   # Check that the version columns are correct
+  expect_equal(v1_retrieved$ValidFromVersion[[1]], "v1.0" )
+  expect_equal(v1_retrieved$ValidToVersion[[1]], "v1.0" )
 
   # Check that we can get v2 back successfully
   v2_retrieved <- pl_filter_collect(db_table_name = tname,
@@ -732,11 +734,46 @@ test_that("pl_filter_collect() works with compressed remote tables", {
                                     matrix_class = "matrix")
   expect_equal(v2_retrieved$Y[[1]], matv2)
   # Check that the version columns are correct
+  expect_equal(v2_retrieved$ValidFromVersion[[1]], "v2.0")
+  expect_equal(v2_retrieved$ValidToVersion[[1]], "v2.0")
 
+  # Test retrieving with the current version.
+  # We should get the v2.0 matrix,
+  # but the columns should have "current".
+  vcurrent_retrieved <- pl_filter_collect(db_table_name = tname,
+                                          version_string = "current",
+                                          index_map = index_map,
+                                          collect = TRUE,
+                                          conn = conn,
+                                          matrix_class = "matrix")
+  expect_equal(vcurrent_retrieved$Y[[1]], matv2)
+  # Check that the version columns are correct
+  expect_equal(vcurrent_retrieved$ValidFromVersion[[1]], "current")
+  expect_equal(vcurrent_retrieved$ValidToVersion[[1]], "current")
+
+  # Test when requesting both v1.0 and v2.0
+  v12_retrieved <- pl_filter_collect(db_table_name = tname,
+                                     version_string = c("v1.0", "v2.0"),
+                                     index_map = index_map,
+                                     collect = TRUE,
+                                     conn = conn,
+                                     matrix_class = "matrix")
+  expect_equal(v12_retrieved$Y, list(matv1, matv2))
+  expect_equal(v12_retrieved$ValidFromVersion, c("v1.0", "v2.0"))
+  # Test reverse order
+  v21_retrieved <- pl_filter_collect(db_table_name = tname,
+                                     version_string = c("v2.0", "v1.0"),
+                                     index_map = index_map,
+                                     collect = TRUE,
+                                     conn = conn,
+                                     matrix_class = "matrix")
+  expect_equal(v21_retrieved$Y, list(matv2, matv1))
+  expect_equal(v21_retrieved$ValidFromVersion, c("v2.0", "v1.0"))
 
 
   # Test retrieving without specifying a version string
   # Do we get the right answer?
+
   # Can we still filter on the version string columns after the fact,
   # if we do not create matsindf?
 
