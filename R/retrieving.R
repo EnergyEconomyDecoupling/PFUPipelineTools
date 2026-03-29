@@ -310,6 +310,87 @@ pl_filter_collect <- function(db_table_name,
                               valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
                               valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname) {
 
+  if (is.null(version_string)) {
+    out <- pl_filter_collect_worker(
+      db_table_name = db_table_name,
+      filter_args = rlang::enquos(...),
+      version_string = version_string,
+      collect = collect,
+      create_matsindf = create_matsindf,
+      conn = conn,
+      schema = schema,
+      fk_parent_tables = fk_parent_tables,
+      index_map_name = index_map_name,
+      index_map = index_map,
+      rctype_table_name = rctype_table_name,
+      rctypes = rctypes,
+      matrix_class = matrix_class,
+      matname = matname,
+      matval = matval,
+      rowtype_colname = rowtype_colname,
+      coltype_colname = coltype_colname,
+      valid_from_version_colname = valid_from_version_colname,
+      valid_to_version_colname = valid_to_version_colname
+    )
+  } else (
+    # Account for version_string with length > 1
+    out <-
+      purrr::map(version_string, pl_filter_collect_worker,
+                 db_table_name = db_table_name,
+                 filter_args = rlang::enquos(...),
+                 collect = collect,
+                 create_matsindf = create_matsindf,
+                 conn = conn,
+                 schema = schema,
+                 fk_parent_tables = fk_parent_tables,
+                 index_map_name = index_map_name,
+                 index_map = index_map,
+                 rctype_table_name = rctype_table_name,
+                 rctypes = rctypes,
+                 matrix_class = matrix_class,
+                 matname = matname,
+                 matval = matval,
+                 rowtype_colname = rowtype_colname,
+                 coltype_colname = coltype_colname,
+                 valid_from_version_colname = valid_from_version_colname,
+                 valid_to_version_colname = valid_to_version_colname) |>
+      dplyr::bind_rows()
+  )
+  return(out)
+}
+
+
+pl_filter_collect_worker <- function(db_table_name,
+                                     filter_args,
+                                     version_string = NULL,
+                                     collect = FALSE,
+                                     create_matsindf = collect,
+                                     conn,
+                                     schema = schema_from_conn(conn = conn),
+                                     fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+                                     index_map_name = "Index",
+                                     index_map = fk_parent_tables[[index_map_name]],
+                                     rctype_table_name = "matnameRCType",
+                                     rctypes = decode_fks(db_table_name = rctype_table_name,
+                                                          collect = TRUE,
+                                                          conn = conn,
+                                                          schema = schema,
+                                                          fk_parent_tables = fk_parent_tables) |>
+                                       dplyr::mutate(
+                                         "{matname}" := decode_fk_keys(.data[[matname]],
+                                                                       fk_table_name = "matname",
+                                                                       conn = conn,
+                                                                       schema = schema,
+                                                                       fk_parent_tables = fk_parent_tables,
+                                                                       pk_suffix = PFUPipelineTools::key_col_info$pk_suffix)),
+                                     matrix_class = c("Matrix", "matrix"),
+                                     matname = PFUPipelineTools::mat_meta_cols$matname,
+                                     matval = PFUPipelineTools::mat_meta_cols$matval,
+                                     rowtype_colname = PFUPipelineTools::mat_meta_cols$rowtype,
+                                     coltype_colname = PFUPipelineTools::mat_meta_cols$coltype,
+                                     valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
+                                     valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname) {
+
   matrix_class <- match.arg(matrix_class)
 
   out <- dplyr::tbl(src = conn, db_table_name)
@@ -317,6 +398,8 @@ pl_filter_collect <- function(db_table_name,
   # First, filter the tbl according to version string,
   # if desired.
   if (!is.null(version_string)) {
+    assertthat::assert_that(length(version_string) == 1,
+                            msg = "version_string must be length 1 in pl_filter_collect_worker()")
     out <- out |>
       filter_on_version_string(version_string = version_string,
                                db_table_name = db_table_name,
@@ -335,7 +418,7 @@ pl_filter_collect <- function(db_table_name,
                collect = FALSE)
 
   # Finally, filter the foreign keys in the tbl based on the expressions in ...
-  filter_args <- rlang::enquos(...)
+  # filter_args <- rlang::enquos(...)
   out <- out |>
     dplyr::filter(!!!filter_args)
 
