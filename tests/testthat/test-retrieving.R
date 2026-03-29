@@ -637,12 +637,10 @@ test_that("pl_filter_collect() works with compressed remote tables", {
 
   skip_on_ci()
   skip_on_cran()
-
   conn <- get_unit_testing_conn()
   on.exit(DBI::dbDisconnect(conn))
 
   index_map <- create_compression_testing_db(conn)
-
 
   # Set the names of the table so we can use the variable in several places
   tname <- "testlocalcompression"
@@ -671,7 +669,7 @@ test_that("pl_filter_collect() works with compressed remote tables", {
                            db_table_name = tname,
                            index_map = index_map,
                            in_place = TRUE,
-                           compress = FALSE)
+                           compress = TRUE)
 
   # matv2 is a modified matrix with the r3, c1 different
   matv2 <- matrix(c(1, 2,
@@ -687,8 +685,8 @@ test_that("pl_filter_collect() works with compressed remote tables", {
                            ValidToVersion = "v2.0",
                            Country = "GHA",
                            EnergyType = "E",
-                           Year = 1972,
-                           matname = "V",
+                           Year = 1971,
+                           matname = "Y",
                            matval = list(matv2))
   # Upsert v2 without compression
   rowsv2 <- midfv2 |>
@@ -696,7 +694,7 @@ test_that("pl_filter_collect() works with compressed remote tables", {
                            db_table_name = tname,
                            index_map = index_map,
                            in_place = TRUE,
-                           compress = FALSE)
+                           compress = TRUE)
 
   # Check that we can get v1 back successfully
   v1_retrieved <- pl_filter_collect(db_table_name = tname,
@@ -706,6 +704,15 @@ test_that("pl_filter_collect() works with compressed remote tables", {
                                     conn = conn,
                                     matrix_class = "matrix")
   expect_equal(v1_retrieved$Y[[1]], matv1)
+
+  # Check that we can get v2 back successfully
+  v2_retrieved <- pl_filter_collect(db_table_name = tname,
+                                    version_string = "v2.0",
+                                    index_map = index_map,
+                                    collect = TRUE,
+                                    conn = conn,
+                                    matrix_class = "matrix")
+  expect_equal(v2_retrieved$Y[[1]], matv2)
 
 
 
