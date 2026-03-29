@@ -167,11 +167,12 @@ test_that("pl_upload_schema_and_simple_tables() works as expected", {
 test_that("encode_fks() works with re-routed foreign keys", {
   skip_on_ci()
   skip_on_cran()
-  conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
-                         dbname = "unit_testing",
-                         host = "mexer.site",
-                         port = 5432,
-                         user = "mkh2")
+  conn <- get_unit_testing_conn()
+  # conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
+  #                        dbname = "unit_testing",
+  #                        host = "mexer.site",
+  #                        port = 5432,
+  #                        user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
   # Get rid of tables before we start
   if (DBI::dbExistsTable(conn, "TestUpsertTable")) {
