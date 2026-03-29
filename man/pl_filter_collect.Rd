@@ -118,7 +118,9 @@ Often when collecting data from the database,
 filtering is desired.
 But filtering based on foreign keys
 (fks, as stored in the database)
-is effectively impossible, because of foreign key encoding.
+is effectively impossible,
+because of foreign key encoding
+to integers.
 This function filters based on
 fk values (typically strings),
 not fk keys (typically integers),
@@ -127,12 +129,21 @@ with optional downloading thereafter.
 By default (\code{collect = FALSE}),
 a \code{tbl} is returned
 (and data are not downloaded from the database).
-Use \code{\link[dplyr:compute]{dplyr::collect()}} to execute the resulting SQL query
+Use \code{\link[dplyr:compute]{dplyr::collect()}} later
+to execute the resulting SQL query
 and obtain an in-memory data frame.
 Or, set \code{collect = TRUE} to execute the SQL and
 return an in-memory data frame.
 }
 \details{
+Filtering on versions is a special case
+because of the way data are compressed in the database.
+Specify one or more version values
+(such as \code{c("v1.0", "v1.1", "v2.0")})
+in the \code{version_string} argument.
+The default (\code{NULL}) returns all versions
+matching all filtering criteria.
+
 \code{schema} is a data model (\code{dm} object) for the CL-PFU database.
 It can be obtained from calling \code{\link[=schema_from_conn]{schema_from_conn()}}.
 If minimal interaction with the database is desired,

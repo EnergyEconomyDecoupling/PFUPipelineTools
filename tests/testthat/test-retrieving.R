@@ -524,8 +524,24 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
                       fk_parent_tables = fk_parent_tables,
                       collect = TRUE) |>
     dplyr::arrange(ValidFromVersion) |>
-    expect_equal(expected_all |> dplyr::filter(ValidFromVersion %in% c("v4", "v2"),
-                                               Country %in% c("GHA", "USA")))
+    expect_equal(expected_all |>
+                   dplyr::filter(ValidFromVersion %in% c("v4", "v2"),
+                                 Country %in% c("GHA", "USA")) |>
+                   # The function returns data with the version requested
+                   # in the ValidFromVersion and ValidToVersion columns.
+                   # Need to do a little fixing to get the
+                   # actual expected data frame.
+                   dplyr::mutate(
+                     ValidFromVersion = dplyr::case_when(
+                       ValidFromVersion == "v4" ~ "v5",
+                       TRUE ~ ValidFromVersion
+                     ),
+                     ValidToVersion = dplyr::case_when(
+                       ValidToVersion == "v10" ~ "v5",
+                       TRUE ~ ValidToVersion
+                     )
+                   )
+    )
 
 
   #### Try degenerate cases
@@ -663,7 +679,8 @@ test_that("pl_filter_collect() works with compressed remote tables", {
                            Year = 1971,
                            matname = c("Y"),
                            matval = list(matv1))
-  # Upsert the original matrix, without compression.
+  # Upsert the original matrix, with compression,
+  # but that doesn't matter in this situation.
   rowsv1 <- midfv1 |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
@@ -688,7 +705,7 @@ test_that("pl_filter_collect() works with compressed remote tables", {
                            Year = 1971,
                            matname = "Y",
                            matval = list(matv2))
-  # Upsert v2 without compression
+  # Upsert v2 with compression
   rowsv2 <- midfv2 |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,

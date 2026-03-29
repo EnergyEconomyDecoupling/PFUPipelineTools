@@ -180,7 +180,9 @@ pl_collect_from_hash <- function(hashed_table,
 #' filtering is desired.
 #' But filtering based on foreign keys
 #' (fks, as stored in the database)
-#' is effectively impossible, because of foreign key encoding.
+#' is effectively impossible,
+#' because of foreign key encoding
+#' to integers.
 #' This function filters based on
 #' fk values (typically strings),
 #' not fk keys (typically integers),
@@ -189,10 +191,19 @@ pl_collect_from_hash <- function(hashed_table,
 #' By default (`collect = FALSE`),
 #' a `tbl` is returned
 #' (and data are not downloaded from the database).
-#' Use [dplyr::collect()] to execute the resulting SQL query
+#' Use [dplyr::collect()] later
+#' to execute the resulting SQL query
 #' and obtain an in-memory data frame.
 #' Or, set `collect = TRUE` to execute the SQL and
 #' return an in-memory data frame.
+#'
+#' Filtering on versions is a special case
+#' because of the way data are compressed in the database.
+#' Specify one or more version values
+#' (such as `c("v1.0", "v1.1", "v2.0")`)
+#' in the `version_string` argument.
+#' The default (`NULL`) returns all versions
+#' matching all filtering criteria.
 #'
 #' `schema` is a data model (`dm` object) for the CL-PFU database.
 #' It can be obtained from calling [schema_from_conn()].
@@ -309,6 +320,11 @@ pl_filter_collect <- function(db_table_name,
                               coltype_colname = PFUPipelineTools::mat_meta_cols$coltype,
                               valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
                               valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname) {
+
+  # Duplicate values of version_string
+  # result in duplicate rows returned.
+  # We don't want to do this.
+  version_string <- unique(version_string)
 
   if (is.null(version_string)) {
     out <- pl_filter_collect_worker(
