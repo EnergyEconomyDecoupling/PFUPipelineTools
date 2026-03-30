@@ -686,7 +686,7 @@ test_that("pl_filter_collect() works with compressed remote tables", {
   # Create a matsindf data frame for the v1 matrix
   midfv1 <- tibble::tibble(Dataset = "CL-PFU IEA",
                            ValidFromVersion = c("v1.0"),
-                           ValidToVersion = c("current"),
+                           ValidToVersion = c("v1.0"),
                            Country = "USA",
                            EnergyType = "E",
                            Year = 1971,
@@ -785,6 +785,35 @@ test_that("pl_filter_collect() works with compressed remote tables", {
 
 
 
+
+
+  # Test uploading an updated instance of one of the matrices
+  # with a 0 in it in the outdated version (v1).
+  # This is a tough test, because we should NOT get the number 3
+  # in the 2nd row, 1st column.
+  # We should get the 0.
+  matv1b <- matv1
+  matv1b[2, 1] <- 0
+  midfv1b <- midfv1 |>
+    dplyr::mutate(
+      matval = list(matv1b)
+    )
+  # Upsert v1b with compression
+  rowsv1b <- midfv1b |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE,
+                           compress = TRUE)
+  v1b_retrieved <- pl_filter_collect(db_table_name = tname,
+                                     version_string = "v1.0",
+                                     index_map = index_map,
+                                     collect = TRUE,
+                                     conn = conn,
+                                     matrix_class = "matrix")
+  expect_equal(v1b_retrieved$Y[[1]], matv1b)
+
+
   # Can we still filter on the version string columns after the fact,
   # if we do not create matsindf?
 
@@ -794,7 +823,7 @@ test_that("pl_filter_collect() works with compressed remote tables", {
 
 
   # Test uploading with a changed value
-  # for an existing version.
+  # for the newest version.
   matv2b <- matv2
   matv2b[1, 2] <- 3.1415926
   midfv2b <- midfv2 |>
@@ -816,9 +845,14 @@ test_that("pl_filter_collect() works with compressed remote tables", {
                                      matrix_class = "matrix")
   expect_equal(v2b_retrieved$Y[[1]], matv2b)
 
-  # Test uploading a new version of one of the matrices
+
+
+
+  # Test uploading an updated version of one of the matrices
   # with a 0 in it.
-  # Do we get the non-zero entry? (I hope not.)
+  # This is a tough test, because we should NOT get the number 3
+  # in the 2nd row, 1st column.
+  # We should get the 0.
   matv2c <- matv2b
   matv2c[2, 1] <- 0
   midfv2c <- midfv2b |>
@@ -842,11 +876,7 @@ test_that("pl_filter_collect() works with compressed remote tables", {
   expect_equal(v2c_retrieved$Y[[1]][2, 1], 0)
   expect_equal(v2c_retrieved$Y[[1]], matv2c)
 
-
-
-
   clean_compression_testing_db(conn)
-
 })
 
 

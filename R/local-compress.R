@@ -194,6 +194,16 @@ compress_helper <- function(remote_df, local_df,
            )
   }
 
+  # Decide the local version and check validity
+  local_version <- local_df[[valid_to_version_colname]] |>
+    unique()
+  assertthat::assert_that(length(local_version) == 1)
+  # valid_from_version and valid_to_version should be same in local_df.
+  # Make sure that's true.
+  local_version_check <- local_df[[valid_from_version_colname]] |>
+    unique()
+  assertthat::assert_that(local_version == local_version_check)
+
   # If remote_df is NULL, all rows of local_df should be uploaded.
   if (is.null(remote_df)) {
     return(local_df |>
@@ -237,15 +247,7 @@ compress_helper <- function(remote_df, local_df,
   # If not, almost certainly an error.
   assertthat::assert_that(setequal(colnames(remote_df), colnames(local_df)))
 
-  # Decide the local and previous versions
-  local_version <- local_df[[valid_to_version_colname]] |>
-    unique()
-  assertthat::assert_that(length(local_version) == 1)
-  # valid_from_version and valid_to_version should be same in local_df.
-  # Make sure that's true.
-  local_version_check <- local_df[[valid_from_version_colname]] |>
-    unique()
-  assertthat::assert_that(local_version == local_version_check)
+  # Decide the previous version
   # Set the previous version relative to local_version.
   previous_version <- local_version - 1
 
