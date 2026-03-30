@@ -313,9 +313,9 @@ pl_upsert <- function(.df,
 #' `ValidFromVersion` and `ValidToVersion` columns.
 #'
 #' This function assumes the `ValidToVersion` column in the remote contains
-#' `2147483647`
-#' (the largest possible integer in both PostgreSQL and `R`
-#' and equal to `PFUPipelineTools::current_version_int`)
+#' `PFUPipelineTools::version_info$current_version_int` or
+#' `r PFUPipelineTools::version_info$current_version_int`
+#' (the largest possible integer in both PostgreSQL and `R`)
 #' for the most current version of the data.
 #'
 #' There are only a few possibilities for rows of data
@@ -325,7 +325,8 @@ pl_upsert <- function(.df,
 #'         and within `tol` for the `value` column.
 #'         In this case, there is nothing to be done, because the
 #'         `ValidToVersion` column in the remote database table
-#'         should already be `2147483647`.
+#'         should already be
+#'         `2147483647`.
 #' * Old/New:
 #'     * Remote (Old): Rows in the remote database table with foreign key columns
 #'                     (except `ValidFromVersion` and `ValidToVersion`)
@@ -348,8 +349,9 @@ pl_upsert <- function(.df,
 #'            remote database table to `working_version - 1`.
 #'            We also change the
 #'            `ValidToVersion` column of the unmatched rows in the
-#'            local data frame to `2147483647` and
-#'            insert into the remote database table.
+#'            local data frame to
+#'            `2147483647`
+#'            and insert into the remote database table.
 #'
 #' Note that `mat_colnames` is used to discriminate data and metadata columns.
 #' Columns of `.df` (local) and `db_table_name` (remote)
@@ -444,7 +446,8 @@ pl_upsert <- function(.df,
 #'                           Default is [PFUPipelineTools::dataset_info]`$what_to_do` or
 #'                           "`r PFUPipelineTools::dataset_info$what_to_do`".
 #' @param current_version_int An integer that indicates the current version in the remote table.
-#'                            Default is [PFUPipelineTools::current_version_int].
+#'                            Default is `PFUPipelineTools::version_info$current_version_int` or
+#'                            `r PFUPipelineTools::version_info$current_version_int`.
 #'                            It is probably a _very bad_ idea to supply
 #'                            a different value from the default.
 #'
@@ -482,7 +485,7 @@ pl_upsert_and_compress <- function(.df,
                                    valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname,
                                    value_colname = PFUPipelineTools::mat_colnames$value,
                                    what_to_do_colname = PFUPipelineTools::dataset_info$what_to_do,
-                                   current_version_int = PFUPipelineTools::current_version_int) {
+                                   current_version_int = PFUPipelineTools::version_info$current_version_int) {
 
   if (is.null(db_table_name)) {
     db_table_name <- .df[[.db_table_name]] |>

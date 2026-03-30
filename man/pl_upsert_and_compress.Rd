@@ -34,7 +34,7 @@ pl_upsert_and_compress(
   valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname,
   value_colname = PFUPipelineTools::mat_colnames$value,
   what_to_do_colname = PFUPipelineTools::dataset_info$what_to_do,
-  current_version_int = PFUPipelineTools::current_version_int
+  current_version_int = PFUPipelineTools::version_info$current_version_int
 )
 }
 \arguments{
@@ -147,7 +147,8 @@ Default is \link{dataset_info}\verb{$what_to_do} or
 "WhatToDo".}
 
 \item{current_version_int}{An integer that indicates the current version in the remote table.
-Default is \link{current_version_int}.
+Default is \code{PFUPipelineTools::version_info$current_version_int} or
+2147483647.
 It is probably a \emph{very bad} idea to supply
 a different value from the default.}
 }
@@ -221,9 +222,9 @@ by setting appropriate values in the
 \code{ValidFromVersion} and \code{ValidToVersion} columns.
 
 This function assumes the \code{ValidToVersion} column in the remote contains
-\code{2147483647}
-(the largest possible integer in both PostgreSQL and \code{R}
-and equal to \code{PFUPipelineTools::current_version_int})
+\code{PFUPipelineTools::version_info$current_version_int} or
+2147483647
+(the largest possible integer in both PostgreSQL and \code{R})
 for the most current version of the data.
 
 There are only a few possibilities for rows of data
@@ -234,7 +235,8 @@ for all foreign key columns except ValidFromVersion and ValidToVersion
 and within \code{tol} for the \code{value} column.
 In this case, there is nothing to be done, because the
 \code{ValidToVersion} column in the remote database table
-should already be \code{2147483647}.
+should already be
+\code{2147483647}.
 \item Old/New:
 \itemize{
 \item Remote (Old): Rows in the remote database table with foreign key columns
@@ -259,8 +261,9 @@ in the the unmatched rows of the
 remote database table to \code{working_version - 1}.
 We also change the
 \code{ValidToVersion} column of the unmatched rows in the
-local data frame to \code{2147483647} and
-insert into the remote database table.
+local data frame to
+\code{2147483647}
+and insert into the remote database table.
 }
 
 Note that \code{mat_colnames} is used to discriminate data and metadata columns.

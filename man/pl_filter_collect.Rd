@@ -7,7 +7,7 @@
 pl_filter_collect(
   db_table_name,
   ...,
-  version_string = NULL,
+  version_string = PFUPipelineTools::version_info$current_version_string,
   collect = FALSE,
   create_matsindf = collect,
   conn,
@@ -42,6 +42,9 @@ a data frame with no rows is returned.}
 
 \item{version_string}{A string of length \code{1} or more
 that indicates the desired version(s).
+Default is \code{PFUPipelineTools::version_info$current_version_string}
+or
+"current".
 \code{NULL}, the default, means to download all versions available in
 \code{db_table_name}.
 \code{c()} (an empty string) returns a zero-row table.
@@ -140,9 +143,12 @@ Filtering on versions is a special case
 because of the way data are compressed in the database.
 Specify one or more version values
 (such as \code{c("v1.0", "v1.1", "v2.0")})
-in the \code{version_string} argument.
-The default (\code{NULL}) returns all versions
-matching all filtering criteria.
+in the \code{version_string} argument
+returns all requested versions.
+The default ("current") returns the current version
+matching all filtering criteria in \code{...}.
+Set \code{version_string = NULL} to disable filtering based
+on versions, but the results may be nonsensical.
 
 \code{schema} is a data model (\code{dm} object) for the CL-PFU database.
 It can be obtained from calling \code{\link[=schema_from_conn]{schema_from_conn()}}.

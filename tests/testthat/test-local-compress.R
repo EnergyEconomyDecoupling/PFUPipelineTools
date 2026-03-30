@@ -1,5 +1,6 @@
 # Create a data frame for testing purposes
 remote_df_func <- function() {
+  current_version_int <- version_info$current_version_int
   tibble::tribble(
     ~Dataset, ~ValidFromVersion, ~ValidToVersion, ~Country, ~Year, ~matname, ~i, ~j, ~value,
     # Dataset = 5 is CL-PFU IEA
@@ -95,7 +96,7 @@ test_that("local_compress() works as expected", {
   upload_new |>
     magrittr::extract2(PFUPipelineTools::dataset_info$valid_to_version_colname) |>
     magrittr::extract2(1) |>
-    expect_equal(current_version_int)
+    expect_equal(version_info$current_version_int)
 
   # Test when 2 rows change
   local_df_two_new_values <- local_df
@@ -109,9 +110,9 @@ test_that("local_compress() works as expected", {
                     PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote,
     5, 2, 2, 146, 1972, 8, 2, 1, 21000,
                     PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote,
-    5, 3, current_version_int, 49, 1971, 2, 1, 3, -13,
+    5, 3, version_info$current_version_int, 49, 1971, 2, 1, 3, -13,
                     PFUPipelineTools::dataset_info$upload_new,
-    5, 3, current_version_int, 146, 1972, 8, 2, 1, -21000,
+    5, 3, version_info$current_version_int, 146, 1972, 8, 2, 1, -21000,
                     PFUPipelineTools::dataset_info$upload_new
   )
   expect_equal(changed_2_rows, expected_changed_2_rows)
@@ -131,7 +132,7 @@ test_that("local_compress() works as expected", {
     local_df |>
       dplyr::mutate(
         "{PFUPipelineTools::mat_colnames$value}" := -.data[[PFUPipelineTools::mat_colnames$value]],
-        "{PFUPipelineTools::dataset_info$valid_to_version}" := current_version_int,
+        "{PFUPipelineTools::dataset_info$valid_to_version}" := version_info$current_version_int,
         "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
       )
   )
@@ -151,7 +152,7 @@ test_that("compress_helper() works with no rows in remote_df and local_df", {
 
   expected_no_rows_remote <- local_df |>
     dplyr::mutate(
-      "{PFUPipelineTools::dataset_info$valid_to_version}" := current_version_int,
+      "{PFUPipelineTools::dataset_info$valid_to_version}" := version_info$current_version_int,
       "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
     )
   expect_equal(res_no_rows_remote, expected_no_rows_remote)
@@ -191,7 +192,7 @@ test_that("compress_helper() works with NULL remote_df or local_df or both", {
   expected_NULL_remote <- local_df |>
     dplyr::mutate(
       "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new,
-      "{PFUPipelineTools::dataset_info$valid_to_version_colname}" := current_version_int
+      "{PFUPipelineTools::dataset_info$valid_to_version_colname}" := version_info$current_version_int
     )
   expect_equal(res_NULL_remote, expected_NULL_remote)
 
@@ -301,7 +302,7 @@ test_that("compress_helper() works when remote has lines of old versions", {
     dplyr::bind_rows(
       local_df[2, ] |>
         dplyr::mutate(
-          "{PFUPipelineTools::dataset_info$valid_to_version}" := current_version_int,
+          "{PFUPipelineTools::dataset_info$valid_to_version}" := version_info$current_version_int,
           "{PFUPipelineTools::mat_colnames$value}" := 42,
           "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
         )
@@ -321,7 +322,7 @@ test_that("compress_helper() works with completely new information with updated 
   res <- compress_helper(remote_df = remote_df, local_df = local_df)
   expected <- local_df |>
     dplyr::mutate(
-      "{PFUPipelineTools::dataset_info$valid_to_version}" := current_version_int,
+      "{PFUPipelineTools::dataset_info$valid_to_version}" := version_info$current_version_int,
       "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
     ) |>
     dplyr::bind_rows(
@@ -347,7 +348,7 @@ test_that("compress_helper() works when there are new row and column names", {
   res <- compress_helper(remote_df = remote_df, local_df = local_df)
   expected <- local_df |>
     dplyr::mutate(
-      "{PFUPipelineTools::dataset_info$valid_to_version}" := current_version_int,
+      "{PFUPipelineTools::dataset_info$valid_to_version}" := version_info$current_version_int,
       "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
     ) |>
     dplyr::bind_rows(
@@ -373,7 +374,7 @@ test_that("compress_helper() works when there are no remote_df rows for the curr
   # In this case, all of the local rows should be uploaded.
   expected <- local_df |>
     dplyr::mutate(
-      "{PFUPipelineTools::dataset_info$valid_to_version}" := current_version_int,
+      "{PFUPipelineTools::dataset_info$valid_to_version}" := version_info$current_version_int,
       "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
     )
     expect_equal(res, expected)
@@ -419,7 +420,7 @@ test_that("compress_helper() works as expected when the current version in remot
       ),
     local_df |>
       dplyr::mutate(
-        "{PFUPipelineTools::dataset_info$valid_to_version}" := current_version_int,
+        "{PFUPipelineTools::dataset_info$valid_to_version}" := version_info$current_version_int,
         "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
       )
   )
@@ -460,7 +461,7 @@ test_that("compress_helper() works as expected when the current version in remot
     dplyr::bind_rows(
       local_df |>
         dplyr::mutate(
-          "{PFUPipelineTools::dataset_info$valid_to_version}" := current_version_int,
+          "{PFUPipelineTools::dataset_info$valid_to_version}" := version_info$current_version_int,
           "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
         )
     )
@@ -494,7 +495,7 @@ test_that("compress_helper() works as expected when the current version in remot
   expected2 <- local_df2 |>
     dplyr::slice(3) |>
     dplyr::mutate(
-      "{PFUPipelineTools::dataset_info$valid_to_version_colname}" := current_version_int,
+      "{PFUPipelineTools::dataset_info$valid_to_version_colname}" := version_info$current_version_int,
       "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
     )
   expect_equal(res2, expected2)

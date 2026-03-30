@@ -201,9 +201,13 @@ pl_collect_from_hash <- function(hashed_table,
 #' because of the way data are compressed in the database.
 #' Specify one or more version values
 #' (such as `c("v1.0", "v1.1", "v2.0")`)
-#' in the `version_string` argument.
-#' The default (`NULL`) returns all versions
-#' matching all filtering criteria.
+#' in the `version_string` argument
+#' returns all requested versions.
+#' The default ("current") returns the current version
+#' matching all filtering criteria in `...`.
+#' Set `version_string = NULL` to disable filtering based
+#' on versions, but the results may be nonsensical.
+#'
 #'
 #' `schema` is a data model (`dm` object) for the CL-PFU database.
 #' It can be obtained from calling [schema_from_conn()].
@@ -234,6 +238,9 @@ pl_collect_from_hash <- function(hashed_table,
 #'            a data frame with no rows is returned.
 #' @param version_string A string of length `1` or more
 #'                       that indicates the desired version(s).
+#'                       Default is `PFUPipelineTools::version_info$current_version_string`
+#'                       or
+#'                       "`r PFUPipelineTools::version_info$current_version_string`".
 #'                       `NULL`, the default, means to download all versions available in
 #'                       `db_table_name`.
 #'                       `c()` (an empty string) returns a zero-row table.
@@ -292,7 +299,7 @@ pl_collect_from_hash <- function(hashed_table,
 #' @export
 pl_filter_collect <- function(db_table_name,
                               ...,
-                              version_string = NULL,
+                              version_string = PFUPipelineTools::version_info$current_version_string,
                               collect = FALSE,
                               create_matsindf = collect,
                               conn,

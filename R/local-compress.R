@@ -99,8 +99,8 @@
 #'              "`r PFUPipelineTools::dataset_info$upload_new`".
 #' @param current_version_int The integer representing the current version.
 #'                            Default is
-#'                            [PFUPipelineTools::current_version_int] or
-#'                            `r PFUPipelineTools::current_version_int`.
+#'                            [PFUPipelineTools::version_info$current_version_int] or
+#'                            `r PFUPipelineTools::version_info$current_version_int`.
 #' @param tol The tolerance within which a local value will be
 #'            assumed same as the remote value.
 #'            Default is `1e-6`.
@@ -152,7 +152,7 @@ compress_helper <- function(remote_df, local_df,
                             delete_row_in_remote = PFUPipelineTools::dataset_info$delete_row_in_remote,
                             replace_value_in_remote = PFUPipelineTools::dataset_info$replace_value_in_remote,
                             upload_new = PFUPipelineTools::dataset_info$upload_new,
-                            current_version_int = PFUPipelineTools::current_version_int,
+                            current_version_int = PFUPipelineTools::version_info$current_version_int,
                             tol = 1e-6) {
 
   # Establish some names

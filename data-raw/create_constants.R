@@ -459,6 +459,7 @@ usethis::use_data(mat_meta_cols, overwrite = TRUE)
 # of the database in ValidFromVersion and ValidToVersion columns.
 #
 
-current_version_int <- 2147483647L
-usethis::use_data(current_version_int, overwrite = TRUE)
+version_info <- list(current_version_string = "current",
+                     current_version_int = 2147483647L)
+usethis::use_data(version_info, overwrite = TRUE)
 

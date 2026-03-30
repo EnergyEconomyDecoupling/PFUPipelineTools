@@ -130,6 +130,7 @@ test_that("Compression works maunally and with pl_upsert()", {
     "v4", "v10", "GHA", 2000L, 8)
 
   pl_filter_collect(db_table_name = db_table_name,
+                    version_string = NULL,
                     collect = TRUE,
                     conn = conn,
                     schema = schema,
@@ -163,10 +164,11 @@ test_that("Compression works maunally and with pl_upsert()", {
     expect_equal(0)
   # Re-collect the table and compare
   pl_filter_collect(db_table_name = db_table_name,
-                              collect = TRUE,
-                              conn = conn,
-                              schema = schema,
-                              fk_parent_tables = fk_parent_tables) |>
+                    version_string = NULL,
+                    collect = TRUE,
+                    conn = conn,
+                    schema = schema,
+                    fk_parent_tables = fk_parent_tables) |>
     dplyr::arrange(val) |>
     expect_equal(expected_compressed_table)
 
@@ -185,6 +187,7 @@ test_that("Compression works maunally and with pl_upsert()", {
   # Make sure the compression happened as expected
   # and gives the same results as before.
   pl_filter_collect(db_table_name = db_table_name,
+                    version_string = NULL,
                     collect = TRUE,
                     conn = conn,
                     schema = schema,
@@ -229,6 +232,7 @@ test_that("Compression works maunally and with pl_upsert()", {
               compress = TRUE)
   # Make sure no compression happened.
   pl_filter_collect(db_table_name = db_table_name,
+                    version_string = NULL,
                     collect = TRUE,
                     conn = conn,
                     schema = schema,

@@ -184,6 +184,8 @@ test_that("pl_filter_collect() works as expected", {
   expect_equal(DBI::dbReadTable(conn, "PLFilterCollectTestCountry"), PLFilterCollectTestCountry)
 
   pl_filter_collect("PLFilterCollectTestTable",
+                    # Disable version filtering.
+                    version_string = NULL,
                     Country == "USA",
                     conn = conn,
                     collect = TRUE) |>
@@ -195,6 +197,7 @@ test_that("pl_filter_collect() works as expected", {
   fk_tables <- get_all_fk_tables(conn = conn, schema = DM)
 
   pl_filter_collect("PLFilterCollectTestTable",
+                    version_string = NULL,
                     Country == "USA",
                     conn = conn,
                     collect = TRUE,
@@ -205,6 +208,7 @@ test_that("pl_filter_collect() works as expected", {
                                  "USA", 5.67e-8))
 
   pl_filter_collect("PLFilterCollectTestTable",
+                    version_string = NULL,
                     Country %in% c("USA", "ZAF"),
                     conn = conn,
                     collect = TRUE) |>
@@ -215,6 +219,7 @@ test_that("pl_filter_collect() works as expected", {
 
   # Try without collecting
   uncollected <- pl_filter_collect(db_table_name = "PLFilterCollectTestTable",
+                                   version_string = NULL,
                                    Country == "USA",
                                    conn = conn,
                                    schema = DM,
@@ -228,6 +233,7 @@ test_that("pl_filter_collect() works as expected", {
 
   # Try without a filter specification. Should get everything back.
   pl_filter_collect("PLFilterCollectTestTable",
+                    version_string = NULL,
                     conn = conn,
                     collect = TRUE) |>
     expect_equal(tibble::tribble(~Country, ~MyValue,
@@ -351,6 +357,7 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
   # Make sure we download the whole table.
   db_table_name |>
     pl_filter_collect(conn = conn,
+                      version_string = NULL,
                       schema = schema,
                       fk_parent_tables = fk_parent_tables,
                       collect = TRUE) |>
@@ -453,7 +460,8 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
 
   # Try an inequality filter
   db_table_name |>
-    pl_filter_collect(val <= 6,
+    pl_filter_collect(version_string = NULL,
+                      val <= 6,
                       conn = conn,
                       schema = schema,
                       fk_parent_tables = fk_parent_tables,
@@ -462,7 +470,8 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
 
   # Try an %in% filter
   db_table_name |>
-    pl_filter_collect(Country %in% c("GHA", "USA"),
+    pl_filter_collect(version_string = NULL,
+                      Country %in% c("GHA", "USA"),
                       conn = conn,
                       schema = schema,
                       fk_parent_tables = fk_parent_tables,
@@ -471,7 +480,8 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
 
   # Add extra conditions
   db_table_name |>
-    pl_filter_collect(val <= 6 & Year >= 1968,
+    pl_filter_collect(version_string = NULL,
+                      val <= 6 & Year >= 1968,
                       conn = conn,
                       schema = schema,
                       fk_parent_tables = fk_parent_tables,
@@ -479,14 +489,16 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
     expect_equal(expected_all |> dplyr::filter(val <= 6 & Year >= 1968))
   # Split conditions
   db_table_name |>
-    pl_filter_collect(val <= 6, Year >= 1968,
+    pl_filter_collect(version_string = NULL,
+                      val <= 6, Year >= 1968,
                       conn = conn,
                       schema = schema,
                       fk_parent_tables = fk_parent_tables,
                       collect = TRUE) |>
     expect_equal(expected_all |> dplyr::filter(val <= 6 & Year >= 1968))
   db_table_name |>
-    pl_filter_collect(val <= 6 & Year >= 1968,
+    pl_filter_collect(version_string = NULL,
+                      val <= 6 & Year >= 1968,
                       Country == "ZAF",
                       conn = conn,
                       schema = schema,
@@ -547,7 +559,8 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
   #### Try degenerate cases
   # Setting impossible filters in ... should return an empty data frame.
   db_table_name |>
-    pl_filter_collect(val == 100,
+    pl_filter_collect(version_string = NULL,
+                      val == 100,
                       conn = conn,
                       schema = schema,
                       fk_parent_tables = fk_parent_tables,
@@ -579,7 +592,7 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
                       fk_parent_tables = fk_parent_tables,
                       collect = TRUE) |>
     expect_equal(expected_all[0, ])
-  # Passing the same version string twice should give
+  # Passing the same version string more than once should give
   # only one copy of the relevant data.
   db_table_name |>
     pl_filter_collect(version_string = c("v3", "v3", "v3"),
@@ -776,6 +789,12 @@ test_that("pl_filter_collect() works with compressed remote tables", {
 
   # Can we still filter on the version string columns after the fact,
   # if we do not create matsindf?
+
+
+
+  # Test uploading a new version of one of the matrices
+  # with a 0 in it.
+  # Do we get the non-zero entry? (I hope not.)
 
   clean_compression_testing_db(conn)
 

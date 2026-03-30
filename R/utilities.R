@@ -941,7 +941,7 @@ create_compression_testing_db <- function(conn) {
                dplyr::filter(FALSE),
              Dataset = data.frame(DatasetID = as.integer(5),
                                   Dataset = "CL-PFU IEA"),
-             Version = data.frame(VersionID = as.integer(c(1, 2, 3, current_version_int)),
+             Version = data.frame(VersionID = as.integer(c(1, 2, 3, version_info$current_version_int)),
                                   Version = c("v1.0", "v2.0", "v3.0", "current")),
              Country = data.frame(CountryID = as.integer(c(49, 146)),
                                   Country = c("GHA", "USA")),

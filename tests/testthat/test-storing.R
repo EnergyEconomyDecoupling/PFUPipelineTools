@@ -180,6 +180,7 @@ test_that("pl_upsert_and_compress() works for zero matrices", {
   # The following should give zero matrices with
   # row and column names
   filter_collected <- pl_filter_collect(db_table_name = "testzeromatrix",
+                                        version_string = NULL,
                                         conn = conn,
                                         collect = TRUE,
                                         index_map = index_map,
@@ -419,7 +420,7 @@ test_that("pl_upsert_and_compress() works with local table compression", {
     dplyr::arrange(i, j)
   expected_resv1 <- tibble::tibble(Dataset = 5,
                                    ValidFromVersion = 1,
-                                   ValidToVersion = current_version_int,
+                                   ValidToVersion = version_info$current_version_int,
                                    Country = 146,
                                    EnergyType = 1,
                                    Year = 1971,
@@ -429,12 +430,13 @@ test_that("pl_upsert_and_compress() works with local table compression", {
                                    value = 1:6)
   testthat::expect_equal(resv1, expected_resv1)
   resv2 <- dplyr::tbl(conn, tname) |>
-    dplyr::filter(ValidFromVersion == 2, ValidToVersion == current_version_int) |>
+    dplyr::filter(ValidFromVersion == 2,
+                  ValidToVersion == version_info$current_version_int) |>
     dplyr::collect() |>
     dplyr::arrange(i, j)
   expected_resv2 <- tibble::tibble(Dataset = 5,
                                    ValidFromVersion = 2,
-                                   ValidToVersion = current_version_int,
+                                   ValidToVersion = version_info$current_version_int,
                                    Country = 49,
                                    EnergyType = 1,
                                    Year = 1972,
@@ -466,12 +468,13 @@ test_that("pl_upsert_and_compress() works with local table compression", {
                            index_map = index_map,
                            in_place = TRUE)
   resv3 <- dplyr::tbl(conn, tname) |>
-    dplyr::filter(ValidFromVersion == 1, ValidToVersion == current_version_int) |>
+    dplyr::filter(ValidFromVersion == 1,
+                  ValidToVersion == version_info$current_version_int) |>
     dplyr::collect() |>
     dplyr::arrange(i, j)
   expected_resv3 <- tibble::tibble(Dataset = 5,
                                    ValidFromVersion = 1,
-                                   ValidToVersion = current_version_int,
+                                   ValidToVersion = version_info$current_version_int,
                                    Country = 146,
                                    EnergyType = 1,
                                    Year = 1971,
@@ -509,13 +512,13 @@ test_that("pl_upsert_and_compress() works with local table compression", {
     dplyr::arrange(value)
   expected_resv4 <- tibble::tibble(Dataset = 5,
                                    ValidFromVersion = c(1, 1, 1, 1, 1, 1, 2),
-                                   ValidToVersion = c(current_version_int,
-                                                      current_version_int,
-                                                      current_version_int,
-                                                      current_version_int,
+                                   ValidToVersion = c(version_info$current_version_int,
+                                                      version_info$current_version_int,
+                                                      version_info$current_version_int,
+                                                      version_info$current_version_int,
                                                       1,
-                                                      current_version_int,
-                                                      current_version_int),
+                                                      version_info$current_version_int,
+                                                      version_info$current_version_int),
                                    Country = 146,
                                    EnergyType = 1,
                                    Year = 1971,
@@ -739,7 +742,7 @@ test_that("pl_upsert_and_compress() works with more metadata columns and new row
   expect_equal(nrow(should_be_one_row), 1)
   expected <- tibble::tibble(Dataset = 5,
                              ValidFromVersion = 1,
-                             ValidToVersion = current_version_int,
+                             ValidToVersion = version_info$current_version_int,
                              Country = 146,
                              EnergyType = 2,
                              Year = 1971,
