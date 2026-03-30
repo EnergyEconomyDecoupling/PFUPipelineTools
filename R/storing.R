@@ -516,6 +516,31 @@ pl_upsert_and_compress <- function(.df,
     magrittr::extract2(.pk_col) |>
     magrittr::extract2(1)
 
+  # Ensure that the version column contain strings of length 1 and the same strings.
+  if (valid_from_version_colname %in% names(.df)) {
+    valid_from_contents <- .df |>
+      dplyr::select(dplyr::all_of(valid_from_version_colname)) |>
+      unique()
+    assertthat::assert_that(length(valid_from_contents) == 1,
+                            msg = paste0(valid_from_version_colname,
+                                         " must have only one value"))
+  }
+  if (valid_to_version_colname %in% names(.df)) {
+    valid_to_contents <- .df |>
+      dplyr::select(dplyr::all_of(valid_to_version_colname)) |>
+      unique()
+    assertthat::assert_that(length(valid_to_contents) == 1,
+                            msg = paste0(valid_to_version_colname,
+                                         " must have only one value"))
+  }
+  if (valid_from_version_colname %in% names(.df) &
+      valid_to_version_colname %in% names(.df)) {
+    assertthat::assert_that(valid_from_contents == valid_to_contents,
+                            msg = paste0(valid_from_version_colname,
+                                         " must match ",
+                                         valid_to_version_colname))
+  }
+
   # Encode for upload using the index_map
   df_matsindf_encoded <- .df |>
     encode_matsindf(index_map = index_map,

@@ -359,7 +359,7 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   # Create a matsindf data frame for the v1 matrix
   midfv1 <- tibble::tibble(Dataset = "CL-PFU IEA",
                            ValidFromVersion = c("v1.0"),
-                           ValidToVersion = c("current"),
+                           ValidToVersion = c("v1.0"),
                            Country = "USA",
                            EnergyType = "E",
                            Year = 1971,
@@ -420,7 +420,7 @@ test_that("pl_upsert_and_compress() works with local table compression", {
     dplyr::arrange(i, j)
   expected_resv1 <- tibble::tibble(Dataset = 5,
                                    ValidFromVersion = 1,
-                                   ValidToVersion = version_info$current_version_int,
+                                   ValidToVersion = 1,
                                    Country = 146,
                                    EnergyType = 1,
                                    Year = 1971,

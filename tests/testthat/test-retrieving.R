@@ -789,9 +789,8 @@ test_that("pl_filter_collect() works with compressed remote tables", {
 
   # Test uploading an updated instance of one of the matrices
   # with a 0 in it in the outdated version (v1).
-  # This is a tough test, because we should NOT get the number 3
-  # in the 2nd row, 1st column.
-  # We should get the 0.
+  # This should fail, because we're trying to update
+  # an old version of the database.
   matv1b <- matv1
   matv1b[2, 1] <- 0
   midfv1b <- midfv1 |>
@@ -799,19 +798,21 @@ test_that("pl_filter_collect() works with compressed remote tables", {
       matval = list(matv1b)
     )
   # Upsert v1b with compression
-  rowsv1b <- midfv1b |>
+  midfv1b |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
                            index_map = index_map,
                            in_place = TRUE,
-                           compress = TRUE)
+                           compress = TRUE) |>
+    expect_error("local_df contains older versions than remote_df in")
   v1b_retrieved <- pl_filter_collect(db_table_name = tname,
                                      version_string = "v1.0",
                                      index_map = index_map,
                                      collect = TRUE,
                                      conn = conn,
                                      matrix_class = "matrix")
-  expect_equal(v1b_retrieved$Y[[1]], matv1b)
+  # Because we couldn't update, we should get v1
+  expect_equal(v1b_retrieved$Y[[1]], matv1)
 
 
   # Can we still filter on the version string columns after the fact,
