@@ -784,17 +784,66 @@ test_that("pl_filter_collect() works with compressed remote tables", {
   expect_equal(v21_retrieved$ValidFromVersion, c("v2.0", "v1.0"))
 
 
-  # Test retrieving without specifying a version string
-  # Do we get the right answer?
 
   # Can we still filter on the version string columns after the fact,
   # if we do not create matsindf?
 
 
+  # Test retrieving without specifying a version string
+  # Do we get the right answer?
+
+
+  # Test uploading with a changed value
+  # for an existing version.
+  matv2b <- matv2
+  matv2b[1, 2] <- 3.1415926
+  midfv2b <- midfv2 |>
+    dplyr::mutate(
+      matval = list(matv2b)
+    )
+  # Upsert v2b with compression
+  rowsv2b <- midfv2b |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE,
+                           compress = TRUE)
+  v2b_retrieved <- pl_filter_collect(db_table_name = tname,
+                                     version_string = "v2.0",
+                                     index_map = index_map,
+                                     collect = TRUE,
+                                     conn = conn,
+                                     matrix_class = "matrix")
+  expect_equal(v2b_retrieved$Y[[1]], matv2b)
 
   # Test uploading a new version of one of the matrices
   # with a 0 in it.
   # Do we get the non-zero entry? (I hope not.)
+  matv2c <- matv2b
+  matv2c[2, 1] <- 0
+  midfv2c <- midfv2b |>
+    dplyr::mutate(
+      matval = list(matv2c)
+    )
+  # Upsert v2b with compression
+  rowsv2c <- midfv2c |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE,
+                           compress = TRUE)
+  v2c_retrieved <- pl_filter_collect(db_table_name = tname,
+                                     version_string = "v2.0",
+                                     index_map = index_map,
+                                     collect = TRUE,
+                                     conn = conn,
+                                     matrix_class = "matrix")
+  # Verify that we get the 0
+  expect_equal(v2c_retrieved$Y[[1]][2, 1], 0)
+  expect_equal(v2c_retrieved$Y[[1]], matv2c)
+
+
+
 
   clean_compression_testing_db(conn)
 
