@@ -71,11 +71,8 @@ test_that("pl_hash() works as expected with in-memory data frame", {
 test_that("pl_hash() works with remote table", {
   skip_on_ci()
   skip_on_cran()
-  conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
-                         dbname = "unit_testing",
-                         host = "mexer.site",
-                         port = 5432,
-                         user = "mkh2")
+
+  conn <- get_unit_testing_conn()
   on.exit(DBI::dbDisconnect(conn))
 
   # Create a test table that has same Country
@@ -113,6 +110,7 @@ test_that("pl_hash() works with remote table", {
 test_that("pl_upsert_and_compress() works for zero matrices", {
   skip_on_ci()
   skip_on_cran()
+
   conn <- get_unit_testing_conn()
   on.exit(DBI::dbDisconnect(conn))
 
@@ -204,6 +202,9 @@ test_that("pl_upsert_and_compress() works for zero matrices", {
 
 
 test_that("pl_upsert() works with local table compression", {
+  skip_on_ci()
+  skip_on_cran()
+
   # pl_upsert() is deprecated.
   # We will need to remove this test when
   # pl_upsert() is removed.
@@ -332,6 +333,9 @@ test_that("pl_upsert() works with local table compression", {
 
 
 test_that("pl_upsert_and_compress() works with local table compression", {
+  skip_on_ci()
+  skip_on_cran()
+
   conn <- get_unit_testing_conn()
   on.exit(DBI::dbDisconnect(conn))
   index_map <- create_compression_testing_db(conn)
@@ -348,7 +352,7 @@ test_that("pl_upsert_and_compress() works with local table compression", {
                   nrow = 3,
                   dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
     matsbyname::setrowtype("Product") |> matsbyname::setcoltype("Industry")
-  # matv2 is a modified matrix with the r3, c1 different
+  # matv2 is a modified matrix with the r3, c1 entry different
   matv2 <- matrix(c(1, 2,
                     3, 4,
                     42, 6),
@@ -397,11 +401,24 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   should_be_twelve_rows <- DBI::dbReadTable(conn, name = tname)
   expect_equal(nrow(should_be_twelve_rows), 12)
 
-  # Remove rows with v2
+  # Clean out the table
   conn |>
-    DBI::dbExecute('DELETE FROM testlocalcompression WHERE "ValidFromVersion" = 2 AND "ValidToVersion" = 2;')
+    DBI::dbExecute('TRUNCATE TABLE testlocalcompression;')
 
-  # Now upsert with compression
+  # Now try with compression
+  # Upsert the original matrix, without compression.
+  rowsv1 <- midfv1 |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE)
+  # Check that there are 6 rows in remote table
+  should_be_six_rows <- DBI::dbReadTable(conn, name = tname)
+  expect_equal(nrow(should_be_six_rows), 6)
+  expect_equal(unique(should_be_six_rows$ValidToVersion),
+               version_info$current_version_int)
+
+  # Now upsert version 2 with compression
   # compress = TRUE is the default
   rowsv2 <- midfv2 |>
     pl_upsert_and_compress(conn = conn,
@@ -420,7 +437,7 @@ test_that("pl_upsert_and_compress() works with local table compression", {
     dplyr::arrange(i, j)
   expected_resv1 <- tibble::tibble(Dataset = 5,
                                    ValidFromVersion = 1,
-                                   ValidToVersion = 1,
+                                   ValidToVersion = version_info$current_version_int,
                                    Country = 146,
                                    EnergyType = 1,
                                    Year = 1971,
@@ -450,7 +467,7 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   conn |>
     DBI::dbExecute('DELETE FROM testlocalcompression WHERE "ValidFromVersion" = 2;')
 
-  # Add a matrix with a modified value in the same version
+  # Add a matrix with a modified value with the same version
   # but all other metadata same.
   # This should update the value in the table but
   # leave everything else unchanged.
@@ -486,7 +503,6 @@ test_that("pl_upsert_and_compress() works with local table compression", {
 
   # Put v1 back the way it was
   foo <- midfv1 |>
-    dplyr::mutate(ValidToVersion = "v1.0") |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
                            index_map = index_map,
@@ -529,7 +545,7 @@ test_that("pl_upsert_and_compress() works with local table compression", {
     dplyr::arrange(value)
   expect_equal(resv4, expected_resv4)
 
-  # Put things back the way they were
+  # Restore v1
   DBI::dbExecute(conn, "DELETE FROM testlocalcompression")
   foo <- midfv1 |>
     pl_upsert_and_compress(conn = conn,
@@ -560,7 +576,7 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   # No rows should have been added.
   expect_equal(nrow(resv5), 6)
   # Nothing should have changed, because the value of
-  # matv3[3, 2] is within tol (1e-6) of the original.
+  # matv3[3, 2] is within default tol (1e-6) of the original.
   resv5 |>
     dplyr::filter(i == 3, j == 6) |>
     dplyr::pull(value) |>
@@ -568,7 +584,7 @@ test_that("pl_upsert_and_compress() works with local table compression", {
     expect_equal(0)
 
   # Now try with a smaller value for tol
-  # This should make changes.
+  # This should make changes "stick" in the remote database.
   rowsv6 <- midfv5 |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
@@ -592,20 +608,10 @@ test_that("pl_upsert_and_compress() works with local table compression", {
 })
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 test_that("pl_upsert_and_compress() works with more metadata columns and new rows/cols", {
+  skip_on_ci()
+  skip_on_cran()
+
   conn <- get_unit_testing_conn()
   on.exit(DBI::dbDisconnect(conn))
   index_map <- create_compression_testing_db(conn)
