@@ -300,7 +300,7 @@ pl_upsert <- function(.df,
 #'
 #' The user in `conn` must have write access to the database.
 #'
-#' By default, [pl_upsert()] will delete all zero entries
+#' By default, [pl_upsert_and_compress()] will delete all zero entries
 #' in matrices before upserting.
 #' But for some countries and years,
 #' that could result in missing matrices, such as **U_EIOU**.
@@ -325,8 +325,7 @@ pl_upsert <- function(.df,
 #'         and within `tol` for the `value` column.
 #'         In this case, there is nothing to be done, because the
 #'         `ValidToVersion` column in the remote database table
-#'         should already be
-#'         `2147483647`.
+#'         should already be `2147483647`.
 #' * Old/New:
 #'     * Remote (Old): Rows in the remote database table with foreign key columns
 #'                     (except `ValidFromVersion` and `ValidToVersion`)
@@ -360,6 +359,11 @@ pl_upsert <- function(.df,
 #' The calling function should supply the complete data in `.df`
 #' for each unique combination metadata column values.
 #'
+#' An error will occur if either
+#' the `ValidFromVersion` or the `ValidToVersion`
+#' column of `.df`
+#' contains `PFUPipelineTools::version_info$current_version_string` or
+#' "`r PFUPipelineTools::version_info$current_version_string`".
 #'
 #' @param .df The data frame to be upserted (and compressed by default).
 #' @param conn A connection to the CL-PFU database.
@@ -433,10 +437,14 @@ pl_upsert <- function(.df,
 #' @param valid_from_version_colname The string name of the valid from version column.
 #'                                   Default is [PFUPipelineTools::dataset_info]`$valid_from_version_colname` or
 #'                                   "`r PFUPipelineTools::dataset_info$valid_from_version_colname`".
+#'                                   Cannot be `PFUPipelineTools::version_info$current_version_string` or
+#'                                   "`r PFUPipelineTools::version_info$current_version_string`".
 #' @param valid_to_version_colname The string name of the valid to version column.
 #'                                 Default is [PFUPipelineTools::dataset_info]`$valid_to_version_colname`
 #'                                 or
 #'                                 "`r PFUPipelineTools::dataset_info$valid_to_version_colname`".
+#'                                 Cannot be `PFUPipelineTools::version_info$current_version_string` or
+#'                                 "`r PFUPipelineTools::version_info$current_version_string`".
 #' @param value_colname The string name of the value column in `.df`.
 #'                      Default is [PFUPipelineTools::mat_colnames]`$value` or
 #'                      "`r PFUPipelineTools::mat_colnames$value`".
@@ -524,6 +532,11 @@ pl_upsert_and_compress <- function(.df,
     assertthat::assert_that(length(valid_from_contents) == 1,
                             msg = paste0(valid_from_version_colname,
                                          " must have only one value"))
+    # Make sure we're not trying to submit "current" as the
+    # version string
+    assertthat::assert_that(valid_from_contents !=
+                              version_info$current_version_string,
+                            msg = "Cannot upload data with 'current' in ValidFromVersion")
   }
   if (valid_to_version_colname %in% names(.df)) {
     valid_to_contents <- .df |>
@@ -532,6 +545,11 @@ pl_upsert_and_compress <- function(.df,
     assertthat::assert_that(length(valid_to_contents) == 1,
                             msg = paste0(valid_to_version_colname,
                                          " must have only one value"))
+    # Make sure we're not trying to submit "current" as the
+    # version string
+    assertthat::assert_that(valid_to_contents !=
+                              version_info$current_version_string,
+                            msg = "Cannot upload data with 'current' in ValidToVersion")
   }
   if (valid_from_version_colname %in% names(.df) &
       valid_to_version_colname %in% names(.df)) {

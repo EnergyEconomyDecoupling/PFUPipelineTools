@@ -129,12 +129,16 @@ Default is \link{mat_colnames} (as a vector).}
 
 \item{valid_from_version_colname}{The string name of the valid from version column.
 Default is \link{dataset_info}\verb{$valid_from_version_colname} or
-"ValidFromVersion".}
+"ValidFromVersion".
+Cannot be \code{PFUPipelineTools::version_info$current_version_string} or
+"current".}
 
 \item{valid_to_version_colname}{The string name of the valid to version column.
 Default is \link{dataset_info}\verb{$valid_to_version_colname}
 or
-"ValidToVersion".}
+"ValidToVersion".
+Cannot be \code{PFUPipelineTools::version_info$current_version_string} or
+"current".}
 
 \item{value_colname}{The string name of the value column in \code{.df}.
 Default is \link{mat_colnames}\verb{$value} or
@@ -209,7 +213,7 @@ of this function.
 
 The user in \code{conn} must have write access to the database.
 
-By default, \code{\link[=pl_upsert]{pl_upsert()}} will delete all zero entries
+By default, \code{\link[=pl_upsert_and_compress]{pl_upsert_and_compress()}} will delete all zero entries
 in matrices before upserting.
 But for some countries and years,
 that could result in missing matrices, such as \strong{U_EIOU}.
@@ -235,8 +239,7 @@ for all foreign key columns except ValidFromVersion and ValidToVersion
 and within \code{tol} for the \code{value} column.
 In this case, there is nothing to be done, because the
 \code{ValidToVersion} column in the remote database table
-should already be
-\code{2147483647}.
+should already be \code{2147483647}.
 \item Old/New:
 \itemize{
 \item Remote (Old): Rows in the remote database table with foreign key columns
@@ -272,4 +275,10 @@ in \code{mat_colnames} are considered to be data columns.
 All other columns are considered to be metadata columns.
 The calling function should supply the complete data in \code{.df}
 for each unique combination metadata column values.
+
+An error will occur if either
+the \code{ValidFromVersion} or the \code{ValidToVersion}
+column of \code{.df}
+contains \code{PFUPipelineTools::version_info$current_version_string} or
+"current".
 }

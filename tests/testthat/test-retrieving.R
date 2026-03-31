@@ -663,12 +663,11 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
 
 
 test_that("pl_filter_collect() works with compressed remote tables", {
-
   skip_on_ci()
   skip_on_cran()
+
   conn <- get_unit_testing_conn()
   on.exit(DBI::dbDisconnect(conn))
-
   index_map <- create_compression_testing_db(conn)
 
   # Set the names of the table so we can use the variable in several places
@@ -698,8 +697,7 @@ test_that("pl_filter_collect() works with compressed remote tables", {
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
                            index_map = index_map,
-                           in_place = TRUE,
-                           compress = TRUE)
+                           in_place = TRUE)
 
   # matv2 is a modified matrix with the r3, c1 different
   matv2 <- matrix(c(1, 2,
@@ -723,8 +721,7 @@ test_that("pl_filter_collect() works with compressed remote tables", {
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
                            index_map = index_map,
-                           in_place = TRUE,
-                           compress = TRUE)
+                           in_place = TRUE)
 
   # Check that we can get v1 back successfully
   v1_retrieved <- pl_filter_collect(db_table_name = tname,
@@ -753,8 +750,9 @@ test_that("pl_filter_collect() works with compressed remote tables", {
   # Test retrieving with the current version.
   # We should get the v2.0 matrix,
   # but the columns should have "current".
+  # The default version_string is "current,"
+  # so no need to specify it here.
   vcurrent_retrieved <- pl_filter_collect(db_table_name = tname,
-                                          version_string = "current",
                                           index_map = index_map,
                                           collect = TRUE,
                                           conn = conn,
@@ -783,10 +781,6 @@ test_that("pl_filter_collect() works with compressed remote tables", {
   expect_equal(v21_retrieved$Y, list(matv2, matv1))
   expect_equal(v21_retrieved$ValidFromVersion, c("v2.0", "v1.0"))
 
-
-
-
-
   # Test uploading an updated instance of one of the matrices
   # with a 0 in it in the outdated version (v1).
   # This should fail, because we're trying to update
@@ -811,8 +805,24 @@ test_that("pl_filter_collect() works with compressed remote tables", {
                                      collect = TRUE,
                                      conn = conn,
                                      matrix_class = "matrix")
-  # Because we couldn't update, we should get v1
+  # Because we couldn't update,
+  # we should get the original v1
   expect_equal(v1b_retrieved$Y[[1]], matv1)
+  # Try to upsert with "current" in the version_string.
+  # This should fail, because we want to be very specific
+  # about the version when submitting new data to the database.
+  # Upsert v2 with compression
+  midfv2 |>
+    dplyr::mutate(
+      ValidFromVersion = "current",
+      ValidToVersion = "current"
+    ) |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE) |>
+    expect_error("Cannot upload data with 'current' in ValidFromVersion")
+
 
 
   # Can we still filter on the version string columns after the fact,
@@ -836,8 +846,7 @@ test_that("pl_filter_collect() works with compressed remote tables", {
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
                            index_map = index_map,
-                           in_place = TRUE,
-                           compress = TRUE)
+                           in_place = TRUE)
   v2b_retrieved <- pl_filter_collect(db_table_name = tname,
                                      version_string = "v2.0",
                                      index_map = index_map,
@@ -845,6 +854,8 @@ test_that("pl_filter_collect() works with compressed remote tables", {
                                      conn = conn,
                                      matrix_class = "matrix")
   expect_equal(v2b_retrieved$Y[[1]], matv2b)
+
+
 
 
 
@@ -865,8 +876,7 @@ test_that("pl_filter_collect() works with compressed remote tables", {
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
                            index_map = index_map,
-                           in_place = TRUE,
-                           compress = TRUE)
+                           in_place = TRUE)
   v2c_retrieved <- pl_filter_collect(db_table_name = tname,
                                      version_string = "v2.0",
                                      index_map = index_map,
