@@ -9,6 +9,7 @@ pl_filter_collect(
   ...,
   version_string = PFUPipelineTools::version_info$current_version_string,
   collect = FALSE,
+  decode_foreign_keys = TRUE,
   create_matsindf = collect,
   conn,
   schema = schema_from_conn(conn = conn),
@@ -53,6 +54,12 @@ If \code{version_string} is invalid, an error will be emitted.}
 \item{collect}{A boolean that tells whether to download the result.
 Default is \code{FALSE}.
 See details.}
+
+\item{decode_foreign_keys}{A boolean that tells whether to decode foreign keys in the result.
+Must be \code{TRUE} if \code{...} contains filtering expressions
+with decoded, human-readable values
+(instead of encoded database integers).
+Default is \code{TRUE}.}
 
 \item{create_matsindf}{A boolean that tells whether to create a matsindf data frame
 from the collected data frame.
@@ -106,12 +113,6 @@ Defaults are
 and
 \code{PFUPipelineTools::dataset_info$valid_to_version_colname},
 respectively.}
-
-\item{decode_fks}{A boolean that tells whether to decode foreign keys in the result.
-Must be \code{TRUE} if \code{...} contains filtering expressions
-with decoded, human-readable values
-(instead of encoded database integers).
-Default is \code{TRUE}.}
 }
 \value{
 A filtered version of \code{db_table_name} downloaded from \code{conn}.

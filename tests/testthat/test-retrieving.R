@@ -823,8 +823,6 @@ test_that("pl_filter_collect() works with compressed remote tables", {
                            in_place = TRUE) |>
     expect_error("Cannot upload data with 'current' in ValidFromVersion")
 
-
-
   # Can we still filter on the version string columns after the fact,
   # if we do not create matsindf?
 
@@ -891,3 +889,87 @@ test_that("pl_filter_collect() works with compressed remote tables", {
 })
 
 
+test_that("Various download formats work as expected in pl_filter_collect()", {
+  skip_on_ci()
+  skip_on_cran()
+
+  conn <- get_unit_testing_conn()
+  on.exit(DBI::dbDisconnect(conn))
+  index_map <- create_compression_testing_db(conn)
+
+  tname <- "testlocalcompression"
+
+  # Add a few matrices
+  # matv1 is the original matrix
+  matv1 <- matrix(c(1, 2,
+                    3, 4,
+                    5, 6),
+                  byrow = TRUE,
+                  nrow = 3,
+                  dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
+    matsbyname::setrowtype("Product") |> matsbyname::setcoltype("Industry")
+  # Create a matsindf data frame for the v1 matrix
+  midfv1 <- tibble::tibble(Dataset = "CL-PFU IEA",
+                           ValidFromVersion = c("v1.0"),
+                           ValidToVersion = c("v1.0"),
+                           Country = "USA",
+                           EnergyType = "E",
+                           Year = 1971,
+                           matname = c("Y"),
+                           matval = list(matv1))
+  rowsv1 <- midfv1 |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE)
+
+  # Obtain an i,j,value data frame
+  v1_ijv <- pl_filter_collect(db_table_name = tname,
+                              version_string = "v1.0",
+                              index_map = index_map,
+                              collect = TRUE,
+                              conn = conn,
+                              matrix_class = "matrix",
+                              create_matsindf = FALSE)
+  # Should have obtained a data frame with i, j, value columns
+  expect_true("i" %in% colnames(v1_ijv))
+  expect_true("j" %in% colnames(v1_ijv))
+  expect_true("value" %in% colnames(v1_ijv))
+  v1_ijv <- v1_ijv |>
+    dplyr::arrange(i, j)
+  expect_equal(v1_ijv$i, c("r1", "r1", "r2", "r2", "r3", "r3"))
+  expect_equal(v1_ijv$j, c("c1", "c2", "c1", "c2", "c1", "c2"))
+  expect_equal(v1_ijv$value, 1:6)
+
+  # Obtain an encoded data frame
+  v1_encoded <- pl_filter_collect(db_table_name = tname,
+                                  version_string = "v1.0",
+                                  index_map = index_map,
+                                  collect = TRUE,
+                                  conn = conn,
+                                  matrix_class = "matrix",
+                                  create_matsindf = FALSE,
+                                  decode_foreign_keys = FALSE)
+  expect_true("i" %in% colnames(v1_encoded))
+  expect_true("j" %in% colnames(v1_encoded))
+  expect_true("value" %in% colnames(v1_encoded))
+  v1_encoded <- v1_encoded |>
+    dplyr::arrange(i, j)
+  expect_equal(nrow(v1_encoded), 6)
+  expect_equal(v1_encoded$Dataset, rep(5, 6))
+  expect_equal(v1_encoded$Country, rep(146, 6))
+  expect_equal(v1_encoded$EnergyType, rep(1, 6))
+  expect_equal(v1_encoded$value, 1:6)
+
+  v1_nover <- pl_filter_collect(db_table_name = tname,
+                                version_string = NULL,
+                                index_map = index_map,
+                                collect = TRUE,
+                                conn = conn,
+                                matrix_class = "matrix",
+                                create_matsindf = FALSE,
+                                decode_fks = FALSE)
+
+
+
+})

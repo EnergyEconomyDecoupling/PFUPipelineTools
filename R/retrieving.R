@@ -248,11 +248,11 @@ pl_collect_from_hash <- function(hashed_table,
 #' @param collect A boolean that tells whether to download the result.
 #'                Default is `FALSE`.
 #'                See details.
-#' @param decode_fks A boolean that tells whether to decode foreign keys in the result.
-#'                   Must be `TRUE` if `...` contains filtering expressions
-#'                   with decoded, human-readable values
-#'                   (instead of encoded database integers).
-#'                   Default is `TRUE`.
+#' @param decode_foreign_keys A boolean that tells whether to decode foreign keys in the result.
+#'                            Must be `TRUE` if `...` contains filtering expressions
+#'                            with decoded, human-readable values
+#'                            (instead of encoded database integers).
+#'                            Default is `TRUE`.
 #' @param create_matsindf A boolean that tells whether to create a matsindf data frame
 #'                        from the collected data frame.
 #'                        Default is the value of `collect`,
@@ -301,6 +301,7 @@ pl_filter_collect <- function(db_table_name,
                               ...,
                               version_string = PFUPipelineTools::version_info$current_version_string,
                               collect = FALSE,
+                              decode_foreign_keys = TRUE,
                               create_matsindf = collect,
                               conn,
                               schema = schema_from_conn(conn = conn),
@@ -339,6 +340,7 @@ pl_filter_collect <- function(db_table_name,
       filter_args = rlang::enquos(...),
       version_string = version_string,
       collect = collect,
+      decode_foreign_keys = decode_foreign_keys,
       create_matsindf = create_matsindf,
       conn = conn,
       schema = schema,
@@ -353,66 +355,100 @@ pl_filter_collect <- function(db_table_name,
       rowtype_colname = rowtype_colname,
       coltype_colname = coltype_colname,
       valid_from_version_colname = valid_from_version_colname,
-      valid_to_version_colname = valid_to_version_colname
-    )
-  } else (
-    # Account for version_string with length > 1
-    out <-
-      purrr::map(version_string, pl_filter_collect_worker,
-                 db_table_name = db_table_name,
-                 filter_args = rlang::enquos(...),
-                 collect = collect,
-                 create_matsindf = create_matsindf,
-                 conn = conn,
-                 schema = schema,
-                 fk_parent_tables = fk_parent_tables,
-                 index_map_name = index_map_name,
-                 index_map = index_map,
-                 rctype_table_name = rctype_table_name,
-                 rctypes = rctypes,
-                 matrix_class = matrix_class,
-                 matname = matname,
-                 matval = matval,
-                 rowtype_colname = rowtype_colname,
-                 coltype_colname = coltype_colname,
-                 valid_from_version_colname = valid_from_version_colname,
-                 valid_to_version_colname = valid_to_version_colname) |>
+      valid_to_version_colname = valid_to_version_colname)
+  } else {
+    # Account for version_string with length >= 1
+    outlist <- list()
+    for (this_version in version_string) {
+      this_df <- pl_filter_collect_worker(
+        db_table_name = db_table_name,
+        filter_args = rlang::enquos(...),
+        version_string = this_version,
+        collect = collect,
+        decode_foreign_keys = decode_foreign_keys,
+        create_matsindf = create_matsindf,
+        conn = conn,
+        schema = schema,
+        fk_parent_tables = fk_parent_tables,
+        index_map_name = index_map_name,
+        index_map = index_map,
+        rctype_table_name = rctype_table_name,
+        rctypes = rctypes,
+        matrix_class = matrix_class,
+        matname = matname,
+        matval = matval,
+        rowtype_colname = rowtype_colname,
+        coltype_colname = coltype_colname,
+        valid_from_version_colname = valid_from_version_colname,
+        valid_to_version_colname = valid_to_version_colname)
+      outlist <- outlist |>
+        append(this_df)
+    }
+    out <- outlist |>
       dplyr::bind_rows()
-  )
+  }
   return(out)
 }
 
 
+# pl_filter_collect_worker <- function(db_table_name,
+#                                      filter_args,
+#                                      version_string = NULL,
+#                                      collect = FALSE,
+#                                      decode_fks,
+#                                      create_matsindf = collect,
+#                                      conn,
+#                                      schema = schema_from_conn(conn = conn),
+#                                      fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+#                                      index_map_name = "Index",
+#                                      index_map = fk_parent_tables[[index_map_name]],
+#                                      rctype_table_name = "matnameRCType",
+#                                      rctypes = decode_fks(db_table_name = rctype_table_name,
+#                                                           collect = TRUE,
+#                                                           conn = conn,
+#                                                           schema = schema,
+#                                                           fk_parent_tables = fk_parent_tables) |>
+#                                        dplyr::mutate(
+#                                          "{matname}" := decode_fk_keys(.data[[matname]],
+#                                                                        fk_table_name = "matname",
+#                                                                        conn = conn,
+#                                                                        schema = schema,
+#                                                                        fk_parent_tables = fk_parent_tables,
+#                                                                        pk_suffix = PFUPipelineTools::key_col_info$pk_suffix)),
+#                                      matrix_class = c("Matrix", "matrix"),
+#                                      matname = PFUPipelineTools::mat_meta_cols$matname,
+#                                      matval = PFUPipelineTools::mat_meta_cols$matval,
+#                                      rowtype_colname = PFUPipelineTools::mat_meta_cols$rowtype,
+#                                      coltype_colname = PFUPipelineTools::mat_meta_cols$coltype,
+#                                      valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
+#                                      valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname) {
+
+
+
+
+
+
+
 pl_filter_collect_worker <- function(db_table_name,
                                      filter_args,
-                                     version_string = NULL,
-                                     collect = FALSE,
-                                     create_matsindf = collect,
+                                     version_string,
+                                     collect,
+                                     decode_foreign_keys,
+                                     create_matsindf,
                                      conn,
-                                     schema = schema_from_conn(conn = conn),
-                                     fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
-                                     index_map_name = "Index",
-                                     index_map = fk_parent_tables[[index_map_name]],
-                                     rctype_table_name = "matnameRCType",
-                                     rctypes = decode_fks(db_table_name = rctype_table_name,
-                                                          collect = TRUE,
-                                                          conn = conn,
-                                                          schema = schema,
-                                                          fk_parent_tables = fk_parent_tables) |>
-                                       dplyr::mutate(
-                                         "{matname}" := decode_fk_keys(.data[[matname]],
-                                                                       fk_table_name = "matname",
-                                                                       conn = conn,
-                                                                       schema = schema,
-                                                                       fk_parent_tables = fk_parent_tables,
-                                                                       pk_suffix = PFUPipelineTools::key_col_info$pk_suffix)),
-                                     matrix_class = c("Matrix", "matrix"),
-                                     matname = PFUPipelineTools::mat_meta_cols$matname,
-                                     matval = PFUPipelineTools::mat_meta_cols$matval,
-                                     rowtype_colname = PFUPipelineTools::mat_meta_cols$rowtype,
-                                     coltype_colname = PFUPipelineTools::mat_meta_cols$coltype,
-                                     valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
-                                     valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname) {
+                                     schema,
+                                     fk_parent_tables,
+                                     index_map_name,
+                                     index_map,
+                                     rctype_table_name,
+                                     rctypes,
+                                     matrix_class,
+                                     matname,
+                                     matval,
+                                     rowtype_colname,
+                                     coltype_colname,
+                                     valid_from_version_colname,
+                                     valid_to_version_colname) {
 
   matrix_class <- match.arg(matrix_class)
 
@@ -434,11 +470,13 @@ pl_filter_collect_worker <- function(db_table_name,
 
   # Next, decode the foreign keys in the tbl with
   # collect = FALSE to ensure a tbl is returned.
-  out <- out |>
-    decode_fks(db_table_name = db_table_name,
-               schema = schema,
-               fk_parent_tables = fk_parent_tables,
-               collect = FALSE)
+  if (decode_foreign_keys) {
+    out <- out |>
+      decode_fks(db_table_name = db_table_name,
+                 schema = schema,
+                 fk_parent_tables = fk_parent_tables,
+                 collect = FALSE)
+  }
 
   # Finally, filter the foreign keys in the tbl based on the expressions in ...
   # filter_args <- rlang::enquos(...)
