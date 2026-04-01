@@ -329,6 +329,8 @@ pl_filter_collect <- function(db_table_name,
                               valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
                               valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname) {
 
+  matrix_class <- match.arg(matrix_class)
+
   # Duplicate values of version_string
   # result in duplicate rows returned.
   # We don't want to do this.
@@ -336,9 +338,9 @@ pl_filter_collect <- function(db_table_name,
 
   if (is.null(version_string)) {
     out <- pl_filter_collect_worker(
+      version_string = version_string,
       db_table_name = db_table_name,
       filter_args = rlang::enquos(...),
-      version_string = version_string,
       collect = collect,
       decode_foreign_keys = decode_foreign_keys,
       create_matsindf = create_matsindf,
@@ -358,33 +360,73 @@ pl_filter_collect <- function(db_table_name,
       valid_to_version_colname = valid_to_version_colname)
   } else {
     # Account for version_string with length >= 1
-    outlist <- list()
-    for (this_version in version_string) {
-      this_df <- pl_filter_collect_worker(
-        db_table_name = db_table_name,
-        filter_args = rlang::enquos(...),
-        version_string = this_version,
-        collect = collect,
-        decode_foreign_keys = decode_foreign_keys,
-        create_matsindf = create_matsindf,
-        conn = conn,
-        schema = schema,
-        fk_parent_tables = fk_parent_tables,
-        index_map_name = index_map_name,
-        index_map = index_map,
-        rctype_table_name = rctype_table_name,
-        rctypes = rctypes,
-        matrix_class = matrix_class,
-        matname = matname,
-        matval = matval,
-        rowtype_colname = rowtype_colname,
-        coltype_colname = coltype_colname,
-        valid_from_version_colname = valid_from_version_colname,
-        valid_to_version_colname = valid_to_version_colname)
-      outlist <- outlist |>
-        append(this_df)
-    }
-    out <- outlist |>
+    # out <- purrr::map(.f = pl_filter_collect_worker,
+    #                   .x = version_string,
+    #                   db_table_name = db_table_name,
+    #                   filter_args = rlang::enquos(...),
+    #                   collect = collect,
+    #                   decode_foreign_keys = decode_foreign_keys,
+    #                   create_matsindf = create_matsindf,
+    #                   conn = conn,
+    #                   schema = schema,
+    #                   fk_parent_tables = fk_parent_tables,
+    #                   index_map_name = index_map_name,
+    #                   index_map = index_map,
+    #                   rctype_table_name = rctype_table_name,
+    #                   rctypes = rctypes,
+    #                   matrix_class = matrix_class,
+    #                   matname = matname,
+    #                   matval = matval,
+    #                   rowtype_colname = rowtype_colname,
+    #                   coltype_colname = coltype_colname,
+    #                   valid_from_version_colname = valid_from_version_colname,
+    #                   valid_to_version_colname = valid_to_version_colname) |>
+    #   dplyr::bind_rows()
+
+    out <- purrr::map(.x = version_string,
+                      .f = function(this_version_string,
+                                    this_filter_args = rlang::enquos(...),
+                                    this_db_table_name = db_table_name,
+                                    this_collect = collect,
+                                    this_decode_foreign_keys = decode_foreign_keys,
+                                    this_create_matsindf = create_matsindf,
+                                    this_conn = conn,
+                                    this_schema = schema,
+                                    this_fk_parent_tables = fk_parent_tables,
+                                    this_index_map_name = index_map_name,
+                                    this_index_map = index_map,
+                                    this_rctype_table_name = rctype_table_name,
+                                    this_rctypes = rctypes,
+                                    this_matrix_class = matrix_class,
+                                    this_matname = matname,
+                                    this_matval = matval,
+                                    this_rowtype_colname = rowtype_colname,
+                                    this_coltype_colname = coltype_colname,
+                                    this_valid_from_version_colname = valid_from_version_colname,
+                                    this_valid_to_version_colname = valid_to_version_colname) {
+
+                        pl_filter_collect_worker(version_string = this_version_string,
+                                                 filter_args = this_filter_args,
+                                                 db_table_name = this_db_table_name,
+                                                 collect = this_collect,
+                                                 decode_foreign_keys = this_decode_foreign_keys,
+                                                 create_matsindf = this_create_matsindf,
+                                                 conn = this_conn,
+                                                 schema = this_schema,
+                                                 fk_parent_tables = this_fk_parent_tables,
+                                                 index_map_name = this_index_map_name,
+                                                 index_map = this_index_map,
+                                                 rctype_table_name = this_rctype_table_name,
+                                                 rctypes = this_rctypes,
+                                                 matrix_class = this_matrix_class,
+                                                 matname = this_matname,
+                                                 matval = this_matval,
+                                                 rowtype_colname = this_rowtype_colname,
+                                                 coltype_colname = this_coltype_colname,
+                                                 valid_from_version_colname = this_valid_from_version_colname,
+                                                 valid_to_version_colname = this_valid_to_version_colname)
+
+                      }) |>
       dplyr::bind_rows()
   }
   return(out)
@@ -429,9 +471,9 @@ pl_filter_collect <- function(db_table_name,
 
 
 
-pl_filter_collect_worker <- function(db_table_name,
+pl_filter_collect_worker <- function(version_string,
+                                     db_table_name,
                                      filter_args,
-                                     version_string,
                                      collect,
                                      decode_foreign_keys,
                                      create_matsindf,
@@ -449,8 +491,6 @@ pl_filter_collect_worker <- function(db_table_name,
                                      coltype_colname,
                                      valid_from_version_colname,
                                      valid_to_version_colname) {
-
-  matrix_class <- match.arg(matrix_class)
 
   out <- dplyr::tbl(src = conn, db_table_name)
 
