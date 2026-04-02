@@ -51,7 +51,7 @@ Default is \code{PFUPipelineTools::usual_hash_group_cols}.}
 \item{conn}{A database connection.}
 
 \item{schema}{The data model (\code{dm} object) for the database in \code{conn}.
-Default is \code{dm_from_con(conn, learn_keys = TRUE)}.
+Default is \code{dm_from_conn(conn)}.
 See details.}
 
 \item{fk_parent_tables}{A named list of all parent tables

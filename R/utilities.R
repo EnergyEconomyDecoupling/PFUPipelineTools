@@ -214,7 +214,7 @@ clean_up_beatles <- function(conn) {
 #'                              Default is `PFUPipelineTools::usual_hash_group_cols`.
 #' @param conn A database connection.
 #' @param schema The data model (`dm` object) for the database in `conn`.
-#'               Default is `dm_from_con(conn, learn_keys = TRUE)`.
+#'               Default is `dm_from_conn(conn)`.
 #'               See details.
 #' @param fk_parent_tables A named list of all parent tables
 #'                         for the foreign keys in `db_table_name`.
