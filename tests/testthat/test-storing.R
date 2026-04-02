@@ -336,23 +336,16 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   skip_on_ci()
   skip_on_cran()
 
-  # Should get NULL if NULL is passed in .df
-  NULL |>
-    pl_upsert_and_compress() |>
-    expect_null()
-
-  # Should get NULL if a zero-row data frame is passed in .df
-  tibble::tribble(~a, ~b,
-                  1, 2) |>
-    dplyr::filter(FALSE) |>
-    pl_upsert_and_compress() |>
-    expect_null()
-
   conn <- get_unit_testing_conn()
   on.exit(DBI::dbDisconnect(conn))
   index_map <- create_compression_testing_db(conn)
 
-  # Set the names of the table so we can use the variable in several places
+  # Should get NULL if NULL is passed in .df
+  NULL |>
+    pl_upsert_and_compress(db_table_name = "foo") |>
+    expect_error(regexp = "no applicable method for 'mutate' applied to an object of class")
+
+  # Set the name of the table so we can use the variable in several places
   tname <- "testlocalcompression"
 
   # Create a couple matrices
@@ -392,6 +385,17 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   should_be_six_rows <- DBI::dbReadTable(conn, name = tname)
   expect_equal(nrow(should_be_six_rows), 6)
 
+  # Upload a zero-row version of the same table.
+  # It should return an empty hash.
+  no_row <- midfv1 |>
+    dplyr::filter(FALSE) |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE,
+                           compress = FALSE)
+
+
   # Create a matsindf data frame for the v2 matrix
   midfv2 <- tibble::tibble(Dataset = "CL-PFU IEA",
                            ValidFromVersion = "v2.0",
@@ -418,7 +422,6 @@ test_that("pl_upsert_and_compress() works with local table compression", {
     DBI::dbExecute('TRUNCATE TABLE testlocalcompression;')
 
   # Now try with compression
-  # Upsert the original matrix, without compression.
   rowsv1 <- midfv1 |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,

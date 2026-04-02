@@ -496,13 +496,13 @@ pl_upsert_and_compress <- function(.df,
                                    what_to_do_colname = PFUPipelineTools::dataset_info$what_to_do,
                                    current_version_int = PFUPipelineTools::version_info$current_version_int) {
 
-  if (is.null(.df)) {
-    return(NULL)
-  }
-
-  if (nrow(.df) == 0) {
-    return(NULL)
-  }
+  # if (is.null(.df)) {
+  #   return(NULL)
+  # }
+  #
+  # if (nrow(.df) == 0) {
+  #   return(NULL)
+  # }
 
   if (is.null(db_table_name)) {
     db_table_name <- .df[[.db_table_name]] |>
@@ -537,6 +537,7 @@ pl_upsert_and_compress <- function(.df,
   if (valid_from_version_colname %in% names(.df)) {
     valid_from_contents <- .df |>
       dplyr::select(dplyr::all_of(valid_from_version_colname)) |>
+      unlist() |>
       unique()
     assertthat::assert_that(length(valid_from_contents) == 1,
                             msg = paste0(valid_from_version_colname,
@@ -550,6 +551,7 @@ pl_upsert_and_compress <- function(.df,
   if (valid_to_version_colname %in% names(.df)) {
     valid_to_contents <- .df |>
       dplyr::select(dplyr::all_of(valid_to_version_colname)) |>
+      unlist() |>
       unique()
     assertthat::assert_that(length(valid_to_contents) == 1,
                             msg = paste0(valid_to_version_colname,
@@ -762,7 +764,7 @@ pl_upsert_and_compress <- function(.df,
 #'     by all columns with more than one unique value and
 #'     `additional_hash_group_cols`
 #'     (when `additional_hash_group_cols` is not `NULL`).
-#'   - The second through N-1 columns are
+#'   - The second through N-1 columns (inclusive) are
 #'     all columns with only one unique value
 #'     (provided that `keep_single_unique_cols` is `TRUE` AND
 #'     those columns specified by
@@ -794,7 +796,7 @@ pl_upsert_and_compress <- function(.df,
 #' in the way that the database creates its hash vs. how R creates its hash.
 #'
 #' @param .df An in-memory data frame to be stored in the database or `NULL` if
-#'            the has of a table in the database at `conn` is desired.
+#'            the hash of a table in the database at `conn` is desired.
 #' @param table_name The string name of the table in which `.df` will be stored
 #'                   or the name of a table in the database to be hashed.
 #' @param conn A connection to a database.
@@ -845,7 +847,7 @@ pl_hash <- function(.df = NULL,
   if (!is.null(table_name)) {
     # Make sure the table_name has length 1.
     if (length(table_name) != 1) {
-      stop("length(table_name) must be 1 in pl_hash()")
+      stop("length(table_name) must be 1 in PFUPipelineTools::pl_hash()")
     }
   }
 
