@@ -158,6 +158,7 @@ a different value from the default.}
 }
 \value{
 A hash of \code{.df} according to \code{.algo}.
+If \code{.df} is \code{NULL} or has no rows, \code{NULL} is returned.
 }
 \description{
 Upserts

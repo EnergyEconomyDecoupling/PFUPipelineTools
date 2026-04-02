@@ -460,6 +460,7 @@ pl_upsert <- function(.df,
 #'                            a different value from the default.
 #'
 #' @returns A hash of `.df` according to `.algo`.
+#'          If `.df` is `NULL` or has no rows, `NULL` is returned.
 #'
 #' @export
 pl_upsert_and_compress <- function(.df,
@@ -494,6 +495,14 @@ pl_upsert_and_compress <- function(.df,
                                    value_colname = PFUPipelineTools::mat_colnames$value,
                                    what_to_do_colname = PFUPipelineTools::dataset_info$what_to_do,
                                    current_version_int = PFUPipelineTools::version_info$current_version_int) {
+
+  if (is.null(.df)) {
+    return(NULL)
+  }
+
+  if (nrow(.df) == 0) {
+    return(NULL)
+  }
 
   if (is.null(db_table_name)) {
     db_table_name <- .df[[.db_table_name]] |>

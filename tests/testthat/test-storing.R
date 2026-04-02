@@ -336,6 +336,18 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   skip_on_ci()
   skip_on_cran()
 
+  # Should get NULL if NULL is passed in .df
+  NULL |>
+    pl_upsert_and_compress() |>
+    expect_null()
+
+  # Should get NULL if a zero-row data frame is passed in .df
+  tibble::tribble(~a, ~b,
+                  1, 2) |>
+    dplyr::filter(FALSE) |>
+    pl_upsert_and_compress() |>
+    expect_null()
+
   conn <- get_unit_testing_conn()
   on.exit(DBI::dbDisconnect(conn))
   index_map <- create_compression_testing_db(conn)
@@ -659,6 +671,14 @@ test_that("pl_upsert_and_compress() works with more metadata columns and new row
   # Verify that we have 6 rows, one for each entry in the matrix
   should_be_six_rows <- DBI::dbReadTable(conn, name = tname)
   expect_equal(nrow(should_be_six_rows), 6)
+
+  # Test uploading an empty data frame.
+  midfv1 |>
+    dplyr::filter(FALSE) |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE)
 
   # Try adding a new matrix with more rows/cols
   midfv2 <- midfv1 |>
