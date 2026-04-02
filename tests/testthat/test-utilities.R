@@ -12,12 +12,25 @@ test_that("self_name() works as intended", {
 test_that("inboard_filter_copy() works as expected", {
   skip_on_ci()
   skip_on_cran()
-  conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
-                         dbname = "unit_testing",
-                         host = "mexer.site",
-                         port = 5432,
-                         user = "mkh2")
+  conn <- get_unit_testing_conn()
   on.exit(DBI::dbDisconnect(conn))
+
+  # Start with a clean slate, getting rid of any possible leftover tables
+  if (DBI::dbExistsTable(conn = conn, name = "testlocalcompression")) {
+    DBI::dbRemoveTable(conn = conn, name = "testlocalcompression")
+  }
+  if (DBI::dbExistsTable(conn = conn, name = "source")) {
+    DBI::dbRemoveTable(conn = conn, name = "source")
+  }
+  if (DBI::dbExistsTable(conn = conn, name = "dest")) {
+    DBI::dbRemoveTable(conn = conn, name = "dest")
+  }
+  if (DBI::dbExistsTable(conn = conn, name = "Country")) {
+    DBI::dbRemoveTable(conn = conn, name = "Country")
+  }
+  if (DBI::dbExistsTable(conn = conn, name = "Year")) {
+    DBI::dbRemoveTable(conn = conn, name = "Year")
+  }
 
   # Make a table for testing
   source_table <- data.frame(Country = as.integer(c(1, 1, 1, 2, 2, 2, 3, 3, 3)),

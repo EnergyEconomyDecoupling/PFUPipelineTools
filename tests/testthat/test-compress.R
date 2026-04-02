@@ -1,3 +1,10 @@
+# All tests in this file are for deprecated functions.
+# Remove this file when
+# * install_compress_function(),
+# * remove_compress_function(), and
+# * compress_rows()
+# are removed from this package.
+
 test_that("install_compress_function() and remove_compress_function() both work", {
 
   skip_on_ci()
@@ -11,6 +18,10 @@ test_that("install_compress_function() and remove_compress_function() both work"
 
   remove_compress_function(conn = conn) |>
     expect_equal(0)
+
+  # Re-install in case other tests need it.
+  install_compress_function(conn = conn) |>
+    expect_equal(0)
 })
 
 
@@ -20,11 +31,6 @@ test_that("Compression works maunally and with pl_upsert()", {
   skip_on_cran()
 
   conn <- get_unit_testing_conn()
-  # conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
-  #                        dbname = "unit_testing",
-  #                        host = "mexer.site",
-  #                        port = 5432,
-  #                        user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
 
   db_table_name <- "PLUpsertTest"
@@ -124,6 +130,7 @@ test_that("Compression works maunally and with pl_upsert()", {
     "v4", "v10", "GHA", 2000L, 8)
 
   pl_filter_collect(db_table_name = db_table_name,
+                    version_string = NULL,
                     collect = TRUE,
                     conn = conn,
                     schema = schema,
@@ -157,10 +164,11 @@ test_that("Compression works maunally and with pl_upsert()", {
     expect_equal(0)
   # Re-collect the table and compare
   pl_filter_collect(db_table_name = db_table_name,
-                              collect = TRUE,
-                              conn = conn,
-                              schema = schema,
-                              fk_parent_tables = fk_parent_tables) |>
+                    version_string = NULL,
+                    collect = TRUE,
+                    conn = conn,
+                    schema = schema,
+                    fk_parent_tables = fk_parent_tables) |>
     dplyr::arrange(val) |>
     expect_equal(expected_compressed_table)
 
@@ -179,6 +187,7 @@ test_that("Compression works maunally and with pl_upsert()", {
   # Make sure the compression happened as expected
   # and gives the same results as before.
   pl_filter_collect(db_table_name = db_table_name,
+                    version_string = NULL,
                     collect = TRUE,
                     conn = conn,
                     schema = schema,
@@ -223,6 +232,7 @@ test_that("Compression works maunally and with pl_upsert()", {
               compress = TRUE)
   # Make sure no compression happened.
   pl_filter_collect(db_table_name = db_table_name,
+                    version_string = NULL,
                     collect = TRUE,
                     conn = conn,
                     schema = schema,
@@ -241,6 +251,11 @@ test_that("Compression works maunally and with pl_upsert()", {
     DBI::dbRemoveTable(conn, country_table_name)
   }
 
-  remove_compress_function(conn = conn) |>
-    expect_equal(0)
+})
+
+
+test_that("install_compress_function() gives a deprecation warning", {
+  install_compress_function() |>
+    expect_warning(regexp = "Remote compression has been replaced by local compression.") |>
+    expect_error('argument "conn" is missing, with no default')
 })

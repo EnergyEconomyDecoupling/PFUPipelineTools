@@ -180,7 +180,9 @@ pl_collect_from_hash <- function(hashed_table,
 #' filtering is desired.
 #' But filtering based on foreign keys
 #' (fks, as stored in the database)
-#' is effectively impossible, because of foreign key encoding.
+#' is effectively impossible,
+#' because of foreign key encoding
+#' to integers.
 #' This function filters based on
 #' fk values (typically strings),
 #' not fk keys (typically integers),
@@ -189,10 +191,23 @@ pl_collect_from_hash <- function(hashed_table,
 #' By default (`collect = FALSE`),
 #' a `tbl` is returned
 #' (and data are not downloaded from the database).
-#' Use [dplyr::collect()] to execute the resulting SQL query
+#' Use [dplyr::collect()] later
+#' to execute the resulting SQL query
 #' and obtain an in-memory data frame.
 #' Or, set `collect = TRUE` to execute the SQL and
 #' return an in-memory data frame.
+#'
+#' Filtering on versions is a special case
+#' because of the way data are compressed in the database.
+#' Specify one or more version values
+#' (such as `c("v1.0", "v1.1", "v2.0")`)
+#' in the `version_string` argument
+#' returns all requested versions.
+#' The default ("current") returns the current version
+#' matching all filtering criteria in `...`.
+#' Set `version_string = NULL` to disable filtering based
+#' on versions, but the results may be nonsensical.
+#'
 #'
 #' `schema` is a data model (`dm` object) for the CL-PFU database.
 #' It can be obtained from calling [schema_from_conn()].
@@ -223,6 +238,9 @@ pl_collect_from_hash <- function(hashed_table,
 #'            a data frame with no rows is returned.
 #' @param version_string A string of length `1` or more
 #'                       that indicates the desired version(s).
+#'                       Default is `PFUPipelineTools::version_info$current_version_string`
+#'                       or
+#'                       "`r PFUPipelineTools::version_info$current_version_string`".
 #'                       `NULL`, the default, means to download all versions available in
 #'                       `db_table_name`.
 #'                       `c()` (an empty string) returns a zero-row table.
@@ -230,6 +248,11 @@ pl_collect_from_hash <- function(hashed_table,
 #' @param collect A boolean that tells whether to download the result.
 #'                Default is `FALSE`.
 #'                See details.
+#' @param decode_foreign_keys A boolean that tells whether to decode foreign keys in the result.
+#'                            Must be `TRUE` if `...` contains filtering expressions
+#'                            with decoded, human-readable values
+#'                            (instead of encoded database integers).
+#'                            Default is `TRUE`.
 #' @param create_matsindf A boolean that tells whether to create a matsindf data frame
 #'                        from the collected data frame.
 #'                        Default is the value of `collect`,
@@ -276,8 +299,9 @@ pl_collect_from_hash <- function(hashed_table,
 #' @export
 pl_filter_collect <- function(db_table_name,
                               ...,
-                              version_string = NULL,
+                              version_string = PFUPipelineTools::version_info$current_version_string,
                               collect = FALSE,
+                              decode_foreign_keys = TRUE,
                               create_matsindf = collect,
                               conn,
                               schema = schema_from_conn(conn = conn),
@@ -289,7 +313,14 @@ pl_filter_collect <- function(db_table_name,
                                                    collect = TRUE,
                                                    conn = conn,
                                                    schema = schema,
-                                                   fk_parent_tables = fk_parent_tables),
+                                                   fk_parent_tables = fk_parent_tables) |>
+                                dplyr::mutate(
+                                  "{matname}" := decode_fk_keys(.data[[matname]],
+                                                                fk_table_name = "matname",
+                                                                conn = conn,
+                                                                schema = schema,
+                                                                fk_parent_tables = fk_parent_tables,
+                                                                pk_suffix = PFUPipelineTools::key_col_info$pk_suffix)),
                               matrix_class = c("Matrix", "matrix"),
                               matname = PFUPipelineTools::mat_meta_cols$matname,
                               matval = PFUPipelineTools::mat_meta_cols$matval,
@@ -300,38 +331,165 @@ pl_filter_collect <- function(db_table_name,
 
   matrix_class <- match.arg(matrix_class)
 
+  # Duplicate values of version_string
+  # result in duplicate rows returned.
+  # We don't want to do this.
+  version_string <- unique(version_string)
+
+  # Figure out the filtering arguments
+  if (...length() == 0) {
+    # No filter args
+    f_args <- NULL
+  } else {
+    f_args <- rlang::enquos(...)
+  }
+
+  if (is.null(version_string)) {
+    out <- pl_filter_collect_worker(
+      version_string = version_string,
+      db_table_name = db_table_name,
+      filter_args = f_args,
+      collect = collect,
+      decode_foreign_keys = decode_foreign_keys,
+      create_matsindf = create_matsindf,
+      conn = conn,
+      schema = schema,
+      fk_parent_tables = fk_parent_tables,
+      index_map_name = index_map_name,
+      index_map = index_map,
+      rctype_table_name = rctype_table_name,
+      rctypes = rctypes,
+      matrix_class = matrix_class,
+      matname = matname,
+      matval = matval,
+      rowtype_colname = rowtype_colname,
+      coltype_colname = coltype_colname,
+      valid_from_version_colname = valid_from_version_colname,
+      valid_to_version_colname = valid_to_version_colname)
+  } else {
+    # Account for version_string with length >= 1
+    out <- purrr::map(.x = version_string,
+                      .f = function(this_version_string,
+                                    this_filter_args = f_args,
+                                    this_db_table_name = db_table_name,
+                                    this_collect = collect,
+                                    this_decode_foreign_keys = decode_foreign_keys,
+                                    this_create_matsindf = create_matsindf,
+                                    this_conn = conn,
+                                    this_schema = schema,
+                                    this_fk_parent_tables = fk_parent_tables,
+                                    this_index_map_name = index_map_name,
+                                    this_index_map = index_map,
+                                    this_rctype_table_name = rctype_table_name,
+                                    this_rctypes = rctypes,
+                                    this_matrix_class = matrix_class,
+                                    this_matname = matname,
+                                    this_matval = matval,
+                                    this_rowtype_colname = rowtype_colname,
+                                    this_coltype_colname = coltype_colname,
+                                    this_valid_from_version_colname = valid_from_version_colname,
+                                    this_valid_to_version_colname = valid_to_version_colname) {
+
+                        pl_filter_collect_worker(version_string = this_version_string,
+                                                 filter_args = this_filter_args,
+                                                 db_table_name = this_db_table_name,
+                                                 collect = this_collect,
+                                                 decode_foreign_keys = this_decode_foreign_keys,
+                                                 create_matsindf = this_create_matsindf,
+                                                 conn = this_conn,
+                                                 schema = this_schema,
+                                                 fk_parent_tables = this_fk_parent_tables,
+                                                 index_map_name = this_index_map_name,
+                                                 index_map = this_index_map,
+                                                 rctype_table_name = this_rctype_table_name,
+                                                 rctypes = this_rctypes,
+                                                 matrix_class = this_matrix_class,
+                                                 matname = this_matname,
+                                                 matval = this_matval,
+                                                 rowtype_colname = this_rowtype_colname,
+                                                 coltype_colname = this_coltype_colname,
+                                                 valid_from_version_colname = this_valid_from_version_colname,
+                                                 valid_to_version_colname = this_valid_to_version_colname)
+                      }) |>
+      dplyr::bind_rows()
+  }
+  return(out)
+}
+
+
+pl_filter_collect_worker <- function(version_string,
+                                     db_table_name,
+                                     filter_args,
+                                     collect,
+                                     decode_foreign_keys,
+                                     create_matsindf,
+                                     conn,
+                                     schema,
+                                     fk_parent_tables,
+                                     index_map_name,
+                                     index_map,
+                                     rctype_table_name,
+                                     rctypes,
+                                     matrix_class,
+                                     matname,
+                                     matval,
+                                     rowtype_colname,
+                                     coltype_colname,
+                                     valid_from_version_colname,
+                                     valid_to_version_colname) {
+
+  # Getting the tbl does not collect.
   out <- dplyr::tbl(src = conn, db_table_name)
 
   # First, filter the tbl according to version string,
   # if desired.
   if (!is.null(version_string)) {
+    assertthat::assert_that(length(version_string) == 1,
+                            msg = "version_string must be length 1 in pl_filter_collect_worker()")
     out <- out |>
       filter_on_version_string(version_string = version_string,
                                db_table_name = db_table_name,
                                schema = schema,
                                fk_parent_tables = fk_parent_tables,
                                valid_from_version_colname = valid_from_version_colname,
-                               valid_to_version_colname = valid_to_version_colname)
+                               valid_to_version_colname = valid_to_version_colname,
+                               # collect = FALSE is the default,
+                               # but specify it here for clarity.
+                               collect = FALSE)
   }
 
-  # Next, decode the foreign keys in the tbl with
-  # collect = FALSE to ensure a tbl is returned.
-  out <- out |>
-    decode_fks(db_table_name = db_table_name,
-               schema = schema,
-               fk_parent_tables = fk_parent_tables,
-               collect = FALSE)
-
+  if (decode_foreign_keys) {
+    # Decode the foreign keys in the tbl with
+    # collect = FALSE to ensure a tbl is returned.
+    out <- out |>
+      decode_fks(db_table_name = db_table_name,
+                 schema = schema,
+                 fk_parent_tables = fk_parent_tables,
+                 # Again, collect = FALSE is the default,
+                 # but specify it here for clarity.
+                 collect = FALSE)
+  }
 
   # Finally, filter the foreign keys in the tbl based on the expressions in ...
-  filter_args <- rlang::enquos(...)
-  out <- out |>
-    dplyr::filter(!!!filter_args)
+  # filter_args <- rlang::enquos(...)
+  if (!is.null(filter_args)) {
+    out <- out |>
+      dplyr::filter(!!!filter_args)
+  }
 
   if (collect) {
     # Collect (execute the SQL), if desired.
     out <- out |>
       dplyr::collect()
+  }
+
+  if (!is.null(version_string) & decode_foreign_keys) {
+    # Set the version columns to the version_string, if requested.
+    out <- out |>
+      dplyr::mutate(
+        "{valid_from_version_colname}" := version_string,
+        "{valid_to_version_colname}" := version_string
+      )
   }
 
   if (create_matsindf) {

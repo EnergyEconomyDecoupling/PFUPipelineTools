@@ -355,7 +355,12 @@ dataset_info <- list(dataset_colname = "Dataset",
                      wlrpfu = "WLR-PFU",
                      wlrpfu_elect = "WLR-PFU Electricity",
                      wlrpfu_trans = "WLR-PFU Transport",
-                     wlrpfu_mw = "WLR-PFU Muscle work")
+                     wlrpfu_mw = "WLR-PFU Muscle work",
+                     what_to_do = "WhatToDo",
+                     replace_valid_to_version_in_remote = "Replace ValidToVersion in remote",
+                     replace_value_in_remote = "Replace value in remote",
+                     delete_row_in_remote = "Delete row in remote",
+                     upload_new = "Upload new")
 usethis::use_data(dataset_info, overwrite = TRUE)
 
 
@@ -448,4 +453,13 @@ mat_meta_cols <- list(matname = "matname",
                       coltype = "coltype")
 usethis::use_data(mat_meta_cols, overwrite = TRUE)
 
+
+#
+# The integer of length 1 that represents the current version
+# of the database in ValidFromVersion and ValidToVersion columns.
+#
+
+version_info <- list(current_version_string = "current",
+                     current_version_int = 2147483647L)
+usethis::use_data(version_info, overwrite = TRUE)
 

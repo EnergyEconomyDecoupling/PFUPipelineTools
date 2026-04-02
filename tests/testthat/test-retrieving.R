@@ -154,11 +154,7 @@ test_that("passing filters in ... works as expected", {
 test_that("pl_filter_collect() works as expected", {
   skip_on_ci()
   skip_on_cran()
-  conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
-                         dbname = "unit_testing",
-                         host = "mexer.site",
-                         port = 5432,
-                         user = "mkh2")
+  conn <- get_unit_testing_conn()
   on.exit(DBI::dbDisconnect(conn))
 
   db_table_name <- "PLFilterCollectTestTable"
@@ -188,6 +184,8 @@ test_that("pl_filter_collect() works as expected", {
   expect_equal(DBI::dbReadTable(conn, "PLFilterCollectTestCountry"), PLFilterCollectTestCountry)
 
   pl_filter_collect("PLFilterCollectTestTable",
+                    # Disable version filtering.
+                    version_string = NULL,
                     Country == "USA",
                     conn = conn,
                     collect = TRUE) |>
@@ -199,6 +197,7 @@ test_that("pl_filter_collect() works as expected", {
   fk_tables <- get_all_fk_tables(conn = conn, schema = DM)
 
   pl_filter_collect("PLFilterCollectTestTable",
+                    version_string = NULL,
                     Country == "USA",
                     conn = conn,
                     collect = TRUE,
@@ -209,6 +208,7 @@ test_that("pl_filter_collect() works as expected", {
                                  "USA", 5.67e-8))
 
   pl_filter_collect("PLFilterCollectTestTable",
+                    version_string = NULL,
                     Country %in% c("USA", "ZAF"),
                     conn = conn,
                     collect = TRUE) |>
@@ -219,6 +219,7 @@ test_that("pl_filter_collect() works as expected", {
 
   # Try without collecting
   uncollected <- pl_filter_collect(db_table_name = "PLFilterCollectTestTable",
+                                   version_string = NULL,
                                    Country == "USA",
                                    conn = conn,
                                    schema = DM,
@@ -232,6 +233,7 @@ test_that("pl_filter_collect() works as expected", {
 
   # Try without a filter specification. Should get everything back.
   pl_filter_collect("PLFilterCollectTestTable",
+                    version_string = NULL,
                     conn = conn,
                     collect = TRUE) |>
     expect_equal(tibble::tribble(~Country, ~MyValue,
@@ -249,12 +251,7 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
 
   skip_on_ci()
   skip_on_cran()
-
-  conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
-                         dbname = "unit_testing",
-                         host = "mexer.site",
-                         port = 5432,
-                         user = "mkh2")
+  conn <- get_unit_testing_conn()
   on.exit(DBI::dbDisconnect(conn))
 
   # Database table with 2 version columns
@@ -360,6 +357,7 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
   # Make sure we download the whole table.
   db_table_name |>
     pl_filter_collect(conn = conn,
+                      version_string = NULL,
                       schema = schema,
                       fk_parent_tables = fk_parent_tables,
                       collect = TRUE) |>
@@ -397,7 +395,12 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
                         schema = schema,
                         fk_parent_tables = fk_parent_tables,
                         collect = TRUE) |>
-      expect_equal(expected_all |> dplyr::filter(ValidFromVersion == "v4"))
+      expect_equal(expected_all |>
+                     dplyr::filter(ValidFromVersion == "v4") |>
+                     dplyr::mutate(
+                       ValidFromVersion = paste0("v", i),
+                       ValidToVersion = paste0("v", i)
+                     ))
   }
 
   #### Test pl_filter_collect() with versions and
@@ -457,7 +460,8 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
 
   # Try an inequality filter
   db_table_name |>
-    pl_filter_collect(val <= 6,
+    pl_filter_collect(version_string = NULL,
+                      val <= 6,
                       conn = conn,
                       schema = schema,
                       fk_parent_tables = fk_parent_tables,
@@ -466,7 +470,8 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
 
   # Try an %in% filter
   db_table_name |>
-    pl_filter_collect(Country %in% c("GHA", "USA"),
+    pl_filter_collect(version_string = NULL,
+                      Country %in% c("GHA", "USA"),
                       conn = conn,
                       schema = schema,
                       fk_parent_tables = fk_parent_tables,
@@ -475,7 +480,8 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
 
   # Add extra conditions
   db_table_name |>
-    pl_filter_collect(val <= 6 & Year >= 1968,
+    pl_filter_collect(version_string = NULL,
+                      val <= 6 & Year >= 1968,
                       conn = conn,
                       schema = schema,
                       fk_parent_tables = fk_parent_tables,
@@ -483,14 +489,16 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
     expect_equal(expected_all |> dplyr::filter(val <= 6 & Year >= 1968))
   # Split conditions
   db_table_name |>
-    pl_filter_collect(val <= 6, Year >= 1968,
+    pl_filter_collect(version_string = NULL,
+                      val <= 6, Year >= 1968,
                       conn = conn,
                       schema = schema,
                       fk_parent_tables = fk_parent_tables,
                       collect = TRUE) |>
     expect_equal(expected_all |> dplyr::filter(val <= 6 & Year >= 1968))
   db_table_name |>
-    pl_filter_collect(val <= 6 & Year >= 1968,
+    pl_filter_collect(version_string = NULL,
+                      val <= 6 & Year >= 1968,
                       Country == "ZAF",
                       conn = conn,
                       schema = schema,
@@ -528,14 +536,31 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
                       fk_parent_tables = fk_parent_tables,
                       collect = TRUE) |>
     dplyr::arrange(ValidFromVersion) |>
-    expect_equal(expected_all |> dplyr::filter(ValidFromVersion %in% c("v4", "v2"),
-                                               Country %in% c("GHA", "USA")))
+    expect_equal(expected_all |>
+                   dplyr::filter(ValidFromVersion %in% c("v4", "v2"),
+                                 Country %in% c("GHA", "USA")) |>
+                   # The function returns data with the version requested
+                   # in the ValidFromVersion and ValidToVersion columns.
+                   # Need to do a little fixing to get the
+                   # actual expected data frame.
+                   dplyr::mutate(
+                     ValidFromVersion = dplyr::case_when(
+                       ValidFromVersion == "v4" ~ "v5",
+                       TRUE ~ ValidFromVersion
+                     ),
+                     ValidToVersion = dplyr::case_when(
+                       ValidToVersion == "v10" ~ "v5",
+                       TRUE ~ ValidToVersion
+                     )
+                   )
+    )
 
 
   #### Try degenerate cases
   # Setting impossible filters in ... should return an empty data frame.
   db_table_name |>
-    pl_filter_collect(val == 100,
+    pl_filter_collect(version_string = NULL,
+                      val == 100,
                       conn = conn,
                       schema = schema,
                       fk_parent_tables = fk_parent_tables,
@@ -567,7 +592,7 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
                       fk_parent_tables = fk_parent_tables,
                       collect = TRUE) |>
     expect_equal(expected_all[0, ])
-  # Passing the same version string twice should give
+  # Passing the same version string more than once should give
   # only one copy of the relevant data.
   db_table_name |>
     pl_filter_collect(version_string = c("v3", "v3", "v3"),
@@ -637,3 +662,391 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
 
 
 
+test_that("pl_filter_collect() works with compressed remote tables", {
+  skip_on_ci()
+  skip_on_cran()
+
+  conn <- get_unit_testing_conn()
+  on.exit(DBI::dbDisconnect(conn))
+  index_map <- create_compression_testing_db(conn)
+
+  # Set the names of the table so we can use the variable in several places
+  tname <- "testlocalcompression"
+
+  # Add a few matrices
+  # matv1 is the original matrix
+  matv1 <- matrix(c(1, 2,
+                    3, 4,
+                    5, 6),
+                  byrow = TRUE,
+                  nrow = 3,
+                  dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
+    matsbyname::setrowtype("Product") |> matsbyname::setcoltype("Industry")
+  # Create a matsindf data frame for the v1 matrix
+  midfv1 <- tibble::tibble(Dataset = "CL-PFU IEA",
+                           ValidFromVersion = c("v1.0"),
+                           ValidToVersion = c("v1.0"),
+                           Country = "USA",
+                           EnergyType = "E",
+                           Year = 1971,
+                           matname = c("Y"),
+                           matval = list(matv1))
+  # Upsert the original matrix, with compression,
+  # but that doesn't matter in this situation.
+  rowsv1 <- midfv1 |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE)
+
+  # matv2 is a modified matrix with the r3, c1 different
+  matv2 <- matrix(c(1, 2,
+                    3, 4,
+                    42, 6),
+                  byrow = TRUE,
+                  nrow = 3,
+                  dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
+    matsbyname::setrowtype("Product") |> matsbyname::setcoltype("Industry")
+  # Create a matsindf data frame for the v2 matrix
+  midfv2 <- tibble::tibble(Dataset = "CL-PFU IEA",
+                           ValidFromVersion = "v2.0",
+                           ValidToVersion = "v2.0",
+                           Country = "USA",
+                           EnergyType = "E",
+                           Year = 1971,
+                           matname = "Y",
+                           matval = list(matv2))
+  # Upsert v2 with compression
+  rowsv2 <- midfv2 |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE)
+
+  # Check that we can get v1 back successfully
+  v1_retrieved <- pl_filter_collect(db_table_name = tname,
+                                    version_string = "v1.0",
+                                    index_map = index_map,
+                                    collect = TRUE,
+                                    conn = conn,
+                                    matrix_class = "matrix")
+  expect_equal(v1_retrieved$Y[[1]], matv1)
+  # Check that the version columns are correct
+  expect_equal(v1_retrieved$ValidFromVersion[[1]], "v1.0" )
+  expect_equal(v1_retrieved$ValidToVersion[[1]], "v1.0" )
+
+  # Check that we can get v2 back successfully
+  v2_retrieved <- pl_filter_collect(db_table_name = tname,
+                                    version_string = "v2.0",
+                                    index_map = index_map,
+                                    collect = TRUE,
+                                    conn = conn,
+                                    matrix_class = "matrix")
+  expect_equal(v2_retrieved$Y[[1]], matv2)
+  # Check that the version columns are correct
+  expect_equal(v2_retrieved$ValidFromVersion[[1]], "v2.0")
+  expect_equal(v2_retrieved$ValidToVersion[[1]], "v2.0")
+
+  # Test retrieving with the current version.
+  # We should get the v2.0 matrix,
+  # but the columns should have "current".
+  # The default version_string is "current,"
+  # so no need to specify it here.
+  vcurrent_retrieved <- pl_filter_collect(db_table_name = tname,
+                                          index_map = index_map,
+                                          collect = TRUE,
+                                          conn = conn,
+                                          matrix_class = "matrix")
+  expect_equal(vcurrent_retrieved$Y[[1]], matv2)
+  # Check that the version columns are correct
+  expect_equal(vcurrent_retrieved$ValidFromVersion[[1]], "current")
+  expect_equal(vcurrent_retrieved$ValidToVersion[[1]], "current")
+
+  # Test when requesting both v1.0 and v2.0
+  v12_retrieved <- pl_filter_collect(db_table_name = tname,
+                                     version_string = c("v1.0", "v2.0"),
+                                     index_map = index_map,
+                                     collect = TRUE,
+                                     conn = conn,
+                                     matrix_class = "matrix")
+  expect_equal(v12_retrieved$Y, list(matv1, matv2))
+  expect_equal(v12_retrieved$ValidFromVersion, c("v1.0", "v2.0"))
+  # Test reverse order
+  v21_retrieved <- pl_filter_collect(db_table_name = tname,
+                                     version_string = c("v2.0", "v1.0"),
+                                     index_map = index_map,
+                                     collect = TRUE,
+                                     conn = conn,
+                                     matrix_class = "matrix")
+  expect_equal(v21_retrieved$Y, list(matv2, matv1))
+  expect_equal(v21_retrieved$ValidFromVersion, c("v2.0", "v1.0"))
+
+  # Test uploading an updated instance of one of the matrices
+  # with a 0 in it in the outdated version (v1).
+  # This should fail, because we're trying to update
+  # an old version of the database.
+  matv1b <- matv1
+  matv1b[2, 1] <- 0
+  midfv1b <- midfv1 |>
+    dplyr::mutate(
+      matval = list(matv1b)
+    )
+  # Upsert v1b with compression
+  midfv1b |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE,
+                           compress = TRUE) |>
+    expect_error("local_df contains older versions than remote_df in")
+  v1b_retrieved <- pl_filter_collect(db_table_name = tname,
+                                     version_string = "v1.0",
+                                     index_map = index_map,
+                                     collect = TRUE,
+                                     conn = conn,
+                                     matrix_class = "matrix")
+  # Because we couldn't update,
+  # we should get the original v1
+  expect_equal(v1b_retrieved$Y[[1]], matv1)
+  # Try to upsert with "current" in the version_string.
+  # This should fail, because we want to be very specific
+  # about the version when submitting new data to the database.
+  # Upsert v2 with compression
+  midfv2 |>
+    dplyr::mutate(
+      ValidFromVersion = "current",
+      ValidToVersion = "current"
+    ) |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE) |>
+    expect_error("Cannot upload data with 'current' in ValidFromVersion")
+
+  # Can we still filter on the version string columns after the fact,
+  # if we do not create matsindf?
+
+
+  # Test retrieving without specifying a version string
+  # Do we get the right answer?
+
+
+  # Test uploading with a changed value
+  # for the newest version.
+  matv2b <- matv2
+  matv2b[1, 2] <- 3.1415926
+  midfv2b <- midfv2 |>
+    dplyr::mutate(
+      matval = list(matv2b)
+    )
+  # Upsert v2b with compression
+  rowsv2b <- midfv2b |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE)
+  v2b_retrieved <- pl_filter_collect(db_table_name = tname,
+                                     version_string = "v2.0",
+                                     index_map = index_map,
+                                     collect = TRUE,
+                                     conn = conn,
+                                     matrix_class = "matrix")
+  expect_equal(v2b_retrieved$Y[[1]], matv2b)
+
+  # Test uploading an updated version of one of the matrices
+  # with a 0 in it.
+  # This is a tough test, because we should NOT get the number 3
+  # in the 2nd row, 1st column.
+  # We should get the 0.
+  matv2c <- matv2b
+  matv2c[2, 1] <- 0
+  midfv2c <- midfv2b |>
+    dplyr::mutate(
+      matval = list(matv2c)
+    )
+  # Upsert v2b with compression
+  rowsv2c <- midfv2c |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE)
+  v2c_retrieved <- pl_filter_collect(db_table_name = tname,
+                                     version_string = "v2.0",
+                                     index_map = index_map,
+                                     collect = TRUE,
+                                     conn = conn,
+                                     matrix_class = "matrix")
+  # Verify that we get the 0
+  expect_equal(v2c_retrieved$Y[[1]][2, 1], 0)
+  expect_equal(v2c_retrieved$Y[[1]], matv2c)
+
+  clean_compression_testing_db(conn)
+})
+
+
+test_that("Various download formats work as expected in pl_filter_collect()", {
+  skip_on_ci()
+  skip_on_cran()
+
+  conn <- get_unit_testing_conn()
+  on.exit(DBI::dbDisconnect(conn))
+  index_map <- create_compression_testing_db(conn)
+
+  tname <- "testlocalcompression"
+
+  # Add a few matrices
+  # matv1 is the original matrix
+  matv1 <- matrix(c(1, 2,
+                    3, 4,
+                    5, 6),
+                  byrow = TRUE,
+                  nrow = 3,
+                  dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
+    matsbyname::setrowtype("Product") |> matsbyname::setcoltype("Industry")
+  # Create a matsindf data frame for the v1 matrix
+  midfv1 <- tibble::tibble(Dataset = "CL-PFU IEA",
+                           ValidFromVersion = c("v1.0"),
+                           ValidToVersion = c("v1.0"),
+                           Country = "USA",
+                           EnergyType = "E",
+                           Year = 1971,
+                           matname = c("Y"),
+                           matval = list(matv1))
+  rowsv1 <- midfv1 |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE)
+
+  # Obtain an i,j,value data frame
+  v1_ijv <- pl_filter_collect(db_table_name = tname,
+                              version_string = "v1.0",
+                              index_map = index_map,
+                              collect = TRUE,
+                              conn = conn,
+                              matrix_class = "matrix",
+                              create_matsindf = FALSE)
+  # Should have obtained a data frame with i, j, value columns
+  expect_true("i" %in% colnames(v1_ijv))
+  expect_true("j" %in% colnames(v1_ijv))
+  expect_true("value" %in% colnames(v1_ijv))
+  v1_ijv <- v1_ijv |>
+    dplyr::arrange(i, j)
+  expect_equal(v1_ijv$i, c("r1", "r1", "r2", "r2", "r3", "r3"))
+  expect_equal(v1_ijv$j, c("c1", "c2", "c1", "c2", "c1", "c2"))
+  expect_equal(v1_ijv$value, 1:6)
+
+  # Obtain an encoded data frame
+  v1_encoded <- pl_filter_collect(db_table_name = tname,
+                                  version_string = "v1.0",
+                                  index_map = index_map,
+                                  collect = TRUE,
+                                  conn = conn,
+                                  matrix_class = "matrix",
+                                  create_matsindf = FALSE,
+                                  decode_foreign_keys = FALSE)
+  expect_true("i" %in% colnames(v1_encoded))
+  expect_true("j" %in% colnames(v1_encoded))
+  expect_true("value" %in% colnames(v1_encoded))
+  v1_encoded <- v1_encoded |>
+    dplyr::arrange(i, j)
+  expect_equal(nrow(v1_encoded), 6)
+  expect_equal(v1_encoded$Dataset, rep(5, 6))
+  expect_equal(v1_encoded$Country, rep(146, 6))
+  expect_equal(v1_encoded$EnergyType, rep(1, 6))
+  expect_equal(v1_encoded$value, 1:6)
+
+  # Try with a NULL version string,
+  # decoding nothing, and not creating matrices.
+  # There are no ..., so no filtering will occur.
+  # Should get ALL versions, but there is only one version,
+  # so that's all we'll see.
+  v1_nversion <- pl_filter_collect(db_table_name = tname,
+                                   version_string = NULL,
+                                   index_map = index_map,
+                                   collect = TRUE,
+                                   conn = conn,
+                                   matrix_class = "matrix",
+                                   create_matsindf = FALSE,
+                                   decode_foreign_keys = FALSE)
+  expect_true("i" %in% colnames(v1_nversion))
+  expect_true("j" %in% colnames(v1_nversion))
+  expect_true("value" %in% colnames(v1_nversion))
+  v1_nversion <- v1_nversion |>
+    dplyr::arrange(i, j)
+  expect_equal(nrow(v1_nversion), 6)
+  expect_equal(v1_nversion$Dataset, rep(5, 6))
+  expect_equal(v1_nversion$Country, rep(146, 6))
+  expect_equal(v1_nversion$EnergyType, rep(1, 6))
+  expect_equal(v1_nversion$value, 1:6)
+
+  # Add another version then try again
+  matv2 <- matv1
+  matv2[2, 1] <- 0
+  midfv2 <- midfv1 |>
+    dplyr::mutate(
+      ValidFromVersion = "v2.0",
+      ValidToVersion = "v2.0",
+      matval = list(matv2)
+    )
+  rowsv2 <- midfv2 |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE)
+  # Now try to retrieve with a NULL version string.
+  # Should get a data frame with many integers.
+  vall_nversion <- pl_filter_collect(db_table_name = tname,
+                                     version_string = NULL,
+                                     index_map = index_map,
+                                     collect = TRUE,
+                                     conn = conn,
+                                     matrix_class = "matrix",
+                                     create_matsindf = FALSE,
+                                     decode_foreign_keys = FALSE)
+  expect_equal(nrow(vall_nversion), 6)
+  vall_nversion |>
+    purrr::pluck("ValidToVersion", 6) |>
+    expect_equal(1)
+  vall_nversion |>
+    purrr::pluck("ValidToVersion", 1) |>
+    expect_equal(PFUPipelineTools::version_info$current_version_int)
+
+  # Try same thing while specifying a version
+  # but without creating matrices
+  v1_collected <- pl_filter_collect(db_table_name = tname,
+                                    version_string = "v1.0",
+                                    index_map = index_map,
+                                    collect = TRUE,
+                                    conn = conn,
+                                    matrix_class = "matrix",
+                                    create_matsindf = FALSE,
+                                    decode_foreign_keys = FALSE)
+  # There are six entries in the v1 matrix
+  expect_equal(nrow(v1_collected), 6)
+  # There are 5 entries in the v2 matrix
+  v2_collected <- pl_filter_collect(db_table_name = tname,
+                                    version_string = "v2.0",
+                                    index_map = index_map,
+                                    collect = TRUE,
+                                    conn = conn,
+                                    matrix_class = "matrix",
+                                    create_matsindf = FALSE,
+                                    decode_foreign_keys = FALSE)
+  expect_equal(nrow(v2_collected), 5)
+  # Try with delayed collection and an outboard filter to v2.
+  v2_postfilter <- pl_filter_collect(db_table_name = tname,
+                                     version_string = NULL,
+                                     index_map = index_map,
+                                     collect = FALSE,
+                                     conn = conn,
+                                     matrix_class = "matrix",
+                                     create_matsindf = FALSE,
+                                     decode_foreign_keys = FALSE) |>
+    dplyr::filter(ValidToVersion == 2147483647) |>
+    dplyr::collect()
+  expect_equal(nrow(v2_postfilter), 5)
+  expect_equal(unique(v2_postfilter$ValidToVersion), PFUPipelineTools::version_info$current_version_int)
+
+
+})

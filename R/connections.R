@@ -18,12 +18,11 @@
 #'               "ScratchEDB" for [get_scratchedb_conn()].
 #' @param user The string username at `host`.
 #'             Default is "dbcreator" for
-#'             [get_mexerdb_conn()],
 #'             [get_sandboxdb_conn()],
 #'             [get_scratchmdb_conn()], and
 #'             [get_scratchedb_conn()]
 #'             appropriate for development.
-#'             The default for [get_unit_testing_conn()] is "mkh2".
+#'             The default user for [get_unit_testing_conn()] is "mkh2".
 #' @param host The string site of the database.
 #'             Default is "mexer.site".
 #' @param port The integer port for the connection.

@@ -1,5 +1,8 @@
 #' Upsert a data frame with optional encoding of foreign keys
 #'
+#' `r lifecycle::badge("superseded")`
+#' Use [PFUPipelineTools::pl_upsert_and_compress]`(compress = FALSE)` instead.
+#'
 #' Upserts
 #' (inserts or updates,
 #' depending on whether the private keys in `.df`
@@ -204,17 +207,36 @@ pl_upsert <- function(.df,
       round_double_cols(digits = digits)
   }
 
-  # Perform the upload.
-  dplyr::tbl(conn, db_table_name) |>
-    dplyr::rows_upsert(df_to_upsert,
-                       by = pk_str,
-                       copy = TRUE,
-                       in_place = in_place)
 
-  # Compress the table, if desired.
   if (compress) {
-    compress_rows(db_table_name = db_table_name, conn = conn)
+
+
+
+    # Perform the upload.
+    dplyr::tbl(conn, db_table_name) |>
+      dplyr::rows_upsert(df_to_upsert,
+                         by = pk_str,
+                         copy = TRUE,
+                         in_place = in_place)
+
+    # Compress the table, if desired.
+    if (compress) {
+      compress_rows(db_table_name = db_table_name, conn = conn)
+    }
+
+
+
+
+
+
+  } else {
+    dplyr::tbl(conn, db_table_name) |>
+      dplyr::rows_upsert(df_to_upsert,
+                         by = pk_str,
+                         copy = TRUE,
+                         in_place = in_place)
   }
+
 
   # Return a hash of df_matsindf_encoded
   df_matsindf_encoded |>
@@ -222,6 +244,486 @@ pl_upsert <- function(.df,
             keep_single_unique_cols = keep_single_unique_cols,
             additional_hash_group_cols = additional_hash_group_cols,
             usual_hash_group_cols = usual_hash_group_cols)
+}
+
+
+#' Upsert and compress rows from a data frame
+#'
+#' Upserts
+#' (inserts or updates,
+#' depending on whether the private keys in `.df`
+#' already exist in `db_table_name`)
+#' `.df` into `db_table_name` at `conn`.
+#'
+#' This function decodes foreign keys (fks), when possible,
+#' assuming that all fks are integers.
+#' If non-integers (typically, character strings)
+#' are provided in fk columns of `.df`,
+#' the non-integers will be recoded to their appropriate integer key values.
+#'
+#' This function knows about CL-PFU database tables that contain
+#' matrix information.
+#' In particular, if `.df` contains matrices,
+#' they are expanded into row-col-val format
+#' before uploading.
+#'
+#' The output of this function is a special data frame that
+#' contains the following columns:
+#'
+#'   * All single-valued columns columns in `.df`,
+#'     columns given in `additional_hash_group_cols`
+#'     (default `NULL`), and
+#'     columns given in `usual_hash_group_cols`
+#'     (default `PFUPipelineTools::usual_hash_group_cols`).
+#'   * Hash: A column with a hash of all non-foreign-key columns.
+#'
+#' `schema` is a data model (`dm` object) for the database in `conn`.
+#' Its default value (`schema_from_conn(conn)`)
+#' extracts the data model for the database at `conn` automatically.
+#' However, if the caller already has the data model,
+#' supplying it in the `schema` argument will save time.
+#'
+#' `fk_parent_tables` is a named list of tables,
+#' one of which (the one named `db_table_name`)
+#' contains the foreign keys for `db_table_name`.
+#' `fk_parent_tables` is treated as a store from which foreign key tables
+#' are retrieved by name when needed.
+#' The default value (which calls `get_all_fk_tables()`
+#' with `collect = TRUE` because decoding of foreign keys
+#' is done outboard of the database)
+#' retrieves all possible foreign key parent tables from `conn`,
+#' potentially a time-consuming process.
+#' For speed, pre-compute all foreign key parent tables once
+#' (via `get_all_fk_tables(collect = TRUE)`)
+#' and pass the list to the `fk_parent_tables` argument
+#' of this function.
+#'
+#' The user in `conn` must have write access to the database.
+#'
+#' By default, [pl_upsert_and_compress()] will delete all zero entries
+#' in matrices before upserting.
+#' But for some countries and years,
+#' that could result in missing matrices, such as **U_EIOU**.
+#' Set `retain_zero_structure = TRUE`
+#' to preserve all entries in a zero matrix.
+#'
+#' Optionally (and by default), this function
+#' compresses the remote data in `db_table_name`
+#' by setting appropriate values in the
+#' `ValidFromVersion` and `ValidToVersion` columns.
+#'
+#' This function assumes the `ValidToVersion` column in the remote contains
+#' `PFUPipelineTools::version_info$current_version_int` or
+#' `r PFUPipelineTools::version_info$current_version_int`
+#' (the largest possible integer in both PostgreSQL and `R`)
+#' for the most current version of the data.
+#'
+#' There are only a few possibilities for rows of data
+#' in the local data frame and the remote database table:
+#' * Same: Rows in the local data frame match rows in the remote database table
+#'         for all foreign key columns except ValidFromVersion and ValidToVersion
+#'         and within `tol` for the `value` column.
+#'         In this case, there is nothing to be done, because the
+#'         `ValidToVersion` column in the remote database table
+#'         should already be `2147483647`.
+#' * Old/New:
+#'     * Remote (Old): Rows in the remote database table with foreign key columns
+#'                     (except `ValidFromVersion` and `ValidToVersion`)
+#'                     that have no match in the local data frame.
+#'                     In this case, we change the `ValidToVersion` column
+#'                     in the the unmatched rows of the
+#'                     remote database table to `working_version - 1`.
+#'     * Local (New): Rows in the local data frame with foreign key columns
+#'                    (except `ValidFromVersion` and `ValidToVersion`)
+#'                    that have no match in the remote database table.
+#'                    In this case, we change the
+#'                    `ValidToVersion` column of the unmatched rows in the
+#'                    local data frame to `2147483647` and
+#'                    insert into the remote database table.
+#' * Updated: Rows in the local data frame match rows in the remote database table
+#'            for all foreign key columns except `ValidFromVersion` and `ValidToVersion`
+#'            but outside of `tol` for the `value` column.
+#'            In this case, we change the `ValidToVersion` column
+#'            in the the unmatched rows of the
+#'            remote database table to `working_version - 1`.
+#'            We also change the
+#'            `ValidToVersion` column of the unmatched rows in the
+#'            local data frame to
+#'            `2147483647`
+#'            and insert into the remote database table.
+#'
+#' Note that `mat_colnames` is used to discriminate data and metadata columns.
+#' Columns of `.df` (local) and `db_table_name` (remote)
+#' in `mat_colnames` are considered to be data columns.
+#' All other columns are considered to be metadata columns.
+#' The calling function should supply the complete data in `.df`
+#' for each unique combination metadata column values.
+#'
+#' An error will occur if either
+#' the `ValidFromVersion` or the `ValidToVersion`
+#' column of `.df`
+#' contains `PFUPipelineTools::version_info$current_version_string` or
+#' "`r PFUPipelineTools::version_info$current_version_string`".
+#'
+#' @param .df The data frame to be upserted (and compressed by default).
+#' @param conn A connection to the CL-PFU database.
+#' @param db_table_name A string identifying the destination for `.df` in `conn`,
+#'                      i.e. the name of a remote database table.
+#'                      Default is `NULL`, meaning that the value for this argument
+#'                      will be taken from the `.db_table_name` column of `.df`.
+#' @param additional_hash_group_cols A vector or list of additional columns
+#'                                   by which `.df` will be grouped
+#'                                   before hashing and, therefore, appear in the output.
+#'                                   Default is `NULL`.
+#'                                   Passed to [pl_hash()].
+#' @param usual_hash_group_cols A vector of columns by which `.df` will be grouped
+#'                              before hashing and, therefore, appear in the output.
+#'                              Default is `PFUPipelineTools::additional_hash_group_cols`
+#'                              but can be set to `NULL` to disable.
+#'                              Passed to [pl_hash()].
+#' @param keep_single_unique_cols A boolean that tells whether to keep
+#'                                columns with a single unique value
+#'                                in the output.
+#'                                Default is `TRUE`.
+#'                                Passed to [pl_hash()].
+#' @param in_place A boolean that tells whether to modify the database at `conn`.
+#'                 Default is `FALSE`, which is helpful if you want to chain
+#'                 several requests.
+#' @param encode_fks A boolean that tells whether to code foreign keys in `.df`
+#'                   before upserting to `conn`.
+#'                   Default is `TRUE`.
+#' @param compress A boolean that tells whether to compress `db_table_name`
+#'                 in the database after uploading.
+#'                 Default is `TRUE`.
+#' @param tol The tolerance within which a local value will be
+#'            assumed same as the remote value.
+#'            This value is passed to [compress_helper()].
+#'            Default is `1e-6`.
+#' @param round_double_columns A boolean that tells whether to
+#'                             round double-precision columns in `.df`.
+#'                             Default is `FALSE`.
+#' @param digits An integer that tells the number of significant digits.
+#'               `digits` has an effect only when `round_double_columns` is `TRUE`.
+#'               Default is `15`, which should
+#'               eliminate any numerical precision errors
+#'               for [compress_rows()].
+#' @param index_map A list of 2 or more data frames that represent the
+#'                  mappings from inboard row and column indices in the database
+#'                  to outboard row and column names in the memory
+#'                  of the local computer.
+#'                  See documentation for [encode_matsindf()] and
+#'                  [matsbyname::to_triplet()].
+#'                  Default is a `list` that contains the `industry`, `product`, and `other`
+#'                  members of `fk_parent_tables`.
+#' @param retain_zero_structure A boolean that tells whether to retain the structure
+#'                              of zero matrices.
+#'                              See details.
+#' @param schema The data model (`dm` object) for the database in `conn`.
+#'               Default is `dm_from_con(conn, learn_keys = TRUE)`.
+#'               See details.
+#' @param fk_parent_tables A named list of all parent tables
+#'                         for the foreign keys in `db_table_name`.
+#'                         See details.
+#' @param .db_table_name The name of the table name column in `.df`.
+#'                       Default is `PFUPipelineTools::hashed_table_colnames$db_table_name`.
+#' @param .pk_col The name of the primary key column in a primary key table.
+#'                See `PFUPipelineTools::dm_pk_colnames`.
+#' @param .algo The hashing algorithm.
+#'              Default is "md5".#' @param db_table_name The name of the table in the database at `conn`
+#'                      into which `.df` will be upserted (and compressed by default).
+#' @param mat_colnames String names of columns in `.df` that contain matrix information,
+#'                     namely, rowname (or index), colname (or index), and value.
+#'                     Default is [PFUPipelineTools::mat_colnames] (as a vector).
+#' @param valid_from_version_colname The string name of the valid from version column.
+#'                                   Default is [PFUPipelineTools::dataset_info]`$valid_from_version_colname` or
+#'                                   "`r PFUPipelineTools::dataset_info$valid_from_version_colname`".
+#'                                   Cannot be `PFUPipelineTools::version_info$current_version_string` or
+#'                                   "`r PFUPipelineTools::version_info$current_version_string`".
+#' @param valid_to_version_colname The string name of the valid to version column.
+#'                                 Default is [PFUPipelineTools::dataset_info]`$valid_to_version_colname`
+#'                                 or
+#'                                 "`r PFUPipelineTools::dataset_info$valid_to_version_colname`".
+#'                                 Cannot be `PFUPipelineTools::version_info$current_version_string` or
+#'                                 "`r PFUPipelineTools::version_info$current_version_string`".
+#' @param value_colname The string name of the value column in `.df`.
+#'                      Default is [PFUPipelineTools::mat_colnames]`$value` or
+#'                      "`r PFUPipelineTools::mat_colnames$value`".
+#' @param what_to_do_colname The string name of a column that tells what to do
+#'                           with various rows of `.df`.
+#'                           This column is used internally.
+#'                           Default is [PFUPipelineTools::dataset_info]`$what_to_do` or
+#'                           "`r PFUPipelineTools::dataset_info$what_to_do`".
+#' @param current_version_int An integer that indicates the current version in the remote table.
+#'                            Default is `PFUPipelineTools::version_info$current_version_int` or
+#'                            `r PFUPipelineTools::version_info$current_version_int`.
+#'                            It is probably a _very bad_ idea to supply
+#'                            a different value from the default.
+#'
+#' @returns A hash of `.df` according to `.algo`.
+#'          If `.df` is `NULL` or has no rows, `NULL` is returned.
+#'
+#' @export
+pl_upsert_and_compress <- function(.df,
+                                   conn,
+                                   db_table_name = NULL,
+                                   additional_hash_group_cols = NULL,
+                                   usual_hash_group_cols = PFUPipelineTools::usual_hash_group_cols,
+                                   keep_single_unique_cols = TRUE,
+                                   in_place = FALSE,
+                                   encode_fks = TRUE,
+                                   compress = TRUE,
+                                   tol = 1e-6,
+                                   round_double_columns = FALSE,
+                                   digits = 15,
+                                   index_map = list(fk_parent_tables[[IEATools::row_col_types$industry]],
+                                                    fk_parent_tables[[IEATools::row_col_types$product]],
+                                                    fk_parent_tables[[IEATools::row_col_types$other]]) |>
+                                     magrittr::set_names(c(IEATools::row_col_types$industry,
+                                                           IEATools::row_col_types$product,
+                                                           IEATools::row_col_types$other)),
+                                   retain_zero_structure = FALSE,
+                                   schema = schema_from_conn(conn),
+                                   fk_parent_tables = get_all_fk_tables(conn = conn,
+                                                                        schema = schema,
+                                                                        collect = TRUE),
+                                   .db_table_name = PFUPipelineTools::hashed_table_colnames$db_table_name,
+                                   .pk_col = PFUPipelineTools::dm_pk_colnames$pk_col,
+                                   .algo = "md5",
+                                   mat_colnames = unlist(PFUPipelineTools::mat_colnames),
+                                   valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
+                                   valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname,
+                                   value_colname = PFUPipelineTools::mat_colnames$value,
+                                   what_to_do_colname = PFUPipelineTools::dataset_info$what_to_do,
+                                   current_version_int = PFUPipelineTools::version_info$current_version_int) {
+
+  if (is.null(db_table_name)) {
+    db_table_name <- .df[[.db_table_name]] |>
+      unique()
+  }
+  if (length(db_table_name) != 1) {
+    stop("length(db_table_name) must be 1 in pl_upsert()")
+  }
+
+  # Eliminate the .db_table_name column if it exists.
+  # We don't upload the table with that column.
+  .df <- .df |>
+    dplyr::mutate(
+      "{.db_table_name}" := NULL
+    )
+
+  pk_table <- dm::dm_get_all_pks(schema, table = dplyr::all_of({{db_table_name}}))
+  # Make sure we have one and only one primary key row
+  assertthat::assert_that(nrow(pk_table) == 1,
+                          msg = paste0("Table '",
+                                       db_table_name,
+                                       "' has ", nrow(pk_table),
+                                       " primary keys. 1 is required."))
+  # Get the primary key name as a string for later use in the upsert command
+  pk_str <- pk_table |>
+    # .pk_col is the name of the column of primary key names
+    # in the tibble returned by dm::dm_get_all_pks()
+    magrittr::extract2(.pk_col) |>
+    magrittr::extract2(1)
+
+  if (nrow(.df) > 0) {
+    # No need to test this if we have an empty .df
+    # Ensure that the version column contain strings of length 1 and the same strings.
+    if (valid_from_version_colname %in% names(.df)) {
+      valid_from_contents <- .df |>
+        dplyr::select(dplyr::all_of(valid_from_version_colname)) |>
+        unlist() |>
+        unique()
+      assertthat::assert_that(length(valid_from_contents) == 1,
+                              msg = paste0(valid_from_version_colname,
+                                           " must have only one value"))
+      # Make sure we're not trying to submit "current" as the
+      # version string
+      assertthat::assert_that(valid_from_contents !=
+                                version_info$current_version_string,
+                              msg = "Cannot upload data with 'current' in ValidFromVersion")
+    }
+    if (valid_to_version_colname %in% names(.df)) {
+      valid_to_contents <- .df |>
+        dplyr::select(dplyr::all_of(valid_to_version_colname)) |>
+        unlist() |>
+        unique()
+      assertthat::assert_that(length(valid_to_contents) == 1,
+                              msg = paste0(valid_to_version_colname,
+                                           " must have only one value"))
+      # Make sure we're not trying to submit "current" as the
+      # version string
+      assertthat::assert_that(valid_to_contents !=
+                                version_info$current_version_string,
+                              msg = "Cannot upload data with 'current' in ValidToVersion")
+    }
+    if (valid_from_version_colname %in% names(.df) &
+        valid_to_version_colname %in% names(.df)) {
+      assertthat::assert_that(valid_from_contents == valid_to_contents,
+                              msg = paste0(valid_from_version_colname,
+                                           " must match ",
+                                           valid_to_version_colname))
+    }
+  }
+
+  # Encode for upload using the index_map
+  df_matsindf_encoded <- .df |>
+    encode_matsindf(index_map = index_map,
+                    retain_zero_structure = retain_zero_structure)
+
+  # The database shouldn't care about targets groups, so
+  # remove any targets grouping.
+  df_to_upsert <- df_matsindf_encoded |>
+    tar_ungroup()
+
+    # Encode fk column values in .df with integer keys, if requested.
+  if (encode_fks) {
+    df_to_upsert <- df_to_upsert |>
+      encode_fks(db_table_name = db_table_name,
+                 schema = schema,
+                 fk_parent_tables = fk_parent_tables)
+  }
+
+  # Round double-precision columns, if desired
+  if (round_double_columns) {
+    df_to_upsert <- df_to_upsert |>
+      round_double_cols(digits = digits)
+  }
+
+  # Get the remote table
+  remote_tbl <- dplyr::tbl(src = conn, db_table_name)
+
+  if (compress) {
+
+    # Download any existing data starting with df_to_upsert.
+    # We should ignore any values in the ValidFromVersion column.
+    # We should ignore any values in the value column.
+    # We should download only those rows with ValidToVersion == current_version_int.
+    join_cols <- setdiff(colnames(df_to_upsert), c(valid_from_version_colname,
+                                                   valid_to_version_colname,
+                                                   # Ignore row, col, and val
+                                                   # columns when joining.
+                                                   mat_colnames[["row"]],
+                                                   mat_colnames[["col"]],
+                                                   mat_colnames[["value"]]))
+    # When updating, we need to include row and column
+    update_cols <- c(join_cols, mat_colnames[["row"]], mat_colnames[["col"]])
+
+    remote_df <- remote_tbl |>
+      dplyr::filter(.data[[valid_to_version_colname]] == current_version_int) |>
+      dplyr::semi_join(df_to_upsert, by = join_cols, copy = TRUE) |>
+      dplyr::collect()
+
+    # Compare to new data via compress_helper()
+    what_to_do_df <- compress_helper(remote_df = remote_df,
+                                     local_df = df_to_upsert,
+                                     tol = tol,
+                                     valid_from_version_colname = valid_from_version_colname,
+                                     valid_to_version_colname = valid_to_version_colname,
+                                     value_colname = value_colname)
+
+    # There are four possibilities:
+    # (1) Need up replace the value in the ValidToVersion column,
+    # (2) Need to replace the value in the value column,
+    # (3) Need to delete rows from the remote, or
+    # (4) Need to upload entirely new data.
+    # The WhatToDo column in what_to_do_df tells how to proceed.
+
+    # (1) Replace ValidToVersion in remote when needed
+    df_replace_valid_to_version_in_remote <- what_to_do_df |>
+      dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote) |>
+      dplyr::mutate(
+        "{what_to_do_colname}" := NULL
+      )
+    if (nrow(df_replace_valid_to_version_in_remote) > 0) {
+      remote_tbl |>
+        dplyr::rows_update(df_replace_valid_to_version_in_remote,
+                           # Need to update by all the update_cols and
+                           # ValidFromVersion and value.
+                           # However, value is a double, so don't include it in the join.
+                           by = c(update_cols,
+                                  valid_from_version_colname),
+                           # Normally, I would be concerned about unmatched = "ignore" here,
+                           # because it could fail silently.
+                           # However, we just downloaded the data a few lines above,
+                           # so we can be sure the rows are present in the remote database.
+                           unmatched = "ignore",
+                           copy = TRUE,
+                           in_place = in_place)
+    }
+
+    # (2) Replace Value in remote when needed
+    df_replace_value_in_remote <- what_to_do_df |>
+      dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$replace_value_in_remote) |>
+      dplyr::mutate(
+        "{what_to_do_colname}" := NULL
+      )
+    if (nrow(df_replace_value_in_remote) > 0) {
+      remote_tbl |>
+        dplyr::rows_update(df_replace_value_in_remote,
+                           # Need to update by all the update_cols and
+                           # ValidFromVersion and ValidToVersion.
+                           by = c(update_cols,
+                                  valid_from_version_colname,
+                                  valid_to_version_colname),
+                           # Normally, I would be concerned about unmatched = "ignore" here,
+                           # because it could fail silently.
+                           # However, we just downloaded the data a few lines above,
+                           # so we can be sure the rows are present in the remote database.
+                           unmatched = "ignore",
+                           copy = TRUE,
+                           in_place = in_place)
+    }
+
+    # (3) Remove rows from remote
+    df_remove_rows_from_remote <- what_to_do_df |>
+      dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$delete_row_in_remote) |>
+      dplyr::mutate(
+        "{what_to_do_colname}" := NULL
+      )
+    if (nrow(df_remove_rows_from_remote) > 0) {
+      remote_tbl |>
+        dplyr::rows_delete(df_remove_rows_from_remote,
+                           by = c(update_cols,
+                                  valid_from_version_colname,
+                                  valid_to_version_colname,
+                                  value_colname),
+                           unmatched = "ignore",
+                           copy = TRUE,
+                           in_place = in_place)
+    }
+
+    # (4) Upload new when needed.
+    df_new <- what_to_do_df |>
+      dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$upload_new) |>
+      dplyr::mutate(
+        "{what_to_do_colname}" := NULL
+      )
+    if (nrow(df_new) > 0) {
+      remote_tbl |>
+        dplyr::rows_insert(df_new,
+                           by = pk_str,
+                           conflict = "ignore",
+                           copy = TRUE,
+                           in_place = in_place)
+    }
+
+
+  } else {
+    # No compression, just upsert.
+    remote_tbl |>
+      dplyr::rows_upsert(df_to_upsert,
+                         by = pk_str,
+                         copy = TRUE,
+                         in_place = in_place)
+  }
+
+  # Return a hash of df_matsindf_encoded
+  df_matsindf_encoded |>
+    pl_hash(table_name = db_table_name,
+            keep_single_unique_cols = keep_single_unique_cols,
+            additional_hash_group_cols = additional_hash_group_cols,
+            usual_hash_group_cols = usual_hash_group_cols,
+            .algo = .algo)
 }
 
 
@@ -257,7 +759,7 @@ pl_upsert <- function(.df,
 #'     by all columns with more than one unique value and
 #'     `additional_hash_group_cols`
 #'     (when `additional_hash_group_cols` is not `NULL`).
-#'   - The second through N-1 columns are
+#'   - The second through N-1 columns (inclusive) are
 #'     all columns with only one unique value
 #'     (provided that `keep_single_unique_cols` is `TRUE` AND
 #'     those columns specified by
@@ -289,7 +791,7 @@ pl_upsert <- function(.df,
 #' in the way that the database creates its hash vs. how R creates its hash.
 #'
 #' @param .df An in-memory data frame to be stored in the database or `NULL` if
-#'            the has of a table in the database at `conn` is desired.
+#'            the hash of a table in the database at `conn` is desired.
 #' @param table_name The string name of the table in which `.df` will be stored
 #'                   or the name of a table in the database to be hashed.
 #' @param conn A connection to a database.
@@ -340,7 +842,7 @@ pl_hash <- function(.df = NULL,
   if (!is.null(table_name)) {
     # Make sure the table_name has length 1.
     if (length(table_name) != 1) {
-      stop("length(table_name) must be 1 in pl_hash()")
+      stop("length(table_name) must be 1 in PFUPipelineTools::pl_hash()")
     }
   }
 
@@ -538,16 +1040,6 @@ unique_cols_in_tbl <- function(table_name, conn) {
   # Finally, get the names of the columns where the value is 1
   names(count_df)[count_df == 1]
 }
-
-
-
-
-
-
-
-
-
-
 
 
 

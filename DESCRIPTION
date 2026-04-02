@@ -21,7 +21,7 @@ Imports:
     digest,
     dm,
     dplyr,
-    IEATools, 
+    IEATools,
     magrittr,
     matsbyname,
     matsindf,
@@ -30,11 +30,12 @@ Imports:
     purrr,
     readr,
     readxl,
-    rlang, 
+    rlang,
     tidyr,
-    tibble
+    tibble,
+    lifecycle
 Depends: 
-    R (>= 3.5)
+    R (>= 4.1.0)
 LazyData: true
 Suggests:
     dbplyr,
