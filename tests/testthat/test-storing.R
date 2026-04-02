@@ -386,7 +386,7 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   expect_equal(nrow(should_be_six_rows), 6)
 
   # Upload a zero-row version of the same table.
-  # It should return an empty hash.
+  # It should return an empty (no-row) hash.
   no_row <- midfv1 |>
     dplyr::filter(FALSE) |>
     pl_upsert_and_compress(conn = conn,
@@ -394,7 +394,7 @@ test_that("pl_upsert_and_compress() works with local table compression", {
                            index_map = index_map,
                            in_place = TRUE,
                            compress = FALSE)
-
+  expect_equal(names(no_row), c("DBTableName", "Dataset", "Country", "EnergyType", "Year", "NestedDataHash"))
 
   # Create a matsindf data frame for the v2 matrix
   midfv2 <- tibble::tibble(Dataset = "CL-PFU IEA",

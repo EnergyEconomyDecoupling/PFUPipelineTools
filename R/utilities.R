@@ -668,6 +668,23 @@ encode_matsindf <- function(.matsindf,
                             col_index_colname = PFUPipelineTools::mat_colnames$j,
                             value_colname = PFUPipelineTools::mat_colnames$value) {
 
+  # If we have no rows in .matsindf but we
+  # have matnames and matvals columns,
+  # we can return a zero-row data frame
+  # with the expected shape
+  # to give later code a chance to run.
+  if (nrow(.matsindf) == 0 & matname %in% names(.matsindf) & matval %in% names(.matsindf)) {
+    out <- .matsindf |>
+      dplyr::mutate(
+        # Eliminate the matvals column, add i, j, val columns
+        "{matval}" := NULL,
+        "{row_index_colname}" := character(0),
+        "{col_index_colname}" := character(0),
+        "{value_colname}" := character(0)
+      )
+    return(out)
+  }
+
   # Find matrix column names
   matcols <- matsindf::matrix_cols(.matsindf, .any = TRUE) |>
     names()

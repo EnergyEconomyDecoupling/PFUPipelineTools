@@ -533,41 +533,44 @@ pl_upsert_and_compress <- function(.df,
     magrittr::extract2(.pk_col) |>
     magrittr::extract2(1)
 
-  # Ensure that the version column contain strings of length 1 and the same strings.
-  if (valid_from_version_colname %in% names(.df)) {
-    valid_from_contents <- .df |>
-      dplyr::select(dplyr::all_of(valid_from_version_colname)) |>
-      unlist() |>
-      unique()
-    assertthat::assert_that(length(valid_from_contents) == 1,
-                            msg = paste0(valid_from_version_colname,
-                                         " must have only one value"))
-    # Make sure we're not trying to submit "current" as the
-    # version string
-    assertthat::assert_that(valid_from_contents !=
-                              version_info$current_version_string,
-                            msg = "Cannot upload data with 'current' in ValidFromVersion")
-  }
-  if (valid_to_version_colname %in% names(.df)) {
-    valid_to_contents <- .df |>
-      dplyr::select(dplyr::all_of(valid_to_version_colname)) |>
-      unlist() |>
-      unique()
-    assertthat::assert_that(length(valid_to_contents) == 1,
-                            msg = paste0(valid_to_version_colname,
-                                         " must have only one value"))
-    # Make sure we're not trying to submit "current" as the
-    # version string
-    assertthat::assert_that(valid_to_contents !=
-                              version_info$current_version_string,
-                            msg = "Cannot upload data with 'current' in ValidToVersion")
-  }
-  if (valid_from_version_colname %in% names(.df) &
-      valid_to_version_colname %in% names(.df)) {
-    assertthat::assert_that(valid_from_contents == valid_to_contents,
-                            msg = paste0(valid_from_version_colname,
-                                         " must match ",
-                                         valid_to_version_colname))
+  if (nrow(.df) > 0) {
+    # No need to test this if we have an empty .df
+    # Ensure that the version column contain strings of length 1 and the same strings.
+    if (valid_from_version_colname %in% names(.df)) {
+      valid_from_contents <- .df |>
+        dplyr::select(dplyr::all_of(valid_from_version_colname)) |>
+        unlist() |>
+        unique()
+      assertthat::assert_that(length(valid_from_contents) == 1,
+                              msg = paste0(valid_from_version_colname,
+                                           " must have only one value"))
+      # Make sure we're not trying to submit "current" as the
+      # version string
+      assertthat::assert_that(valid_from_contents !=
+                                version_info$current_version_string,
+                              msg = "Cannot upload data with 'current' in ValidFromVersion")
+    }
+    if (valid_to_version_colname %in% names(.df)) {
+      valid_to_contents <- .df |>
+        dplyr::select(dplyr::all_of(valid_to_version_colname)) |>
+        unlist() |>
+        unique()
+      assertthat::assert_that(length(valid_to_contents) == 1,
+                              msg = paste0(valid_to_version_colname,
+                                           " must have only one value"))
+      # Make sure we're not trying to submit "current" as the
+      # version string
+      assertthat::assert_that(valid_to_contents !=
+                                version_info$current_version_string,
+                              msg = "Cannot upload data with 'current' in ValidToVersion")
+    }
+    if (valid_from_version_colname %in% names(.df) &
+        valid_to_version_colname %in% names(.df)) {
+      assertthat::assert_that(valid_from_contents == valid_to_contents,
+                              msg = paste0(valid_from_version_colname,
+                                           " must match ",
+                                           valid_to_version_colname))
+    }
   }
 
   # Encode for upload using the index_map
