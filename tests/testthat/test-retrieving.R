@@ -853,11 +853,6 @@ test_that("pl_filter_collect() works with compressed remote tables", {
                                      matrix_class = "matrix")
   expect_equal(v2b_retrieved$Y[[1]], matv2b)
 
-
-
-
-
-
   # Test uploading an updated version of one of the matrices
   # with a 0 in it.
   # This is a tough test, because we should NOT get the number 3
@@ -961,15 +956,97 @@ test_that("Various download formats work as expected in pl_filter_collect()", {
   expect_equal(v1_encoded$EnergyType, rep(1, 6))
   expect_equal(v1_encoded$value, 1:6)
 
-  v1_nover <- pl_filter_collect(db_table_name = tname,
-                                version_string = NULL,
-                                index_map = index_map,
-                                collect = TRUE,
-                                conn = conn,
-                                matrix_class = "matrix",
-                                create_matsindf = FALSE,
-                                decode_fks = FALSE)
+  # Try with a NULL version string,
+  # decoding nothing, and not creating matrices.
+  # There are no ..., so no filtering will occur.
+  # Should get ALL versions, but there is only one version,
+  # so that's all we'll see.
+  v1_nversion <- pl_filter_collect(db_table_name = tname,
+                                   version_string = NULL,
+                                   index_map = index_map,
+                                   collect = TRUE,
+                                   conn = conn,
+                                   matrix_class = "matrix",
+                                   create_matsindf = FALSE,
+                                   decode_foreign_keys = FALSE)
+  expect_true("i" %in% colnames(v1_nversion))
+  expect_true("j" %in% colnames(v1_nversion))
+  expect_true("value" %in% colnames(v1_nversion))
+  v1_nversion <- v1_nversion |>
+    dplyr::arrange(i, j)
+  expect_equal(nrow(v1_nversion), 6)
+  expect_equal(v1_nversion$Dataset, rep(5, 6))
+  expect_equal(v1_nversion$Country, rep(146, 6))
+  expect_equal(v1_nversion$EnergyType, rep(1, 6))
+  expect_equal(v1_nversion$value, 1:6)
 
+  # Add another version then try again
+  matv2 <- matv1
+  matv2[2, 1] <- 0
+  midfv2 <- midfv1 |>
+    dplyr::mutate(
+      ValidFromVersion = "v2.0",
+      ValidToVersion = "v2.0",
+      matval = list(matv2)
+    )
+  rowsv2 <- midfv2 |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = tname,
+                           index_map = index_map,
+                           in_place = TRUE)
+  # Now try to retrieve with a NULL version string.
+  # Should get a data frame with many integers.
+  vall_nversion <- pl_filter_collect(db_table_name = tname,
+                                     version_string = NULL,
+                                     index_map = index_map,
+                                     collect = TRUE,
+                                     conn = conn,
+                                     matrix_class = "matrix",
+                                     create_matsindf = FALSE,
+                                     decode_foreign_keys = FALSE)
+  expect_equal(nrow(vall_nversion), 6)
+  vall_nversion |>
+    purrr::pluck("ValidToVersion", 6) |>
+    expect_equal(1)
+  vall_nversion |>
+    purrr::pluck("ValidToVersion", 1) |>
+    expect_equal(PFUPipelineTools::version_info$current_version_int)
+
+  # Try same thing while specifying a version
+  # but without creating matrices
+  v1_collected <- pl_filter_collect(db_table_name = tname,
+                                    version_string = "v1.0",
+                                    index_map = index_map,
+                                    collect = TRUE,
+                                    conn = conn,
+                                    matrix_class = "matrix",
+                                    create_matsindf = FALSE,
+                                    decode_foreign_keys = FALSE)
+  # There are six entries in the v1 matrix
+  expect_equal(nrow(v1_collected), 6)
+  # There are 5 entries in the v2 matrix
+  v2_collected <- pl_filter_collect(db_table_name = tname,
+                                    version_string = "v2.0",
+                                    index_map = index_map,
+                                    collect = TRUE,
+                                    conn = conn,
+                                    matrix_class = "matrix",
+                                    create_matsindf = FALSE,
+                                    decode_foreign_keys = FALSE)
+  expect_equal(nrow(v2_collected), 5)
+  # Try with delayed collection and an outboard filter to v2.
+  v2_postfilter <- pl_filter_collect(db_table_name = tname,
+                                     version_string = NULL,
+                                     index_map = index_map,
+                                     collect = FALSE,
+                                     conn = conn,
+                                     matrix_class = "matrix",
+                                     create_matsindf = FALSE,
+                                     decode_foreign_keys = FALSE) |>
+    dplyr::filter(ValidToVersion == 2147483647) |>
+    dplyr::collect()
+  expect_equal(nrow(v2_postfilter), 5)
+  expect_equal(unique(v2_postfilter$ValidToVersion), PFUPipelineTools::version_info$current_version_int)
 
 
 })

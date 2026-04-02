@@ -336,11 +336,19 @@ pl_filter_collect <- function(db_table_name,
   # We don't want to do this.
   version_string <- unique(version_string)
 
+  # Figure out the filtering arguments
+  if (...length() == 0) {
+    # No filter args
+    f_args <- NULL
+  } else {
+    f_args <- rlang::enquos(...)
+  }
+
   if (is.null(version_string)) {
     out <- pl_filter_collect_worker(
       version_string = version_string,
       db_table_name = db_table_name,
-      filter_args = rlang::enquos(...),
+      filter_args = f_args,
       collect = collect,
       decode_foreign_keys = decode_foreign_keys,
       create_matsindf = create_matsindf,
@@ -385,7 +393,7 @@ pl_filter_collect <- function(db_table_name,
 
     out <- purrr::map(.x = version_string,
                       .f = function(this_version_string,
-                                    this_filter_args = rlang::enquos(...),
+                                    this_filter_args = f_args,
                                     this_db_table_name = db_table_name,
                                     this_collect = collect,
                                     this_decode_foreign_keys = decode_foreign_keys,
@@ -433,44 +441,6 @@ pl_filter_collect <- function(db_table_name,
 }
 
 
-# pl_filter_collect_worker <- function(db_table_name,
-#                                      filter_args,
-#                                      version_string = NULL,
-#                                      collect = FALSE,
-#                                      decode_fks,
-#                                      create_matsindf = collect,
-#                                      conn,
-#                                      schema = schema_from_conn(conn = conn),
-#                                      fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
-#                                      index_map_name = "Index",
-#                                      index_map = fk_parent_tables[[index_map_name]],
-#                                      rctype_table_name = "matnameRCType",
-#                                      rctypes = decode_fks(db_table_name = rctype_table_name,
-#                                                           collect = TRUE,
-#                                                           conn = conn,
-#                                                           schema = schema,
-#                                                           fk_parent_tables = fk_parent_tables) |>
-#                                        dplyr::mutate(
-#                                          "{matname}" := decode_fk_keys(.data[[matname]],
-#                                                                        fk_table_name = "matname",
-#                                                                        conn = conn,
-#                                                                        schema = schema,
-#                                                                        fk_parent_tables = fk_parent_tables,
-#                                                                        pk_suffix = PFUPipelineTools::key_col_info$pk_suffix)),
-#                                      matrix_class = c("Matrix", "matrix"),
-#                                      matname = PFUPipelineTools::mat_meta_cols$matname,
-#                                      matval = PFUPipelineTools::mat_meta_cols$matval,
-#                                      rowtype_colname = PFUPipelineTools::mat_meta_cols$rowtype,
-#                                      coltype_colname = PFUPipelineTools::mat_meta_cols$coltype,
-#                                      valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
-#                                      valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname) {
-
-
-
-
-
-
-
 pl_filter_collect_worker <- function(version_string,
                                      db_table_name,
                                      filter_args,
@@ -492,6 +462,7 @@ pl_filter_collect_worker <- function(version_string,
                                      valid_from_version_colname,
                                      valid_to_version_colname) {
 
+  # Getting the tbl does not collect.
   out <- dplyr::tbl(src = conn, db_table_name)
 
   # First, filter the tbl according to version string,
@@ -505,23 +476,30 @@ pl_filter_collect_worker <- function(version_string,
                                schema = schema,
                                fk_parent_tables = fk_parent_tables,
                                valid_from_version_colname = valid_from_version_colname,
-                               valid_to_version_colname = valid_to_version_colname)
+                               valid_to_version_colname = valid_to_version_colname,
+                               # collect = FALSE is the default,
+                               # but specify it here for clarity.
+                               collect = FALSE)
   }
 
-  # Next, decode the foreign keys in the tbl with
-  # collect = FALSE to ensure a tbl is returned.
   if (decode_foreign_keys) {
+    # Decode the foreign keys in the tbl with
+    # collect = FALSE to ensure a tbl is returned.
     out <- out |>
       decode_fks(db_table_name = db_table_name,
                  schema = schema,
                  fk_parent_tables = fk_parent_tables,
+                 # Again, collect = FALSE is the default,
+                 # but specify it here for clarity.
                  collect = FALSE)
   }
 
   # Finally, filter the foreign keys in the tbl based on the expressions in ...
   # filter_args <- rlang::enquos(...)
-  out <- out |>
-    dplyr::filter(!!!filter_args)
+  if (!is.null(filter_args)) {
+    out <- out |>
+      dplyr::filter(!!!filter_args)
+  }
 
   if (collect) {
     # Collect (execute the SQL), if desired.
@@ -529,7 +507,7 @@ pl_filter_collect_worker <- function(version_string,
       dplyr::collect()
   }
 
-  if (!is.null(version_string)) {
+  if (!is.null(version_string) & decode_foreign_keys) {
     # Set the version columns to the version_string, if requested.
     out <- out |>
       dplyr::mutate(
