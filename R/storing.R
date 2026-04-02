@@ -496,14 +496,6 @@ pl_upsert_and_compress <- function(.df,
                                    what_to_do_colname = PFUPipelineTools::dataset_info$what_to_do,
                                    current_version_int = PFUPipelineTools::version_info$current_version_int) {
 
-  # if (is.null(.df)) {
-  #   return(NULL)
-  # }
-  #
-  # if (nrow(.df) == 0) {
-  #   return(NULL)
-  # }
-
   if (is.null(db_table_name)) {
     db_table_name <- .df[[.db_table_name]] |>
       unique()
