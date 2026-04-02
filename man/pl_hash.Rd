@@ -20,7 +20,7 @@ pl_hash(
 }
 \arguments{
 \item{.df}{An in-memory data frame to be stored in the database or \code{NULL} if
-the has of a table in the database at \code{conn} is desired.}
+the hash of a table in the database at \code{conn} is desired.}
 
 \item{table_name}{The string name of the table in which \code{.df} will be stored
 or the name of a table in the database to be hashed.}
@@ -100,7 +100,7 @@ contains a hash of a data frame created by nesting
 by all columns with more than one unique value and
 \code{additional_hash_group_cols}
 (when \code{additional_hash_group_cols} is not \code{NULL}).
-\item The second through N-1 columns are
+\item The second through N-1 columns (inclusive) are
 all columns with only one unique value
 (provided that \code{keep_single_unique_cols} is \code{TRUE} AND
 those columns specified by
