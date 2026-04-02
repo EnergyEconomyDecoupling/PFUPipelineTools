@@ -9,6 +9,17 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+* Improvements to `pl_filter_download()`, including 
+  new options to control whether encoded or decoded 
+  data are downloaded.
+* New function `pl_upsert_and_compress()` takes over duties from
+  `pl_upsert()`. 
+  `pl_upsert_and_compress()` performs local compression,
+  deciding how and when to compress database tables
+  using the `ValidFromVersion` and `ValidToVersion` columns.
+  `pl_upsert_and_compress()` compresses by default and
+  allows more options.
+  `pl_upsert()` is deprecated.
 * New function `compress_helper()` encapsulates the logic
   for deciding which rows to change when uploading to 
   the database.
