@@ -368,29 +368,6 @@ pl_filter_collect <- function(db_table_name,
       valid_to_version_colname = valid_to_version_colname)
   } else {
     # Account for version_string with length >= 1
-    # out <- purrr::map(.f = pl_filter_collect_worker,
-    #                   .x = version_string,
-    #                   db_table_name = db_table_name,
-    #                   filter_args = rlang::enquos(...),
-    #                   collect = collect,
-    #                   decode_foreign_keys = decode_foreign_keys,
-    #                   create_matsindf = create_matsindf,
-    #                   conn = conn,
-    #                   schema = schema,
-    #                   fk_parent_tables = fk_parent_tables,
-    #                   index_map_name = index_map_name,
-    #                   index_map = index_map,
-    #                   rctype_table_name = rctype_table_name,
-    #                   rctypes = rctypes,
-    #                   matrix_class = matrix_class,
-    #                   matname = matname,
-    #                   matval = matval,
-    #                   rowtype_colname = rowtype_colname,
-    #                   coltype_colname = coltype_colname,
-    #                   valid_from_version_colname = valid_from_version_colname,
-    #                   valid_to_version_colname = valid_to_version_colname) |>
-    #   dplyr::bind_rows()
-
     out <- purrr::map(.x = version_string,
                       .f = function(this_version_string,
                                     this_filter_args = f_args,
@@ -433,7 +410,6 @@ pl_filter_collect <- function(db_table_name,
                                                  coltype_colname = this_coltype_colname,
                                                  valid_from_version_colname = this_valid_from_version_colname,
                                                  valid_to_version_colname = this_valid_to_version_colname)
-
                       }) |>
       dplyr::bind_rows()
   }
