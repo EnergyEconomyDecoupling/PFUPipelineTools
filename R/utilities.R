@@ -1014,10 +1014,10 @@ create_compression_testing_db <- function(conn) {
     dm::dm_add_fk(table = matnameRCType, columns = coltype,
                   ref_table = RCType, ref_columns = RCTypeID)
   dm::copy_dm_to(conn, dm = dm, temporary = FALSE)
-  # Create index map
-  index_map <- list(Product = dm$Index |> dplyr::filter(IndexID %in% 1:4),
-                    Industry = dm$Index |> dplyr::filter(IndexID %in% 5:7))
-  return(index_map)
+
+  # Return the index map
+  return(dm$Index)
+
 }
 
 

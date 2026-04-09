@@ -17,11 +17,8 @@ pl_filter_collect(
   index_map_name = "Index",
   index_map = fk_parent_tables[[index_map_name]],
   rctype_table_name = "matnameRCType",
-  rctypes = dplyr::mutate(decode_fks(db_table_name = rctype_table_name, collect = TRUE,
-    conn = conn, schema = schema, fk_parent_tables = fk_parent_tables), `:=`("{matname}",
-    decode_fk_keys(.data[[matname]], fk_table_name = "matname", conn = conn, schema =
-    schema, fk_parent_tables = fk_parent_tables, pk_suffix =
-    PFUPipelineTools::key_col_info$pk_suffix))),
+  rctypes = decode_fks(db_table_name = rctype_table_name, collect = TRUE, conn = conn,
+    schema = schema, fk_parent_tables = fk_parent_tables),
   matrix_class = c("Matrix", "matrix"),
   matname = PFUPipelineTools::mat_meta_cols$matname,
   matval = PFUPipelineTools::mat_meta_cols$matval,

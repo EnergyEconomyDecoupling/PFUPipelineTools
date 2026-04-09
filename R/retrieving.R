@@ -313,14 +313,15 @@ pl_filter_collect <- function(db_table_name,
                                                    collect = TRUE,
                                                    conn = conn,
                                                    schema = schema,
-                                                   fk_parent_tables = fk_parent_tables) |>
-                                dplyr::mutate(
-                                  "{matname}" := decode_fk_keys(.data[[matname]],
-                                                                fk_table_name = "matname",
-                                                                conn = conn,
-                                                                schema = schema,
-                                                                fk_parent_tables = fk_parent_tables,
-                                                                pk_suffix = PFUPipelineTools::key_col_info$pk_suffix)),
+                                                   fk_parent_tables = fk_parent_tables) #|>
+                                # dplyr::mutate(
+                                #   "{matname}" := decode_fk_keys(.data[[matname]],
+                                #                                 fk_table_name = "matname",
+                                #                                 conn = conn,
+                                #                                 schema = schema,
+                                #                                 fk_parent_tables = fk_parent_tables,
+                                #                                 pk_suffix = PFUPipelineTools::key_col_info$pk_suffix))
+                                ,
                               matrix_class = c("Matrix", "matrix"),
                               matname = PFUPipelineTools::mat_meta_cols$matname,
                               matval = PFUPipelineTools::mat_meta_cols$matval,
