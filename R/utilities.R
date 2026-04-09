@@ -930,6 +930,32 @@ round_double_cols <- function(.df, digits = 15) {
 #'
 #' @export
 create_compression_testing_db <- function(conn) {
+  # Code to avoid build notes
+  testlocalcompression <- NULL
+  ValidFromVersion <- NULL
+  ValidToVersion <- NULL
+  matname <- NULL
+  i <- NULL
+  j <- NULL
+  Dataset <- NULL
+  DatasetID <- NULL
+  Version <- NULL
+  VersionID <- NULL
+  Country <- NULL
+  CountryID <- NULL
+  EnergyType <- NULL
+  EnergyTypeID <- NULL
+  Year <- NULL
+  YearID <- NULL
+  matnameID <- NULL
+  RCType <- NULL
+  RCTypeID <- NULL
+  matnameRCType <- NULL
+  Index <- NULL
+  IndexID <- NULL
+  rowtype <- NULL
+  coltype <- NULL
+  version_info <- NULL
 
   # Start with a clean slate
   clean_compression_testing_db(conn)
@@ -949,7 +975,8 @@ create_compression_testing_db <- function(conn) {
                dplyr::filter(FALSE),
              Dataset = data.frame(DatasetID = as.integer(5),
                                   Dataset = "CL-PFU IEA"),
-             Version = data.frame(VersionID = as.integer(c(1, 2, 3, version_info$current_version_int)),
+             Version = data.frame(VersionID = as.integer(c(1, 2, 3,
+                                                           PFUPipelineTools::version_info$current_version_int)),
                                   Version = c("v1.0", "v2.0", "v3.0", "current")),
              Country = data.frame(CountryID = as.integer(c(49, 146)),
                                   Country = c("GHA", "USA")),

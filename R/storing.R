@@ -454,6 +454,11 @@ pl_upsert <- function(.df,
 #'                            `r PFUPipelineTools::version_info$current_version_int`.
 #'                            It is probably a _very bad_ idea to supply
 #'                            a different value from the default.
+#' @param current_version_string A string that identifies the current version in the remote table.
+#'                            Default is `PFUPipelineTools::version_info$current_version_string` or
+#'                            `r PFUPipelineTools::version_info$current_version_string`.
+#'                            It is probably a _very bad_ idea to supply
+#'                            a different value from the default.
 #'
 #' @returns A hash of `.df` according to `.algo`.
 #'          If `.df` is `NULL` or has no rows, `NULL` is returned.
@@ -486,6 +491,7 @@ pl_upsert_and_compress <- function(.df,
                                    valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname,
                                    value_colname = PFUPipelineTools::mat_colnames$value,
                                    what_to_do_colname = PFUPipelineTools::dataset_info$what_to_do,
+                                   current_version_string = PFUPipelineTools::version_info$current_version_string,
                                    current_version_int = PFUPipelineTools::version_info$current_version_int) {
 
   if (is.null(db_table_name)) {
@@ -530,8 +536,7 @@ pl_upsert_and_compress <- function(.df,
                                            " must have only one value"))
       # Make sure we're not trying to submit "current" as the
       # version string
-      assertthat::assert_that(valid_from_contents !=
-                                version_info$current_version_string,
+      assertthat::assert_that(valid_from_contents != current_version_string,
                               msg = "Cannot upload data with 'current' in ValidFromVersion")
     }
     if (valid_to_version_colname %in% names(.df)) {
@@ -544,9 +549,8 @@ pl_upsert_and_compress <- function(.df,
                                            " must have only one value"))
       # Make sure we're not trying to submit "current" as the
       # version string
-      assertthat::assert_that(valid_to_contents !=
-                                version_info$current_version_string,
-                              msg = "Cannot upload data with 'current' in ValidToVersion")
+      assertthat::assert_that(valid_to_contents != current_version_string,
+                              msg = "Cannot upload data with 'current' as ValidToVersion")
     }
     if (valid_from_version_colname %in% names(.df) &
         valid_to_version_colname %in% names(.df)) {
