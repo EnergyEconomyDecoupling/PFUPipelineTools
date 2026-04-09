@@ -1047,6 +1047,18 @@ test_that("Various download formats work as expected in pl_filter_collect()", {
     dplyr::collect()
   expect_equal(nrow(v2_postfilter), 5)
   expect_equal(unique(v2_postfilter$ValidToVersion), PFUPipelineTools::version_info$current_version_int)
+})
 
 
+test_that("pl_filter_collect() works with the earliest version in the Mexer database", {
+  res <- pl_filter_collect(db_table_name = "Cmats",
+                           version_string = "v2.0",
+                           Country == "AUT",
+                           Year == 1971,
+                           collect = TRUE,
+                           conn = get_mexerdb_conn(user = "dbcreator"))
+  expect_equal(nrow(res), 1)
+  expect_equal(colnames(res), c("Dataset", "ValidFromVersion", "ValidToVersion", "Country",
+                                "Method", "EnergyType", "LastStage", "Year",
+                                "C_EIOU", "C_Y"))
 })
