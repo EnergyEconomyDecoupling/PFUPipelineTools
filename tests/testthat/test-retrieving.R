@@ -726,7 +726,6 @@ test_that("pl_filter_collect() works with compressed remote tables", {
   # Check that we can get v1 back successfully
   v1_retrieved <- pl_filter_collect(db_table_name = tname,
                                     version_string = "v1.0",
-                                    # index_map = index_map,
                                     collect = TRUE,
                                     conn = conn,
                                     matrix_class = "matrix")
@@ -738,7 +737,6 @@ test_that("pl_filter_collect() works with compressed remote tables", {
   # Check that we can get v2 back successfully
   v2_retrieved <- pl_filter_collect(db_table_name = tname,
                                     version_string = "v2.0",
-                                    index_map = index_map,
                                     collect = TRUE,
                                     conn = conn,
                                     matrix_class = "matrix")
@@ -753,7 +751,6 @@ test_that("pl_filter_collect() works with compressed remote tables", {
   # The default version_string is "current,"
   # so no need to specify it here.
   vcurrent_retrieved <- pl_filter_collect(db_table_name = tname,
-                                          index_map = index_map,
                                           collect = TRUE,
                                           conn = conn,
                                           matrix_class = "matrix")
@@ -765,7 +762,6 @@ test_that("pl_filter_collect() works with compressed remote tables", {
   # Test when requesting both v1.0 and v2.0
   v12_retrieved <- pl_filter_collect(db_table_name = tname,
                                      version_string = c("v1.0", "v2.0"),
-                                     index_map = index_map,
                                      collect = TRUE,
                                      conn = conn,
                                      matrix_class = "matrix")
@@ -774,7 +770,6 @@ test_that("pl_filter_collect() works with compressed remote tables", {
   # Test reverse order
   v21_retrieved <- pl_filter_collect(db_table_name = tname,
                                      version_string = c("v2.0", "v1.0"),
-                                     index_map = index_map,
                                      collect = TRUE,
                                      conn = conn,
                                      matrix_class = "matrix")
@@ -801,7 +796,6 @@ test_that("pl_filter_collect() works with compressed remote tables", {
     expect_error("local_df contains older versions than remote_df in")
   v1b_retrieved <- pl_filter_collect(db_table_name = tname,
                                      version_string = "v1.0",
-                                     index_map = index_map,
                                      collect = TRUE,
                                      conn = conn,
                                      matrix_class = "matrix")
@@ -847,7 +841,6 @@ test_that("pl_filter_collect() works with compressed remote tables", {
                            in_place = TRUE)
   v2b_retrieved <- pl_filter_collect(db_table_name = tname,
                                      version_string = "v2.0",
-                                     index_map = index_map,
                                      collect = TRUE,
                                      conn = conn,
                                      matrix_class = "matrix")
@@ -872,7 +865,6 @@ test_that("pl_filter_collect() works with compressed remote tables", {
                            in_place = TRUE)
   v2c_retrieved <- pl_filter_collect(db_table_name = tname,
                                      version_string = "v2.0",
-                                     index_map = index_map,
                                      collect = TRUE,
                                      conn = conn,
                                      matrix_class = "matrix")
@@ -890,7 +882,7 @@ test_that("Various download formats work as expected in pl_filter_collect()", {
 
   conn <- get_unit_testing_conn()
   on.exit(DBI::dbDisconnect(conn))
-  index_map <- create_compression_testing_db(conn)
+  create_compression_testing_db(conn)
 
   tname <- "testlocalcompression"
 
@@ -921,7 +913,7 @@ test_that("Various download formats work as expected in pl_filter_collect()", {
   # Obtain an i,j,value data frame
   v1_ijv <- pl_filter_collect(db_table_name = tname,
                               version_string = "v1.0",
-                              index_map = index_map,
+                              # index_map = index_map,
                               collect = TRUE,
                               conn = conn,
                               matrix_class = "matrix",
