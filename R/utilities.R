@@ -930,15 +930,32 @@ round_double_cols <- function(.df, digits = 15) {
 #'
 #' @export
 create_compression_testing_db <- function(conn) {
-  # Set the names of the table so we can use the variable in several places
-  tname <- "testlocalcompression"
-  dataset <- "Dataset"
-  version <- "Version"
-  country <- "Country"
-  energy_type <- "EnergyType"
-  year <- "Year"
-  matname <- "matname"
-  index <- "Index"
+  # Code to avoid build notes
+  testlocalcompression <- NULL
+  ValidFromVersion <- NULL
+  ValidToVersion <- NULL
+  matname <- NULL
+  i <- NULL
+  j <- NULL
+  Dataset <- NULL
+  DatasetID <- NULL
+  Version <- NULL
+  VersionID <- NULL
+  Country <- NULL
+  CountryID <- NULL
+  EnergyType <- NULL
+  EnergyTypeID <- NULL
+  Year <- NULL
+  YearID <- NULL
+  matnameID <- NULL
+  RCType <- NULL
+  RCTypeID <- NULL
+  matnameRCType <- NULL
+  Index <- NULL
+  IndexID <- NULL
+  rowtype <- NULL
+  coltype <- NULL
+  version_info <- NULL
 
   # Start with a clean slate
   clean_compression_testing_db(conn)
@@ -958,7 +975,8 @@ create_compression_testing_db <- function(conn) {
                dplyr::filter(FALSE),
              Dataset = data.frame(DatasetID = as.integer(5),
                                   Dataset = "CL-PFU IEA"),
-             Version = data.frame(VersionID = as.integer(c(1, 2, 3, version_info$current_version_int)),
+             Version = data.frame(VersionID = as.integer(c(1, 2, 3,
+                                                           PFUPipelineTools::version_info$current_version_int)),
                                   Version = c("v1.0", "v2.0", "v3.0", "current")),
              Country = data.frame(CountryID = as.integer(c(49, 146)),
                                   Country = c("GHA", "USA")),
@@ -968,14 +986,14 @@ create_compression_testing_db <- function(conn) {
                                Year = as.integer(c(1971, 1972))),
              matname = data.frame(matnameID = as.integer(c(2, 3, 7, 8)),
                                   matname = c("R", "U", "V", "Y")),
-             RCType = data.frame(RCTypeID	= c(1, 2),
+             RCType = data.frame(RCTypeID	= as.integer(c(1, 2)),
                                  RCType	= c("Industry", "Product"),
                                  FullName = c("Industry", "Product"),
                                  Description = c("Resource reservoirs, indistries, and final demand",
                                                  "Energy carriers")),
-             matnameRCType = data.frame(matname = c(2, 3, 7, 8),
-                                        rowtype = c(1, 2, 1, 2),
-                                        coltype = c(2, 1, 2, 1)),
+             matnameRCType = data.frame(matname = as.integer(c(2, 3, 7, 8)),
+                                        rowtype = as.integer(c(1, 2, 1, 2)),
+                                        coltype = as.integer(c(2, 1, 2, 1))),
              Index = data.frame(IndexID = as.integer(c(1, 2, 3, 4, 5, 6, 7)),
                                 Index = c("r1", "r2", "r3", "r4", "c1", "c2", "c3"))
   ) |>
@@ -1009,15 +1027,17 @@ create_compression_testing_db <- function(conn) {
                   ref_table = Index, ref_columns = IndexID) |>
     dm::dm_add_fk(table = testlocalcompression, columns = j,
                   ref_table = Index, ref_columns = IndexID) |>
+    dm::dm_add_fk(table = matnameRCType, columns = matname,
+                  ref_table = matname, ref_columns = matnameID) |>
     dm::dm_add_fk(table = matnameRCType, columns = rowtype,
                   ref_table = RCType, ref_columns = RCTypeID) |>
     dm::dm_add_fk(table = matnameRCType, columns = coltype,
                   ref_table = RCType, ref_columns = RCTypeID)
   dm::copy_dm_to(conn, dm = dm, temporary = FALSE)
-  # Create index map
-  index_map <- list(Product = dm$Index |> dplyr::filter(IndexID %in% 1:4),
-                    Industry = dm$Index |> dplyr::filter(IndexID %in% 5:7))
-  return(index_map)
+
+  # Return the index map
+  return(dm$Index)
+
 }
 
 

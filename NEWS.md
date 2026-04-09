@@ -23,11 +23,11 @@ which always resolves to the latest release.
 * New function `compress_helper()` encapsulates the logic
   for deciding which rows to change when uploading to 
   the database.
-* Added new function `get_unit_testing_conn()` 
-  for convenience during unit testing.
+* New function `get_unit_testing_conn()` 
+  provides convenience during unit testing.
 * New tests for new features. 
-    - Now up to 239 tests, all passing
-    - Test coverage now reported to be 24.64%, but 
+    - Now up to 350 tests, all passing
+    - Test coverage now reported to be 50.7%, but 
       that's an undercount. 
       Many (most?) functions are not tested 
       on continuous integration platforms and CRAN. 

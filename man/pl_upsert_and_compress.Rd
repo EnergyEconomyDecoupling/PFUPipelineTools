@@ -17,12 +17,8 @@ pl_upsert_and_compress(
   tol = 1e-06,
   round_double_columns = FALSE,
   digits = 15,
-  index_map =
-    magrittr::set_names(list(fk_parent_tables[[IEATools::row_col_types$industry]],
-    fk_parent_tables[[IEATools::row_col_types$product]],
-    fk_parent_tables[[IEATools::row_col_types$other]]),
-    c(IEATools::row_col_types$industry, IEATools::row_col_types$product,
-    IEATools::row_col_types$other)),
+  index_map_name = "Index",
+  index_map = fk_parent_tables[[index_map_name]],
   retain_zero_structure = FALSE,
   schema = schema_from_conn(conn),
   fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema, collect = TRUE),
@@ -34,6 +30,7 @@ pl_upsert_and_compress(
   valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname,
   value_colname = PFUPipelineTools::mat_colnames$value,
   what_to_do_colname = PFUPipelineTools::dataset_info$what_to_do,
+  current_version_string = PFUPipelineTools::version_info$current_version_string,
   current_version_int = PFUPipelineTools::version_info$current_version_int
 )
 }
@@ -92,14 +89,11 @@ Default is \code{15}, which should
 eliminate any numerical precision errors
 for \code{\link[=compress_rows]{compress_rows()}}.}
 
-\item{index_map}{A list of 2 or more data frames that represent the
-mappings from inboard row and column indices in the database
-to outboard row and column names in the memory
-of the local computer.
-See documentation for \code{\link[=encode_matsindf]{encode_matsindf()}} and
-\code{\link[matsbyname:to_named_triplet]{matsbyname::to_triplet()}}.
-Default is a \code{list} that contains the \code{industry}, \code{product}, and \code{other}
-members of \code{fk_parent_tables}.}
+\item{index_map_name}{The name of the table that serves as the index for row and column names.
+Default is "Index".}
+
+\item{index_map}{The index map for the matrices in the database at \code{conn}.
+Default is \code{fk_parent_tables[[index_table_name]]}.}
 
 \item{retain_zero_structure}{A boolean that tells whether to retain the structure
 of zero matrices.
@@ -149,6 +143,12 @@ with various rows of \code{.df}.
 This column is used internally.
 Default is \link{dataset_info}\verb{$what_to_do} or
 "WhatToDo".}
+
+\item{current_version_string}{A string that identifies the current version in the remote table.
+Default is \code{PFUPipelineTools::version_info$current_version_string} or
+current.
+It is probably a \emph{very bad} idea to supply
+a different value from the default.}
 
 \item{current_version_int}{An integer that indicates the current version in the remote table.
 Default is \code{PFUPipelineTools::version_info$current_version_int} or

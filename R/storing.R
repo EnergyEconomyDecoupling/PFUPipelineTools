@@ -407,14 +407,10 @@ pl_upsert <- function(.df,
 #'               Default is `15`, which should
 #'               eliminate any numerical precision errors
 #'               for [compress_rows()].
-#' @param index_map A list of 2 or more data frames that represent the
-#'                  mappings from inboard row and column indices in the database
-#'                  to outboard row and column names in the memory
-#'                  of the local computer.
-#'                  See documentation for [encode_matsindf()] and
-#'                  [matsbyname::to_triplet()].
-#'                  Default is a `list` that contains the `industry`, `product`, and `other`
-#'                  members of `fk_parent_tables`.
+#' @param index_map_name The name of the table that serves as the index for row and column names.
+#'                       Default is "Index".
+#' @param index_map The index map for the matrices in the database at `conn`.
+#'                  Default is `fk_parent_tables[[index_table_name]]`.
 #' @param retain_zero_structure A boolean that tells whether to retain the structure
 #'                              of zero matrices.
 #'                              See details.
@@ -458,6 +454,11 @@ pl_upsert <- function(.df,
 #'                            `r PFUPipelineTools::version_info$current_version_int`.
 #'                            It is probably a _very bad_ idea to supply
 #'                            a different value from the default.
+#' @param current_version_string A string that identifies the current version in the remote table.
+#'                            Default is `PFUPipelineTools::version_info$current_version_string` or
+#'                            `r PFUPipelineTools::version_info$current_version_string`.
+#'                            It is probably a _very bad_ idea to supply
+#'                            a different value from the default.
 #'
 #' @returns A hash of `.df` according to `.algo`.
 #'          If `.df` is `NULL` or has no rows, `NULL` is returned.
@@ -475,12 +476,8 @@ pl_upsert_and_compress <- function(.df,
                                    tol = 1e-6,
                                    round_double_columns = FALSE,
                                    digits = 15,
-                                   index_map = list(fk_parent_tables[[IEATools::row_col_types$industry]],
-                                                    fk_parent_tables[[IEATools::row_col_types$product]],
-                                                    fk_parent_tables[[IEATools::row_col_types$other]]) |>
-                                     magrittr::set_names(c(IEATools::row_col_types$industry,
-                                                           IEATools::row_col_types$product,
-                                                           IEATools::row_col_types$other)),
+                                   index_map_name = "Index",
+                                   index_map = fk_parent_tables[[index_map_name]],
                                    retain_zero_structure = FALSE,
                                    schema = schema_from_conn(conn),
                                    fk_parent_tables = get_all_fk_tables(conn = conn,
@@ -494,6 +491,7 @@ pl_upsert_and_compress <- function(.df,
                                    valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname,
                                    value_colname = PFUPipelineTools::mat_colnames$value,
                                    what_to_do_colname = PFUPipelineTools::dataset_info$what_to_do,
+                                   current_version_string = PFUPipelineTools::version_info$current_version_string,
                                    current_version_int = PFUPipelineTools::version_info$current_version_int) {
 
   if (is.null(db_table_name)) {
@@ -538,8 +536,7 @@ pl_upsert_and_compress <- function(.df,
                                            " must have only one value"))
       # Make sure we're not trying to submit "current" as the
       # version string
-      assertthat::assert_that(valid_from_contents !=
-                                version_info$current_version_string,
+      assertthat::assert_that(valid_from_contents != current_version_string,
                               msg = "Cannot upload data with 'current' in ValidFromVersion")
     }
     if (valid_to_version_colname %in% names(.df)) {
@@ -552,9 +549,8 @@ pl_upsert_and_compress <- function(.df,
                                            " must have only one value"))
       # Make sure we're not trying to submit "current" as the
       # version string
-      assertthat::assert_that(valid_to_contents !=
-                                version_info$current_version_string,
-                              msg = "Cannot upload data with 'current' in ValidToVersion")
+      assertthat::assert_that(valid_to_contents != current_version_string,
+                              msg = "Cannot upload data with 'current' as ValidToVersion")
     }
     if (valid_from_version_colname %in% names(.df) &
         valid_to_version_colname %in% names(.df)) {

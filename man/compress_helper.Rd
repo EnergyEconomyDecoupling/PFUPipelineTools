@@ -67,7 +67,7 @@ Default is \link{dataset_info}\verb{$upload_new} or
 
 \item{current_version_int}{The integer representing the current version.
 Default is
-\link{version_info$current_version_int} or
+\link{version_info}\verb{$current_version_int} or
 2147483647.}
 
 \item{tol}{The tolerance within which a local value will be
@@ -145,23 +145,23 @@ those rows will be removed from \code{remote_df}.
 \examples{
 remote_df <- tibble::tribble(
   ~Dataset, ~ValidFromVersion, ~ValidToVersion, ~Country, ~Year, ~matname, ~i, ~j, ~value,
-   5, 2, current_version_int, 49, 1971, 2, 1, 1, 11,
-   5, 2, current_version_int, 49, 1971, 2, 1, 2, 12,
-   5, 2, current_version_int, 49, 1971, 2, 1, 3, 13,
-   5, 2, current_version_int, 49, 1971, 2, 2, 1, 21,
+   5, 2, PFUPipelineTools::version_info$current_version_int, 49, 1971, 2, 1, 1, 11,
+   5, 2, PFUPipelineTools::version_info$current_version_int, 49, 1971, 2, 1, 2, 12,
+   5, 2, PFUPipelineTools::version_info$current_version_int, 49, 1971, 2, 1, 3, 13,
+   5, 2, PFUPipelineTools::version_info$current_version_int, 49, 1971, 2, 2, 1, 21,
    # matname = 3 is U
-   5, 2, current_version_int, 49, 1971, 3, 1, 1, 110,
-   5, 2, current_version_int, 49, 1971, 3, 2, 2, 220,
-   5, 2, current_version_int, 49, 1971, 3, 3, 2, 320,
+   5, 2, PFUPipelineTools::version_info$current_version_int, 49, 1971, 3, 1, 1, 110,
+   5, 2, PFUPipelineTools::version_info$current_version_int, 49, 1971, 3, 2, 2, 220,
+   5, 2, PFUPipelineTools::version_info$current_version_int, 49, 1971, 3, 3, 2, 320,
    # Country = 146 is USA
    # matname = 7 is V
-   5, 2, current_version_int, 146, 1972, 7, 1, 1, 1100,
-   5, 2, current_version_int, 146, 1972, 7, 2, 2, 2200,
-   5, 2, current_version_int, 146, 1972, 7, 3, 5, 3500,
+   5, 2, PFUPipelineTools::version_info$current_version_int, 146, 1972, 7, 1, 1, 1100,
+   5, 2, PFUPipelineTools::version_info$current_version_int, 146, 1972, 7, 2, 2, 2200,
+   5, 2, PFUPipelineTools::version_info$current_version_int, 146, 1972, 7, 3, 5, 3500,
    # matname = 8 is Y
-   5, 2, current_version_int, 146, 1972, 8, 1, 1, 11000,
-   5, 2, current_version_int, 146, 1972, 8, 2, 1, 21000,
-   5, 2, current_version_int, 146, 1972, 8, 1, 2, 12000
+   5, 2, PFUPipelineTools::version_info$current_version_int, 146, 1972, 8, 1, 1, 11000,
+   5, 2, PFUPipelineTools::version_info$current_version_int, 146, 1972, 8, 2, 1, 21000,
+   5, 2, PFUPipelineTools::version_info$current_version_int, 146, 1972, 8, 1, 2, 12000
 )
 # Change 2 rows
 local_df <- remote_df |>
