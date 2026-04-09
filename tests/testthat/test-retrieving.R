@@ -907,7 +907,6 @@ test_that("Various download formats work as expected in pl_filter_collect()", {
   rowsv1 <- midfv1 |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
-                           index_map = index_map,
                            in_place = TRUE)
 
   # Obtain an i,j,value data frame
@@ -931,7 +930,6 @@ test_that("Various download formats work as expected in pl_filter_collect()", {
   # Obtain an encoded data frame
   v1_encoded <- pl_filter_collect(db_table_name = tname,
                                   version_string = "v1.0",
-                                  index_map = index_map,
                                   collect = TRUE,
                                   conn = conn,
                                   matrix_class = "matrix",
@@ -955,7 +953,6 @@ test_that("Various download formats work as expected in pl_filter_collect()", {
   # so that's all we'll see.
   v1_nversion <- pl_filter_collect(db_table_name = tname,
                                    version_string = NULL,
-                                   index_map = index_map,
                                    collect = TRUE,
                                    conn = conn,
                                    matrix_class = "matrix",
@@ -984,13 +981,11 @@ test_that("Various download formats work as expected in pl_filter_collect()", {
   rowsv2 <- midfv2 |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
-                           index_map = index_map,
                            in_place = TRUE)
   # Now try to retrieve with a NULL version string.
   # Should get a data frame with many integers.
   vall_nversion <- pl_filter_collect(db_table_name = tname,
                                      version_string = NULL,
-                                     index_map = index_map,
                                      collect = TRUE,
                                      conn = conn,
                                      matrix_class = "matrix",
@@ -1008,7 +1003,6 @@ test_that("Various download formats work as expected in pl_filter_collect()", {
   # but without creating matrices
   v1_collected <- pl_filter_collect(db_table_name = tname,
                                     version_string = "v1.0",
-                                    index_map = index_map,
                                     collect = TRUE,
                                     conn = conn,
                                     matrix_class = "matrix",
@@ -1019,7 +1013,6 @@ test_that("Various download formats work as expected in pl_filter_collect()", {
   # There are 5 entries in the v2 matrix
   v2_collected <- pl_filter_collect(db_table_name = tname,
                                     version_string = "v2.0",
-                                    index_map = index_map,
                                     collect = TRUE,
                                     conn = conn,
                                     matrix_class = "matrix",
@@ -1029,7 +1022,6 @@ test_that("Various download formats work as expected in pl_filter_collect()", {
   # Try with delayed collection and an outboard filter to v2.
   v2_postfilter <- pl_filter_collect(db_table_name = tname,
                                      version_string = NULL,
-                                     index_map = index_map,
                                      collect = FALSE,
                                      conn = conn,
                                      matrix_class = "matrix",

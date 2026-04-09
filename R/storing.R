@@ -407,14 +407,10 @@ pl_upsert <- function(.df,
 #'               Default is `15`, which should
 #'               eliminate any numerical precision errors
 #'               for [compress_rows()].
-#' @param index_map A list of 2 or more data frames that represent the
-#'                  mappings from inboard row and column indices in the database
-#'                  to outboard row and column names in the memory
-#'                  of the local computer.
-#'                  See documentation for [encode_matsindf()] and
-#'                  [matsbyname::to_triplet()].
-#'                  Default is a `list` that contains the `industry`, `product`, and `other`
-#'                  members of `fk_parent_tables`.
+#' @param index_map_name The name of the table that serves as the index for row and column names.
+#'                       Default is "Index".
+#' @param index_map The index map for the matrices in the database at `conn`.
+#'                  Default is `fk_parent_tables[[index_table_name]]`.
 #' @param retain_zero_structure A boolean that tells whether to retain the structure
 #'                              of zero matrices.
 #'                              See details.
@@ -475,12 +471,8 @@ pl_upsert_and_compress <- function(.df,
                                    tol = 1e-6,
                                    round_double_columns = FALSE,
                                    digits = 15,
-                                   index_map = list(fk_parent_tables[[IEATools::row_col_types$industry]],
-                                                    fk_parent_tables[[IEATools::row_col_types$product]],
-                                                    fk_parent_tables[[IEATools::row_col_types$other]]) |>
-                                     magrittr::set_names(c(IEATools::row_col_types$industry,
-                                                           IEATools::row_col_types$product,
-                                                           IEATools::row_col_types$other)),
+                                   index_map_name = "Index",
+                                   index_map = fk_parent_tables[[index_map_name]],
                                    retain_zero_structure = FALSE,
                                    schema = schema_from_conn(conn),
                                    fk_parent_tables = get_all_fk_tables(conn = conn,

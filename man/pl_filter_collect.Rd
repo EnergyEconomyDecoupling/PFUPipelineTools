@@ -13,7 +13,7 @@ pl_filter_collect(
   create_matsindf = collect,
   conn,
   schema = schema_from_conn(conn = conn),
-  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema, collect = TRUE),
   index_map_name = "Index",
   index_map = fk_parent_tables[[index_map_name]],
   rctype_table_name = "matnameRCType",
