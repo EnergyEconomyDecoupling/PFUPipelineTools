@@ -29,7 +29,7 @@ which always resolves to the latest release.
     - Now up to 350 tests, all passing
     - Test coverage now reported to be 50.7%, but 
       that's an undercount. 
-      Many (most?) functions are not tested 
+      Many functions are not tested 
       on continuous integration platforms and CRAN. 
 
 
