@@ -930,15 +930,6 @@ round_double_cols <- function(.df, digits = 15) {
 #'
 #' @export
 create_compression_testing_db <- function(conn) {
-  # Set the names of the table so we can use the variable in several places
-  # tname <- "testlocalcompression"
-  # dataset <- "Dataset"
-  # version <- "Version"
-  # country <- "Country"
-  # energy_type <- "EnergyType"
-  # year <- "Year"
-  # matname <- "matname"
-  # index <- "Index"
 
   # Start with a clean slate
   clean_compression_testing_db(conn)
