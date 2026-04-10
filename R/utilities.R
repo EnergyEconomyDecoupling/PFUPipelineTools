@@ -973,6 +973,14 @@ create_compression_testing_db <- function(conn) {
                                                value = 3.1415926) |>
                # Delete all rows, but keep names and column types
                dplyr::filter(FALSE),
+             PhiConstants = data.frame(Dataset = as.integer(5),
+                                       ValidFromVersion = as.integer(1),
+                                       ValidToVersion = as.integer(2),
+                                       Product = as.integer(1),
+                                       phi = 1.06,
+                                       IsUseful = TRUE) |>
+               # Delete all rows, but keep names and column types
+               dplyr::filter(FALSE),
              Dataset = data.frame(DatasetID = as.integer(5),
                                   Dataset = "CL-PFU IEA"),
              Version = data.frame(VersionID = as.integer(c(1, 2, 3,
@@ -1000,6 +1008,11 @@ create_compression_testing_db <- function(conn) {
     dm::new_dm() |>
     dm::dm_add_pk(testlocalcompression, columns = c(ValidFromVersion, ValidToVersion,
                                                     matname, i, j)) |>
+    dm::dm_add_pk(PhiConstants, columns = c(Dataset,
+                                            ValidFromVersion,
+                                            ValidToVersion,
+                                            Product,
+                                            IsUseful)) |>
     dm::dm_add_pk(Dataset, columns = c(DatasetID)) |>
     dm::dm_add_pk(Version, columns = c(VersionID)) |>
     dm::dm_add_pk(Country, columns = c(CountryID)) |>
@@ -1027,6 +1040,14 @@ create_compression_testing_db <- function(conn) {
                   ref_table = Index, ref_columns = IndexID) |>
     dm::dm_add_fk(table = testlocalcompression, columns = j,
                   ref_table = Index, ref_columns = IndexID) |>
+    dm::dm_add_fk(table = PhiConstants, columns = Dataset,
+                  ref_table = Dataset, ref_columns = DatasetID) |>
+    dm::dm_add_fk(table = PhiConstants, columns = ValidFromVersion,
+                  ref_table = Version, ref_columns = VersionID) |>
+    dm::dm_add_fk(table = PhiConstants, columns = ValidToVersion,
+                  ref_table = Version, ref_columns = VersionID) |>
+    dm::dm_add_fk(table = PhiConstants, columns = Product,
+                  ref_table = Index, ref_columns = IndexID) |>
     dm::dm_add_fk(table = matnameRCType, columns = matname,
                   ref_table = matname, ref_columns = matnameID) |>
     dm::dm_add_fk(table = matnameRCType, columns = rowtype,
@@ -1037,7 +1058,6 @@ create_compression_testing_db <- function(conn) {
 
   # Return the index map
   return(dm$Index)
-
 }
 
 

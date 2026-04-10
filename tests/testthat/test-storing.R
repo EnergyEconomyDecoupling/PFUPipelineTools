@@ -785,3 +785,8 @@ test_that("pl_upsert_and_compress() works with more metadata columns and new row
   # Clean up after ourselves
   clean_compression_testing_db(conn)
 })
+
+
+test_that("Updating a table without a 'value' column works", {
+
+})
