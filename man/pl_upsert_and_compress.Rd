@@ -8,6 +8,7 @@ pl_upsert_and_compress(
   .df,
   conn,
   db_table_name = NULL,
+  version_string = NULL,
   additional_hash_group_cols = NULL,
   usual_hash_group_cols = PFUPipelineTools::usual_hash_group_cols,
   keep_single_unique_cols = TRUE,
@@ -43,6 +44,12 @@ pl_upsert_and_compress(
 i.e. the name of a remote database table.
 Default is \code{NULL}, meaning that the value for this argument
 will be taken from the \code{.db_table_name} column of \code{.df}.}
+
+\item{version_string}{An optional string that tells the version of the database being updated.
+See details.
+Default is \code{NULL}, meaning version information should be
+obtained from the \code{ValidFromVersion} and \code{ValidToVersion} columns
+of \code{.df}.}
 
 \item{additional_hash_group_cols}{A vector or list of additional columns
 by which \code{.df} will be grouped
@@ -276,6 +283,15 @@ in \code{mat_colnames} are considered to be data columns.
 All other columns are considered to be metadata columns.
 The calling function should supply the complete data in \code{.df}
 for each unique combination metadata column values.
+
+\code{version_string} is an optional argument that tells the
+version of the database being uploaded.
+The default is \code{NULL}, meaning that version information
+should be obtained from the
+the \code{ValidFromVersion} and \code{ValidToVersion} columns
+of \code{.df}.
+If \code{version_string} is specified, it must be
+a string vector of length 1.
 
 An error will occur if either
 the \code{ValidFromVersion} or the \code{ValidToVersion}

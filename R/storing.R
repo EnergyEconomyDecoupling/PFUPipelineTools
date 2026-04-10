@@ -359,6 +359,15 @@ pl_upsert <- function(.df,
 #' The calling function should supply the complete data in `.df`
 #' for each unique combination metadata column values.
 #'
+#' `version_string` is an optional argument that tells the
+#' version of the database being uploaded.
+#' The default is `NULL`, meaning that version information
+#' should be obtained from the
+#' the `ValidFromVersion` and `ValidToVersion` columns
+#' of `.df`.
+#' If `version_string` is specified, it must be
+#' a string vector of length 1.
+#'
 #' An error will occur if either
 #' the `ValidFromVersion` or the `ValidToVersion`
 #' column of `.df`
@@ -371,6 +380,11 @@ pl_upsert <- function(.df,
 #'                      i.e. the name of a remote database table.
 #'                      Default is `NULL`, meaning that the value for this argument
 #'                      will be taken from the `.db_table_name` column of `.df`.
+#' @param version_string An optional string that tells the version of the database being updated.
+#'                       See details.
+#'                       Default is `NULL`, meaning version information should be
+#'                       obtained from the `ValidFromVersion` and `ValidToVersion` columns
+#'                       of `.df`.
 #' @param additional_hash_group_cols A vector or list of additional columns
 #'                                   by which `.df` will be grouped
 #'                                   before hashing and, therefore, appear in the output.
@@ -467,6 +481,7 @@ pl_upsert <- function(.df,
 pl_upsert_and_compress <- function(.df,
                                    conn,
                                    db_table_name = NULL,
+                                   version_string = NULL,
                                    additional_hash_group_cols = NULL,
                                    usual_hash_group_cols = PFUPipelineTools::usual_hash_group_cols,
                                    keep_single_unique_cols = TRUE,
@@ -525,6 +540,41 @@ pl_upsert_and_compress <- function(.df,
 
   if (nrow(.df) > 0) {
     # No need to test this if we have an empty .df
+
+    # Verify that we have a value column.
+    assertthat::assert_that(value_colname %in% names(.df),
+                            msg = paste0("The value column named '",
+                                         value_colname,
+                                         "' must be in .df in pl_upsert_and_compress()"))
+
+    if (!(valid_from_version_colname %in% names(.df)) &
+        !(valid_to_version_colname %in% names(.df))) {
+      # Add those columns to .df and fill with version_string
+      # Check that version_string is not NULL
+      assertthat::assert_that(!is.null(version_string),
+                              msg = paste0("ValidFromVersion and ValidToVersion are missing ",
+                                           "version_string is NULL in pl_upsert_and_compress() ",
+                                           "for table '", db_table_name, "'"))
+      # Check the version_string has length 1
+      assertthat::assert_that(length(version_string) == 1)
+
+      # Add the columns
+      .df <- .df |>
+        dplyr::mutate(
+          "{valid_from_version_colname}" := version_string,
+          "{valid_to_version_colname}" := version_string,
+        )
+    }
+
+    # Check that both ValidFromVersion and ValidToVersion
+    # are present in .df if one is present in .df
+    assertthat::assert_that(!xor(valid_from_version_colname %in% names(.df),
+                                 valid_to_version_colname %in% names(.df)),
+                            msg = paste0("If .df has one of ValidFromVersion and ValidToVersion columns, ",
+                                         "it must have both. When calling pl_upsert_and_compress() for ",
+                                         db_table_name,
+                                         " only one is present."))
+
     # Ensure that the version column contain strings of length 1 and the same strings.
     if (valid_from_version_colname %in% names(.df)) {
       valid_from_contents <- .df |>

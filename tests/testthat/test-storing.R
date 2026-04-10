@@ -378,7 +378,6 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   rowsv1 <- midfv1 |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
-                           index_map = index_map,
                            in_place = TRUE,
                            compress = FALSE)
   # Check that there are 6 rows in remote table
@@ -391,7 +390,6 @@ test_that("pl_upsert_and_compress() works with local table compression", {
     dplyr::filter(FALSE) |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
-                           index_map = index_map,
                            in_place = TRUE,
                            compress = FALSE)
   expect_equal(names(no_row), c("DBTableName", "Dataset", "Country", "EnergyType", "Year", "NestedDataHash"))
@@ -410,7 +408,6 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   rowsv2 <- midfv2 |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
-                           index_map = index_map,
                            in_place = TRUE,
                            compress = FALSE)
   # Check that there are 12 rows in remote table
@@ -425,7 +422,6 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   rowsv1 <- midfv1 |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
-                           index_map = index_map,
                            in_place = TRUE)
   # Check that there are 6 rows in remote table
   should_be_six_rows <- DBI::dbReadTable(conn, name = tname)
@@ -438,7 +434,6 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   rowsv2 <- midfv2 |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
-                           index_map = index_map,
                            in_place = TRUE)
 
   # We added data with a new country.
@@ -497,7 +492,6 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   rowsv3 <- midfv3 |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
-                           index_map = index_map,
                            in_place = TRUE)
   resv3 <- dplyr::tbl(conn, tname) |>
     dplyr::filter(ValidFromVersion == 1,
@@ -520,7 +514,6 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   foo <- midfv1 |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
-                           index_map = index_map,
                            in_place = TRUE)
 
   # Now add an updated matrix with a new version.
@@ -536,7 +529,6 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   rowsv4 <- midfv4 |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
-                           index_map = index_map,
                            in_place = TRUE)
   resv4 <- dplyr::tbl(conn, tname) |>
     dplyr::collect() |>
@@ -565,7 +557,6 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   foo <- midfv1 |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
-                           index_map = index_map,
                            in_place = TRUE)
   # Create a Y matrix with a slightly different value
   # to test pl_upsert_and_compress() when we are within tol.
@@ -583,7 +574,6 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   rowsv5 <- midfv5 |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
-                           index_map = index_map,
                            in_place = TRUE)
   resv5 <- dplyr::tbl(conn, tname) |>
     dplyr::collect() |>
@@ -603,7 +593,7 @@ test_that("pl_upsert_and_compress() works with local table compression", {
   rowsv6 <- midfv5 |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
-                           index_map = index_map,
+                           # index_map = index_map,
                            # Smaller than 1e-10, so the modification of 1e-10
                            # should show up as a modification to the
                            # database.
@@ -629,7 +619,7 @@ test_that("pl_upsert_and_compress() works with more metadata columns and new row
 
   conn <- get_unit_testing_conn()
   on.exit(DBI::dbDisconnect(conn))
-  index_map <- create_compression_testing_db(conn)
+  create_compression_testing_db(conn)
 
   # Set the names of the table so we can use the variable in several places
   tname <- "testlocalcompression"
@@ -669,7 +659,6 @@ test_that("pl_upsert_and_compress() works with more metadata columns and new row
   rowsv1 <- midfv1 |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
-                           index_map = index_map,
                            in_place = TRUE)
   # Verify that we have 6 rows, one for each entry in the matrix
   should_be_six_rows <- DBI::dbReadTable(conn, name = tname)
@@ -680,7 +669,6 @@ test_that("pl_upsert_and_compress() works with more metadata columns and new row
     dplyr::filter(FALSE) |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
-                           index_map = index_map,
                            in_place = TRUE)
 
   # Try adding a new matrix with more rows/cols
@@ -698,7 +686,6 @@ test_that("pl_upsert_and_compress() works with more metadata columns and new row
   rowsv2 <- midfv2 |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
-                           index_map = index_map,
                            in_place = TRUE)
   should_be_nine_rows <- DBI::dbReadTable(conn, name = tname)
   expect_equal(nrow(should_be_nine_rows), 9)
@@ -738,7 +725,6 @@ test_that("pl_upsert_and_compress() works with more metadata columns and new row
   rowsv3 <- midfv3 |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
-                           index_map = index_map,
                            in_place = TRUE)
   should_be_ten_rows <- DBI::dbReadTable(conn, name = tname)
   expect_equal(nrow(should_be_ten_rows), 10)
@@ -764,7 +750,6 @@ test_that("pl_upsert_and_compress() works with more metadata columns and new row
   rowsv4 <- midfv4 |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = tname,
-                           index_map = index_map,
                            in_place = TRUE)
 
   should_be_one_row <- DBI::dbReadTable(conn, name = tname)
@@ -788,5 +773,62 @@ test_that("pl_upsert_and_compress() works with more metadata columns and new row
 
 
 test_that("Updating a table without a 'value' column works", {
+  skip_on_ci()
+  skip_on_cran()
+
+  conn <- get_unit_testing_conn()
+  on.exit(DBI::dbDisconnect(conn))
+  create_compression_testing_db(conn)
+
+  # Create a PhiConstants table
+  PhiC <- tibble::tribble(~Product, ~phi, ~IsUseful,
+                          "r1", 1, TRUE,
+                          "r2", 1.06, TRUE,
+                          "r3", 0.75, TRUE)
+
+  # Check for error conditions
+  PhiC |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = "PhiConstants",
+                           version_string = "v1.0",
+                           in_place = TRUE) |>
+    expect_error(regexp = "The value column named 'value' must be in .df in")
+  PhiC |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = "PhiConstants",
+                           value_colname = "phi",
+                           in_place = TRUE) |>
+    expect_error(regexp = "ValidFromVersion and ValidToVersion are missing version_string is NULL")
+
+  # This one should work
+  PhiC |>
+    pl_upsert_and_compress(conn = conn,
+                           db_table_name = "PhiConstants",
+                           value_colname = "phi",
+                           version_string = "v1.0",
+                           in_place = TRUE)
+
 
 })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
