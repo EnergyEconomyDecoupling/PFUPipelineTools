@@ -101,8 +101,6 @@ test_that("pl_hash() works with remote table", {
   expect_equal(nrow(pl_hash_tbl), 2)
   expect_equal(colnames(pl_hash_tbl), expected_colnames)
 
-
-
   DBI::dbRemoveTable(conn, "TestPLHash")
 })
 
