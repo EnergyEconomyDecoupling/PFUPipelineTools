@@ -541,18 +541,12 @@ pl_upsert_and_compress <- function(.df,
   if (nrow(.df) > 0) {
     # No need to test this if we have an empty .df
 
-    # Verify that we have a value column.
-    assertthat::assert_that(value_colname %in% names(.df),
-                            msg = paste0("The value column named '",
-                                         value_colname,
-                                         "' must be in .df in pl_upsert_and_compress()"))
-
     if (!(valid_from_version_colname %in% names(.df)) &
         !(valid_to_version_colname %in% names(.df))) {
       # Add those columns to .df and fill with version_string
       # Check that version_string is not NULL
       assertthat::assert_that(!is.null(version_string),
-                              msg = paste0("ValidFromVersion and ValidToVersion are missing ",
+                              msg = paste0("ValidFromVersion and ValidToVersion are missing and ",
                                            "version_string is NULL in pl_upsert_and_compress() ",
                                            "for table '", db_table_name, "'"))
       # Check the version_string has length 1
@@ -614,7 +608,14 @@ pl_upsert_and_compress <- function(.df,
   # Encode for upload using the index_map
   df_matsindf_encoded <- .df |>
     encode_matsindf(index_map = index_map,
-                    retain_zero_structure = retain_zero_structure)
+                    retain_zero_structure = retain_zero_structure,
+                    value_colname = value_colname)
+
+  # Verify that we have a value column.
+  assertthat::assert_that(value_colname %in% names(df_matsindf_encoded),
+                          msg = paste0("The value column named '",
+                                       value_colname,
+                                       "' must be in the encoded data frame in pl_upsert_and_compress()"))
 
   # The database shouldn't care about targets groups, so
   # remove any targets grouping.

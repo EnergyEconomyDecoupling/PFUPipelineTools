@@ -294,7 +294,8 @@ pl_collect_from_hash <- function(hashed_table,
 #'              `PFUPipelineTools::dataset_info$valid_to_version_colname`,
 #'              respectively.
 #'
-#' @return A filtered version of `db_table_name` downloaded from `conn`.
+#' @return When `collect == TRUE`, a filtered version of `db_table_name` downloaded from `conn`.
+#'         When `collect == FALSE`, a list of `tbl` objects.
 #'
 #' @export
 pl_filter_collect <- function(db_table_name,
@@ -403,8 +404,12 @@ pl_filter_collect <- function(db_table_name,
                                                  coltype_colname = this_coltype_colname,
                                                  valid_from_version_colname = this_valid_from_version_colname,
                                                  valid_to_version_colname = this_valid_to_version_colname)
-                      }) |>
-      dplyr::bind_rows()
+                      })
+    if (collect) {
+      # We have a list of data frames, all collected.
+      # rbind them together
+      out <- dplyr::bind_rows(out)
+    }
   }
   return(out)
 }

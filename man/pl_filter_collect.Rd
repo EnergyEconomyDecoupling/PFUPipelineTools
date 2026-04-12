@@ -112,7 +112,8 @@ and
 respectively.}
 }
 \value{
-A filtered version of \code{db_table_name} downloaded from \code{conn}.
+When \code{collect == TRUE}, a filtered version of \code{db_table_name} downloaded from \code{conn}.
+When \code{collect == FALSE}, a list of \code{tbl} objects.
 }
 \description{
 Often when collecting data from the database,

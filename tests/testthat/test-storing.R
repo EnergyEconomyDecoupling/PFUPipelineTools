@@ -781,12 +781,12 @@ test_that("Updating a table without a 'value' column works", {
   create_compression_testing_db(conn)
 
   # Create a PhiConstants table
-  PhiC <- tibble::tribble(~Product, ~phi, ~IsUseful,
-                          "r1", 1, TRUE,
-                          "r2", 1.06, TRUE,
-                          "r3", 0.75, TRUE)
+  PhiC <- tibble::tribble(~Dataset, ~Product, ~phi, ~IsUseful,
+                          "CL-PFU IEA", "r1", 1, TRUE,
+                          "CL-PFU IEA", "r2", 1.06, TRUE,
+                          "CL-PFU IEA", "r3", 0.75, TRUE)
 
-  # Check for error conditions
+  # Check error conditions
   PhiC |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = "PhiConstants",
@@ -801,14 +801,34 @@ test_that("Updating a table without a 'value' column works", {
     expect_error(regexp = "ValidFromVersion and ValidToVersion are missing version_string is NULL")
 
   # This one should work
-  PhiC |>
+  hash <- PhiC |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = "PhiConstants",
                            value_colname = "phi",
                            version_string = "v1.0",
                            in_place = TRUE)
 
+  # Don't download
+  nodl <- pl_filter_collect(db_table_name = "PhiConstants",
+                            version_string = "v1.0",
+                            conn = conn,
+                            collect = FALSE)
+  expect_true(is.list(nodl))
+  expect_equal(length(nodl), 1)
 
+  # Now download the stored data frame
+  dl <- pl_filter_collect(db_table_name = "PhiConstants",
+                          version_string = "v1.0",
+                          conn = conn,
+                          collect = TRUE)
+  expect_equal(names(dl), c("Dataset", "ValidFromVersion", "ValidToVersion",
+                            "Product", "phi", "IsUseful"))
+  expect_equal(dl$Dataset, PhiC$Dataset)
+  expect_equal(dl$ValidFromVersion |> unique(), "v1.0")
+  expect_equal(dl$ValidToVersion |> unique(), "v1.0")
+  expect_equal(dl$Product, PhiC$Product)
+  expect_equal(dl$phi, PhiC$phi)
+  expect_equal(dl$IsUseful, PhiC$IsUseful)
 })
 
 
