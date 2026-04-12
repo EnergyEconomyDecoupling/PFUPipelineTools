@@ -113,91 +113,71 @@ test_that("pl_upsert_and_compress() works for zero matrices", {
 
   conn <- get_unit_testing_conn()
   on.exit(DBI::dbDisconnect(conn))
-
-  # Start with a fresh slate
-  if (DBI::dbExistsTable(conn = conn, name = "testzeromatrix")) {
-    DBI::dbRemoveTable(conn = conn, name = "testzeromatrix")
-  }
-
-  # Create data model
-  dm <- list(testzeromatrix = data.frame(matname = "zerom",
-                                         i = as.integer(1),
-                                         j = as.integer(1),
-                                         value = 3.1415926) |>
-               # Delete all rows, but keep names and column types
-               dplyr::filter(FALSE)) |>
-    dm::new_dm() |>
-    dm::dm_add_pk(testzeromatrix, columns = c(matname, i, j))
-  dm::copy_dm_to(conn, dm = dm, temporary = FALSE)
-  # Create index map
-  index_map <- list(Product = data.frame(IndexID = as.integer(1:3),
-                                     Index = c("r1", "r2", "r3")),
-                    Industry = data.frame(IndexID = as.integer(1:2),
-                                     Index = c("c1", "c2")))
+  create_compression_testing_db(conn)
 
   # Create a zero matrix
-  zerom <- matrix(c(0, 0,
-                    0, 0,
-                    0, 0), nrow = 3, dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
+  Y_zero <- matrix(c(0, 0,
+                     0, 0,
+                     0, 0), nrow = 3, dimnames = list(c("r1", "r2", "r3"), c("c1", "c2"))) |>
     matsbyname::setrowtype("Product") |> matsbyname::setcoltype("Industry")
+
   # Create a matsindf data frame
-  midf <- tibble::tibble(matname = c("zerom1", "zerom2"),
-                         matval = list(zerom, zerom))
+  midf <- tibble::tibble(Dataset = "CL-PFU IEA",
+                         Country = "GHA",
+                         EnergyType = "X",
+                         Year = 1972,
+                         matname = "Y",
+                         matval = list(Y_zero))
+  # Upload without retaining the zero structure
   no_rows <- midf |>
     pl_upsert_and_compress(conn = conn,
-                           db_table_name = "testzeromatrix",
-                           index_map = index_map,
+                           version_string = "v1.0",
+                           db_table_name = "testlocalcompression",
+                           in_place = TRUE,
                            compress = FALSE)
   # Check that there are no rows in the hashed table
   expect_equal(nrow(no_rows), 0)
-  # Check that there are no rows in the table
-  should_be_no_rows <- DBI::dbReadTable(conn, name = "testzeromatrix")
+  # Check that there are no rows in the remote table
+  should_be_no_rows <- DBI::dbReadTable(conn, name = "testlocalcompression")
   expect_equal(nrow(should_be_no_rows), 0)
 
   # Now upsert zerom while preserving rows
-  twelve_rows <- midf |>
+  six_rows <- midf |>
     pl_upsert_and_compress(conn = conn,
-                           db_table_name = "testzeromatrix",
-                           index_map = index_map,
+                           version_string = "v1.0",
+                           db_table_name = "testlocalcompression",
                            in_place = TRUE,
                            retain_zero_structure = TRUE,
                            compress = FALSE)
   # The hash should come back with 1 row
-  expect_equal(nrow(twelve_rows), 1)
+  expect_equal(nrow(six_rows), 1)
   # Check that there are twelve rows in the table
-  should_be_twelve_rows <- DBI::dbReadTable(conn, name = "testzeromatrix")
-  expect_equal(nrow(should_be_twelve_rows), 12)
+  should_be_six_rows <- DBI::dbReadTable(conn, name = "testlocalcompression")
+  expect_equal(nrow(should_be_six_rows), 6)
 
   # Now try to use pl_filter_collect() to get the data.
   rctypes <- tibble::tribble(~matname, ~rowtype, ~coltype,
-                             "zerom1", "Product", "Industry",
-                             "zerom2", "Product", "Industry")
-
-
+                             "Y", "Product", "Industry",
+                             "Y", "Product", "Industry")
 
   # The following should give zero matrices with
   # row and column names
-  filter_collected <- pl_filter_collect(db_table_name = "testzeromatrix",
-                                        version_string = NULL,
+  filter_collected <- pl_filter_collect(db_table_name = "testlocalcompression",
+                                        version_string = "v1.0",
                                         conn = conn,
-                                        collect = TRUE,
-                                        index_map = index_map,
-                                        rctypes = rctypes)
+                                        collect = TRUE)
   expect_equal(nrow(filter_collected), 1)
-  expect_equal(colnames(filter_collected), c("zerom1", "zerom2"))
-  expect_equal(nrow(filter_collected$zerom1[[1]]), 3)
-  expect_equal(ncol(filter_collected$zerom1[[1]]), 2)
-  expect_equal(nrow(filter_collected$zerom2[[1]]), 3)
-  expect_equal(ncol(filter_collected$zerom2[[1]]), 2)
-  expect_true(matsbyname::iszero_byname(filter_collected$zerom1[[1]]))
-  expect_true(matsbyname::iszero_byname(filter_collected$zerom2[[1]]))
-  expect_equal(rownames(filter_collected$zerom1[[1]]), c("r1", "r2", "r3"))
-  expect_equal(colnames(filter_collected$zerom1[[1]]), c("c1", "c2"))
-  expect_equal(rownames(filter_collected$zerom2[[1]]), c("r1", "r2", "r3"))
-  expect_equal(colnames(filter_collected$zerom2[[1]]), c("c1", "c2"))
+  expect_equal(colnames(filter_collected),
+               c("Dataset", "ValidFromVersion", "ValidToVersion",
+                 "Country", "EnergyType", "Year", "Y"))
+  expect_equal(nrow(filter_collected$Y[[1]]), 3)
+  expect_equal(ncol(filter_collected$Y[[1]]), 2)
+  expect_true(matsbyname::iszero_byname(filter_collected$Y[[1]]))
+  expect_equal(rownames(filter_collected$Y[[1]]), c("r1", "r2", "r3"))
+  expect_equal(colnames(filter_collected$Y[[1]]), c("c1", "c2"))
 
-  # Clean up after ourselves
-  DBI::dbRemoveTable(conn = conn, name = "testzeromatrix")
+  # Clean up after ourselves.
+  clean_compression_testing_db(conn)
 })
 
 
