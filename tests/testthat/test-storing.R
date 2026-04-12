@@ -792,13 +792,13 @@ test_that("Updating a table without a 'value' column works", {
                            db_table_name = "PhiConstants",
                            version_string = "v1.0",
                            in_place = TRUE) |>
-    expect_error(regexp = "The value column named 'value' must be in .df in")
+    expect_error(regexp = "The value column named 'value' must be in the encoded data frame in pl_upsert_and_compress")
   PhiC |>
     pl_upsert_and_compress(conn = conn,
                            db_table_name = "PhiConstants",
                            value_colname = "phi",
                            in_place = TRUE) |>
-    expect_error(regexp = "ValidFromVersion and ValidToVersion are missing version_string is NULL")
+    expect_error(regexp = "ValidFromVersion and ValidToVersion are missing and version_string is NULL in pl_upsert_and_compress")
 
   # This one should work
   hash <- PhiC |>
@@ -829,6 +829,9 @@ test_that("Updating a table without a 'value' column works", {
   expect_equal(dl$Product, PhiC$Product)
   expect_equal(dl$phi, PhiC$phi)
   expect_equal(dl$IsUseful, PhiC$IsUseful)
+
+  # Clean up after ourselves
+  clean_compression_testing_db(conn)
 })
 
 
