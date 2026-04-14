@@ -640,121 +640,17 @@ pl_upsert_and_compress <- function(.df,
   remote_tbl <- dplyr::tbl(src = conn, db_table_name)
 
   if (compress) {
-
-    # Download any existing data starting with df_to_upsert.
-    # We should ignore any values in the ValidFromVersion column.
-    # We should ignore any values in the value column.
-    # We should download only those rows with ValidToVersion == current_version_int.
-    join_cols <- setdiff(colnames(df_to_upsert), c(valid_from_version_colname,
-                                                   valid_to_version_colname,
-                                                   # Ignore row, col, and val
-                                                   # columns when joining.
-                                                   mat_colnames[["row"]],
-                                                   mat_colnames[["col"]],
-                                                   mat_colnames[["value"]]))
-    # When updating, we need to include row and column
-    update_cols <- c(join_cols, mat_colnames[["row"]], mat_colnames[["col"]])
-
-    remote_df <- remote_tbl |>
-      dplyr::filter(.data[[valid_to_version_colname]] == current_version_int) |>
-      dplyr::semi_join(df_to_upsert, by = join_cols, copy = TRUE) |>
-      dplyr::collect()
-
-    # Compare to new data via compress_helper()
-    what_to_do_df <- compress_helper(remote_df = remote_df,
-                                     local_df = df_to_upsert,
-                                     tol = tol,
-                                     valid_from_version_colname = valid_from_version_colname,
-                                     valid_to_version_colname = valid_to_version_colname,
-                                     value_colname = value_colname)
-
-    # There are four possibilities:
-    # (1) Need up replace the value in the ValidToVersion column,
-    # (2) Need to replace the value in the value column,
-    # (3) Need to delete rows from the remote, or
-    # (4) Need to upload entirely new data.
-    # The WhatToDo column in what_to_do_df tells how to proceed.
-
-    # (1) Replace ValidToVersion in remote when needed
-    df_replace_valid_to_version_in_remote <- what_to_do_df |>
-      dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote) |>
-      dplyr::mutate(
-        "{what_to_do_colname}" := NULL
-      )
-    if (nrow(df_replace_valid_to_version_in_remote) > 0) {
-      remote_tbl |>
-        dplyr::rows_update(df_replace_valid_to_version_in_remote,
-                           # Need to update by all the update_cols and
-                           # ValidFromVersion and value.
-                           # However, value is a double, so don't include it in the join.
-                           by = c(update_cols,
-                                  valid_from_version_colname),
-                           # Normally, I would be concerned about unmatched = "ignore" here,
-                           # because it could fail silently.
-                           # However, we just downloaded the data a few lines above,
-                           # so we can be sure the rows are present in the remote database.
-                           unmatched = "ignore",
-                           copy = TRUE,
+    do_upsert_and_compress(df_to_upsert = df_to_upsert,
+                           valid_from_version_colname = valid_from_version_colname,
+                           valid_to_version_colname = valid_to_version_colname,
+                           value_colname = value_colname,
+                           what_to_do_colname = what_to_do_colname,
+                           mat_colnames = mat_colnames,
+                           remote_tbl = remote_tbl,
+                           pk_str = pk_str,
+                           tol = tol,
+                           current_version_int = current_version_int,
                            in_place = in_place)
-    }
-
-    # (2) Replace Value in remote when needed
-    df_replace_value_in_remote <- what_to_do_df |>
-      dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$replace_value_in_remote) |>
-      dplyr::mutate(
-        "{what_to_do_colname}" := NULL
-      )
-    if (nrow(df_replace_value_in_remote) > 0) {
-      remote_tbl |>
-        dplyr::rows_update(df_replace_value_in_remote,
-                           # Need to update by all the update_cols and
-                           # ValidFromVersion and ValidToVersion.
-                           by = c(update_cols,
-                                  valid_from_version_colname,
-                                  valid_to_version_colname),
-                           # Normally, I would be concerned about unmatched = "ignore" here,
-                           # because it could fail silently.
-                           # However, we just downloaded the data a few lines above,
-                           # so we can be sure the rows are present in the remote database.
-                           unmatched = "ignore",
-                           copy = TRUE,
-                           in_place = in_place)
-    }
-
-    # (3) Remove rows from remote
-    df_remove_rows_from_remote <- what_to_do_df |>
-      dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$delete_row_in_remote) |>
-      dplyr::mutate(
-        "{what_to_do_colname}" := NULL
-      )
-    if (nrow(df_remove_rows_from_remote) > 0) {
-      remote_tbl |>
-        dplyr::rows_delete(df_remove_rows_from_remote,
-                           by = c(update_cols,
-                                  valid_from_version_colname,
-                                  valid_to_version_colname,
-                                  value_colname),
-                           unmatched = "ignore",
-                           copy = TRUE,
-                           in_place = in_place)
-    }
-
-    # (4) Upload new when needed.
-    df_new <- what_to_do_df |>
-      dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$upload_new) |>
-      dplyr::mutate(
-        "{what_to_do_colname}" := NULL
-      )
-    if (nrow(df_new) > 0) {
-      remote_tbl |>
-        dplyr::rows_insert(df_new,
-                           by = pk_str,
-                           conflict = "ignore",
-                           copy = TRUE,
-                           in_place = in_place)
-    }
-
-
   } else {
     # No compression, just upsert.
     remote_tbl |>
@@ -771,6 +667,133 @@ pl_upsert_and_compress <- function(.df,
             additional_hash_group_cols = additional_hash_group_cols,
             usual_hash_group_cols = usual_hash_group_cols,
             .algo = .algo)
+}
+
+
+do_upsert_and_compress <- function(df_to_upsert,
+                                   valid_from_version_colname,
+                                   valid_to_version_colname,
+                                   value_colname,
+                                   what_to_do_colname,
+                                   mat_colnames,
+                                   remote_tbl,
+                                   pk_str,
+                                   tol,
+                                   current_version_int,
+                                   in_place) {
+
+  # Download any existing data starting with df_to_upsert.
+  # We should ignore any values in the ValidFromVersion column.
+  # We should ignore any values in the value column.
+  # We should download only those rows with ValidToVersion == current_version_int.
+  join_cols <- setdiff(colnames(df_to_upsert), c(valid_from_version_colname,
+                                                 valid_to_version_colname,
+                                                 # Ignore row, col, and val
+                                                 # columns when joining.
+                                                 mat_colnames[["row"]],
+                                                 mat_colnames[["col"]],
+                                                 mat_colnames[["value"]]))
+  # When updating, we need to include row and column
+  update_cols <- c(join_cols, mat_colnames[["row"]], mat_colnames[["col"]])
+
+  remote_df <- remote_tbl |>
+    dplyr::filter(.data[[valid_to_version_colname]] == current_version_int) |>
+    dplyr::semi_join(df_to_upsert, by = join_cols, copy = TRUE) |>
+    dplyr::collect()
+
+  # Compare to new data via compress_helper()
+  what_to_do_df <- compress_helper(remote_df = remote_df,
+                                   local_df = df_to_upsert,
+                                   tol = tol,
+                                   valid_from_version_colname = valid_from_version_colname,
+                                   valid_to_version_colname = valid_to_version_colname,
+                                   value_colname = value_colname)
+
+  # There are four possibilities:
+  # (1) Need up replace the value in the ValidToVersion column,
+  # (2) Need to replace the value in the value column,
+  # (3) Need to delete rows from the remote, or
+  # (4) Need to upload entirely new data.
+  # The WhatToDo column in what_to_do_df tells how to proceed.
+
+  # (1) Replace ValidToVersion in remote when needed
+  df_replace_valid_to_version_in_remote <- what_to_do_df |>
+    dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote) |>
+    dplyr::mutate(
+      "{what_to_do_colname}" := NULL
+    )
+  if (nrow(df_replace_valid_to_version_in_remote) > 0) {
+    remote_tbl |>
+      dplyr::rows_update(df_replace_valid_to_version_in_remote,
+                         # Need to update by all the update_cols and
+                         # ValidFromVersion and value.
+                         # However, value is a double, so don't include it in the join.
+                         by = c(update_cols,
+                                valid_from_version_colname),
+                         # Normally, I would be concerned about unmatched = "ignore" here,
+                         # because it could fail silently.
+                         # However, we just downloaded the data a few lines above,
+                         # so we can be sure the rows are present in the remote database.
+                         unmatched = "ignore",
+                         copy = TRUE,
+                         in_place = in_place)
+  }
+
+  # (2) Replace Value in remote when needed
+  df_replace_value_in_remote <- what_to_do_df |>
+    dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$replace_value_in_remote) |>
+    dplyr::mutate(
+      "{what_to_do_colname}" := NULL
+    )
+  if (nrow(df_replace_value_in_remote) > 0) {
+    remote_tbl |>
+      dplyr::rows_update(df_replace_value_in_remote,
+                         # Need to update by all the update_cols and
+                         # ValidFromVersion and ValidToVersion.
+                         by = c(update_cols,
+                                valid_from_version_colname,
+                                valid_to_version_colname),
+                         # Normally, I would be concerned about unmatched = "ignore" here,
+                         # because it could fail silently.
+                         # However, we just downloaded the data a few lines above,
+                         # so we can be sure the rows are present in the remote database.
+                         unmatched = "ignore",
+                         copy = TRUE,
+                         in_place = in_place)
+  }
+
+  # (3) Remove rows from remote
+  df_remove_rows_from_remote <- what_to_do_df |>
+    dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$delete_row_in_remote) |>
+    dplyr::mutate(
+      "{what_to_do_colname}" := NULL
+    )
+  if (nrow(df_remove_rows_from_remote) > 0) {
+    remote_tbl |>
+      dplyr::rows_delete(df_remove_rows_from_remote,
+                         by = c(update_cols,
+                                valid_from_version_colname,
+                                valid_to_version_colname,
+                                value_colname),
+                         unmatched = "ignore",
+                         copy = TRUE,
+                         in_place = in_place)
+  }
+
+  # (4) Upload new when needed.
+  df_new <- what_to_do_df |>
+    dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$upload_new) |>
+    dplyr::mutate(
+      "{what_to_do_colname}" := NULL
+    )
+  if (nrow(df_new) > 0) {
+    remote_tbl |>
+      dplyr::rows_insert(df_new,
+                         by = pk_str,
+                         conflict = "ignore",
+                         copy = TRUE,
+                         in_place = in_place)
+  }
 }
 
 
