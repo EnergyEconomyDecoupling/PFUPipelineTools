@@ -476,7 +476,6 @@ compress_helper <- function(remote_df, local_df,
       dplyr::bind_rows(new_version_upload_new)
   }
 
-
   return(out)
 }
 

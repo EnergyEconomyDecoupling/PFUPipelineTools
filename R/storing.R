@@ -469,10 +469,10 @@ pl_upsert <- function(.df,
 #'                            It is probably a _very bad_ idea to supply
 #'                            a different value from the default.
 #' @param current_version_string A string that identifies the current version in the remote table.
-#'                            Default is `PFUPipelineTools::version_info$current_version_string` or
-#'                            `r PFUPipelineTools::version_info$current_version_string`.
-#'                            It is probably a _very bad_ idea to supply
-#'                            a different value from the default.
+#'                               Default is `PFUPipelineTools::version_info$current_version_string` or
+#'                               `r PFUPipelineTools::version_info$current_version_string`.
+#'                               It is probably a _very bad_ idea to supply
+#'                               a different value from the default.
 #'
 #' @returns A hash of `.df` according to `.algo`.
 #'          If `.df` is `NULL` or has no rows, `NULL` is returned.
@@ -538,72 +538,12 @@ pl_upsert_and_compress <- function(.df,
     magrittr::extract2(.pk_col) |>
     magrittr::extract2(1)
 
-  if (nrow(.df) > 0) {
-    # No need to test this if we have an empty .df
-
-    if (!(valid_from_version_colname %in% names(.df)) &
-        !(valid_to_version_colname %in% names(.df))) {
-      # Add those columns to .df and fill with version_string
-      # Check that version_string is not NULL
-      assertthat::assert_that(!is.null(version_string),
-                              msg = paste0("ValidFromVersion and ValidToVersion are missing and ",
-                                           "version_string is NULL in pl_upsert_and_compress() ",
-                                           "for table '", db_table_name, "'"))
-      # Check the version_string has length 1
-      assertthat::assert_that(length(version_string) == 1)
-
-      # Add the columns
-      .df <- .df |>
-        dplyr::mutate(
-          "{valid_from_version_colname}" := version_string,
-          "{valid_to_version_colname}" := version_string,
-        )
-    }
-
-    # Check that both ValidFromVersion and ValidToVersion
-    # are present in .df if one is present in .df
-    assertthat::assert_that(!xor(valid_from_version_colname %in% names(.df),
-                                 valid_to_version_colname %in% names(.df)),
-                            msg = paste0("If .df has one of ValidFromVersion and ValidToVersion columns, ",
-                                         "it must have both. When calling pl_upsert_and_compress() for ",
-                                         db_table_name,
-                                         " only one is present."))
-
-    # Ensure that the version column contain strings of length 1 and the same strings.
-    if (valid_from_version_colname %in% names(.df)) {
-      valid_from_contents <- .df |>
-        dplyr::select(dplyr::all_of(valid_from_version_colname)) |>
-        unlist() |>
-        unique()
-      assertthat::assert_that(length(valid_from_contents) == 1,
-                              msg = paste0(valid_from_version_colname,
-                                           " must have only one value"))
-      # Make sure we're not trying to submit "current" as the
-      # version string
-      assertthat::assert_that(valid_from_contents != current_version_string,
-                              msg = "Cannot upload data with 'current' in ValidFromVersion")
-    }
-    if (valid_to_version_colname %in% names(.df)) {
-      valid_to_contents <- .df |>
-        dplyr::select(dplyr::all_of(valid_to_version_colname)) |>
-        unlist() |>
-        unique()
-      assertthat::assert_that(length(valid_to_contents) == 1,
-                              msg = paste0(valid_to_version_colname,
-                                           " must have only one value"))
-      # Make sure we're not trying to submit "current" as the
-      # version string
-      assertthat::assert_that(valid_to_contents != current_version_string,
-                              msg = "Cannot upload data with 'current' as ValidToVersion")
-    }
-    if (valid_from_version_colname %in% names(.df) &
-        valid_to_version_colname %in% names(.df)) {
-      assertthat::assert_that(valid_from_contents == valid_to_contents,
-                              msg = paste0(valid_from_version_colname,
-                                           " must match ",
-                                           valid_to_version_colname))
-    }
-  }
+  .df <- .df |>
+    validate_for_upsert_and_compress(db_table_name = db_table_name,
+                                     valid_from_version_colname = valid_from_version_colname,
+                                     valid_to_version_colname = valid_to_version_colname,
+                                     version_string = version_string,
+                                     current_version_string = current_version_string)
 
   # Encode for upload using the index_map
   df_matsindf_encoded <- .df |>
@@ -670,6 +610,142 @@ pl_upsert_and_compress <- function(.df,
 }
 
 
+#' Validate and prepare the incoming data frame
+#' for `upsert_and_compress()`.
+#'
+#' @param .df The data frame being validated.
+#' @param db_table_name A string identifying the destination for `.df` in `conn`,
+#'                      i.e. the name of a remote database table.
+#'                      Default is `NULL`, meaning that the value for this argument
+#'                      will be taken from the `.db_table_name` column of `.df`.
+#' @param valid_from_version_colname The string name of the valid from version column.
+#'                                   Default is [PFUPipelineTools::dataset_info]`$valid_from_version_colname` or
+#'                                   "`r PFUPipelineTools::dataset_info$valid_from_version_colname`".
+#'                                   Cannot be `PFUPipelineTools::version_info$current_version_string` or
+#'                                   "`r PFUPipelineTools::version_info$current_version_string`".
+#' @param valid_to_version_colname The string name of the valid to version column.
+#'                                 Default is [PFUPipelineTools::dataset_info]`$valid_to_version_colname`
+#'                                 or
+#'                                 "`r PFUPipelineTools::dataset_info$valid_to_version_colname`".
+#'                                 Cannot be `PFUPipelineTools::version_info$current_version_string` or
+#'                                 "`r PFUPipelineTools::version_info$current_version_string`".
+#' @param version_string An optional string that tells the version of the database being updated.
+#'                       See details.
+#'                       Default is `NULL`, meaning version information should be
+#'                       obtained from the `ValidFromVersion` and `ValidToVersion` columns
+#'                       of `.df`.
+#' @param current_version_string A string that identifies the current version in the remote table.
+#'                               Default is `PFUPipelineTools::version_info$current_version_string` or
+#'                               `r PFUPipelineTools::version_info$current_version_string`.
+#'                               It is probably a _very bad_ idea to supply
+#'                               a different value from the default.
+#'
+#' @returns An updated version of `.df` ready for upserting and compressing.
+#'
+#' @export
+validate_for_upsert_and_compress <- function(.df,
+                                             db_table_name,
+                                             valid_from_version_colname,
+                                             valid_to_version_colname,
+                                             version_string,
+                                             current_version_string) {
+  if (nrow(.df) > 0) {
+    # No need to test this if we have an empty .df
+
+    if (!(valid_from_version_colname %in% names(.df)) &
+        !(valid_to_version_colname %in% names(.df))) {
+      # Add those columns to .df and fill with version_string
+      # Check that version_string is not NULL
+      assertthat::assert_that(!is.null(version_string),
+                              msg = paste0("ValidFromVersion and ValidToVersion are missing and ",
+                                           "version_string is NULL in pl_upsert_and_compress() ",
+                                           "for table '", db_table_name, "'"))
+      # Check the version_string has length 1
+      assertthat::assert_that(length(version_string) == 1)
+
+      # Add the columns
+      .df <- .df |>
+        dplyr::mutate(
+          "{valid_from_version_colname}" := version_string,
+          "{valid_to_version_colname}" := version_string,
+        )
+    }
+
+    # Check that both ValidFromVersion and ValidToVersion
+    # are present in .df if one is present in .df
+    assertthat::assert_that(!xor(valid_from_version_colname %in% names(.df),
+                                 valid_to_version_colname %in% names(.df)),
+                            msg = paste0("If .df has one of ValidFromVersion and ValidToVersion columns, ",
+                                         "it must have both. When calling pl_upsert_and_compress() for ",
+                                         db_table_name,
+                                         " only one is present."))
+
+    # Ensure that the version column contain strings of length 1 and the same strings.
+    if (valid_from_version_colname %in% names(.df)) {
+      valid_from_contents <- .df |>
+        dplyr::select(dplyr::all_of(valid_from_version_colname)) |>
+        unlist() |>
+        unique()
+      assertthat::assert_that(length(valid_from_contents) == 1,
+                              msg = paste0(valid_from_version_colname,
+                                           " must have only one value"))
+      # Make sure we're not trying to submit "current" as the
+      # version string
+      assertthat::assert_that(valid_from_contents != current_version_string,
+                              msg = "Cannot upload data with 'current' in ValidFromVersion")
+    }
+    if (valid_to_version_colname %in% names(.df)) {
+      valid_to_contents <- .df |>
+        dplyr::select(dplyr::all_of(valid_to_version_colname)) |>
+        unlist() |>
+        unique()
+      assertthat::assert_that(length(valid_to_contents) == 1,
+                              msg = paste0(valid_to_version_colname,
+                                           " must have only one value"))
+      # Make sure we're not trying to submit "current" as the
+      # version string
+      assertthat::assert_that(valid_to_contents != current_version_string,
+                              msg = "Cannot upload data with 'current' as ValidToVersion")
+    }
+    if (valid_from_version_colname %in% names(.df) &
+        valid_to_version_colname %in% names(.df)) {
+      assertthat::assert_that(valid_from_contents == valid_to_contents,
+                              msg = paste0(valid_from_version_colname,
+                                           " must match ",
+                                           valid_to_version_colname))
+    }
+  }
+  return(.df)
+}
+
+
+#' A helper function that performs the upsert and compress action
+#'
+#' @param df_to_upsert The data frame to be upserted.
+#' @param valid_from_version_colname The string name of the valid from version column.
+#'                                   Cannot be `PFUPipelineTools::version_info$current_version_string` or
+#'                                   "`r PFUPipelineTools::version_info$current_version_string`".
+#' @param valid_to_version_colname The string name of the valid to version column.
+#'                                 Cannot be `PFUPipelineTools::version_info$current_version_string` or
+#'                                 "`r PFUPipelineTools::version_info$current_version_string`".
+#' @param value_colname The string name of the value column in `.df`.
+#' @param what_to_do_colname The string name of a column that tells what to do
+#'                           with various rows of `.df`.
+#'                           This column is used internally.
+#' @param mat_colnames String names of columns in `.df` that contain matrix information,
+#'                     namely, rowname (or index), colname (or index), and value.
+#' @param remote_tbl A remote table against which `df_to_upsert` is compared.
+#' @param pk_str The string for the primary key.
+#' @param tol The tolerance within which a local value will be
+#'            assumed same as the remote value.
+#'            This value is passed to [compress_helper()].
+#' @param current_version_int An integer that indicates the current version in the remote table.
+#' @param in_place A boolean that tells whether to change the remote table.
+#'
+#' @returns Nothing useful.
+#'          This function should be called for its side effect of updating the remote table.
+
+#' @export
 do_upsert_and_compress <- function(df_to_upsert,
                                    valid_from_version_colname,
                                    valid_to_version_colname,
@@ -718,7 +794,8 @@ do_upsert_and_compress <- function(df_to_upsert,
 
   # (1) Replace ValidToVersion in remote when needed
   df_replace_valid_to_version_in_remote <- what_to_do_df |>
-    dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote) |>
+    dplyr::filter(.data[[what_to_do_colname]] ==
+                    PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote) |>
     dplyr::mutate(
       "{what_to_do_colname}" := NULL
     )
@@ -741,7 +818,8 @@ do_upsert_and_compress <- function(df_to_upsert,
 
   # (2) Replace Value in remote when needed
   df_replace_value_in_remote <- what_to_do_df |>
-    dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$replace_value_in_remote) |>
+    dplyr::filter(.data[[what_to_do_colname]] ==
+                    PFUPipelineTools::dataset_info$replace_value_in_remote) |>
     dplyr::mutate(
       "{what_to_do_colname}" := NULL
     )
@@ -764,7 +842,8 @@ do_upsert_and_compress <- function(df_to_upsert,
 
   # (3) Remove rows from remote
   df_remove_rows_from_remote <- what_to_do_df |>
-    dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$delete_row_in_remote) |>
+    dplyr::filter(.data[[what_to_do_colname]] ==
+                    PFUPipelineTools::dataset_info$delete_row_in_remote) |>
     dplyr::mutate(
       "{what_to_do_colname}" := NULL
     )
@@ -782,7 +861,8 @@ do_upsert_and_compress <- function(df_to_upsert,
 
   # (4) Upload new when needed.
   df_new <- what_to_do_df |>
-    dplyr::filter(.data[[what_to_do_colname]] == PFUPipelineTools::dataset_info$upload_new) |>
+    dplyr::filter(.data[[what_to_do_colname]] ==
+                    PFUPipelineTools::dataset_info$upload_new) |>
     dplyr::mutate(
       "{what_to_do_colname}" := NULL
     )
