@@ -38,6 +38,14 @@ Defaults are \link{dataset_info}\verb{$valid_from_version_colname} and \link{dat
 Default is \link{mat_colnames}\verb{$value} or
 "value".}
 
+\item{nam}{The name of a column of names for values in the remote and local data frames.
+This name is used internally.
+Default is "nam".}
+
+\item{val}{The name of a column of values in the remote and local data frames.
+This name is used internally.
+Default is "val".}
+
 \item{what_to_do_colname}{The name of the column that tells
 what to do with the row.
 Default is \link{dataset_info}\verb{$what_to_do} or
@@ -143,6 +151,14 @@ a complete set of information for metadata columns
 Thus, if for the same metadata and the current version,
 \code{local_df} is lacking some rows present in \code{remote_df},
 those rows will be removed from \code{remote_df}.
+
+\code{value_colname} can be vector of length greater than 1,
+indicating multiple value columns.
+To accommodate this possibility,
+\code{remote_df} and \code{local_df} are pivoted longer internally
+to create \code{nam} and \code{val} columns.
+If any value in a row of \code{local_df} is different from \code{remote_df},
+the entire row is marked as being updated.
 }
 \examples{
 remote_df <- tibble::tribble(

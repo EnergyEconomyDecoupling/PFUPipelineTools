@@ -62,6 +62,14 @@
 #' `local_df` is lacking some rows present in `remote_df`,
 #' those rows will be removed from `remote_df`.
 #'
+#' `value_colname` can be vector of length greater than 1,
+#' indicating multiple value columns.
+#' To accommodate this possibility,
+#' `remote_df` and `local_df` are pivoted longer internally
+#' to create `nam` and `val` columns.
+#' If any value in a row of `local_df` is different from `remote_df`,
+#' the entire row is marked as being updated.
+#'
 #' @param remote_df A remote version of the rows contained in `local_df`.
 #' @param local_df A new data frame computed locally that
 #'                 contains a new set of values for `remote_df`.
@@ -73,6 +81,12 @@
 #' @param value_colname The name of the value column.
 #'                      Default is [PFUPipelineTools::mat_colnames]`$value` or
 #'                      "`r PFUPipelineTools::mat_colnames$value`".
+#' @param nam The name of a column of names for values in the remote and local data frames.
+#'            This name is used internally.
+#'            Default is "nam".
+#' @param val The name of a column of values in the remote and local data frames.
+#'            This name is used internally.
+#'            Default is "val".
 #' @param what_to_do_colname The name of the column that tells
 #'                           what to do with the row.
 #'                           Default is [PFUPipelineTools::dataset_info]`$what_to_do` or
@@ -162,6 +176,43 @@ compress_helper <- function(remote_df, local_df,
                             current_version_int = PFUPipelineTools::version_info$current_version_int,
                             tol = 1e-6) {
 
+  if (is.null(remote_df) & is.null(local_df)) {
+    return(NULL)
+  }
+
+  # If we have NULL for local_df, nothing should change.
+  if (is.null(local_df)) {
+    return(remote_df |>
+             dplyr::mutate(
+               "{what_to_do_colname}" := "bogus"
+             ) |>
+             # We want no rows in this data frame
+             dplyr::filter(FALSE)
+    )
+  }
+
+  # If local_df has no rows, we can't do anything,
+  # because there is no guidance on what is to be done.
+  if (nrow(local_df) == 0) {
+    return(remote_df |>
+             dplyr::mutate(
+               "{what_to_do_colname}" := "bogus"
+             ) |>
+             # We want no rows in this data frame
+             dplyr::filter(FALSE)
+    )
+  }
+
+  # If remote_df is NULL, all rows of local_df should be uploaded.
+  if (is.null(remote_df)) {
+    return(local_df |>
+             dplyr::mutate(
+               "{valid_to_version_colname}" := current_version_int,
+               "{what_to_do_colname}" := upload_new
+             )
+    )
+  }
+
   # Establish some names
   remote <- "Remote"
   local <- "Local"
@@ -177,33 +228,6 @@ compress_helper <- function(remote_df, local_df,
   new_local_value_name <- paste0(val, local)
   value_diff_name <- paste0(val, diff)
 
-  if (is.null(remote_df) & is.null(local_df)) {
-    return(NULL)
-  }
-
-  # If we have NULL for local_df, nothing should change.
-  if (is.null(local_df)) {
-    return(remote_df |>
-             dplyr::mutate(
-               "{what_to_do_colname}" := "bogus"
-             ) |>
-             # We want no rows in this data frame
-             dplyr::filter(FALSE)
-           )
-  }
-
-  # If local_df has no rows, we can't do anything,
-  # because there is no guidance on what is to be done.
-  if (nrow(local_df) == 0) {
-    return(remote_df |>
-             dplyr::mutate(
-               "{what_to_do_colname}" := "bogus"
-             ) |>
-             # We want no rows in this data frame
-             dplyr::filter(FALSE)
-           )
-  }
-
   # Decide the local version and check validity
   local_version <- local_df[[valid_to_version_colname]] |>
     unique()
@@ -213,16 +237,6 @@ compress_helper <- function(remote_df, local_df,
   local_version_check <- local_df[[valid_from_version_colname]] |>
     unique()
   assertthat::assert_that(local_version == local_version_check)
-
-  # If remote_df is NULL, all rows of local_df should be uploaded.
-  if (is.null(remote_df)) {
-    return(local_df |>
-             dplyr::mutate(
-               "{valid_to_version_colname}" := current_version_int,
-               "{what_to_do_colname}" := upload_new
-             )
-           )
-  }
 
   # Filter remote_df to contain only the current rows.
   # We want to compare local_df to only current rows in remote.
@@ -262,7 +276,7 @@ compress_helper <- function(remote_df, local_df,
   previous_version <- local_version - 1
 
 
-  # It can be that we have more than one value column.
+  # We can have more than one value column.
   # Pivot the data frames to put all the values in one column.
   remote_df_long <- remote_df |>
     tidyr::pivot_longer(cols = value_colname,
