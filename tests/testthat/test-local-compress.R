@@ -512,11 +512,49 @@ test_that("compress_helper() works with multiple value columns", {
     )
   local_df <- remote_df |>
     dplyr::mutate(
+      ValidToVersion = 2
+    )
+
+  # local_df is same as remote_df,
+  # so no changes are expected.
+  # Returning an no-row data frame is the right thing to do.
+  res <- compress_helper(remote_df = remote_df,
+                         local_df = local_df,
+                         value_colname = c("value1", "value2"))
+  expect_equal(nrow(res), 0)
+  expect_true("value1" %in% colnames(res))
+  expect_true("value2" %in% colnames(res))
+
+  # Adjust one of the values in local_df
+  # so that changes are expected
+  local_df[2, "value1"] <- 3.1415926
+  res2 <- compress_helper(remote_df = remote_df,
+                          local_df = local_df,
+                          value_colname = c("value1", "value2"))
+  # This should result in a change to the remote_df
+
+
+
+  |>
+    dplyr::mutate(
       ValidFromVersion = 3,
       ValidToVersion = 3
     )
 
-  compress_helper(remote_df = remote_df,
-                  local_df = local_df,
-                  value_colname = c("value1", "value2"))
+
 })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

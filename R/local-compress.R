@@ -224,9 +224,9 @@ compress_helper <- function(remote_df, local_df,
   # new_remote_value_name <- paste0(value_colname, remote)
   # new_local_value_name <- paste0(value_colname, local)
   # value_diff_name <- paste0(value_colname, diff)
-  new_remote_value_name <- paste0(val, remote)
-  new_local_value_name <- paste0(val, local)
-  value_diff_name <- paste0(val, diff)
+  new_remote_val_name <- paste0(val, remote)
+  new_local_val_name <- paste0(val, local)
+  val_diff_name <- paste0(val, diff)
 
   # Decide the local version and check validity
   local_version <- local_df[[valid_to_version_colname]] |>
@@ -249,16 +249,16 @@ compress_helper <- function(remote_df, local_df,
   # and should be uploaded.
   if (nrow(remote_df) == 0) {
     out <- local_df |>
-      prep_upload_new(value_diff_name = value_diff_name,
+      prep_upload_new(val_diff_name = val_diff_name,
                       new_remote_from_name = new_remote_from_name,
                       new_remote_to_name = new_remote_to_name,
-                      new_remote_value_name = new_remote_value_name,
+                      new_remote_val_name = new_remote_val_name,
                       valid_from_version_colname = valid_from_version_colname,
                       valid_to_version_colname = valid_to_version_colname,
-                      value_colname = value_colname,
+                      val_colname = val_colname,
                       new_local_from_name = new_local_from_name,
                       new_local_to_name = new_local_to_name,
-                      new_local_value_name = new_local_value_name,
+                      new_local_val_name = new_local_val_name,
                       what_to_do_colname = what_to_do_colname,
                       upload_new = upload_new,
                       current_version_int = current_version_int)
@@ -298,7 +298,7 @@ compress_helper <- function(remote_df, local_df,
     dplyr::rename(
       "{new_remote_from_name}" := dplyr::all_of(valid_from_version_colname),
       "{new_remote_to_name}" := dplyr::all_of(valid_to_version_colname),
-      "{new_remote_value_name}" := dplyr::all_of(val)
+      "{new_remote_val_name}" := dplyr::all_of(val)
     )
   # local_df_new_names <- local_df |>
   #   dplyr::rename(
@@ -310,7 +310,7 @@ compress_helper <- function(remote_df, local_df,
     dplyr::rename(
       "{new_local_from_name}" := dplyr::all_of(valid_from_version_colname),
       "{new_local_to_name}" := dplyr::all_of(valid_to_version_colname),
-      "{new_local_value_name}" := dplyr::all_of(val)
+      "{new_local_val_name}" := dplyr::all_of(val)
     )
 
 
@@ -320,8 +320,8 @@ compress_helper <- function(remote_df, local_df,
   # valid_from_version, valid_to_version, and value columns.
   # This approach uses all metadata columns for joining.
   join_cols <- c(colnames(remote_df_new_names), colnames(local_df_new_names)) |>
-    setdiff(c(new_remote_from_name, new_remote_to_name, new_remote_value_name,
-              new_local_from_name, new_local_to_name, new_local_value_name)) |>
+    setdiff(c(new_remote_from_name, new_remote_to_name, new_remote_val_name,
+              new_local_from_name, new_local_to_name, new_local_val_name)) |>
     unique()
   # Perform a full join
   joined <- dplyr::full_join(remote_df_new_names,
@@ -329,7 +329,7 @@ compress_helper <- function(remote_df, local_df,
                              by = join_cols) |>
     dplyr::mutate(
       # Difference the values
-      "{value_diff_name}" := .data[[new_local_value_name]] - .data[[new_remote_value_name]]
+      "{val_diff_name}" := .data[[new_local_val_name]] - .data[[new_remote_val_name]]
     )
 
   # Check that local_df is not younger than remote_df
@@ -368,20 +368,20 @@ compress_helper <- function(remote_df, local_df,
   # directly.
   # Nothing needs to be changed in existing rows of remote_df.
   completely_new_data_in_local_df <- joined |>
-    dplyr::filter(is.na(.data[[new_remote_value_name]]) &
-                    !is.na(.data[[new_local_value_name]]))
+    dplyr::filter(is.na(.data[[new_remote_val_name]]) &
+                    !is.na(.data[[new_local_val_name]]))
   if (nrow(completely_new_data_in_local_df) > 0) {
     add_to_out <- completely_new_data_in_local_df |>
-      prep_upload_new(value_diff_name = value_diff_name,
+      prep_upload_new(val_diff_name = val_diff_name,
                       new_remote_from_name = new_remote_from_name,
                       new_remote_to_name = new_remote_to_name,
-                      new_remote_value_name = new_remote_value_name,
+                      new_remote_val_name = new_remote_val_name,
                       valid_from_version_colname = valid_from_version_colname,
                       valid_to_version_colname = valid_to_version_colname,
-                      value_colname = value_colname,
+                      val_colname = val_colname,
                       new_local_from_name = new_local_from_name,
                       new_local_to_name = new_local_to_name,
-                      new_local_value_name = new_local_value_name,
+                      new_local_val_name = new_local_val_name,
                       what_to_do_colname = what_to_do_colname,
                       upload_new = upload_new,
                       current_version_int)
@@ -403,22 +403,22 @@ compress_helper <- function(remote_df, local_df,
   # depending on whether ValidFromVersion in remote_df is same as
   # local_version or not.
   delete_rows_in_remote_df <- joined |>
-    dplyr::filter(is.na(.data[[new_local_value_name]] & !is.na(.data[[new_remote_value_name]])))
-  if (nrow(delete_rows_in_remote_df)) {
+    dplyr::filter(is.na(.data[[new_local_val_name]] & !is.na(.data[[new_remote_val_name]])))
+  if (nrow(delete_rows_in_remote_df) > 0) {
     # Check for rows where remote_df has same ValidFromVersion as local_version.
     # In this case, we need to delete the row from remote.
     add_to_out <- delete_rows_in_remote_df |>
       dplyr::filter(.data[[new_remote_from_name]] == local_version) |>
       prep_delete_row_in_remote(new_local_from_name = new_local_from_name,
                                 new_local_to_name = new_local_to_name,
-                                new_local_value_name = new_local_value_name,
+                                new_local_val_name = new_local_val_name,
                                 value_diff_name = value_diff_name,
                                 valid_from_version_colname = valid_from_version_colname,
                                 valid_to_version_colname = valid_to_version_colname,
-                                value_colname = value_colname,
+                                val_colname = val_colname,
                                 new_remote_from_name = new_remote_from_name,
                                 new_remote_to_name = new_remote_to_name,
-                                new_remote_value_name = new_remote_value_name,
+                                new_remote_val_name = new_remote_val_name,
                                 what_to_do_colname = what_to_do_colname,
                                 delete_row_in_remote = delete_row_in_remote)
     out <- out |>
@@ -432,13 +432,13 @@ compress_helper <- function(remote_df, local_df,
         value_diff_name = value_diff_name,
         new_local_from_name = new_local_from_name,
         new_local_to_name = new_local_to_name,
-        new_local_value_name = new_local_value_name,
+        new_local_val_name = new_local_val_name,
         valid_from_version_colname = valid_from_version_colname,
         valid_to_version_colname = valid_to_version_colname,
-        value_colname = value_colname,
+        val_colname = val_colname,
         new_remote_from_name = new_remote_from_name,
         new_remote_to_name = new_remote_to_name,
-        new_remote_value_name = new_remote_value_name,
+        new_remote_val_name = new_remote_val_name,
         what_to_do_colname = what_to_do_colname,
         change_remote = change_valid_to_version_in_remote,
         previous_version = previous_version)
@@ -447,81 +447,86 @@ compress_helper <- function(remote_df, local_df,
   }
 
   # Find all rows where
-  # (a) the remote and local values both exist and
+  # (a) the remote and local values both exist
+  # and
   # (b) the remote and local values differ more than tol
   unequal_vals <- joined |>
-    dplyr::filter(abs(.data[[value_diff_name]]) > tol)
+    dplyr::filter(abs(.data[[val_diff_name]]) > tol)
 
   # What to do with these rows depends on the version information.
 
-  # If the local_version is same as the remote's valid_from_version,
-  # we need to simply update the value in the remote.
-  replace_remote_value <- unequal_vals |>
-    dplyr::filter(.data[[new_remote_from_name]] == local_version) |>
-    prep_replace_value_in_remote(new_remote_value_name = new_remote_value_name,
-                                 new_local_from_name = new_local_from_name,
-                                 new_local_to_name = new_local_to_name,
-                                 value_diff_name = value_diff_name,
-                                 valid_from_version_colname = valid_from_version_colname,
-                                 new_remote_from_name = new_remote_from_name,
-                                 valid_to_version_colname = valid_to_version_colname,
-                                 new_remote_to_name = new_remote_to_name,
-                                 value_colname = value_colname,
-                                 new_local_value_name = new_local_value_name,
-                                 what_to_do_colname = what_to_do_colname,
-                                 replace_value_in_remote = replace_value_in_remote)
-  out <- out |>
-    dplyr::bind_rows(replace_remote_value)
+  if (nrow(unequal_vals) > 0) {
+    # If the local_version is same as the remote's valid_from_version,
+    # we need to simply update the value in the remote.
+    replace_remote_value <- unequal_vals |>
+      dplyr::filter(.data[[new_remote_from_name]] == local_version)
+    if (nrow(replace_remote_value) > 0) {
+      replace_remote_value |>
+        prep_replace_value_in_remote(new_remote_val_name = new_remote_val_name,
+                                     new_local_from_name = new_local_from_name,
+                                     new_local_to_name = new_local_to_name,
+                                     val_diff_name = val_diff_name,
+                                     valid_from_version_colname = valid_from_version_colname,
+                                     new_remote_from_name = new_remote_from_name,
+                                     valid_to_version_colname = valid_to_version_colname,
+                                     new_remote_to_name = new_remote_to_name,
+                                     val_colname = val_colname,
+                                     new_local_val_name = new_local_val_name,
+                                     what_to_do_colname = what_to_do_colname,
+                                     replace_value_in_remote = replace_value_in_remote)
+      out <- out |>
+        dplyr::bind_rows(replace_remote_value)
+    }
 
-  # If local_version is greater than the remote's valid_from_version,
-  # we need to
-  # (a) set remote's valid_to_version to
-  #     one less than local_version
-  # and
-  # (b) upload local_df as new information.
+    # If local_version is greater than the remote's valid_from_version,
+    # we need to
+    # (a) set remote's valid_to_version to
+    #     one less than local_version
+    # and
+    # (b) upload local_df as new information.
+    new_version <- unequal_vals |>
+      dplyr::filter(.data[[new_remote_from_name]] <
+                      .data[[new_local_from_name]])
 
-  new_version <- unequal_vals |>
-    dplyr::filter(.data[[new_remote_from_name]] <
-                    .data[[new_local_from_name]])
+    if (nrow(new_version) > 0) {
+      # Find rows where we need to change the valid_to_version
+      # in the remote
+      new_version_change_valid_to_version_in_remote <- new_version |>
+        prep_unequal_change_valid_to_version_in_remote(
+          val_diff_name = val_diff_name,
+          new_local_from_name = new_local_from_name,
+          new_local_to_name = new_local_to_name,
+          new_local_val_name = new_local_val_name,
+          valid_from_version_colname = valid_from_version_colname,
+          valid_to_version_colname = valid_to_version_colname,
+          value_colname = value_colname,
+          new_remote_from_name = new_remote_from_name,
+          new_remote_to_name = new_remote_to_name,
+          new_remote_val_name = new_remote_val_name,
+          what_to_do_colname = what_to_do_colname,
+          change_remote = change_valid_to_version_in_remote,
+          previous_version = previous_version)
+      out <- out |>
+        dplyr::bind_rows(new_version_change_valid_to_version_in_remote)
 
-  if (nrow(new_version) > 0) {
-    # Find rows where we need to change the valid_to_version
-    # in the remote
-    new_version_change_valid_to_version_in_remote <- new_version |>
-      prep_unequal_change_valid_to_version_in_remote(
-        value_diff_name = value_diff_name,
-        new_local_from_name = new_local_from_name,
-        new_local_to_name = new_local_to_name,
-        new_local_value_name = new_local_value_name,
-        valid_from_version_colname = valid_from_version_colname,
-        valid_to_version_colname = valid_to_version_colname,
-        value_colname = value_colname,
-        new_remote_from_name = new_remote_from_name,
-        new_remote_to_name = new_remote_to_name,
-        new_remote_value_name = new_remote_value_name,
-        what_to_do_colname = what_to_do_colname,
-        change_remote = change_valid_to_version_in_remote,
-        previous_version = previous_version)
-    out <- out |>
-      dplyr::bind_rows(new_version_change_valid_to_version_in_remote)
-
-    # Prepare rows to upload as a new version
-    new_version_upload_new <- new_version |>
-      prep_upload_new(value_diff_name = value_diff_name,
-                      new_remote_from_name = new_remote_from_name,
-                      new_remote_to_name = new_remote_to_name,
-                      new_remote_value_name = new_remote_value_name,
-                      valid_from_version_colname = valid_from_version_colname,
-                      valid_to_version_colname = valid_to_version_colname,
-                      value_colname = value_colname,
-                      new_local_from_name = new_local_from_name,
-                      new_local_to_name = new_local_to_name,
-                      new_local_value_name = new_local_value_name,
-                      what_to_do_colname = what_to_do_colname,
-                      upload_new = upload_new,
-                      current_version_int = current_version_int)
-    out <- out |>
-      dplyr::bind_rows(new_version_upload_new)
+      # Prepare rows to upload as a new version
+      new_version_upload_new <- new_version |>
+        prep_upload_new(val_diff_name = val_diff_name,
+                        new_remote_from_name = new_remote_from_name,
+                        new_remote_to_name = new_remote_to_name,
+                        new_remote_val_name = new_remote_val_name,
+                        valid_from_version_colname = valid_from_version_colname,
+                        valid_to_version_colname = valid_to_version_colname,
+                        value_colname = value_colname,
+                        new_local_from_name = new_local_from_name,
+                        new_local_to_name = new_local_to_name,
+                        new_local_val_name = new_local_val_name,
+                        what_to_do_colname = what_to_do_colname,
+                        upload_new = upload_new,
+                        current_version_int = current_version_int)
+      out <- out |>
+        dplyr::bind_rows(new_version_upload_new)
+    }
   }
 
   return(out)
@@ -568,16 +573,16 @@ prep_unequal_change_valid_to_version_in_remote <- function(.df,
 
 
 prep_replace_value_in_remote <- function(.df,
-                                         new_remote_value_name,
+                                         new_remote_val_name,
                                          new_local_from_name,
                                          new_local_to_name,
-                                         value_diff_name,
+                                         val_diff_name,
                                          valid_from_version_colname,
                                          new_remote_from_name,
                                          valid_to_version_colname,
                                          new_remote_to_name,
-                                         value_colname,
-                                         new_local_value_name,
+                                         val_colname,
+                                         new_local_val_name,
                                          what_to_do_colname,
                                          replace_value_in_remote) {
   .df |>
@@ -600,33 +605,33 @@ prep_replace_value_in_remote <- function(.df,
 
 
 prep_upload_new <- function(.df,
-                            value_diff_name,
+                            val_diff_name,
                             new_remote_from_name,
                             new_remote_to_name,
-                            new_remote_value_name,
+                            new_remote_val_name,
                             valid_from_version_colname,
                             valid_to_version_colname,
-                            value_colname,
+                            val_colname,
                             new_local_from_name,
                             new_local_to_name,
-                            new_local_value_name,
+                            new_local_val_name,
                             what_to_do_colname,
                             upload_new,
                             current_version_int) {
   .df |>
     dplyr::mutate(
       # Remove the diff and remote columns
-      "{value_diff_name}" := NULL,
+      "{val_diff_name}" := NULL,
       "{new_remote_from_name}" := NULL,
       "{new_remote_to_name}" := NULL,
-      "{new_remote_value_name}" := NULL,
+      "{new_remote_val_name}" := NULL,
     ) |>
     dplyr::rename(
       # Rename the local valid and value columns
       # back to their original names
       "{valid_from_version_colname}" := dplyr::any_of(new_local_from_name),
       "{valid_to_version_colname}" := dplyr::any_of(new_local_to_name),
-      "{value_colname}" := dplyr::any_of(new_local_value_name)
+      "{val_colname}" := dplyr::any_of(new_local_val_name)
     ) |>
     dplyr::mutate(
       # Set the what to do column name
