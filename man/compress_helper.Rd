@@ -10,6 +10,8 @@ compress_helper(
   valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
   valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname,
   value_colname = PFUPipelineTools::mat_colnames$value,
+  nam = "nam",
+  val = "val",
   what_to_do_colname = PFUPipelineTools::dataset_info$what_to_do,
   change_valid_to_version_in_remote =
     PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote,

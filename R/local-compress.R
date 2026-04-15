@@ -144,13 +144,20 @@
 #' # and what must be done.
 #' compress_helper(remote_df = remote_df, local_df = local_df)
 compress_helper <- function(remote_df, local_df,
-                            valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
-                            valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname,
+                            valid_from_version_colname =
+                              PFUPipelineTools::dataset_info$valid_from_version_colname,
+                            valid_to_version_colname =
+                              PFUPipelineTools::dataset_info$valid_to_version_colname,
                             value_colname = PFUPipelineTools::mat_colnames$value,
+                            nam = "nam",
+                            val = "val",
                             what_to_do_colname = PFUPipelineTools::dataset_info$what_to_do,
-                            change_valid_to_version_in_remote = PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote,
-                            delete_row_in_remote = PFUPipelineTools::dataset_info$delete_row_in_remote,
-                            replace_value_in_remote = PFUPipelineTools::dataset_info$replace_value_in_remote,
+                            change_valid_to_version_in_remote =
+                              PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote,
+                            delete_row_in_remote =
+                              PFUPipelineTools::dataset_info$delete_row_in_remote,
+                            replace_value_in_remote =
+                              PFUPipelineTools::dataset_info$replace_value_in_remote,
                             upload_new = PFUPipelineTools::dataset_info$upload_new,
                             current_version_int = PFUPipelineTools::version_info$current_version_int,
                             tol = 1e-6) {
@@ -160,12 +167,15 @@ compress_helper <- function(remote_df, local_df,
   local <- "Local"
   diff <- "Diff"
   new_remote_from_name <- paste0(valid_from_version_colname, remote)
-  new_remote_to_name <- paste0(valid_to_version_colname, remote)
-  new_remote_value_name <- paste0(value_colname, remote)
   new_local_from_name <- paste0(valid_from_version_colname, local)
+  new_remote_to_name <- paste0(valid_to_version_colname, remote)
   new_local_to_name <- paste0(valid_to_version_colname, local)
-  new_local_value_name <- paste0(value_colname, local)
-  value_diff_name <- paste0(value_colname, diff)
+  # new_remote_value_name <- paste0(value_colname, remote)
+  # new_local_value_name <- paste0(value_colname, local)
+  # value_diff_name <- paste0(value_colname, diff)
+  new_remote_value_name <- paste0(val, remote)
+  new_local_value_name <- paste0(val, local)
+  value_diff_name <- paste0(val, diff)
 
   if (is.null(remote_df) & is.null(local_df)) {
     return(NULL)
@@ -252,19 +262,43 @@ compress_helper <- function(remote_df, local_df,
   previous_version <- local_version - 1
 
 
+  # It can be that we have more than one value column.
+  # Pivot the data frames to put all the values in one column.
+  remote_df_long <- remote_df |>
+    tidyr::pivot_longer(cols = value_colname,
+                        names_to = nam,
+                        values_to = val)
+  local_df_long <- local_df |>
+    tidyr::pivot_longer(cols = value_colname,
+                        names_to = nam,
+                        values_to = val)
+
   # Replace version column names prior to joining
-  remote_df_new_names <- remote_df |>
+  # remote_df_new_names <- remote_df |>
+  #   dplyr::rename(
+  #     "{new_remote_from_name}" := dplyr::all_of(valid_from_version_colname),
+  #     "{new_remote_to_name}" := dplyr::all_of(valid_to_version_colname),
+  #     "{new_remote_value_name}" := dplyr::all_of(value_colname)
+  #   )
+  remote_df_new_names <- remote_df_long |>
     dplyr::rename(
       "{new_remote_from_name}" := dplyr::all_of(valid_from_version_colname),
       "{new_remote_to_name}" := dplyr::all_of(valid_to_version_colname),
-      "{new_remote_value_name}" := dplyr::all_of(value_colname)
+      "{new_remote_value_name}" := dplyr::all_of(val)
     )
-  local_df_new_names <- local_df |>
+  # local_df_new_names <- local_df |>
+  #   dplyr::rename(
+  #     "{new_local_from_name}" := dplyr::all_of(valid_from_version_colname),
+  #     "{new_local_to_name}" := dplyr::all_of(valid_to_version_colname),
+  #     "{new_local_value_name}" := dplyr::all_of(value_colname)
+  #   )
+  local_df_new_names <- local_df_long |>
     dplyr::rename(
       "{new_local_from_name}" := dplyr::all_of(valid_from_version_colname),
       "{new_local_to_name}" := dplyr::all_of(valid_to_version_colname),
-      "{new_local_value_name}" := dplyr::all_of(value_colname)
+      "{new_local_value_name}" := dplyr::all_of(val)
     )
+
 
   # Figure out columns by which to join.
   # We want to join by all columns EXCEPT
