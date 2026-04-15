@@ -500,3 +500,23 @@ test_that("compress_helper() works as expected when the current version in remot
     )
   expect_equal(res2, expected2)
 })
+
+
+# test_that("compress_helper() works with multiple value columns", {
+#   remote_df <- remote_df_func() |>
+#     dplyr::rename(
+#       value1 = value
+#     ) |>
+#     dplyr::mutate(
+#       value2 = value1*10
+#     )
+#   local_df <- remote_df |>
+#     dplyr::mutate(
+#       ValidFromVersion = 3,
+#       ValidToVersion = 3
+#     )
+#
+#   compress_helper(remote_df = remote_df,
+#                   local_df = local_df,
+#                   value_colname = c("value1", "value2"))
+# })
