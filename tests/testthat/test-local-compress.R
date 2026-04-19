@@ -512,7 +512,7 @@ test_that("compress_helper() works with multiple value columns", {
     )
   local_df <- remote_df |>
     dplyr::mutate(
-      ValidToVersion = 2
+      "{PFUPipelineTools::dataset_info$valid_to_version_colname}" := 2
     )
 
   # local_df is same as remote_df,
@@ -525,21 +525,52 @@ test_that("compress_helper() works with multiple value columns", {
   expect_true("value1" %in% colnames(res))
   expect_true("value2" %in% colnames(res))
 
+
+  # Add completely new data with a new version.
+  # The metadata do not exist in remote.
+  local_df2 <- local_df |>
+    dplyr::mutate(
+      "{IEATools::iea_cols$country}" := -9999
+    )
+  res2 <- compress_helper(remote_df = remote_df,
+                          local_df = local_df2,
+                          value_colname = c("value1", "value2"))
+  res2 |>
+    dplyr::filter(WhatToDo == PFUPipelineTools::dataset_info$delete_row_in_remote) |>
+    nrow() |>
+    expect_equal(13)
+  res2 |>
+    dplyr::filter(WhatToDo == PFUPipelineTools::dataset_info$upload_new) |>
+    nrow() |>
+    expect_equal(13)
+
+  # Remove a row in local_df
+  local_df3 <- local_df[-2, ]
+  res3 <- compress_helper(remote_df = remote_df,
+                          local_df = local_df3,
+                          value_colname = c("value1", "value2"))
+  res3 |>
+    dplyr::filter(is.na(ValidFromVersion_local)) |>
+    purrr::pluck("WhatToDo", 1) |>
+    expect_equal(PFUPipelineTools::dataset_info$delete_row_in_remote)
+
+
+
   # Adjust one of the values in local_df
   # so that changes are expected
-  local_df[2, "value1"] <- 3.1415926
-  res2 <- compress_helper(remote_df = remote_df,
-                          local_df = local_df,
+  local_df4 <- local_df
+  local_df4[2, "value1"] <- 3.1415926
+  res4 <- compress_helper(remote_df = remote_df,
+                          local_df = local_df4,
                           value_colname = c("value1", "value2"))
-  # This should result in a change to the remote_df
+  # This should result in a change to the remote_df for 1 row
+  res4 |>
+    dplyr::filter(WhatToDo == PFUPipelineTools::dataset_info$replace_value_in_remote) |>
+    nrow() |>
+    expect_equal(1)
 
 
 
-  |>
-    dplyr::mutate(
-      ValidFromVersion = 3,
-      ValidToVersion = 3
-    )
 
 
 })

@@ -12,6 +12,7 @@ compress_helper(
   value_colname = PFUPipelineTools::mat_colnames$value,
   nam = "nam",
   val = "val",
+  changed_cols_colname = PFUPipelineTools::dataset_info$changed_cols_colname,
   what_to_do_colname = PFUPipelineTools::dataset_info$what_to_do,
   change_valid_to_version_in_remote =
     PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote,
@@ -45,6 +46,12 @@ Default is "nam".}
 \item{val}{The name of a column of values in the remote and local data frames.
 This name is used internally.
 Default is "val".}
+
+\item{changed_cols_colname}{The name of a column that tells which
+columns have changed.
+This column is added internally but removed
+before returning.
+Default is "ChangedCols".}
 
 \item{what_to_do_colname}{The name of the column that tells
 what to do with the row.
