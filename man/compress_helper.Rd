@@ -19,6 +19,7 @@ compress_helper(
   delete_row_in_remote = PFUPipelineTools::dataset_info$delete_row_in_remote,
   replace_value_in_remote = PFUPipelineTools::dataset_info$replace_value_in_remote,
   upload_new = PFUPipelineTools::dataset_info$upload_new,
+  no_action = PFUPipelineTools::dataset_info$no_action,
   current_version_int = PFUPipelineTools::version_info$current_version_int,
   tol = 1e-06
 )
@@ -81,6 +82,11 @@ indicates local rows
 to be uploaded to the remote.
 Default is \link{dataset_info}\verb{$upload_new} or
 "Upload new".}
+
+\item{no_action}{The string that indicates no action is needed
+on this row.
+Default is \link{dataset_info}\code{no_action} or
+"No action".}
 
 \item{current_version_int}{The integer representing the current version.
 Default is

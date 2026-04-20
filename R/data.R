@@ -250,6 +250,7 @@
 #' \item{replace_value_in_remote}{A string that indicates the value should be replaced in the remote database.}
 #' \item{delete_row_in_remote}{A string that indicates a row to be deleted from the remote database.}
 #' \item{upload_new}{A string indicating that rows of a dataframe should be uploaded to the remote database, because they are new, i.e., they do not yet exist in the remote database.}
+#' \item{no_action}{A string indicating that rows of a dataframe need no action taken upon them, because they are unchanged.}
 #' }
 #'
 #' @examples

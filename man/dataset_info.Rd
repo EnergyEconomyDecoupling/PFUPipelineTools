@@ -5,7 +5,7 @@
 \alias{dataset_info}
 \title{Column name for datasets}
 \format{
-A string list with 20 entries.
+A string list with 21 entries.
 \describe{
 \item{dataset_colname}{The string name of the dataset column, "Dataset".}
 \item{valid_from_version_colname}{The string name of the column that gives the initial version for which this datapoint is valid, "ValidFromVersion".}
@@ -27,6 +27,7 @@ A string list with 20 entries.
 \item{replace_value_in_remote}{A string that indicates the value should be replaced in the remote database.}
 \item{delete_row_in_remote}{A string that indicates a row to be deleted from the remote database.}
 \item{upload_new}{A string indicating that rows of a dataframe should be uploaded to the remote database, because they are new, i.e., they do not yet exist in the remote database.}
+\item{no_action}{A string indicating that rows of a dataframe need no action taken upon them, because they are unchanged.}
 }
 }
 \usage{

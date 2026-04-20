@@ -116,6 +116,10 @@
 #'              to be uploaded to the remote.
 #'              Default is [PFUPipelineTools::dataset_info]`$upload_new` or
 #'              "`r PFUPipelineTools::dataset_info$upload_new`".
+#' @param no_action The string that indicates no action is needed
+#'                  on this row.
+#'                  Default is [PFUPipelineTools::dataset_info]`no_action` or
+#'                  "`r PFUPipelineTools::dataset_info$no_action`".
 #' @param current_version_int The integer representing the current version.
 #'                            Default is
 #'                            [PFUPipelineTools::version_info]`$current_version_int` or
@@ -179,6 +183,7 @@ compress_helper <- function(remote_df, local_df,
                             replace_value_in_remote =
                               PFUPipelineTools::dataset_info$replace_value_in_remote,
                             upload_new = PFUPipelineTools::dataset_info$upload_new,
+                            no_action = PFUPipelineTools::dataset_info$no_action,
                             current_version_int = PFUPipelineTools::version_info$current_version_int,
                             tol = 1e-6) {
 
@@ -260,7 +265,7 @@ compress_helper <- function(remote_df, local_df,
   }
 
 
-  joined |>
+  next_steps <- joined |>
     dplyr::rowwise() |>
     dplyr::mutate(
       # Identify which value columns differ
@@ -280,69 +285,15 @@ compress_helper <- function(remote_df, local_df,
       }),
       "{what_to_do_colname}" := dplyr::case_when(
 
-        # (4) New data. Upload to remote.
+        # New data. Upload to remote.
         is.na(.data[[paste0(valid_from_version_colname, remote_suff)]]) ~ upload_new,
-        # (3) Old data. Delete from remote.
+        # Old data. Delete from remote,
+        # possibly by deleting altogether,
+        # possibly by just changing the ValidToVersion column.
         is.na(.data[[paste0(valid_from_version_colname, local_suff)]]) ~ delete_row_in_remote,
-        # (2) One or more value changes
+        # One or more value changes
         length(.data[[changed_cols_colname]]) > 0 ~ replace_value_in_remote,
-        TRUE ~ "No action necessary"
-
-
-
-
-
-
-        # # Look for cases where local_df contains new data altogether, i.e.
-        # # a new combination of values in metadata columns.
-        # # In this case, the joined table will have
-        # # all of the remote value columns being NA
-        # # and
-        # # all of the local value columns being not NA.
-        # # For this circumstance, the local rows should be uploaded
-        # # directly.
-        # # Nothing needs to be changed in existing rows of remote_df.
-        # dplyr::if_all(tidyselect::all_of(paste0(value_colname, remote_suff)), is.na) &&
-        #   dplyr::if_all(tidyselect::all_of(paste0(value_colname, local_suff)), function(x) !is.na(x)) ~ upload_new,
-        #
-        # # Look for cases where local_df lacks data that are present in remote_df.
-        # # These are cases where we should "delete" the remote row.
-        # # Remembering that we already filtered on current_version_int,
-        # # this condition will occur only if we have a new run
-        # # that no longer has a certain combination of metadata.
-        # # In this case, the joined table will have
-        # # all remote values not NA
-        # # and
-        # # all local values NA.
-        # # When ValidFromVersion in the remote table
-        # # is the same as local_version,
-        # # we simply delete the row from the table.
-        # dplyr::if_all(tidyselect::all_of(paste0(value_colname, remote_suff)), function(x) {!is.na(x)}) &&
-        #   dplyr::if_all(tidyselect::all_of(paste0(value_colname, local_suff)), is.na) &&
-        #   .data[[paste0(valid_from_version_colname, remote_suff)]] == local_version ~ delete_row_in_remote,
-        # # When ValidFromVersion in the remote table
-        # # is less than local_version,
-        # # we need to update ValidToVersion in the remote table.
-        # dplyr::if_all(tidyselect::all_of(paste0(value_colname, remote_suff)), function(x) {!is.na(x)}) &&
-        #   dplyr::if_all(tidyselect::all_of(paste0(value_colname, local_suff)), is.na) &&
-        #   .data[[paste0(valid_from_version_colname, remote_suff)]] < local_version ~ change_valid_to_version_in_remote,
-        #
-        # # Check for rows where remote_df has older ValidFromVersion than local_version.
-        # # In this case, we need to set ValidToVersion to local_version - 1
-        # # in the remote.
-        #
-        #
-        #
-        # # Find all rows where
-        # # (a) the remote and local values both exist
-        # # and
-        # # (b) the remote and local values differ more than tol.
-        # # Due to previous checks,
-        # # this should only occur when the change_cols vector
-        # # has length > 0.
-        # length(.data[[changed_cols_colname]]) > 0 ~ replace_value_in_remote,
-
-
+        TRUE ~ PFUPipelineTools::dataset_info$no_action
       )
     )
 
