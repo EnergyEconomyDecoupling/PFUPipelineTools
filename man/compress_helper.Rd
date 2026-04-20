@@ -14,6 +14,8 @@ compress_helper(
   val = "val",
   changed_cols_colname = PFUPipelineTools::dataset_info$changed_cols_colname,
   what_to_do_colname = PFUPipelineTools::dataset_info$what_to_do,
+  delete_or_change_valid_to_in_remote =
+    PFUPipelineTools::dataset_info$delete_or_change_valid_to_in_remote,
   change_valid_to_version_in_remote =
     PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote,
   delete_row_in_remote = PFUPipelineTools::dataset_info$delete_row_in_remote,

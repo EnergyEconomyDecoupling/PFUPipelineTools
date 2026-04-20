@@ -176,6 +176,7 @@ compress_helper <- function(remote_df, local_df,
                             val = "val",
                             changed_cols_colname = PFUPipelineTools::dataset_info$changed_cols_colname,
                             what_to_do_colname = PFUPipelineTools::dataset_info$what_to_do,
+                            delete_or_change_valid_to_in_remote = PFUPipelineTools::dataset_info$delete_or_change_valid_to_in_remote,
                             change_valid_to_version_in_remote =
                               PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote,
                             delete_row_in_remote =
@@ -264,7 +265,7 @@ compress_helper <- function(remote_df, local_df,
     stop("local_df contains older versions than remote_df in compress_helper()")
   }
 
-
+  # Figure out the next steps from the joined data frame.
   next_steps <- joined |>
     dplyr::rowwise() |>
     dplyr::mutate(
@@ -274,7 +275,7 @@ compress_helper <- function(remote_df, local_df,
           this_r <- get(paste0(this_col, remote_suff))
           this_l <- get(paste0(this_col, local_suff))
 
-          # Handle NA + floating point safely
+          # Handle NA and floating point safely
           if (is.numeric(this_r) && is.numeric(this_l)) {
             !isTRUE(all.equal(this_r, this_l, tolerance = tol))
           } else {
@@ -294,18 +295,45 @@ compress_helper <- function(remote_df, local_df,
         # One or more value changes
         length(.data[[changed_cols_colname]]) > 0 ~ replace_value_in_remote,
         TRUE ~ PFUPipelineTools::dataset_info$no_action
-      )
+      ),
+      # Eliminate changed_cols. We no longer need it.
+      "{changed_cols_colname}" = NULL
     )
 
+  # Build a data frame that can be used to
+  # upload, delete, or adjust the remote database.
+  out <- next_steps |>
+    prep_out(local_version = local_version,
+             previous_version = previous_version,
+             value_colname = value_colname,
+             remote_suff = remote_suff,
+             local_suff = local_suff,
+             out_template = remote_df[0, ])
 
 
 
 
-  stop()
 
 
+  return(out)
+
+}
 
 
+prep_out <- function(local_version, previous_version,
+                     value_colname, remote_suff, local_suff,
+                     out_template,
+                     what_to_do_colname,
+                     change_valid_to_version_in_remote,
+                     delete_row_in_remote,
+                     replace_value_in_remote,
+                     upload_new,
+                     no_action) {
+
+  out <- out_template
+
+  # Address cases where
+}
 
 
 
@@ -626,9 +654,9 @@ compress_helper <- function(remote_df, local_df,
   #       dplyr::bind_rows(new_version_upload_new)
   #   }
   # }
-
-  return(out)
-}
+#
+#   return(out)
+# }
 
 
 prep_unequal_change_valid_to_version_in_remote <- function(.df,

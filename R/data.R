@@ -246,6 +246,7 @@
 #' \item{wlrpfu_mw}{A string identifying the muscle work portion of the World Long Run Primary Final Useful dataset.}
 #' \item{changed_cols_colname}{A string that identifies which value columns have changed.}
 #' \item{what_to_do}{The string name of a column that tells what to do  with updated data for the remote database. Options are `change_remote` and `upload_new`.}
+#' \item{delete_or_change_valid_to_in_remote}{A string that indicates we need to either delete a row in the remote or change the ValidToVersion column in the remote.}
 #' \item{replace_valid_to_version_in_remote}{A string indicating that valid to version column should be changed in the remote database when updating values.}
 #' \item{replace_value_in_remote}{A string that indicates the value should be replaced in the remote database.}
 #' \item{delete_row_in_remote}{A string that indicates a row to be deleted from the remote database.}
