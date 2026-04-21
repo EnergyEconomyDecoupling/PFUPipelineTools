@@ -298,7 +298,7 @@ compress_helper <- function(remote_df, local_df,
         TRUE ~ PFUPipelineTools::dataset_info$no_action
       ),
       # Eliminate changed_cols. We no longer need it.
-      # "{changed_cols_colname}" := NULL
+      "{changed_cols_colname}" := NULL
     )
 
   # Build a data frame that can be used to
@@ -317,7 +317,8 @@ compress_helper <- function(remote_df, local_df,
              delete_row_in_remote = delete_row_in_remote,
              replace_value_in_remote = replace_value_in_remote,
              upload_new_row = upload_new_row,
-             no_action = no_action)
+             no_action = no_action,
+             current_version_int = current_version_int)
 
 
 
@@ -340,9 +341,62 @@ prep_out <- function(next_steps_df,
                      delete_row_in_remote,
                      replace_value_in_remote,
                      upload_new_row,
-                     no_action) {
+                     no_action,
+                     current_version_int) {
 
   out <- out_template
+
+
+  # Address cases where we have to delete a row in the remote database.
+  # These cases can be tricky, because rows that need to be deleted
+  # could actually simply need their ValidToVersion value updated.
+  # ***** I can possibly combine this with the previous code,
+  # because all steps are the same.
+  to_replace_value <- next_steps_df |>
+    dplyr::filter(.data[[what_to_do_colname]] == replace_value_in_remote)
+  if (nrow(to_replace_value) > 0) {
+    # Check remote and local versions to see if we can simply replace
+    # the value or if we also need to change the ValidToVersion
+    # column in remote.
+    to_change_valid_from_version_in_remote <- to_replace_value |>
+      dplyr::filter(.data[[paste0(valid_from_version_colname, remote_suff)]] !=
+                      local_version) |>
+      # Eliminate the remote columns.
+      dplyr::select(-tidyselect::all_of(
+        c(paste0(valid_from_version_colname, local_suff),
+          paste0(valid_to_version_colname, local_suff),
+          paste0(value_colname, local_suff)
+        ))) |>
+      # Rename the remote columns to their base name
+      dplyr::rename_with(
+        .fn = ~ sub(pattern = paste0(remote_suff, "$"),
+                    replacement = "",
+                    x = .x),
+        .cols = dplyr::ends_with(remote_suff)
+      ) |>
+      dplyr::mutate(
+        # Change ValidToVersion to previous_version
+        "{valid_to_version_colname}" := previous_version,
+        # Change WhatToDo to change_valid_to_version_in_remote
+        "{what_to_do_colname}" := change_valid_to_version_in_remote
+      )
+    out <- out |>
+      dplyr::bind_rows(to_change_valid_from_version_in_remote)
+
+    # Now, we do a little trick.
+    # The new values in all rows marked with replace_value_in_remote
+    # should also be uploaded.
+    # We can change WhatToDo from replace_value_in_remote to
+    # upload_new_row so that the row will be uploaded
+    # in the next section of code.
+    next_steps_df <- next_steps_df |>
+      dplyr::mutate(
+        "{what_to_do_colname}" := dplyr::case_when(
+          .data[[what_to_do_colname]] == replace_value_in_remote ~ upload_new_row,
+          TRUE ~ .data[[what_to_do_colname]]
+        )
+      )
+  }
 
   # Address cases where we need to upload new rows.
   to_upload <- next_steps_df |>
@@ -359,44 +413,13 @@ prep_out <- function(next_steps_df,
                   replacement = "",
                   x = .x),
       .cols = dplyr::ends_with(local_suff)
+    ) |>
+    dplyr::mutate(
+      "{valid_to_version_colname}" := current_version_int
     )
+
   out <- out |>
     dplyr::bind_rows(to_upload)
-
-  # Address cases where we have to delete a row in the remote database.
-  # These cases can be tricky, because rows that need to be deleted
-  # could actually simply need their ValidToVersion value updated.
-  # ***** I can possibly combine this with the previous code,
-  # because all steps are the same.
-  to_replace_value <- next_steps_df |>
-    dplyr::filter(.data[[what_to_do_colname]] == replace_value_in_remote)
-  if (nrow(to_replace_value) > 0) {
-    # Check remote and local versions to see if we can simply replace
-    # the value or if we also need to change the ValidToVersion
-    # column in remote.
-
-    to_change_valid_from_version_in_remote <- to_replace_value |>
-      dplyr::filter(.data[[paste0(valid_from_version_colname, remote_suff)]] != local_version)
-
-    # **** finish this logic.
-
-  }
-  |>
-    # Eliminate the remote columns.
-    dplyr::select(-tidyselect::all_of(
-      c(paste0(valid_from_version_colname, remote_suff),
-        paste0(valid_to_version_colname, remote_suff),
-        paste0(value_colname, remote_suff)
-      ))) |>
-    # Rename the local columns to their base name
-    dplyr::rename_with(
-      .fn = ~ sub(pattern = paste0(local_suff, "$"),
-                  replacement = "",
-                  x = .x),
-      .cols = dplyr::ends_with(local_suff)
-    )
-  out <- out |>
-    dplyr::bind_rows(to_change_value)
 
   # Address cases where we need to delete a row in the remote.
   to_delete_remote <- next_steps_df |>

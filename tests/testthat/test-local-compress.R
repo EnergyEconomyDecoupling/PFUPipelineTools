@@ -526,8 +526,9 @@ test_that("compress_helper() works with multiple value columns", {
   expect_equal(colnames(res), c(colnames(local_df), PFUPipelineTools::dataset_info$what_to_do))
 
 
-  # Add completely new data with a new version.
-  # The metadata do not exist in remote.
+  # Add new data with same version.
+  # The metadata exist in remote.
+  # But new country means we need to delete the old rows and add the new rows
   local_df2 <- local_df |>
     dplyr::mutate(
       "{IEATools::iea_cols$country}" := -9999
@@ -546,8 +547,17 @@ test_that("compress_helper() works with multiple value columns", {
   res2 |>
     colnames() |>
     expect_equal(c(colnames(remote_df), PFUPipelineTools::dataset_info$what_to_do))
-  expect_equal(res2, local_df2 |> dplyr::mutate(
-    "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new))
+  expect_equal(res2, dplyr::bind_rows(
+    local_df2 |>
+      dplyr::mutate(
+        "{PFUPipelineTools::dataset_info$valid_to_version_colname}" := PFUPipelineTools::version_info$current_version_int,
+        "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
+      ),
+    remote_df |>
+      dplyr::mutate(
+        "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$change_valid_to_version_in_remote
+      )
+  ))
 
   # Remove a row in local_df,
   # so the row needs to be removed from the remote table.
@@ -572,7 +582,7 @@ test_that("compress_helper() works with multiple value columns", {
     nrow() |>
     expect_equal(1)
 
-  # Change one value and a new version.
+  # Change one value with a new version.
   # This should change the ValidToVersion column in remote and
   # upload the new version.
   local_df5 <- local_df |>
@@ -585,7 +595,9 @@ test_that("compress_helper() works with multiple value columns", {
                           local_df = local_df5,
                           value_colname = c("value1", "value2"))
   expect_equal(nrow(res5), 2)
-
+  expect_equal(res5[[PFUPipelineTools::dataset_info$what_to_do]],
+               c(PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote,
+                 PFUPipelineTools::dataset_info$upload_new_row))
 })
 
 
