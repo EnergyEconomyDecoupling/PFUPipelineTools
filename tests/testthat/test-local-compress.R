@@ -528,7 +528,8 @@ test_that("compress_helper() works with multiple value columns", {
 
   # Add new data with same version.
   # The metadata exist in remote.
-  # But new country means we need to delete the old rows and add the new rows
+  # But the new country means we need
+  # to delete the old rows and add the new rows
   local_df2 <- local_df |>
     dplyr::mutate(
       "{IEATools::iea_cols$country}" := -9999
@@ -547,16 +548,18 @@ test_that("compress_helper() works with multiple value columns", {
   res2 |>
     colnames() |>
     expect_equal(c(colnames(remote_df), PFUPipelineTools::dataset_info$what_to_do))
-  expect_equal(res2, dplyr::bind_rows(
-    local_df2 |>
-      dplyr::mutate(
-        "{PFUPipelineTools::dataset_info$valid_to_version_colname}" := PFUPipelineTools::version_info$current_version_int,
-        "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
-      ),
-    remote_df |>
-      dplyr::mutate(
-        "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$change_valid_to_version_in_remote
-      )
+  expect_equal(res2,
+               dplyr::bind_rows(
+                 local_df2 |>
+                   dplyr::mutate(
+                     "{PFUPipelineTools::dataset_info$valid_to_version_colname}" := PFUPipelineTools::version_info$current_version_int,
+                     "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
+                   ),
+                 remote_df |>
+                   dplyr::mutate(
+                     "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$change_valid_to_version_in_remote,
+                     "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$delete_row_in_remote
+                   )
   ))
 
   # Remove a row in local_df,
