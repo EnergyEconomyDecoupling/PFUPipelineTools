@@ -297,7 +297,7 @@ compress_helper <- function(remote_df, local_df,
         TRUE ~ PFUPipelineTools::dataset_info$no_action
       ),
       # Eliminate changed_cols. We no longer need it.
-      "{changed_cols_colname}" = NULL
+      "{changed_cols_colname}" := NULL
     )
 
   # Build a data frame that can be used to
@@ -305,10 +305,18 @@ compress_helper <- function(remote_df, local_df,
   out <- next_steps |>
     prep_out(local_version = local_version,
              previous_version = previous_version,
+             valid_from_version_colname = valid_from_version_colname,
+             valid_to_version_colname = valid_to_version_colname,
              value_colname = value_colname,
              remote_suff = remote_suff,
              local_suff = local_suff,
-             out_template = remote_df[0, ])
+             out_template = remote_df[0, ],
+             what_to_do_colname = what_to_do_colname,
+             change_valid_to_version_in_remote = change_valid_to_version_in_remote,
+             delete_row_in_remote = delete_row_in_remote,
+             replace_value_in_remote = replace_value_in_remote,
+             upload_new = upload_new,
+             no_action = no_action)
 
 
 
@@ -320,7 +328,10 @@ compress_helper <- function(remote_df, local_df,
 }
 
 
-prep_out <- function(local_version, previous_version,
+prep_out <- function(next_steps_df,
+                     local_version, previous_version,
+                     valid_from_version_colname,
+                     valid_to_version_colname,
                      value_colname, remote_suff, local_suff,
                      out_template,
                      what_to_do_colname,
@@ -332,7 +343,18 @@ prep_out <- function(local_version, previous_version,
 
   out <- out_template
 
-  # Address cases where
+  # Address cases where we need to upload new rows.
+  to_upload <- next_steps_df |>
+    dplyr::filter(.data[[what_to_do_colname]] == upload_new) |>
+    # Eliminate the remote columns.
+    dplyr::select(-tidyselect::all_of(
+      c(paste0(valid_from_version_colname, remote_suff),
+        paste0(valid_to_version_colname, remote_suff),
+        paste0(value_colname, remote_suff)
+      ))) # |>
+    # Rename the local columns to their base name
+
+
 }
 
 

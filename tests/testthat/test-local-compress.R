@@ -522,8 +522,8 @@ test_that("compress_helper() works with multiple value columns", {
                          local_df = local_df,
                          value_colname = c("value1", "value2"))
   expect_equal(nrow(res), 0)
-  expect_true("value1" %in% colnames(res))
-  expect_true("value2" %in% colnames(res))
+  expect_equal(colnames(res), colnames(remote_df))
+  expect_equal(colnames(res), colnames(local_df))
 
 
   # Add completely new data with a new version.
