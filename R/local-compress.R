@@ -350,8 +350,6 @@ prep_out <- function(next_steps_df,
   # Address cases where we have to delete a row in the remote database.
   # These cases can be tricky, because rows that need to be deleted
   # could actually simply need their ValidToVersion value updated.
-  # ***** I can possibly combine this with the previous code,
-  # because all steps are the same.
   to_replace_value <- next_steps_df |>
     dplyr::filter(.data[[what_to_do_colname]] == replace_value_in_remote)
   if (nrow(to_replace_value) > 0) {
