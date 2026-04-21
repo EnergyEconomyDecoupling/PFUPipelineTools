@@ -402,6 +402,8 @@ prep_out <- function(next_steps_df,
     )
   out <- out |>
     dplyr::bind_rows(to_delete_remote)
+
+  return(out)
 }
 
 
