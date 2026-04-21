@@ -20,7 +20,7 @@ compress_helper(
     PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote,
   delete_row_in_remote = PFUPipelineTools::dataset_info$delete_row_in_remote,
   replace_value_in_remote = PFUPipelineTools::dataset_info$replace_value_in_remote,
-  upload_new = PFUPipelineTools::dataset_info$upload_new,
+  upload_new_row = PFUPipelineTools::dataset_info$upload_new_row,
   no_action = PFUPipelineTools::dataset_info$no_action,
   current_version_int = PFUPipelineTools::version_info$current_version_int,
   tol = 1e-06
@@ -79,11 +79,12 @@ should be changed.
 Default is \link{dataset_info}\verb{$replace_value_in_remote} or
 "Replace value in remote".}
 
-\item{upload_new}{The string that
+\item{upload_new_row}{The string that
 indicates local rows
+have new metadata and need
 to be uploaded to the remote.
 Default is \link{dataset_info}\verb{$upload_new} or
-"Upload new".}
+"Upload new row".}
 
 \item{no_action}{The string that indicates no action is needed
 on this row.
@@ -137,7 +138,7 @@ The values are
 "Replace ValidToVersion in remote",
 "Replace value in remote",
 "Delete row in remote", and
-"Upload new",
+"Upload new row",
 respectively.
 
 Functions that call \code{\link[=compress_helper]{compress_helper()}} should query the value

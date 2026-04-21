@@ -111,15 +111,16 @@
 #'              deleted from the remote database.
 #'              Default is [PFUPipelineTools::dataset_info]`$delete_row_in_remote` or
 #'              "`r PFUPipelineTools::dataset_info$delete_row_in_remote`".
-#' @param upload_new The string that
+#' @param upload_new_row The string that
 #'              indicates local rows
+#'              have new metadata and need
 #'              to be uploaded to the remote.
 #'              Default is [PFUPipelineTools::dataset_info]`$upload_new` or
 #'              "`r PFUPipelineTools::dataset_info$upload_new`".
 #' @param no_action The string that indicates no action is needed
-#'                  on this row.
-#'                  Default is [PFUPipelineTools::dataset_info]`no_action` or
-#'                  "`r PFUPipelineTools::dataset_info$no_action`".
+#'              on this row.
+#'              Default is [PFUPipelineTools::dataset_info]`no_action` or
+#'              "`r PFUPipelineTools::dataset_info$no_action`".
 #' @param current_version_int The integer representing the current version.
 #'                            Default is
 #'                            [PFUPipelineTools::version_info]`$current_version_int` or
@@ -183,7 +184,7 @@ compress_helper <- function(remote_df, local_df,
                               PFUPipelineTools::dataset_info$delete_row_in_remote,
                             replace_value_in_remote =
                               PFUPipelineTools::dataset_info$replace_value_in_remote,
-                            upload_new = PFUPipelineTools::dataset_info$upload_new,
+                            upload_new_row = PFUPipelineTools::dataset_info$upload_new_row,
                             no_action = PFUPipelineTools::dataset_info$no_action,
                             current_version_int = PFUPipelineTools::version_info$current_version_int,
                             tol = 1e-6) {
@@ -287,7 +288,7 @@ compress_helper <- function(remote_df, local_df,
       "{what_to_do_colname}" := dplyr::case_when(
 
         # New data. Upload to remote.
-        is.na(.data[[paste0(valid_from_version_colname, remote_suff)]]) ~ upload_new,
+        is.na(.data[[paste0(valid_from_version_colname, remote_suff)]]) ~ upload_new_row,
         # Old data. Delete from remote,
         # possibly by deleting altogether,
         # possibly by just changing the ValidToVersion column.
@@ -297,7 +298,7 @@ compress_helper <- function(remote_df, local_df,
         TRUE ~ PFUPipelineTools::dataset_info$no_action
       ),
       # Eliminate changed_cols. We no longer need it.
-      "{changed_cols_colname}" := NULL
+      # "{changed_cols_colname}" := NULL
     )
 
   # Build a data frame that can be used to
@@ -315,7 +316,7 @@ compress_helper <- function(remote_df, local_df,
              change_valid_to_version_in_remote = change_valid_to_version_in_remote,
              delete_row_in_remote = delete_row_in_remote,
              replace_value_in_remote = replace_value_in_remote,
-             upload_new = upload_new,
+             upload_new_row = upload_new_row,
              no_action = no_action)
 
 
@@ -338,14 +339,14 @@ prep_out <- function(next_steps_df,
                      change_valid_to_version_in_remote,
                      delete_row_in_remote,
                      replace_value_in_remote,
-                     upload_new,
+                     upload_new_row,
                      no_action) {
 
   out <- out_template
 
   # Address cases where we need to upload new rows.
   to_upload <- next_steps_df |>
-    dplyr::filter(.data[[what_to_do_colname]] == upload_new) |>
+    dplyr::filter(.data[[what_to_do_colname]] == upload_new_row) |>
     # Eliminate the remote columns.
     dplyr::select(-tidyselect::all_of(
       c(paste0(valid_from_version_colname, remote_suff),
@@ -367,8 +368,18 @@ prep_out <- function(next_steps_df,
   # could actually simply need their ValidToVersion value updated.
   # ***** I can possibly combine this with the previous code,
   # because all steps are the same.
-  to_change_value <- next_steps_df |>
-    dplyr::filter(.data[[what_to_do_colname]] == replace_value_in_remote) |>
+  to_replace_value <- next_steps_df |>
+    dplyr::filter(.data[[what_to_do_colname]] == replace_value_in_remote)
+  if (nrow(to_replace_value) > 0) {
+    # Check remote and local versions to see if we can simply replace
+    # the value or if we also need to change the ValidToVersion
+    # column in remote.
+
+    to_change_valid_from_version_in_remote <- to_replace_value |>
+      dplyr::filter(.data[[paste0(valid_from_version_colname, remote_suff)]] != local_version)
+
+  }
+  |>
     # Eliminate the remote columns.
     dplyr::select(-tidyselect::all_of(
       c(paste0(valid_from_version_colname, remote_suff),

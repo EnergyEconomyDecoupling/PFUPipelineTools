@@ -250,7 +250,7 @@
 #' \item{replace_valid_to_version_in_remote}{A string indicating that valid to version column should be changed in the remote database when updating values.}
 #' \item{replace_value_in_remote}{A string that indicates the value should be replaced in the remote database.}
 #' \item{delete_row_in_remote}{A string that indicates a row to be deleted from the remote database.}
-#' \item{upload_new}{A string indicating that rows of a dataframe should be uploaded to the remote database, because they are new, i.e., they do not yet exist in the remote database.}
+#' \item{upload_new_row}{A string indicating rows of a local dataframe that have new metadata and should be uploaded to the remote database. They do not yet exist in the remote database.}
 #' \item{no_action}{A string indicating that rows of a dataframe need no action taken upon them, because they are unchanged.}
 #' }
 #'
