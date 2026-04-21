@@ -354,10 +354,10 @@ prep_out <- function(next_steps_df,
       ))) |>
     # Rename the local columns to their base name
     dplyr::rename_with(
-      ~ sub(pattern = paste0(local_suff, "$"),
-            replacement = "",
-            x = .x),
-      dplyr::ends_with(local_suff)
+      .fn = ~ sub(pattern = paste0(local_suff, "$"),
+                  replacement = "",
+                  x = .x),
+      .cols = dplyr::ends_with(local_suff)
     )
   out <- out |>
     dplyr::bind_rows(to_upload)
@@ -365,7 +365,8 @@ prep_out <- function(next_steps_df,
   # Address cases where we have to delete a row in the remote database.
   # These cases can be tricky, because rows that need to be deleted
   # could actually simply need their ValidToVersion value updated.
-  # ***** I can possibly combine this with the previous code.
+  # ***** I can possibly combine this with the previous code,
+  # because all steps are the same.
   to_change_value <- next_steps_df |>
     dplyr::filter(.data[[what_to_do_colname]] == replace_value_in_remote) |>
     # Eliminate the remote columns.
@@ -376,10 +377,10 @@ prep_out <- function(next_steps_df,
       ))) |>
     # Rename the local columns to their base name
     dplyr::rename_with(
-      ~ sub(pattern = paste0(local_suff, "$"),
-            replacement = "",
-            x = .x),
-      dplyr::ends_with(local_suff)
+      .fn = ~ sub(pattern = paste0(local_suff, "$"),
+                  replacement = "",
+                  x = .x),
+      .cols = dplyr::ends_with(local_suff)
     )
   out <- out |>
     dplyr::bind_rows(to_change_value)
@@ -395,10 +396,10 @@ prep_out <- function(next_steps_df,
       ))) |>
     # Rename the remote columns to their base name
     dplyr::rename_with(
-      ~ sub(pattern = paste0(remote_suff, "$"),
-            replacement = "",
-            x = .x),
-      dplyr::ends_with(remote_suff)
+      .fn = ~ sub(pattern = paste0(remote_suff, "$"),
+                  replacement = "",
+                  x = .x),
+      .cols = dplyr::ends_with(remote_suff)
     )
   out <- out |>
     dplyr::bind_rows(to_delete_remote)

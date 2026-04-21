@@ -571,6 +571,21 @@ test_that("compress_helper() works with multiple value columns", {
     dplyr::filter(WhatToDo == PFUPipelineTools::dataset_info$replace_value_in_remote) |>
     nrow() |>
     expect_equal(1)
+
+  # Change one value and a new version.
+  # This should change the ValidToVersion column in remote and
+  # upload the new version.
+  local_df5 <- local_df |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$valid_from_version}" := 3,
+      "{PFUPipelineTools::dataset_info$valid_to_version}" := 3,
+    )
+  local_df5[2, "value1"] <- 3.1415926
+  res5 <- compress_helper(remote_df = remote_df,
+                          local_df = local_df5,
+                          value_colname = c("value1", "value2"))
+  expect_equal(nrow(res5), 2)
+
 })
 
 
