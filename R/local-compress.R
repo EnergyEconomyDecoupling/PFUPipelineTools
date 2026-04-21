@@ -351,8 +351,12 @@ prep_out <- function(next_steps_df,
       c(paste0(valid_from_version_colname, remote_suff),
         paste0(valid_to_version_colname, remote_suff),
         paste0(value_colname, remote_suff)
-      ))) # |>
+      ))) |>
     # Rename the local columns to their base name
+    dplyr::rename_with(
+      ~ sub(paste0(local_suff, "$"), "", .x),
+      dplyr::ends_with(local_suff)
+    )
 
   out <- out |>
     dplyr::bind_rows(to_upload)
