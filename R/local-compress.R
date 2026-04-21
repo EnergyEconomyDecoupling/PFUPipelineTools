@@ -354,6 +354,8 @@ prep_out <- function(next_steps_df,
       ))) # |>
     # Rename the local columns to their base name
 
+  out <- out |>
+    dplyr::bind_rows(to_upload)
 
 }
 
