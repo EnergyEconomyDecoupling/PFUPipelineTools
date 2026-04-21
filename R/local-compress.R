@@ -354,13 +354,54 @@ prep_out <- function(next_steps_df,
       ))) |>
     # Rename the local columns to their base name
     dplyr::rename_with(
-      ~ sub(paste0(local_suff, "$"), "", .x),
+      ~ sub(pattern = paste0(local_suff, "$"),
+            replacement = "",
+            x = .x),
       dplyr::ends_with(local_suff)
     )
-
   out <- out |>
     dplyr::bind_rows(to_upload)
 
+  # Address cases where we have to delete a row in the remote database.
+  # These cases can be tricky, because rows that need to be deleted
+  # could actually simply need their ValidToVersion value updated.
+  # ***** I can possibly combine this with the previous code.
+  to_change_value <- next_steps_df |>
+    dplyr::filter(.data[[what_to_do_colname]] == replace_value_in_remote) |>
+    # Eliminate the remote columns.
+    dplyr::select(-tidyselect::all_of(
+      c(paste0(valid_from_version_colname, remote_suff),
+        paste0(valid_to_version_colname, remote_suff),
+        paste0(value_colname, remote_suff)
+      ))) |>
+    # Rename the local columns to their base name
+    dplyr::rename_with(
+      ~ sub(pattern = paste0(local_suff, "$"),
+            replacement = "",
+            x = .x),
+      dplyr::ends_with(local_suff)
+    )
+  out <- out |>
+    dplyr::bind_rows(to_change_value)
+
+  # Address cases where we need to delete a row in the remote.
+  to_delete_remote <- next_steps_df |>
+    dplyr::filter(.data[[what_to_do_colname]] == delete_row_in_remote) |>
+    # Eliminate the local columns
+    dplyr::select(-tidyselect::all_of(
+      c(paste0(valid_from_version_colname, local_suff),
+        paste0(valid_to_version_colname, local_suff),
+        paste0(value_colname, local_suff)
+      ))) |>
+    # Rename the remote columns to their base name
+    dplyr::rename_with(
+      ~ sub(pattern = paste0(remote_suff, "$"),
+            replacement = "",
+            x = .x),
+      dplyr::ends_with(remote_suff)
+    )
+  out <- out |>
+    dplyr::bind_rows(to_delete_remote)
 }
 
 

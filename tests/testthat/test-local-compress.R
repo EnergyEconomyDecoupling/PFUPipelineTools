@@ -522,8 +522,8 @@ test_that("compress_helper() works with multiple value columns", {
                          local_df = local_df,
                          value_colname = c("value1", "value2"))
   expect_equal(nrow(res), 0)
-  expect_equal(colnames(res), colnames(remote_df))
-  expect_equal(colnames(res), colnames(local_df))
+  expect_equal(colnames(res), c(colnames(remote_df), PFUPipelineTools::dataset_info$what_to_do))
+  expect_equal(colnames(res), c(colnames(local_df), PFUPipelineTools::dataset_info$what_to_do))
 
 
   # Add completely new data with a new version.
@@ -543,18 +543,21 @@ test_that("compress_helper() works with multiple value columns", {
     dplyr::filter(WhatToDo == PFUPipelineTools::dataset_info$upload_new) |>
     nrow() |>
     expect_equal(13)
+  res2 |>
+    colnames() |>
+    expect_equal(c(colnames(remote_df), PFUPipelineTools::dataset_info$what_to_do))
+  expect_equal(res2, local_df2 |> dplyr::mutate(
+    "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new))
 
-  # Remove a row in local_df
+  # Remove a row in local_df,
+  # so the row needs to be removed from the remote table.
   local_df3 <- local_df[-2, ]
   res3 <- compress_helper(remote_df = remote_df,
                           local_df = local_df3,
                           value_colname = c("value1", "value2"))
-  res3 |>
-    dplyr::filter(is.na(ValidFromVersion_local)) |>
-    purrr::pluck("WhatToDo", 1) |>
-    expect_equal(PFUPipelineTools::dataset_info$delete_row_in_remote)
-
-
+  expect_equal(res3, remote_df[2, ] |>
+                 dplyr::mutate(
+                   "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$delete_row_in_remote))
 
   # Adjust one of the values in local_df
   # so that changes are expected
@@ -568,11 +571,6 @@ test_that("compress_helper() works with multiple value columns", {
     dplyr::filter(WhatToDo == PFUPipelineTools::dataset_info$replace_value_in_remote) |>
     nrow() |>
     expect_equal(1)
-
-
-
-
-
 })
 
 
