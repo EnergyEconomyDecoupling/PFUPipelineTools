@@ -203,7 +203,7 @@ compress_helper <- function(remote_df, local_df,
     return(local_df |>
              dplyr::mutate(
                "{valid_to_version_colname}" := current_version_int,
-               "{what_to_do_colname}" := upload_new
+               "{what_to_do_colname}" := upload_new_row
              )
     )
   }
