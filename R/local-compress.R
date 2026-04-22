@@ -239,6 +239,10 @@ compress_helper <- function(remote_df, local_df,
   # Decide the previous version
   previous_version <- local_version - 1
 
+  # Ensure that remote_df contains only the current version
+  remote_df <- remote_df |>
+    dplyr::filter(.data[[valid_to_version_colname]] == current_version_int)
+
   # Establish some suffixes
   remote_suff <- "_remote"
   local_suff <- "_local"
