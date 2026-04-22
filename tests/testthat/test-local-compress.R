@@ -320,18 +320,14 @@ test_that("compress_helper() works with completely new information with updated 
       "{PFUPipelineTools::usual_hash_group_cols[['year']]}" := 10000
     )
   res <- compress_helper(remote_df = remote_df, local_df = local_df)
+  # Because the new information has different metadata (Country and Year),
+  # the existing remote information should not be touched, and
+  # the new information should be uploaded as new data.
   expected <- local_df |>
     dplyr::mutate(
       "{PFUPipelineTools::dataset_info$valid_to_version}" := version_info$current_version_int,
       "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
-    ) |>
-    dplyr::bind_rows(
-      remote_df |>
-        dplyr::mutate(
-          "{PFUPipelineTools::dataset_info$valid_to_version}" := 2,
-          "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote
-        )
-      )
+    )
   expect_equal(res, expected)
 })
 
