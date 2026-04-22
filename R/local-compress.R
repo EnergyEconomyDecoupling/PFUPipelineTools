@@ -9,6 +9,8 @@
 #' `remote` means (sometimes older) data from the remote database.
 #' `local` means new data calculated locally and meant to be uploaded
 #' to the remote database.
+#' `remote` is assumed to have the same metadata
+#' (non-value columns, primary keys) as local.
 #'
 #' This function doesn't change any rows in the remote database.
 #' Rather, it returns a data frame with same columns as
@@ -266,9 +268,9 @@ compress_helper <- function(remote_df, local_df,
   local_df_older <- joined |>
     dplyr::filter(.data[[paste0(valid_from_version_colname, remote_suff)]] >
                     .data[[paste0(valid_from_version_colname, local_suff)]])
-  if (nrow(local_df_older) > 0) {
-    stop("local_df contains older versions than remote_df in compress_helper()")
-  }
+  assertthat::assert_that(nrow(local_df_older) == 0,
+                          msg = paste("local_df contains older versions",
+                                      "than remote_df in compress_helper()"))
 
   # Figure out the next steps from the joined data frame.
   next_steps <- joined |>
@@ -347,7 +349,6 @@ prep_out <- function(next_steps_df,
       # Add the WhatToDo column
       "{what_to_do_colname}" := character(0)
     )
-
 
   # Address cases where we have to delete a row in the remote database.
   # These cases can be tricky, because rows that need to be deleted
