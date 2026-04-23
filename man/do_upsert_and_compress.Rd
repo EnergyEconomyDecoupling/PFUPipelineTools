@@ -8,7 +8,9 @@ do_upsert_and_compress(
   df_to_upsert,
   valid_from_version_colname,
   valid_to_version_colname,
-  value_colname,
+  row_colname = PFUPipelineTools::mat_colnames$row,
+  col_colname = PFUPipelineTools::mat_colnames$col,
+  value_colname = PFUPipelineTools::mat_colnames$value,
   what_to_do_colname,
   mat_colnames,
   remote_tbl,
@@ -29,7 +31,19 @@ Cannot be \code{PFUPipelineTools::version_info$current_version_string} or
 Cannot be \code{PFUPipelineTools::version_info$current_version_string} or
 "current".}
 
-\item{value_colname}{The string name of the value column in \code{.df}.}
+\item{row_colname}{The name of the column that indicates matrix row names.
+Default is \link{mat_colnames}\verb{$row} or
+"i".}
+
+\item{col_colname}{The name of the column that indicates matrix column names.
+Default is \link{mat_colnames}\verb{$col} or
+"j".}
+
+\item{value_colname}{The name of the column that indicates matrix values.
+This argument could have length greater than 1,
+in which case, all items in the vector are assumed to be value columns.
+Default is \link{mat_colnames}\verb{$value} or
+"value".}
 
 \item{what_to_do_colname}{The string name of a column that tells what to do
 with various rows of \code{.df}.

@@ -9,8 +9,13 @@
 #' `remote` means (sometimes older) data from the remote database.
 #' `local` means new data calculated locally and meant to be uploaded
 #' to the remote database.
-#' `remote` is assumed to have the same metadata
-#' (non-value columns, primary keys) as local.
+#'
+#' Very important: `remote_df` is assumed to have the same metadata
+#' (non-value columns, i.e., primary keys) as `local_df`.
+#' That assumption is valid when called from
+#' [PFUPipelineTools::do_upsert_and_compress()],
+#' which already performs a [dplyr::semi_join()]
+#' to filter `remote_df` for matching metadata columns.
 #'
 #' This function doesn't change any rows in the remote database.
 #' Rather, it returns a data frame with same columns as
@@ -21,21 +26,19 @@
 #' "`r PFUPipelineTools::dataset_info$what_to_do`") that tells
 #' what must be done with each row.
 #' The possible values of the `what_to_do_colname` are
-#' [PFUPipelineTools::dataset_info]`$replace_valid_to_version_in_remote`,
-#' [PFUPipelineTools::dataset_info]`$replace_value_in_remote`,
-#' [PFUPipelineTools::dataset_info]`$delete_row_in_remote`, and
-#' [PFUPipelineTools::dataset_info]`$upload_new`
+#' [PFUPipelineTools::dataset_info]`$replace_valid_to_version_in_remote` or
+#' "`r PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote`",
+#' [PFUPipelineTools::dataset_info]`$replace_value_in_remote` or
+#' "`r PFUPipelineTools::dataset_info$replace_value_in_remote`",
+#' [PFUPipelineTools::dataset_info]`$delete_row_in_remote` or
+#' "`r PFUPipelineTools::dataset_info]$delete_row_in_remote`", and
+#' [PFUPipelineTools::dataset_info]`$upload_new` or
+#' "`r PFUPipelineTools::dataset_info$upload_new`"
 #' that indicate whether to change the remote table's
 #' `ValidToVersion` value,
 #' replace the value in the `value` column,
 #' delete the remote row, or
 #' upload a new row, respectively.
-#' The values are
-#' "`r PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote`",
-#' "`r PFUPipelineTools::dataset_info$replace_value_in_remote`",
-#' "`r PFUPipelineTools::dataset_info$delete_row_in_remote`", and
-#' "`r PFUPipelineTools::dataset_info$upload_new`",
-#' respectively.
 #'
 #' Functions that call [compress_helper()] should query the value
 #' of the `what_to_do_colname` to decide how to handle

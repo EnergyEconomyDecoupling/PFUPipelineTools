@@ -116,30 +116,35 @@ In the context of this function,
 \code{local} means new data calculated locally and meant to be uploaded
 to the remote database.
 
+Very important: \code{remote_df} is assumed to have the same metadata
+(non-value columns, i.e., primary keys) as \code{local_df}.
+That assumption is valid when called from
+\code{\link[=do_upsert_and_compress]{do_upsert_and_compress()}},
+which already performs a \code{\link[dplyr:filter-joins]{dplyr::semi_join()}}
+to filter \code{remote_df} for matching metadata columns.
+
 This function doesn't change any rows in the remote database.
 Rather, it returns a data frame with same columns as
 \code{remote_df} and an additional column
 named with the value of \code{what_to_do_colname}
 (by default
 \link{dataset_info}\verb{$what_to_do} or
-"WhatToDo") that tells
+"\verb{r PFUPipelineTools::dataset_info$what_to_do}") that tells
 what must be done with each row.
 The possible values of the \code{what_to_do_colname} are
-\link{dataset_info}\verb{$replace_valid_to_version_in_remote},
-\link{dataset_info}\verb{$replace_value_in_remote},
-\link{dataset_info}\verb{$delete_row_in_remote}, and
-\link{dataset_info}\verb{$upload_new}
+\link{dataset_info}\verb{$replace_valid_to_version_in_remote} or
+"\verb{r PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote}",
+\link{dataset_info}\verb{$replace_value_in_remote} or
+"\verb{r PFUPipelineTools::dataset_info$replace_value_in_remote}",
+\link{dataset_info}\verb{$delete_row_in_remote} or
+"\verb{r PFUPipelineTools::dataset_info]$delete_row_in_remote}", and
+\link{dataset_info}\verb{$upload_new} or
+"\verb{r PFUPipelineTools::dataset_info$upload_new}"
 that indicate whether to change the remote table's
 \code{ValidToVersion} value,
 replace the value in the \code{value} column,
 delete the remote row, or
 upload a new row, respectively.
-The values are
-"Replace ValidToVersion in remote",
-"Replace value in remote",
-"Delete row in remote", and
-"Upload new row",
-respectively.
 
 Functions that call \code{\link[=compress_helper]{compress_helper()}} should query the value
 of the \code{what_to_do_colname} to decide how to handle
