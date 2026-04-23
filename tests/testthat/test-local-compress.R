@@ -636,6 +636,7 @@ test_that("compress_helper() works as expected when the current version in remot
 
 # Fails, because replacing the ValidToVersion column is
 # mistakenly reported as needing to delete the row in remote.
+# Do I need to do a new join that includes ValidFromVersion in joining columns?
 test_that("compress_helper() works when there are new row and column names", {
   remote_df <- remote_df_func() |>
     # Keep only the rows with same metadata.
