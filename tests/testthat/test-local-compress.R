@@ -313,6 +313,10 @@ test_that("compress_helper() works when remote has lines of old versions", {
 
 test_that("compress_helper() works with completely new information with updated version", {
   remote_df <- remote_df_func() |>
+    # Get rid of all rows, because local_df (below)
+    # has none of the same metadata.
+    # The calling function should remove all rows with
+    # non-matching metadata
     dplyr::filter(FALSE)
   local_df <- local_df_func()[1, ] |>
     dplyr::mutate(
@@ -334,7 +338,9 @@ test_that("compress_helper() works with completely new information with updated 
 
 
 test_that("compress_helper() works when there are new row and column names", {
-  remote_df <- remote_df_func()
+  remote_df <- remote_df_func() |>
+    # Keep only the rows with same metadata.
+    dplyr::filter(Country == 49)
   local_df <- local_df_func()[2, ] |>
     dplyr::mutate(
       # By changing the integers in the i and j columns,
@@ -343,6 +349,9 @@ test_that("compress_helper() works when there are new row and column names", {
       "{PFUPipelineTools::mat_colnames$j}" := 1000
     )
   res <- compress_helper(remote_df = remote_df, local_df = local_df)
+  # By including only 1 row in local_df,
+  # all other rows in remote_df will be deemed outdated and marked for deletion
+  # (via replacing the ValidToVersion value in the remote data frame)
   expected <- local_df |>
     dplyr::mutate(
       "{PFUPipelineTools::dataset_info$valid_to_version}" := version_info$current_version_int,
