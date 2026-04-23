@@ -117,11 +117,20 @@ In the context of this function,
 to the remote database.
 
 Very important: \code{remote_df} is assumed to have the same metadata
-(non-value columns, i.e., primary keys) as \code{local_df}.
+(non-value columns, i.e., primary keys,
+excluding the version columns)
+as \code{local_df}.
 That assumption is valid when called from
 \code{\link[=do_upsert_and_compress]{do_upsert_and_compress()}},
 which already performs a \code{\link[dplyr:filter-joins]{dplyr::semi_join()}}
 to filter \code{remote_df} for matching metadata columns.
+
+Important: \code{local_df} is assumed to contain
+a complete set of current information for metadata columns
+(columns excluding \code{i}, \code{j}, and \code{value}).
+Thus, if for the same metadata and the current version,
+\code{local_df} is lacking some rows present in \code{remote_df},
+those rows will be removed from \code{remote_df}.
 
 This function doesn't change any rows in the remote database.
 Rather, it returns a data frame with same columns as
@@ -129,25 +138,30 @@ Rather, it returns a data frame with same columns as
 named with the value of \code{what_to_do_colname}
 (by default
 \link{dataset_info}\verb{$what_to_do} or
-"\verb{r PFUPipelineTools::dataset_info$what_to_do}") that tells
-what must be done with each row.
+"WhatToDo") that tells
+what must be done with each row
+and modify the remote database appropriately.
 The possible values of the \code{what_to_do_colname} are
-\link{dataset_info}\verb{$replace_valid_to_version_in_remote} or
-"\verb{r PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote}",
-\link{dataset_info}\verb{$replace_value_in_remote} or
-"\verb{r PFUPipelineTools::dataset_info$replace_value_in_remote}",
-\link{dataset_info}\verb{$delete_row_in_remote} or
-"\verb{r PFUPipelineTools::dataset_info]$delete_row_in_remote}", and
-\link{dataset_info}\verb{$upload_new} or
-"\verb{r PFUPipelineTools::dataset_info$upload_new}"
-that indicate whether to change the remote table's
+\itemize{
+\item \link{dataset_info}\verb{$replace_valid_to_version_in_remote} or
+"Replace ValidToVersion in remote",
+\item \link{dataset_info}\verb{$replace_value_in_remote} or
+"Replace value in remote",
+\item \link{dataset_info}\verb{$delete_row_in_remote} or
+"Delete row in remote", and
+\item \link{dataset_info}\verb{$upload_new_row} or
+"Upload new row".
+}
+
+Respectively, these indicate
+whether to change the remote table's
 \code{ValidToVersion} value,
 replace the value in the \code{value} column,
 delete the remote row, or
 upload a new row, respectively.
 
 Functions that call \code{\link[=compress_helper]{compress_helper()}} should query the value
-of the \code{what_to_do_colname} to decide how to handle
+of \code{what_to_do_colname} to decide how to handle
 each row.
 
 If both \code{remote_df} and \code{local_df} are \code{NULL}, \code{NULL} is returned.
@@ -166,20 +180,10 @@ Note: \code{local_df} should have the same values in both
 to clearly indicate intent by the caller.
 If not, an error is thrown.
 
-Important: \code{local_df} is assumed to contain
-a complete set of information for metadata columns
-(columns excluding \code{i}, \code{j}, and \code{value}).
-Thus, if for the same metadata and the current version,
-\code{local_df} is lacking some rows present in \code{remote_df},
-those rows will be removed from \code{remote_df}.
-
 \code{value_colname} can be vector of length greater than 1,
 indicating multiple value columns.
-To accommodate this possibility,
-\code{remote_df} and \code{local_df} are pivoted longer internally
-to create \code{nam} and \code{val} columns.
 If any value in a row of \code{local_df} is different from \code{remote_df},
-the entire row is marked as being updated.
+the entire row is marked as updated.
 }
 \examples{
 remote_df <- tibble::tribble(

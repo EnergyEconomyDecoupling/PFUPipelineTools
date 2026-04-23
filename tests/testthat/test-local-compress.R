@@ -312,7 +312,8 @@ test_that("compress_helper() works when remote has lines of old versions", {
 
 
 test_that("compress_helper() works with completely new information with updated version", {
-  remote_df <- remote_df_func()
+  remote_df <- remote_df_func() |>
+    dplyr::filter(FALSE)
   local_df <- local_df_func()[1, ] |>
     dplyr::mutate(
       "{PFUPipelineTools::mat_colnames$value}" := 42,
