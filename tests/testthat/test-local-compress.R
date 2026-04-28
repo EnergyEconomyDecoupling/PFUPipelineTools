@@ -617,6 +617,7 @@ test_that("compress_helper() works as expected when the current version in remot
           "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
         )
     )
+  # Rearrange rows to match the order of res.
   expected <- expected[c(2:nrow(expected), 1), ]
   expect_equal(res, expected)
 
