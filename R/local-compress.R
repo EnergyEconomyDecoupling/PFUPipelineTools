@@ -496,23 +496,31 @@ prep_out <- function(next_steps_df,
   }
 
   # Address cases where we need to delete a row in the remote.
-  to_delete_remote <- next_steps_df |>
+  delete_remote <- next_steps_df |>
     dplyr::filter(.data[[what_to_do_colname]] == delete_row_in_remote)
-  if (nrow(to_delete_remote) > 0) {
-    to_delete_remote <- to_delete_remote |>
-      # Eliminate the local columns
-      dplyr::select(-tidyselect::all_of(
-        c(paste0(valid_from_version_colname, local_suff),
-          paste0(valid_to_version_colname, local_suff),
-          paste0(value_colname, local_suff)
-        ))) |>
-      # Rename the remote columns to their base name
-      dplyr::rename_with(
-        .fn = ~ sub(pattern = paste0(remote_suff, "$"),
-                    replacement = "",
-                    x = .x),
-        .cols = dplyr::ends_with(remote_suff)
-      )
+  if (nrow(delete_remote) > 0) {
+    # to_delete_remote <- delete_remote |>
+    #   # Eliminate the local columns
+    #   dplyr::select(-tidyselect::all_of(
+    #     c(paste0(valid_from_version_colname, local_suff),
+    #       paste0(valid_to_version_colname, local_suff),
+    #       paste0(value_colname, local_suff)
+    #     ))) |>
+    #   # Rename the remote columns to their base name
+    #   dplyr::rename_with(
+    #     .fn = ~ sub(pattern = paste0(remote_suff, "$"),
+    #                 replacement = "",
+    #                 x = .x),
+    #     .cols = dplyr::ends_with(remote_suff)
+    #   )
+    to_delete_remote <- delete_remote |>
+      rationalize_version_value_cols(version_suffix_to_remove = local_suff,
+                                     value_suffix_to_remove = local_suff,
+                                     valid_from_version_colname = valid_from_version_colname,
+                                     valid_to_version_colname = valid_to_version_colname,
+                                     value_colname = value_colname,
+                                     remote_suff = remote_suff,
+                                     local_suff = local_suff)
     out <- out |>
       dplyr::bind_rows(to_delete_remote)
   }
@@ -544,8 +552,6 @@ prep_out <- function(next_steps_df,
                                      value_colname = value_colname,
                                      remote_suff = remote_suff,
                                      local_suff = local_suff) |>
-
-
       # Set the ValidToVersion column to previous_version
       dplyr::mutate(
         "{valid_to_version_colname}" := previous_version
@@ -566,29 +572,6 @@ rationalize_version_value_cols <- function(.df,
                                            value_colname,
                                            remote_suff,
                                            local_suff) {
-  # to_replace_valid_to_version <- replace_valid_to_version |>
-  #   # Eliminate the local columns
-  #   dplyr::select(-tidyselect::all_of(
-  #     c(paste0(valid_from_version_colname, local_suff),
-  #       paste0(valid_to_version_colname, local_suff),
-  #       paste0(value_colname, local_suff)
-  #     ))) |>
-  #   # Rename the remote columns to their base name
-  #   dplyr::rename_with(
-  #     .fn = ~ sub(pattern = paste0(remote_suff, "$"),
-  #                 replacement = "",
-  #                 x = .x),
-  #     .cols = dplyr::ends_with(remote_suff)
-  #   ) |>
-  #   # Set the ValidToVersion column to previous_version
-  #   dplyr::mutate(
-  #     "{valid_to_version_colname}" := previous_version
-  #   )
-  # out <- out |>
-  #   dplyr::bind_rows(to_replace_valid_to_version)
-
-
-
   .df |>
     # Eliminate unneeded columns
     dplyr::select(-tidyselect::all_of(
