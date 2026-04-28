@@ -589,6 +589,9 @@ test_that("compress_helper() works when there are new row and column names", {
 
 
 # Fail because it is not correctly pickup up a deletion.
+#################
+################# Fist step: verify if the test is correct!
+#################
 test_that("compress_helper() works as expected when the current version in remote_df started several versions ago, some data from remote_df do not appear in local_df, but later reappear", {
   remote_df <- remote_df_func()
   local_df_orig <- remote_df_func() |>
