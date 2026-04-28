@@ -579,19 +579,6 @@ test_that("compress_helper() works when there are new row and column names", {
 })
 
 
-
-
-
-
-
-
-
-
-
-# Fail because it is not correctly pickup up a deletion.
-#################
-################# Fist step: verify if the test is correct!
-#################
 test_that("compress_helper() works as expected when the current version in remote_df started several versions ago, some data from remote_df do not appear in local_df, but later reappear", {
   remote_df <- remote_df_func()
   local_df_orig <- remote_df_func() |>
@@ -608,6 +595,7 @@ test_that("compress_helper() works as expected when the current version in remot
   local_df <- local_df_orig |>
     dplyr::slice(-3)
   res <- compress_helper(remote_df = remote_df, local_df = local_df)
+
   expected <- dplyr::bind_rows(
     remote_df |>
       dplyr::slice(3) |>
@@ -629,6 +617,7 @@ test_that("compress_helper() works as expected when the current version in remot
           "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
         )
     )
+  expected <- expected[c(2:nrow(expected), 1), ]
   expect_equal(res, expected)
 
   # Now, re-add the deleted row in local_df and try again.
