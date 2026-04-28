@@ -186,7 +186,7 @@ compress_helper <- function(remote_df, local_df,
                             changed_cols_colname = PFUPipelineTools::dataset_info$changed_cols_colname,
                             what_to_do_colname = PFUPipelineTools::dataset_info$what_to_do,
                             delete_or_change_valid_to_in_remote = PFUPipelineTools::dataset_info$delete_or_change_valid_to_in_remote,
-                            change_valid_to_version_in_remote =
+                            replace_valid_to_version_in_remote =
                               PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote,
                             delete_row_in_remote =
                               PFUPipelineTools::dataset_info$delete_row_in_remote,
@@ -301,10 +301,17 @@ compress_helper <- function(remote_df, local_df,
 
         # New data. Upload to remote.
         is.na(.data[[paste0(valid_from_version_colname, remote_suff)]]) ~ upload_new_row,
-        # Old data. Delete from remote,
-        # possibly by deleting altogether,
-        # possibly by just changing the ValidToVersion column.
-        is.na(.data[[paste0(valid_from_version_colname, local_suff)]]) ~ delete_row_in_remote,
+        # These data no longer exist in local_df,
+        # and we're working now on the same version of the database
+        # (i.e., ValidFromVersion_remote is same as local_version).
+        # In this event, we need to delete the row from remote_df.
+        is.na(.data[[paste0(valid_from_version_colname, local_suff)]]) &
+          .data[[paste0(valid_from_version_colname, remote_suff)]] == local_version ~ delete_row_in_remote,
+        # These data no longer exist in local_df,
+        # and we're working on a NEW version of the database
+        # (i.e., ValidFromVersion_remote is earlier than local_version.)
+        # In this event, we need to update the ValidToVersion column in remote_df.
+        is.na(.data[[paste0(valid_from_version_colname, local_suff)]]) ~ replace_valid_to_version_in_remote,
         # One or more value changes
         length(.data[[changed_cols_colname]]) > 0 ~ replace_value_in_remote,
         TRUE ~ PFUPipelineTools::dataset_info$no_action
@@ -325,7 +332,7 @@ compress_helper <- function(remote_df, local_df,
              local_suff = local_suff,
              out_template = remote_df[0, ],
              what_to_do_colname = what_to_do_colname,
-             change_valid_to_version_in_remote = change_valid_to_version_in_remote,
+             replace_valid_to_version_in_remote = replace_valid_to_version_in_remote,
              delete_row_in_remote = delete_row_in_remote,
              replace_value_in_remote = replace_value_in_remote,
              upload_new_row = upload_new_row,
@@ -343,7 +350,7 @@ prep_out <- function(next_steps_df,
                      value_colname, remote_suff, local_suff,
                      out_template,
                      what_to_do_colname,
-                     change_valid_to_version_in_remote,
+                     replace_valid_to_version_in_remote,
                      delete_row_in_remote,
                      replace_value_in_remote,
                      upload_new_row,
@@ -398,6 +405,7 @@ prep_out <- function(next_steps_df,
         dplyr::bind_rows(same_version_replace_value)
     }
 
+    # Address cases where we have a newer version.
     newer_version <- to_replace_value |>
       dplyr::filter(.data[[paste0(valid_from_version_colname, remote_suff)]] < local_version)
 
@@ -425,7 +433,7 @@ prep_out <- function(next_steps_df,
           # Change ValidToVersion to previous_version
           "{valid_to_version_colname}" := previous_version,
           # Change WhatToDo to change_valid_to_version_in_remote
-          "{what_to_do_colname}" := change_valid_to_version_in_remote
+          "{what_to_do_colname}" := replace_valid_to_version_in_remote
         )
       out <- out |>
         dplyr::bind_rows(to_change_valid_from_version_in_remote)
@@ -493,6 +501,33 @@ prep_out <- function(next_steps_df,
       )
     out <- out |>
       dplyr::bind_rows(to_delete_remote)
+  }
+
+  # Address cases where we need to update the ValidToVersion column.
+  replace_valid_to_version <- next_steps_df |>
+    dplyr::filter(.data[[what_to_do_colname]] == replace_valid_to_version_in_remote)
+
+  if (nrow(replace_valid_to_version)) {
+    to_replace_valid_to_version <- replace_valid_to_version |>
+      # Eliminate the local columns
+      dplyr::select(-tidyselect::all_of(
+        c(paste0(valid_from_version_colname, local_suff),
+          paste0(valid_to_version_colname, local_suff),
+          paste0(value_colname, local_suff)
+        ))) |>
+      # Rename the remote columns to their base name
+      dplyr::rename_with(
+        .fn = ~ sub(pattern = paste0(remote_suff, "$"),
+                    replacement = "",
+                    x = .x),
+        .cols = dplyr::ends_with(remote_suff)
+      ) |>
+      # Set the ValidToVersion column to previous_version
+      dplyr::mutate(
+        "{valid_to_version_colname}" := previous_version
+      )
+    out <- out |>
+      dplyr::bind_rows(to_replace_valid_to_version)
   }
 
   return(out)

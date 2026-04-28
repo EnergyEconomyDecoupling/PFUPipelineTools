@@ -363,15 +363,15 @@ test_that("compress_helper() correctly identifies rows that should be removed fr
       "{PFUPipelineTools::dataset_info$valid_to_version_colname}" := 2
     )
   res <- compress_helper(remote_df = remote_df, local_df = local_df)
+  expected <- remote_df[c(7, 13), ] |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$delete_row_in_remote
+    )
   # Check that we have 2 rows to remove from remote in res
   res |>
     dplyr::filter(.data[[PFUPipelineTools::dataset_info$what_to_do]] == PFUPipelineTools::dataset_info$delete_row_in_remote) |>
     nrow() |>
     expect_equal(2)
-  expected <- remote_df[c(7, 13), ] |>
-    dplyr::mutate(
-      "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$delete_row_in_remote
-    )
   expect_equal(res, expected)
 })
 
@@ -548,6 +548,36 @@ test_that("compress_helper() works for all options", {
 })
 
 
+test_that("compress_helper() works when there are new row and column names", {
+  remote_df <- remote_df_func() |>
+    # Keep only the rows with same metadata.
+    dplyr::filter(Country == 49)
+  local_df <- local_df_func()[2, ] |>
+    dplyr::mutate(
+      # By changing the integers in the i and j columns,
+      # we're changing the row and column names
+      "{PFUPipelineTools::mat_colnames$i}" := 1000,
+      "{PFUPipelineTools::mat_colnames$j}" := 1000
+    )
+  res <- compress_helper(remote_df = remote_df, local_df = local_df)
+  # By including only 1 row in local_df,
+  # all other rows in remote_df will be deemed outdated and marked for deletion
+  # (via replacing the ValidToVersion value in the remote data frame)
+  expected <- local_df |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$valid_to_version}" := version_info$current_version_int,
+      "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
+    ) |>
+    dplyr::bind_rows(
+      remote_df |>
+        dplyr::mutate(
+          "{PFUPipelineTools::dataset_info$valid_to_version}" := 2,
+          "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote
+        )
+    )
+  expect_equal(res, expected)
+})
+
 
 
 
@@ -633,37 +663,4 @@ test_that("compress_helper() works as expected when the current version in remot
   expect_equal(res2, expected2)
 })
 
-
-# Fails, because replacing the ValidToVersion column is
-# mistakenly reported as needing to delete the row in remote.
-# Do I need to do a new join that includes ValidFromVersion in joining columns?
-test_that("compress_helper() works when there are new row and column names", {
-  remote_df <- remote_df_func() |>
-    # Keep only the rows with same metadata.
-    dplyr::filter(Country == 49)
-  local_df <- local_df_func()[2, ] |>
-    dplyr::mutate(
-      # By changing the integers in the i and j columns,
-      # we're changing the row and column names
-      "{PFUPipelineTools::mat_colnames$i}" := 1000,
-      "{PFUPipelineTools::mat_colnames$j}" := 1000
-    )
-  res <- compress_helper(remote_df = remote_df, local_df = local_df)
-  # By including only 1 row in local_df,
-  # all other rows in remote_df will be deemed outdated and marked for deletion
-  # (via replacing the ValidToVersion value in the remote data frame)
-  expected <- local_df |>
-    dplyr::mutate(
-      "{PFUPipelineTools::dataset_info$valid_to_version}" := version_info$current_version_int,
-      "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
-    ) |>
-    dplyr::bind_rows(
-      remote_df |>
-        dplyr::mutate(
-          "{PFUPipelineTools::dataset_info$valid_to_version}" := 2,
-          "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote
-        )
-    )
-  expect_equal(res, expected)
-})
 
