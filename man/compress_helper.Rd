@@ -14,8 +14,6 @@ compress_helper(
   val = "val",
   changed_cols_colname = PFUPipelineTools::dataset_info$changed_cols_colname,
   what_to_do_colname = PFUPipelineTools::dataset_info$what_to_do,
-  delete_or_change_valid_to_in_remote =
-    PFUPipelineTools::dataset_info$delete_or_change_valid_to_in_remote,
   replace_valid_to_version_in_remote =
     PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote,
   delete_row_in_remote = PFUPipelineTools::dataset_info$delete_row_in_remote,
@@ -61,6 +59,13 @@ what to do with the row.
 Default is \link{dataset_info}\verb{$what_to_do} or
 "WhatToDo".}
 
+\item{replace_valid_to_version_in_remote}{The string that
+indicates the value in the remote's
+\code{valid_to_version} column
+should be changed.
+Default is \link{dataset_info}\verb{$replace_valid_to_version_in_remote} or
+"Replace ValidToVersion in remote".}
+
 \item{delete_row_in_remote}{The string that indicates the row should be
 deleted from the remote database.
 Default is \link{dataset_info}\verb{$delete_row_in_remote} or
@@ -92,13 +97,6 @@ Default is
 \item{tol}{The tolerance within which a local value will be
 assumed same as the remote value.
 Default is \code{1e-6}.}
-
-\item{change_valid_to_version_in_remote}{The string that
-indicates the value in the remote's
-\code{valid_to_version} column
-should be changed.
-Default is \link{dataset_info}\verb{$replace_valid_to_version_in_remote} or
-"Replace ValidToVersion in remote".}
 }
 \value{
 A data frame with same columns as \code{remote_df} and \code{local_df} and an
@@ -177,7 +175,11 @@ their foreign key columns should all be ID integers.
 Note: \code{local_df} should have the same values in both
 \code{valid_from_version_colname} and
 \code{valid_to_version_colname}
-to clearly indicate intent by the caller.
+to clearly indicate the intent of the caller.
+If not, an error is thrown.
+
+The \code{valid_to_version_colname} in \code{remote_df} must contain
+\code{current_version_int}.
 If not, an error is thrown.
 
 \code{value_colname} can be vector of length greater than 1,
