@@ -12,6 +12,10 @@ which always resolves to the latest release.
 * Improvements to `pl_filter_download()`, including 
   new options to control whether encoded or decoded 
   data are downloaded.
+* New functions `pl_upsert_and_compress()` and 
+  `compress_helper()` 
+  allow multiple value columns in a data frame
+  and remote table.
 * New function `pl_upsert_and_compress()` takes over duties from
   `pl_upsert()`. 
   `pl_upsert_and_compress()` performs local compression,
