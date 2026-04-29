@@ -473,23 +473,35 @@ prep_out <- function(next_steps_df,
   to_upload <- next_steps_df |>
     dplyr::filter(.data[[what_to_do_colname]] == upload_new_row)
   if (nrow(to_upload) > 0) {
+    # to_upload <- to_upload |>
+    #   # Eliminate the remote columns.
+    #   dplyr::select(-tidyselect::all_of(
+    #     c(paste0(valid_from_version_colname, remote_suff),
+    #       paste0(valid_to_version_colname, remote_suff),
+    #       paste0(value_colname, remote_suff)
+    #     ))) |>
+    #   # Rename the local columns to their base name
+    #   dplyr::rename_with(
+    #     .fn = ~ sub(pattern = paste0(local_suff, "$"),
+    #                 replacement = "",
+    #                 x = .x),
+    #     .cols = dplyr::ends_with(local_suff)
+    #   ) |>
+    #   dplyr::mutate(
+    #     "{valid_to_version_colname}" := current_version_int
+    #   )
+
     to_upload <- to_upload |>
-      # Eliminate the remote columns.
-      dplyr::select(-tidyselect::all_of(
-        c(paste0(valid_from_version_colname, remote_suff),
-          paste0(valid_to_version_colname, remote_suff),
-          paste0(value_colname, remote_suff)
-        ))) |>
-      # Rename the local columns to their base name
-      dplyr::rename_with(
-        .fn = ~ sub(pattern = paste0(local_suff, "$"),
-                    replacement = "",
-                    x = .x),
-        .cols = dplyr::ends_with(local_suff)
-      ) |>
-      dplyr::mutate(
-        "{valid_to_version_colname}" := current_version_int
-      )
+      rationalize_version_value_cols(version_suffix_to_remove = remote_suff,
+                                     value_suffix_to_remove = remote_suff,
+                                     valid_from_version_colname = valid_from_version_colname,
+                                     valid_to_version_colname = valid_to_version_colname,
+                                     value_colname = value_colname,
+                                     remote_suff = remote_suff,
+                                     local_suff = local_suff) |>
+        dplyr::mutate(
+          "{valid_to_version_colname}" := current_version_int
+        )
 
     out <- out |>
       dplyr::bind_rows(to_upload)
@@ -589,20 +601,3 @@ rationalize_version_value_cols <- function(.df,
       .cols = dplyr::ends_with(c(remote_suff, local_suff))
     )
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
