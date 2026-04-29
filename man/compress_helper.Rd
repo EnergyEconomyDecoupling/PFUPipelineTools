@@ -32,7 +32,8 @@ contains a new set of values for \code{remote_df}.}
 
 \item{valid_from_version_colname, valid_to_version_colname}{See
 \link{dataset_info}.
-Defaults are \link{dataset_info}\verb{$valid_from_version_colname} and \link{dataset_info}\verb{$valid_to_version_colname} or
+Defaults are \link{dataset_info}\verb{$valid_from_version_colname} and
+\link{dataset_info}\verb{$valid_to_version_colname} or
 "ValidFromVersion" and
 "ValidToVersion".}
 

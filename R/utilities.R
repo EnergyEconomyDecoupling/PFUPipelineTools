@@ -939,6 +939,7 @@ create_compression_testing_db <- function(conn) {
   j <- NULL
   Dataset <- NULL
   DatasetID <- NULL
+  PhiConstants <- NULL
   Version <- NULL
   VersionID <- NULL
   Country <- NULL
@@ -956,6 +957,8 @@ create_compression_testing_db <- function(conn) {
   rowtype <- NULL
   coltype <- NULL
   version_info <- NULL
+  Product <- NULL
+  IsUseful <- NULL
 
   # Start with a clean slate
   clean_compression_testing_db(conn)
