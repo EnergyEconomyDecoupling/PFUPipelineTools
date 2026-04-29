@@ -360,6 +360,37 @@ compress_helper <- function(remote_df, local_df,
 }
 
 
+#' Prepare an outgoing data frame for deciding what to do with new data
+#'
+#' This is a helper function for [compress_helper()].
+#'
+#' @param next_steps_df A data frame from [compress_helper()].
+#' @param local_version An integer that tells the local version being developed.
+#' @param previous_version An integer that tells the previous version
+#'                         before the version on which we're working.
+#' @param valid_from_version_colname The name of the ValidFromVersion column.
+#' @param valid_to_version_colname The name of the ValidToVersion column.
+#' @param value_colname The names of the value columns.
+#'                      May be a vector of length greater than 1.
+#' @param remote_suff The suffix for remote column names.
+#' @param local_suff The suffix for local column names.
+#' @param out_template A zero-row template data frame for the outgoing data frame.
+#' @param what_to_do_colname The name of a column that tells what to do with each row.
+#' @param replace_valid_to_version_in_remote A string that indicates a row
+#'                                           should have its ValidToVersion value
+#'                                           replaced in the remote table.
+#' @param delete_row_in_remote A string that indicates a row should be deleted
+#'                             from the remote table.
+#' @param replace_value_in_remote A string that indicates values should be replaced
+#'                                in the remote table.
+#' @param upload_new_row A string that indicates the row is new and should be
+#'                       uploaded to the remote table.
+#' @param no_action A string that indicates there should be no action
+#'                  taken upon this row.
+#' @param current_version_int The integer that indicates a row is the current version.
+#'
+#' @returns A modified version of `next_steps_df` indicating
+#'          what should be done for each row.
 prep_out <- function(next_steps_df,
                      local_version, previous_version,
                      valid_from_version_colname,
@@ -392,28 +423,39 @@ prep_out <- function(next_steps_df,
 
     if (nrow(same_version) > 0) {
       # For same_version, clean up the data frame
+      # same_version_replace_value <- same_version |>
+      #   dplyr::select(-tidyselect::all_of(
+      #     c(paste0(valid_from_version_colname, local_suff),
+      #       paste0(valid_to_version_colname, local_suff),
+      #       paste0(value_colname, remote_suff)))
+      #   ) |>
+      #   # Rename remote columns to their base name
+      #   # (ValidFromVersion and ValidToVersion)
+      #   dplyr::rename_with(
+      #     .fn = ~ sub(pattern = paste0(remote_suff, "$"),
+      #                 replacement = "",
+      #                 x = .x),
+      #     .cols = dplyr::ends_with(remote_suff)
+      #   ) |>
+      #   # Rename remaining local columns to their base name
+      #   # (value columns)
+      #   dplyr::rename_with(
+      #     .fn = ~ sub(pattern = paste0(local_suff, "$"),
+      #                 replacement = "",
+      #                 x = .x),
+      #     .cols = dplyr::ends_with(local_suff)
+      #   )
+
+
+      # For same_version, clean up the data frame
       same_version_replace_value <- same_version |>
-        dplyr::select(-tidyselect::all_of(
-          c(paste0(valid_from_version_colname, local_suff),
-            paste0(valid_to_version_colname, local_suff),
-            paste0(value_colname, remote_suff)))
-        ) |>
-        # Rename remote columns to their base name
-        # (ValidFromVersion and ValidToVersion)
-        dplyr::rename_with(
-          .fn = ~ sub(pattern = paste0(remote_suff, "$"),
-                      replacement = "",
-                      x = .x),
-          .cols = dplyr::ends_with(remote_suff)
-        ) |>
-        # Rename remaining local columns to their base name
-        # (value columns)
-        dplyr::rename_with(
-          .fn = ~ sub(pattern = paste0(local_suff, "$"),
-                      replacement = "",
-                      x = .x),
-          .cols = dplyr::ends_with(local_suff)
-        )
+        rationalize_version_value_cols(version_suffix_to_remove = local_suff,
+                                       value_suffix_to_remove = remote_suff,
+                                       valid_from_version_colname = valid_from_version_colname,
+                                       valid_to_version_colname = valid_to_version_colname,
+                                       value_colname = value_colname,
+                                       remote_suff = remote_suff,
+                                       local_suff = local_suff)
 
       out <- out |>
         dplyr::bind_rows(same_version_replace_value)
@@ -430,19 +472,28 @@ prep_out <- function(next_steps_df,
       to_change_valid_from_version_in_remote <- newer_version |>
         dplyr::filter(.data[[paste0(valid_from_version_colname, remote_suff)]] !=
                         local_version) |>
-        # Eliminate the remote columns.
-        dplyr::select(-tidyselect::all_of(
-          c(paste0(valid_from_version_colname, local_suff),
-            paste0(valid_to_version_colname, local_suff),
-            paste0(value_colname, local_suff)
-          ))) |>
-        # Rename the remote columns to their base name
-        dplyr::rename_with(
-          .fn = ~ sub(pattern = paste0(remote_suff, "$"),
-                      replacement = "",
-                      x = .x),
-          .cols = dplyr::ends_with(remote_suff)
-        ) |>
+        # # Eliminate the remote columns.
+        # dplyr::select(-tidyselect::all_of(
+        #   c(paste0(valid_from_version_colname, local_suff),
+        #     paste0(valid_to_version_colname, local_suff),
+        #     paste0(value_colname, local_suff)
+        #   ))) |>
+        # # Rename the remote columns to their base name
+        # dplyr::rename_with(
+        #   .fn = ~ sub(pattern = paste0(remote_suff, "$"),
+        #               replacement = "",
+        #               x = .x),
+        #   .cols = dplyr::ends_with(remote_suff)
+        # ) |>
+
+        rationalize_version_value_cols(version_suffix_to_remove = local_suff,
+                                       value_suffix_to_remove = local_suff,
+                                       valid_from_version_colname = valid_from_version_colname,
+                                       valid_to_version_colname = valid_to_version_colname,
+                                       value_colname = value_colname,
+                                       remote_suff = remote_suff,
+                                       local_suff = local_suff) |>
+
         dplyr::mutate(
           # Change ValidToVersion to previous_version
           "{valid_to_version_colname}" := previous_version,
@@ -576,6 +627,27 @@ prep_out <- function(next_steps_df,
 }
 
 
+#' Adjust column titles while deciding next steps
+#'
+#' When deciding what to do with new or adjusted data,
+#' this function adjusts title of joined version and value columns.
+#' This function is used as a helper function for
+#' [PFUPipelineTools::prep_out()].
+#'
+#' @param .df The data frame whose column names are to be adjusted.
+#' @param version_suffix_to_remove The string suffix on version column names
+#'                                 that are to be deleted.
+#' @param value_suffix_to_remove The string suffix on value column names
+#'                               that are to be deleted.
+#' @param valid_from_version_colname The string name of the ValidFromVersion column.
+#' @param valid_to_version_colname The string name of the ValidToVersion column.
+#' @param value_colname The string name of the value columns.
+#'                      May be a vector of multiple value columns.
+#' @param remote_suff The remote suffix for column names.
+#' @param local_suff The local suffix for column names.
+#'
+#' @returns A modified version of `.df` that is amenable to
+#'          uploading or adjusting a remote data frame.
 rationalize_version_value_cols <- function(.df,
                                            version_suffix_to_remove,
                                            value_suffix_to_remove,
