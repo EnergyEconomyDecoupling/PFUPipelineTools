@@ -312,7 +312,12 @@ test_that("compress_helper() works when remote has lines of old versions", {
 
 
 test_that("compress_helper() works with completely new information with updated version", {
-  remote_df <- remote_df_func()
+  remote_df <- remote_df_func() |>
+    # Get rid of all rows, because local_df (below)
+    # has none of the same metadata.
+    # The calling function should remove all rows with
+    # non-matching metadata
+    dplyr::filter(FALSE)
   local_df <- local_df_func()[1, ] |>
     dplyr::mutate(
       "{PFUPipelineTools::mat_colnames$value}" := 42,
@@ -320,43 +325,13 @@ test_that("compress_helper() works with completely new information with updated 
       "{PFUPipelineTools::usual_hash_group_cols[['year']]}" := 10000
     )
   res <- compress_helper(remote_df = remote_df, local_df = local_df)
+  # Because the new information has different metadata (Country and Year),
+  # the existing remote information should not be touched, and
+  # the new information should be uploaded as new data.
   expected <- local_df |>
     dplyr::mutate(
       "{PFUPipelineTools::dataset_info$valid_to_version}" := version_info$current_version_int,
       "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
-    ) |>
-    dplyr::bind_rows(
-      remote_df |>
-        dplyr::mutate(
-          "{PFUPipelineTools::dataset_info$valid_to_version}" := 2,
-          "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote
-        )
-      )
-  expect_equal(res, expected)
-})
-
-
-test_that("compress_helper() works when there are new row and column names", {
-  remote_df <- remote_df_func()
-  local_df <- local_df_func()[2, ] |>
-    dplyr::mutate(
-      # By changing the integers in the i and j columns,
-      # we're changing the row and column names
-      "{PFUPipelineTools::mat_colnames$i}" := 1000,
-      "{PFUPipelineTools::mat_colnames$j}" := 1000
-    )
-  res <- compress_helper(remote_df = remote_df, local_df = local_df)
-  expected <- local_df |>
-    dplyr::mutate(
-      "{PFUPipelineTools::dataset_info$valid_to_version}" := version_info$current_version_int,
-      "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
-    ) |>
-    dplyr::bind_rows(
-      remote_df |>
-        dplyr::mutate(
-          "{PFUPipelineTools::dataset_info$valid_to_version}" := 2,
-          "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote
-        )
     )
   expect_equal(res, expected)
 })
@@ -388,15 +363,15 @@ test_that("compress_helper() correctly identifies rows that should be removed fr
       "{PFUPipelineTools::dataset_info$valid_to_version_colname}" := 2
     )
   res <- compress_helper(remote_df = remote_df, local_df = local_df)
+  expected <- remote_df[c(7, 13), ] |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$delete_row_in_remote
+    )
   # Check that we have 2 rows to remove from remote in res
   res |>
     dplyr::filter(.data[[PFUPipelineTools::dataset_info$what_to_do]] == PFUPipelineTools::dataset_info$delete_row_in_remote) |>
     nrow() |>
     expect_equal(2)
-  expected <- remote_df[c(7, 13), ] |>
-    dplyr::mutate(
-      "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$delete_row_in_remote
-    )
   expect_equal(res, expected)
 })
 
@@ -428,6 +403,182 @@ test_that("compress_helper() works as expected when the current version in remot
 })
 
 
+test_that("compress_helper() works with multiple value columns", {
+  remote_df <- remote_df_func() |>
+    dplyr::rename(
+      value1 = value
+    ) |>
+    dplyr::mutate(
+      value2 = value1*10
+    )
+  local_df <- remote_df |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$valid_to_version_colname}" := 2
+    )
+
+  # local_df is same as remote_df,
+  # so no changes are expected.
+  # Returning an no-row data frame is the right thing to do.
+  res <- compress_helper(remote_df = remote_df,
+                         local_df = local_df,
+                         value_colname = c("value1", "value2"))
+  expect_equal(nrow(res), 0)
+  expect_equal(colnames(res), c(colnames(remote_df), PFUPipelineTools::dataset_info$what_to_do))
+  expect_equal(colnames(res), c(colnames(local_df), PFUPipelineTools::dataset_info$what_to_do))
+
+
+  # Add new data with same version.
+  # The metadata exist in remote.
+  # But the new country means we need
+  # to delete the old rows and add the new rows
+  local_df2 <- local_df |>
+    dplyr::mutate(
+      "{IEATools::iea_cols$country}" := -9999
+    )
+  res2 <- compress_helper(remote_df = remote_df,
+                          local_df = local_df2,
+                          value_colname = c("value1", "value2"))
+  res2 |>
+    dplyr::filter(WhatToDo == PFUPipelineTools::dataset_info$delete_row_in_remote) |>
+    nrow() |>
+    expect_equal(13)
+  res2 |>
+    dplyr::filter(WhatToDo == PFUPipelineTools::dataset_info$upload_new) |>
+    nrow() |>
+    expect_equal(13)
+  res2 |>
+    colnames() |>
+    expect_equal(c(colnames(remote_df), PFUPipelineTools::dataset_info$what_to_do))
+  expect_equal(res2,
+               dplyr::bind_rows(
+                 local_df2 |>
+                   dplyr::mutate(
+                     "{PFUPipelineTools::dataset_info$valid_to_version_colname}" := PFUPipelineTools::version_info$current_version_int,
+                     "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
+                   ),
+                 remote_df |>
+                   dplyr::mutate(
+                     "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$change_valid_to_version_in_remote,
+                     "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$delete_row_in_remote
+                   )
+  ))
+
+  # Remove a row in local_df,
+  # so the row needs to be removed from the remote table.
+  local_df3 <- local_df[-2, ]
+  res3 <- compress_helper(remote_df = remote_df,
+                          local_df = local_df3,
+                          value_colname = c("value1", "value2"))
+  expect_equal(res3, remote_df[2, ] |>
+                 dplyr::mutate(
+                   "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$delete_row_in_remote))
+
+  # Adjust one of the values in local_df
+  # so that changes are expected.
+  # Specifically, the values should be updated.
+  local_df4 <- local_df
+  local_df4[2, "value1"] <- 3.1415926
+  res4 <- compress_helper(remote_df = remote_df,
+                          local_df = local_df4,
+                          value_colname = c("value1", "value2"))
+  # This should result in a change to the remote_df for 1 row
+  res4 |>
+    dplyr::filter(WhatToDo == PFUPipelineTools::dataset_info$replace_value_in_remote) |>
+    nrow() |>
+    expect_equal(1)
+  res4 |>
+    purrr::pluck("value1", 1) |>
+    expect_equal(local_df4 |>
+                   purrr::pluck("value1", 2))
+
+  # Change one value with a new version.
+  # This should change the ValidToVersion column in remote and
+  # upload the new version.
+  local_df5 <- local_df |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$valid_from_version}" := 3,
+      "{PFUPipelineTools::dataset_info$valid_to_version}" := 3,
+    )
+  local_df5[2, "value1"] <- 3.1415926
+  res5 <- compress_helper(remote_df = remote_df,
+                          local_df = local_df5,
+                          value_colname = c("value1", "value2"))
+  expect_equal(nrow(res5), 2)
+  expect_equal(res5[[PFUPipelineTools::dataset_info$what_to_do]],
+               c(PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote,
+                 PFUPipelineTools::dataset_info$upload_new_row))
+})
+
+
+test_that("compress_helper() works for all options", {
+  remote_df <- remote_df_func()
+  local_df <- remote_df_func() |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$valid_to_version_colname}" := 2
+    )
+
+  # One value changes in 1 existing matrix.
+  # This simulates working on the same version
+  # but making one change.
+  # No new entries are added.
+  local_df[1, "value"] <- 42
+  res <- compress_helper(remote_df = remote_df,
+                         local_df = local_df)
+  expected <- local_df[1, ] |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$valid_to_version_colname}" :=
+        PFUPipelineTools::version_info$current_version_int,
+      "{PFUPipelineTools::dataset_info$what_to_do}" :=
+        PFUPipelineTools::dataset_info$replace_value_in_remote
+    )
+  expect_equal(res, expected)
+
+  # Updated version but all data remains same.
+  # Should be no change.
+  remote_df <- remote_df_func()
+  local_df <- local_df_func()
+  res2 <- compress_helper(remote_df = remote_df,
+                          local_df = local_df)
+  expected2 <- remote_df |>
+    dplyr::filter(FALSE) |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$what_to_do}" := character(0)
+    )
+  expect_equal(res2, expected2)
+})
+
+
+test_that("compress_helper() works when there are new row and column names", {
+  remote_df <- remote_df_func() |>
+    # Keep only the rows with same metadata.
+    dplyr::filter(Country == 49)
+  local_df <- local_df_func()[2, ] |>
+    dplyr::mutate(
+      # By changing the integers in the i and j columns,
+      # we're changing the row and column names
+      "{PFUPipelineTools::mat_colnames$i}" := 1000,
+      "{PFUPipelineTools::mat_colnames$j}" := 1000
+    )
+  res <- compress_helper(remote_df = remote_df, local_df = local_df)
+  # By including only 1 row in local_df,
+  # all other rows in remote_df will be deemed outdated and marked for deletion
+  # (via replacing the ValidToVersion value in the remote data frame)
+  expected <- local_df |>
+    dplyr::mutate(
+      "{PFUPipelineTools::dataset_info$valid_to_version}" := version_info$current_version_int,
+      "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
+    ) |>
+    dplyr::bind_rows(
+      remote_df |>
+        dplyr::mutate(
+          "{PFUPipelineTools::dataset_info$valid_to_version}" := 2,
+          "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$replace_valid_to_version_in_remote
+        )
+    )
+  expect_equal(res, expected)
+})
+
+
 test_that("compress_helper() works as expected when the current version in remote_df started several versions ago, some data from remote_df do not appear in local_df, but later reappear", {
   remote_df <- remote_df_func()
   local_df_orig <- remote_df_func() |>
@@ -438,12 +589,13 @@ test_that("compress_helper() works as expected when the current version in remot
         .data[[PFUPipelineTools::dataset_info$valid_from_version]],
       "{PFUPipelineTools::mat_colnames$value}" := .data[[PFUPipelineTools::mat_colnames$value]] + 100
     )
-    # Get rid of the 3rd row in local_df.
-    # So should delete it from remote_df by adjusting the ValidToVersion column
-    # but not by deleting it from remote_df.
+  # Get rid of the 3rd row in local_df.
+  # So should delete it from remote_df by adjusting the ValidToVersion column
+  # but not by deleting it from remote_df.
   local_df <- local_df_orig |>
     dplyr::slice(-3)
   res <- compress_helper(remote_df = remote_df, local_df = local_df)
+
   expected <- dplyr::bind_rows(
     remote_df |>
       dplyr::slice(3) |>
@@ -465,6 +617,8 @@ test_that("compress_helper() works as expected when the current version in remot
           "{PFUPipelineTools::dataset_info$what_to_do}" := PFUPipelineTools::dataset_info$upload_new
         )
     )
+  # Rearrange rows to match the order of res.
+  expected <- expected[c(2:nrow(expected), 1), ]
   expect_equal(res, expected)
 
   # Now, re-add the deleted row in local_df and try again.
@@ -500,3 +654,5 @@ test_that("compress_helper() works as expected when the current version in remot
     )
   expect_equal(res2, expected2)
 })
+
+

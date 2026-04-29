@@ -356,11 +356,14 @@ dataset_info <- list(dataset_colname = "Dataset",
                      wlrpfu_elect = "WLR-PFU Electricity",
                      wlrpfu_trans = "WLR-PFU Transport",
                      wlrpfu_mw = "WLR-PFU Muscle work",
+                     changed_cols_colname = "ChangedCols",
                      what_to_do = "WhatToDo",
+                     delete_or_change_valid_to_in_remote = "Delete or change ValidToVersion in remote",
                      replace_valid_to_version_in_remote = "Replace ValidToVersion in remote",
                      replace_value_in_remote = "Replace value in remote",
                      delete_row_in_remote = "Delete row in remote",
-                     upload_new = "Upload new")
+                     upload_new_row = "Upload new row",
+                     no_action = "No action")
 usethis::use_data(dataset_info, overwrite = TRUE)
 
 

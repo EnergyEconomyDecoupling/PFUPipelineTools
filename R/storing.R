@@ -728,7 +728,17 @@ validate_for_upsert_and_compress <- function(.df,
 #' @param valid_to_version_colname The string name of the valid to version column.
 #'                                 Cannot be `PFUPipelineTools::version_info$current_version_string` or
 #'                                 "`r PFUPipelineTools::version_info$current_version_string`".
-#' @param value_colname The string name of the value column in `.df`.
+#' @param row_colname The name of the column that indicates matrix row names.
+#'                    Default is [PFUPipelineTools::mat_colnames]`$row` or
+#'                    "`r PFUPipelineTools::mat_colnames$row`".
+#' @param col_colname The name of the column that indicates matrix column names.
+#'                    Default is [PFUPipelineTools::mat_colnames]`$col` or
+#'                    "`r PFUPipelineTools::mat_colnames$col`".
+#' @param value_colname The name of the column that indicates matrix values.
+#'                      This argument could have length greater than 1,
+#'                      in which case, all items in the vector are assumed to be value columns.
+#'                      Default is [PFUPipelineTools::mat_colnames]`$value` or
+#'                      "`r PFUPipelineTools::mat_colnames$val`".
 #' @param what_to_do_colname The string name of a column that tells what to do
 #'                           with various rows of `.df`.
 #'                           This column is used internally.
@@ -744,12 +754,14 @@ validate_for_upsert_and_compress <- function(.df,
 #'
 #' @returns Nothing useful.
 #'          This function should be called for its side effect of updating the remote table.
-
+#'
 #' @export
 do_upsert_and_compress <- function(df_to_upsert,
                                    valid_from_version_colname,
                                    valid_to_version_colname,
-                                   value_colname,
+                                   row_colname = PFUPipelineTools::mat_colnames$row,
+                                   col_colname = PFUPipelineTools::mat_colnames$col,
+                                   value_colname = PFUPipelineTools::mat_colnames$value,
                                    what_to_do_colname,
                                    mat_colnames,
                                    remote_tbl,
@@ -774,6 +786,10 @@ do_upsert_and_compress <- function(df_to_upsert,
 
   remote_df <- remote_tbl |>
     dplyr::filter(.data[[valid_to_version_colname]] == current_version_int) |>
+    # Here, semi_join filters remote_tbl to include only those rows
+    # that match the metadata of join_cols.
+    # This step ensures that we don't download remote data for, say,
+    # a different country than in df_to_upsert.
     dplyr::semi_join(df_to_upsert, by = join_cols, copy = TRUE) |>
     dplyr::collect()
 
