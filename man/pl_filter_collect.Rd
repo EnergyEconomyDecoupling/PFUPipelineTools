@@ -138,7 +138,15 @@ Or, set \code{collect = TRUE} to execute the SQL and
 return an in-memory data frame.
 }
 \details{
-Filtering on versions is a special case
+Most filter conditions are provide in the \code{...} argument.
+By default (\code{decode_foreign_keys = TRUE}),
+decoded values need to be supplied,
+e.g., \code{Country == "AUS"}.
+However, when \code{decode_foreign_keys = FALSE},
+you need to supply the encoded integers:
+\code{Country == 6}.
+
+Filtering on database versions is a special case
 because of the way data are compressed in the database.
 Specify one or more version values
 (such as \code{c("v1.0", "v1.1", "v2.0")})

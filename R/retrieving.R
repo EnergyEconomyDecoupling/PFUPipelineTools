@@ -197,7 +197,15 @@ pl_collect_from_hash <- function(hashed_table,
 #' Or, set `collect = TRUE` to execute the SQL and
 #' return an in-memory data frame.
 #'
-#' Filtering on versions is a special case
+#' Most filter conditions are provide in the `...` argument.
+#' By default (`decode_foreign_keys = TRUE`),
+#' decoded values need to be supplied,
+#' e.g., `Country == "AUS"`.
+#' However, when `decode_foreign_keys = FALSE`,
+#' you need to supply the encoded integers:
+#' `Country == 6`.
+#'
+#' Filtering on database versions is a special case
 #' because of the way data are compressed in the database.
 #' Specify one or more version values
 #' (such as `c("v1.0", "v1.1", "v2.0")`)
@@ -207,7 +215,6 @@ pl_collect_from_hash <- function(hashed_table,
 #' matching all filtering criteria in `...`.
 #' Set `version_string = NULL` to disable filtering based
 #' on versions, but the results may be nonsensical.
-#'
 #'
 #' `schema` is a data model (`dm` object) for the CL-PFU database.
 #' It can be obtained from calling [schema_from_conn()].
