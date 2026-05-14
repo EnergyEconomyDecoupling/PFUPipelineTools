@@ -778,9 +778,9 @@ do_upsert_and_compress <- function(df_to_upsert,
                                                  valid_to_version_colname,
                                                  # Ignore row, col, and val
                                                  # columns when joining.
-                                                 mat_colnames[["row"]],
-                                                 mat_colnames[["col"]],
-                                                 mat_colnames[["value"]]))
+                                                 row_colname,
+                                                 col_colname,
+                                                 value_colname))
   # When updating, we need to include row and column
   update_cols <- c(join_cols, mat_colnames[["row"]], mat_colnames[["col"]])
 
