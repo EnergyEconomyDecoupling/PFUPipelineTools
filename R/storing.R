@@ -551,8 +551,8 @@ pl_upsert_and_compress <- function(.df,
                     retain_zero_structure = retain_zero_structure,
                     value_colname = value_colname)
 
-  # Verify that we have a value column.
-  assertthat::assert_that(value_colname %in% names(df_matsindf_encoded),
+  # Verify that we have all value columns.
+  assertthat::assert_that(all(value_colname %in% names(df_matsindf_encoded)),
                           msg = paste0("The value column named '",
                                        value_colname,
                                        "' must be in the encoded data frame in pl_upsert_and_compress()"))
