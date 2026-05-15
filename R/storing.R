@@ -781,8 +781,17 @@ do_upsert_and_compress <- function(df_to_upsert,
                                                  row_colname,
                                                  col_colname,
                                                  value_colname))
-  # When updating, we need to include row and column
-  update_cols <- c(join_cols, mat_colnames[["row"]], mat_colnames[["col"]])
+
+  # update_cols <- c(join_cols, row_colname, col_colname)
+  # When updating, we need to include row and column,
+  # if they exist in remote_tbl.
+  update_cols <- join_cols
+  if (row_colname %in% colnames(remote_tbl)) {
+    update_cols <- c(update_cols, row_colname)
+  }
+  if (col_colname %in% colnames(remote_tbl)) {
+    update_cols <- c(update_cols, col_colname)
+  }
 
   remote_df <- remote_tbl |>
     dplyr::filter(.data[[valid_to_version_colname]] == current_version_int) |>
