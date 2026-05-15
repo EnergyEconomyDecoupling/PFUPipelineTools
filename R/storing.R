@@ -742,6 +742,11 @@ validate_for_upsert_and_compress <- function(.df,
 #'                      in which case, all items in the vector are assumed to be value columns.
 #'                      Default is [PFUPipelineTools::mat_colnames]`$value` or
 #'                      "`r PFUPipelineTools::mat_colnames$val`".
+#' @param set_id_cols String names of columns that identify a complete set of data
+#'                    in df_to_upsert.
+#'                    This vector is used internally to identify columns
+#'                    by which to join when deciding changes from remote data.
+#'                    Default is [PFUPipelineTools::usual_hash_group_cols].
 #' @param what_to_do_colname The string name of a column that tells what to do
 #'                           with various rows of `.df`.
 #'                           This column is used internally.
@@ -766,6 +771,7 @@ do_upsert_and_compress <- function(df_to_upsert,
                                    row_colname = PFUPipelineTools::mat_colnames$row,
                                    col_colname = PFUPipelineTools::mat_colnames$col,
                                    value_colname = PFUPipelineTools::mat_colnames$value,
+                                   set_id_cols = PFUPipelineTools::usual_hash_group_cols,
                                    what_to_do_colname,
                                    mat_colnames,
                                    remote_tbl,
@@ -786,7 +792,7 @@ do_upsert_and_compress <- function(df_to_upsert,
   #                                                col_colname,
   #                                                value_colname))
 
-  join_cols <- colnames(remote_tbl)[colnames(remote_tbl) %in% PFUPipelineTools::usual_hash_group_cols]
+  join_cols <- colnames(remote_tbl)[colnames(remote_tbl) %in% set_id_cols]
 
   # When updating, we need to include row and column,
   # if they exist in remote_tbl.

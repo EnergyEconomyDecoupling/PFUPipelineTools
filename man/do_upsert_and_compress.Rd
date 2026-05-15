@@ -12,6 +12,7 @@ do_upsert_and_compress(
   row_colname = PFUPipelineTools::mat_colnames$row,
   col_colname = PFUPipelineTools::mat_colnames$col,
   value_colname = PFUPipelineTools::mat_colnames$value,
+  set_id_cols = PFUPipelineTools::usual_hash_group_cols,
   what_to_do_colname,
   mat_colnames,
   remote_tbl,
@@ -49,6 +50,12 @@ This argument could have length greater than 1,
 in which case, all items in the vector are assumed to be value columns.
 Default is \link{mat_colnames}\verb{$value} or
 "value".}
+
+\item{set_id_cols}{String names of columns that identify a complete set of data
+in df_to_upsert.
+This vector is used internally to identify columns
+by which to join when deciding changes from remote data.
+Default is \link{usual_hash_group_cols}.}
 
 \item{what_to_do_colname}{The string name of a column that tells what to do
 with various rows of \code{.df}.
