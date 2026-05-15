@@ -728,6 +728,9 @@ validate_for_upsert_and_compress <- function(.df,
 #' @param valid_to_version_colname The string name of the valid to version column.
 #'                                 Cannot be `PFUPipelineTools::version_info$current_version_string` or
 #'                                 "`r PFUPipelineTools::version_info$current_version_string`".
+#' @param matname_colname The name of the column that contains matrix names.
+#'                        Default is [PFUPipelineTools::mat_meta_cols]`$matname` of
+#'                        "`r PFUPipelineTools::mat_meta_cols$matname`".
 #' @param row_colname The name of the column that indicates matrix row names.
 #'                    Default is [PFUPipelineTools::mat_colnames]`$row` or
 #'                    "`r PFUPipelineTools::mat_colnames$row`".
@@ -759,6 +762,7 @@ validate_for_upsert_and_compress <- function(.df,
 do_upsert_and_compress <- function(df_to_upsert,
                                    valid_from_version_colname,
                                    valid_to_version_colname,
+                                   matname_colname = PFUPipelineTools::mat_meta_cols$matname,
                                    row_colname = PFUPipelineTools::mat_colnames$row,
                                    col_colname = PFUPipelineTools::mat_colnames$col,
                                    value_colname = PFUPipelineTools::mat_colnames$value,
@@ -774,17 +778,22 @@ do_upsert_and_compress <- function(df_to_upsert,
   # We should ignore any values in the ValidFromVersion column.
   # We should ignore any values in the value column.
   # We should download only those rows with ValidToVersion == current_version_int.
-  join_cols <- setdiff(colnames(df_to_upsert), c(valid_from_version_colname,
-                                                 valid_to_version_colname,
-                                                 # Ignore row, col, and val
-                                                 # columns when joining.
-                                                 row_colname,
-                                                 col_colname,
-                                                 value_colname))
+  # join_cols <- setdiff(colnames(df_to_upsert), c(valid_from_version_colname,
+  #                                                valid_to_version_colname,
+  #                                                # Ignore row, col, and val
+  #                                                # columns when joining.
+  #                                                row_colname,
+  #                                                col_colname,
+  #                                                value_colname))
+
+  join_cols <- colnames(remote_tbl)[colnames(remote_tbl) %in% PFUPipelineTools::usual_hash_group_cols]
 
   # When updating, we need to include row and column,
   # if they exist in remote_tbl.
   update_cols <- join_cols
+  if (matname_colname %in% colnames(remote_tbl)) {
+    update_cols <- c(update_cols, matname_colname)
+  }
   if (row_colname %in% colnames(remote_tbl)) {
     update_cols <- c(update_cols, row_colname)
   }

@@ -8,6 +8,7 @@ do_upsert_and_compress(
   df_to_upsert,
   valid_from_version_colname,
   valid_to_version_colname,
+  matname_colname = PFUPipelineTools::mat_meta_cols$matname,
   row_colname = PFUPipelineTools::mat_colnames$row,
   col_colname = PFUPipelineTools::mat_colnames$col,
   value_colname = PFUPipelineTools::mat_colnames$value,
@@ -30,6 +31,10 @@ Cannot be \code{PFUPipelineTools::version_info$current_version_string} or
 \item{valid_to_version_colname}{The string name of the valid to version column.
 Cannot be \code{PFUPipelineTools::version_info$current_version_string} or
 "current".}
+
+\item{matname_colname}{The name of the column that contains matrix names.
+Default is \link{mat_meta_cols}\verb{$matname} of
+"matname".}
 
 \item{row_colname}{The name of the column that indicates matrix row names.
 Default is \link{mat_colnames}\verb{$row} or
