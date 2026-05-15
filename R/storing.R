@@ -782,7 +782,6 @@ do_upsert_and_compress <- function(df_to_upsert,
                                                  col_colname,
                                                  value_colname))
 
-  # update_cols <- c(join_cols, row_colname, col_colname)
   # When updating, we need to include row and column,
   # if they exist in remote_tbl.
   update_cols <- join_cols
