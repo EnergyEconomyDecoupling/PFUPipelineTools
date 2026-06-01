@@ -9,6 +9,10 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+* No longer removing the `Schema` table from the list of tables to be uploaded
+  in `load_fk_tables()`.
+  This means that the database will contain its own schema
+  in the `Schema` table.
 * Improvements to `pl_filter_download()`, including 
   new options to control whether encoded or decoded 
   data are downloaded.

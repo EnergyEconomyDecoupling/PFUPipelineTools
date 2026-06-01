@@ -71,7 +71,7 @@ load_fk_tables <- function(version,
 
   simple_tables_path |>
     readxl::excel_sheets() |>
-    setdiff(c(readme_sheet, schema_sheet)) |>
+    setdiff(readme_sheet) |>
     self_name() |>
     lapply(FUN = function(this_sheet_name) {
       # Get the data types for this simple table
