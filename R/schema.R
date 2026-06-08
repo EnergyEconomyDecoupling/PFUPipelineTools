@@ -19,11 +19,11 @@
 #'
 #' @examples
 #' \dontrun{
-#' load_schema_table(version = "v2.0")
+#' load_schema_table(version = "v3.0")
 #' }
 load_schema_table <- function(version,
                               schema_path = PFUSetup::get_abs_paths(version = version)[["schema_path"]],
-                              schema_sheet = "Schema") {
+                              schema_sheet = "SchemaTable") {
   schema_path |>
     readxl::read_excel(sheet = schema_sheet)
 }
@@ -52,7 +52,7 @@ load_schema_table <- function(version,
 #' @param schema_sheet The name of the sheet in the in the file at `simple_tables_path`
 #'                     that contains schema information.`
 #'                     Default is "Schema".
-#' @param .table,.colname,.coldatatype See `PFUPipelineTools::schema_table_colnames`.
+#' @param .tablename,.colname,.coldatatype See `PFUPipelineTools::schema_table_colnames`.
 #'
 #' @return A named list of data frames, each containing a foreign key table
 #'         for the CL-PFU database.
@@ -61,8 +61,8 @@ load_schema_table <- function(version,
 load_fk_tables <- function(version,
                            simple_tables_path = PFUSetup::get_abs_paths(version = version)[["schema_path"]],
                            readme_sheet = "README",
-                           schema_sheet = "Schema",
-                           .table = PFUPipelineTools::schema_table_colnames$table,
+                           schema_sheet = "SchemaTable",
+                           .tablename = PFUPipelineTools::schema_table_colnames$tablename,
                            .colname = PFUPipelineTools::schema_table_colnames$colname,
                            .coldatatype = PFUPipelineTools::schema_table_colnames$coldatatype) {
   # Read schema_table for data types
@@ -76,7 +76,7 @@ load_fk_tables <- function(version,
     lapply(FUN = function(this_sheet_name) {
       # Get the data types for this simple table
       dtypes <- schema_table |>
-        dplyr::filter(.data[[.table]] == this_sheet_name) |>
+        dplyr::filter(.data[[.tablename]] == this_sheet_name) |>
         dplyr::select(dplyr::all_of(c(.colname, .coldatatype)))
 
       # Get the table
@@ -117,7 +117,7 @@ load_fk_tables <- function(version,
 #'
 #' `schema_table` is assumed to be a data frame with the following columns:
 #'
-#'   - `.table`: gives table names in the database.
+#'   - `.tablename`: gives table names in the database.
 #'   - `.colname`: gives column names in each table; if suffixed with `pk_suffix`,
 #'                 interpreted as a primary key column.
 #'   - `.is_pk`: tells if `.colname` is a primary key for `.table`.
@@ -144,7 +144,7 @@ load_fk_tables <- function(version,
 #' schema_dm(st)
 schema_dm <- function(schema_table,
                       pk_suffix = PFUPipelineTools::key_col_info$pk_suffix,
-                      .table = PFUPipelineTools::schema_table_colnames$table,
+                      .tablename = PFUPipelineTools::schema_table_colnames$tablename,
                       .colname = PFUPipelineTools::schema_table_colnames$colname,
                       .is_pk = PFUPipelineTools::schema_table_colnames$is_pk,
                       .coldatatype = PFUPipelineTools::schema_table_colnames$coldatatype,
@@ -152,12 +152,12 @@ schema_dm <- function(schema_table,
                       .fk_colname = PFUPipelineTools::schema_table_colnames$fk_colname,
                       .pk_cols = ".pk_cols") {
 
-  dm_tables <- schema_table[[.table]] |>
+  dm_tables <- schema_table[[.tablename]] |>
     unique() |>
     self_name() |>
     lapply(FUN = function(this_table_name) {
       colnames <- schema_table |>
-        dplyr::filter(.data[[.table]] == this_table_name) |>
+        dplyr::filter(.data[[.tablename]] == this_table_name) |>
         magrittr::extract2(.colname)
       # Convert to a data frame
       this_mat <- matrix(nrow = 0, ncol = length(colnames), dimnames = list(NULL, colnames))
@@ -166,7 +166,7 @@ schema_dm <- function(schema_table,
         tibble::as_tibble()
       # Set data types
       coldatatypes <- schema_table |>
-        dplyr::filter(.data[[.table]] == this_table_name) |>
+        dplyr::filter(.data[[.tablename]] == this_table_name) |>
         magrittr::extract2(.coldatatype)
       for (icol in 1:length(coldatatypes)) {
         this_data_type <- coldatatypes[[icol]]
@@ -194,12 +194,11 @@ schema_dm <- function(schema_table,
   # Get the primary key info for all tables.
   pk_info <- schema_table |>
     dplyr::filter(.data[[.is_pk]]) |>
-    dplyr::select(dplyr::all_of(c(.table, .colname))) |>
-    # dplyr::rename(.pk_cols = .data[[.colname]])
+    dplyr::select(dplyr::all_of(c(.tablename, .colname))) |>
     dplyr::rename(.pk_cols = dplyr::all_of(.colname))
   # Get a list of all tables in the schema
   tables <- schema_table |>
-    dplyr::select(dplyr::all_of(.table)) |>
+    dplyr::select(dplyr::all_of(.tablename)) |>
     unlist() |>
     unname() |>
     unique()
@@ -207,7 +206,7 @@ schema_dm <- function(schema_table,
   # in the data model (dm_tables)
   for (this_table in tables) {
     these_pk_cols <- pk_info |>
-      dplyr::filter(.data[[.table]] == this_table) |>
+      dplyr::filter(.data[[.tablename]] == this_table) |>
       dplyr::select(dplyr::all_of(.pk_cols)) |>
       unlist() |>
       unname()
@@ -222,7 +221,7 @@ schema_dm <- function(schema_table,
 
   if (nrow(fk_info) > 0) {
     for (irow in 1:nrow(fk_info)) {
-      this_table_name <- fk_info[[.table]][[irow]]
+      this_table_name <- fk_info[[.tablename]][[irow]]
       colname <- fk_info[[.colname]][[irow]]
       fk_table <- fk_info[[.fk_table]][[irow]]
       fk_colname <- fk_info[[.fk_colname]][[irow]]

@@ -57,7 +57,7 @@
 #'
 #' @format A string list with `r length(schema_table_colnames)` entries.
 #' \describe{
-#' \item{table}{The name of a string column that tells the database table name.}
+#' \item{tablename}{The name of a string column that tells the database table name.}
 #' \item{colname}{The name of a string column that identifies a column in `table`.}
 #' \item{is_pk}{The name of a boolean column that tells whether `column` is a primary key.}
 #' \item{coldatatype}{The name of a string column that tells the data type of `column`, such as "int", "text", "boolean", or "double precision".}
