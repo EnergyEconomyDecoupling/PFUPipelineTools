@@ -2,8 +2,8 @@ test_that("load_schema_table() works as expected", {
   # There are too many path dependencies to work on CI.
   skip_on_ci()
   skip_on_cran()
-  st <- load_schema_table(version = "v2.0")
-  expect_true("Table" %in% colnames(st))
+  st <- load_schema_table(version = "v3.0a2")
+  expect_true("TableName" %in% colnames(st))
   expect_true("Colname" %in% colnames(st))
   expect_true("ColDataType" %in% colnames(st))
   expect_true("FKTable" %in% colnames(st))
@@ -15,7 +15,7 @@ test_that("schema_dm() works as expected", {
   # There are too many path dependencies to work on CI.
   skip_on_ci()
   skip_on_cran()
-  clpfu_dm <- load_schema_table(version = "v2.0") |>
+  clpfu_dm <- load_schema_table(version = "v3.0a2") |>
     schema_dm()
   clpfu_dm |>
     dm::dm_get_all_fks() |>
@@ -37,7 +37,7 @@ test_that("schema_dm() works as expected", {
 
 
 test_that("schema_dm() fails with unknown data type", {
-  st <- tibble::tribble(~Table, ~Colname, ~IsPK, ~ColDataType, ~FKTable, ~FKColname,
+  st <- tibble::tribble(~TableName, ~Colname, ~IsPK, ~ColDataType, ~FKTable, ~FKColname,
                         "Country", "CountryID", TRUE, "bogus", "NA", "NA",
                         "Country", "Country", FALSE, "text", "NA", "NA",
                         "Country", "Description", FALSE, "text", "NA", "NA")
@@ -50,7 +50,7 @@ test_that("schema_dm() fails with unknown data type", {
 test_that("load_fk_tables() works as expected", {
   skip_on_ci()
   skip_on_cran()
-  simple_tables <- load_fk_tables(version = "v2.0")
+  simple_tables <- load_fk_tables(version = "v3.0a2")
   expect_true("Year" %in% names(simple_tables))
   expect_true("Method" %in% names(simple_tables))
 

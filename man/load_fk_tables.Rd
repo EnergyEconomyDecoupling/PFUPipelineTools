@@ -8,8 +8,8 @@ load_fk_tables(
   version,
   simple_tables_path = PFUSetup::get_abs_paths(version = version)[["schema_path"]],
   readme_sheet = "README",
-  schema_sheet = "Schema",
-  .table = PFUPipelineTools::schema_table_colnames$table,
+  schema_sheet = "SchemaTable",
+  .tablename = PFUPipelineTools::schema_table_colnames$tablename,
   .colname = PFUPipelineTools::schema_table_colnames$colname,
   .coldatatype = PFUPipelineTools::schema_table_colnames$coldatatype
 )
@@ -28,7 +28,7 @@ Default is "README".}
 that contains schema information.`
 Default is "Schema".}
 
-\item{.table, .colname, .coldatatype}{See \code{PFUPipelineTools::schema_table_colnames}.}
+\item{.tablename, .colname, .coldatatype}{See \code{PFUPipelineTools::schema_table_colnames}.}
 }
 \value{
 A named list of data frames, each containing a foreign key table

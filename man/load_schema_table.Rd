@@ -7,7 +7,7 @@
 load_schema_table(
   version,
   schema_path = PFUSetup::get_abs_paths(version = version)[["schema_path"]],
-  schema_sheet = "Schema"
+  schema_sheet = "SchemaTable"
 )
 }
 \arguments{
@@ -32,6 +32,6 @@ This function reads the schema table from the SchemaAndSimpleTables.xlsx file.
 }
 \examples{
 \dontrun{
-load_schema_table(version = "v2.0")
+load_schema_table(version = "v3.0")
 }
 }
