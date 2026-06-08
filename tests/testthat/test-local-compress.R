@@ -656,3 +656,32 @@ test_that("compress_helper() works as expected when the current version in remot
 })
 
 
+test_that("compress_helper() works for MachineData table", {
+  # This is actual data from v2.0 of the Mexer database
+  remote_df <- tibble::tribble(
+    ~Dataset, ~ValidFromVersion, ~ValidToVersion,
+    ~Country, ~EnergyType, ~LastStage, ~Method, ~Machine, ~EuProduct, ~Quantity, ~Year, ~Value,
+    5, 3, 2147483647L,
+    3, 1, 2, 1, 2464, 117, 31, 1960, 0.12494914810933232,
+    5, 3, 2147483647L,
+    3, 1, 2, 1, 2464, 117, 31, 1961, 0.12590738916902622
+  )
+  # Make an identical local dataframe.
+  # Should not result in any changes.
+  local_df <- remote_df |>
+    dplyr::mutate(
+      ValidToVersion = 3
+    )
+
+  res1 <- compress_helper(remote_df, local_df, value_colname = "Value")
+  expect_equal(nrow(res1), 0)
+
+  # Change one of the values.
+  local_df2 <- local_df
+  local_df2[["Value"]][[1]] <- 42
+  res2 <- compress_helper(remote_df, local_df2, value_colname = "Value")
+  expect_equal(nrow(res2), 1)
+  expect_equal(res2[["Value"]][[1]], 42)
+})
+
+
