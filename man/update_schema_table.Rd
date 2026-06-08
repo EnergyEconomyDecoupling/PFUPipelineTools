@@ -12,8 +12,8 @@ update_schema_table(
     "Fellowship 1960-2015 PFU database research"),
   input_data_path = file.path(project_path, "InputData", input_data_version),
   schema_path = file.path(input_data_path, "SchemaAndFKTables.xlsx"),
-  schema_sheet = "Schema",
-  table_colname = "Table",
+  schema_sheet = "SchemaTable",
+  table_colname = "TableName",
   is_pk_colname = "IsPK",
   colname_colname = "Colname",
   drv = RPostgres::Postgres(),
@@ -43,7 +43,7 @@ Default is "Schema".}
 
 \item{table_colname, is_pk_colname, colname_colname}{Names of the table,
 isPK, and colname columns in the schema table.
-Defaults are "Table", "IsPK", and "Colname", respectively.}
+Defaults are "TableName", "IsPK", and "Colname", respectively.}
 
 \item{drv}{The database driver to be used. Default is \code{RPostgres::Postgres()}.}
 

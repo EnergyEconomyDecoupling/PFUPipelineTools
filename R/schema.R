@@ -725,7 +725,7 @@ decode_fks <- function(.df = NULL,
 #'                     Default is "Schema".
 #' @param table_colname,is_pk_colname,colname_colname Names of the table,
 #'                     isPK, and colname columns in the schema table.
-#'                     Defaults are "Table", "IsPK", and "Colname", respectively.
+#'                     Defaults are "TableName", "IsPK", and "Colname", respectively.
 #' @param drv The database driver to be used. Default is `RPostgres::Postgres()`.
 #' @param host The host for the database. Default is "mexer.site".
 #' @param port The port for accessing the database. Default is `6432`.
@@ -750,8 +750,8 @@ update_schema_table <- function(dbname,
                                                             input_data_version),
                                 schema_path = file.path(input_data_path,
                                                         "SchemaAndFKTables.xlsx"),
-                                schema_sheet = "Schema",
-                                table_colname = "Table",
+                                schema_sheet = "SchemaTable",
+                                table_colname = "TableName",
                                 is_pk_colname = "IsPK",
                                 colname_colname = "Colname",
                                 # Database connection information
