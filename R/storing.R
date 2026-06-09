@@ -841,11 +841,10 @@ do_upsert_and_compress <- function(df_to_upsert,
   if (nrow(df_replace_valid_to_version_in_remote) > 0) {
     remote_tbl |>
       dplyr::rows_update(df_replace_valid_to_version_in_remote,
-                         # Need to update by all the update_cols and
-                         # ValidFromVersion and value.
-                         # However, value is a double, so don't include it in the join.
-                         by = c(update_cols,
-                                valid_from_version_colname),
+                         # We need to change the value in the ValidToVersion column
+                         # for all rows in df_replace_valid_to_version_in_remote.
+                         # So update by all columns except ValidToVersion.
+                         by = setdiff(colnames(remote_tbl), valid_to_version_colname),
                          # Normally, I would be concerned about unmatched = "ignore" here,
                          # because it could fail silently.
                          # However, we just downloaded the data a few lines above,

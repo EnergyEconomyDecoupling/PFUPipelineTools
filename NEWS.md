@@ -9,6 +9,9 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+* Fixed a bug where updating the `ValidToVersion` column 
+  for an updated row failed because the `by` argument 
+  had too few column names.
 * No longer removing the `SchemaTable` table from the list of tables to be uploaded
   in `load_fk_tables()`.
   This means that the database will contain its own schema
