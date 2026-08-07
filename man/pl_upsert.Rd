@@ -85,7 +85,7 @@ mappings from inboard row and column indices in the database
 to outboard row and column names in the memory
 of the local computer.
 See documentation for \code{\link[=encode_matsindf]{encode_matsindf()}} and
-\code{\link[matsbyname:to_named_triplet]{matsbyname::to_triplet()}}.
+\code{\link[matsbyname:to_triplet]{matsbyname::to_triplet()}}.
 Default is a \code{list} that contains the \code{industry}, \code{product}, and \code{other}
 members of \code{fk_parent_tables}.}
 

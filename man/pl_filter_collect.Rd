@@ -43,7 +43,7 @@ that indicates the desired version(s).
 Default is \code{PFUPipelineTools::version_info$current_version_string}
 or
 "current".
-\code{NULL}, the default, means to download all versions available in
+\code{NULL} means to download all versions available in
 \code{db_table_name}.
 \code{c()} (an empty string) returns a zero-row table.
 If \code{version_string} is invalid, an error will be emitted.}
@@ -131,7 +131,7 @@ with optional downloading thereafter.
 By default (\code{collect = FALSE}),
 a \code{tbl} is returned
 (and data are not downloaded from the database).
-Use \code{\link[dplyr:compute]{dplyr::collect()}} later
+Use \code{\link[dplyr:collect]{dplyr::collect()}} later
 to execute the resulting SQL query
 and obtain an in-memory data frame.
 Or, set \code{collect = TRUE} to execute the SQL and

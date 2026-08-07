@@ -121,7 +121,7 @@ excluding the version columns)
 as \code{local_df}.
 That assumption is valid when called from
 \code{\link[=do_upsert_and_compress]{do_upsert_and_compress()}},
-which already performs a \code{\link[dplyr:filter-joins]{dplyr::semi_join()}}
+which already performs a \code{\link[dplyr:semi_join]{dplyr::semi_join()}}
 to filter \code{remote_df} for matching metadata columns.
 
 Important: \code{local_df} is assumed to contain
