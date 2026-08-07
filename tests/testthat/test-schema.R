@@ -2,7 +2,7 @@ test_that("load_schema_table() works as expected", {
   # There are too many path dependencies to work on CI.
   skip_on_ci()
   skip_on_cran()
-  st <- load_schema_table(version = "v3.0a2")
+  st <- load_schema_table(version = "v3.0")
   expect_true("TableName" %in% colnames(st))
   expect_true("Colname" %in% colnames(st))
   expect_true("ColDataType" %in% colnames(st))
