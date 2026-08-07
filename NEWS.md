@@ -47,7 +47,7 @@ which always resolves to the latest release.
   provides convenience during unit testing.
 * New tests for new features. 
     - Now up to 373 tests, all passing
-    - Test coverage now reported to be 45.83%, but 
+    - Test coverage now reported to be 45.78%, but 
       that's likely an undercount. 
       Many functions are not tested 
       on continuous integration platforms and CRAN. 
