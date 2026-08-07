@@ -48,5 +48,7 @@ export(update_schema_table)
 export(validate_for_upsert_and_compress)
 importFrom(lifecycle,deprecated)
 importFrom(magrittr,"%>%")
-importFrom(rlang,":=")
-importFrom(rlang,.data)
+importFrom(rlang,
+  ":=",
+  .data
+)
