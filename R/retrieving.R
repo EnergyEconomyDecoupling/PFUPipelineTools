@@ -248,7 +248,7 @@ pl_collect_from_hash <- function(hashed_table,
 #'                       Default is `PFUPipelineTools::version_info$current_version_string`
 #'                       or
 #'                       "`r PFUPipelineTools::version_info$current_version_string`".
-#'                       `NULL`, the default, means to download all versions available in
+#'                       `NULL` means to download all versions available in
 #'                       `db_table_name`.
 #'                       `c()` (an empty string) returns a zero-row table.
 #'                       If `version_string` is invalid, an error will be emitted.
