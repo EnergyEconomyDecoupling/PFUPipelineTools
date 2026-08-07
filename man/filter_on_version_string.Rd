@@ -65,6 +65,17 @@ and \code{ValidToVersion} columns incremented appropriately.
 The desired version is supplied in the \code{version_string} argument,
 which can be a vector of any length.
 
+In the outgoing data frame, both
+\code{valid_from_version_colname} and
+\code{valid_to_version_colname} in the outgoing data frame will contain
+identical values, namely \code{version_string}.
+This behavior avoids ambiguity regarding the version to which
+each row belongs and abstracts the complexity
+of the compression algorithm in the remote database.
+This behavior means that asking for two or more versions
+(in \code{version_string}) may return identical rows
+except for the version columns.
+
 If both \code{tbl} and \code{db_table_name} are provided, \code{db_table_name} is
 ignored.
 }

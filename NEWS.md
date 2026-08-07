@@ -9,6 +9,15 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+* Fixed a bug in the examples for `schema_dm()`.
+* Fixed a bug where `pl_collect_from_hash()` did not replace
+  values in the `ValidFromVersion` and `ValidToVersion` columns
+  with the requested version.
+  The solution was implemented at a low level
+  in `filter_on_version_string()` and applies to both
+  `pl_collect_from_hash()` and `pl_filter_collect()`,
+  meaning that similar code could be removed from
+  `pl_filter_collect()`.
 * Fixed a bug where updating the `ValidToVersion` column 
   for an updated row failed because the `by` argument 
   had too few column names.

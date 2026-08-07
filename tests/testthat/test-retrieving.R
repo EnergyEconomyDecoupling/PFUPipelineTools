@@ -3,11 +3,12 @@ test_that("pl_collect_from_hash() works as expected", {
 
   skip_on_ci()
   skip_on_cran()
-  conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
-                         dbname = "unit_testing",
-                         host = "mexer.site",
-                         port = 5432,
-                         user = "mkh2")
+  conn <- get_unit_testing_conn()
+  # conn <- DBI::dbConnect(drv = RPostgres::Postgres(),
+  #                        dbname = "unit_testing",
+  #                        host = "mexer.site",
+  #                        port = 5432,
+  #                        user = "mkh2")
   on.exit(DBI::dbDisconnect(conn))
 
   # Make a data frame for testing.
@@ -638,12 +639,19 @@ test_that("pl_collect_from_hash() and pl_filter_collect() work with versions", {
     expect_equal(expected_all |> dplyr::filter(ValidToVersion == "v3"))
 
   for (i in 4:10) {
+    v_string <- paste0("v", i)
+    expected_table <- expected_all |>
+      dplyr::filter(ValidFromVersion == "v4") |>
+      dplyr::mutate(
+        ValidFromVersion = v_string,
+        ValidToVersion = v_string
+      )
     hash_dbt |>
-      pl_collect_from_hash(version_string = paste0("v", i),
+      pl_collect_from_hash(version_string = v_string,
                            conn = conn,
                            schema = schema,
                            fk_parent_tables = fk_parent_tables) |>
-      expect_equal(expected_all |> dplyr::filter(ValidFromVersion == "v4"))
+      expect_equal(expected_table)
   }
 
 

@@ -129,7 +129,7 @@ load_fk_tables <- function(version,
 #' @param schema_table A schema table, typically the output of `load_schema_table()`.
 #' @param pk_suffix The suffix for primary keys.
 #'                  Default is "_ID".
-#' @param .table,.colname,.is_pk,.coldatatype,.fk_table,.fk_colname See `PFUPipelineTools::schema_table_colnames`.
+#' @param .tablename,.colname,.is_pk,.coldatatype,.fk_table,.fk_colname See `PFUPipelineTools::schema_table_colnames`.
 #' @param .pk_cols Column names used internally.
 #'
 #' @return A `dm` object created from `schema_table`.
@@ -137,7 +137,7 @@ load_fk_tables <- function(version,
 #' @export
 #'
 #' @examples
-#' st <- tibble::tribble(~Table, ~Colname, ~IsPK, ~ColDataType, ~FKTable, ~FKColname,
+#' st <- tibble::tribble(~TableName, ~Colname, ~IsPK, ~ColDataType, ~FKTable, ~FKColname,
 #'                       "Country", "CountryID", TRUE, "text", "NA", "NA",
 #'                       "Country", "Country", FALSE, "text", "NA", "NA",
 #'                       "Country", "Description", FALSE, "text", "NA", "NA")
