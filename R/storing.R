@@ -866,9 +866,14 @@ do_upsert_and_compress <- function(df_to_upsert,
       dplyr::rows_update(df_replace_value_in_remote,
                          # Need to update by all the update_cols and
                          # ValidFromVersion and ValidToVersion.
-                         by = c(update_cols,
-                                valid_from_version_colname,
-                                valid_to_version_colname),
+                         # by = c(update_cols,
+                         #        valid_from_version_colname,
+                         #        valid_to_version_colname),
+
+                         # We need to change the value in the value column,
+                         # for all rows in df_replace_value_in_remote.
+                         # So update by all columns except Value.
+                         by = setdiff(colnames(remote_tbl), value_colname),
                          # Normally, I would be concerned about unmatched = "ignore" here,
                          # because it could fail silently.
                          # However, we just downloaded the data a few lines above,
