@@ -1,0 +1,217 @@
+# Package index
+
+## All functions
+
+- [`agg_metadata`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/agg_metadata.md)
+  : Metadata information for aggregation groups
+
+- [`aggregation_df_cols`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/aggregation_df_cols.md)
+  : PFUAggPipeline data frame column names
+
+- [`aggregation_file_cols`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/aggregation_file_cols.md)
+  : Aggregation file column names
+
+- [`aggregation_file_tab_names`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/aggregation_file_tab_names.md)
+  : Aggregation file tab information
+
+- [`all_countries`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/all_countries.md)
+  : Country abbreviations
+
+- [`beatles_fk_tables`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/beatles_fk_tables.md)
+  : Example simple database tables
+
+- [`beatles_schema_table`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/beatles_schema_table.md)
+  : Example database schema table
+
+- [`canonical_countries`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/canonical_countries.md)
+  : Canonical countries
+
+- [`clean_compression_testing_db()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/clean_compression_testing_db.md)
+  : Cleans up after a table compression test
+
+- [`clean_up_beatles()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/clean_up_beatles.md)
+  : Clean up Beatles tables
+
+- [`compress_helper()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/compress_helper.md)
+  : A local table compression helper function
+
+- [`compress_rows()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/compress_rows.md)
+  **\[deprecated\]** : Execute the compress function on a database table
+
+- [`create_compression_testing_db()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/create_compression_testing_db.md)
+  : Create a database for testing table compression
+
+- [`dataset_info`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/dataset_info.md)
+  : Column name for datasets
+
+- [`get_db_conn()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/db-connections.md)
+  [`get_mexerdb_conn()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/db-connections.md)
+  [`get_sandboxdb_conn()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/db-connections.md)
+  [`get_scratchmdb_conn()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/db-connections.md)
+  [`get_scratchedb_conn()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/db-connections.md)
+  [`get_unit_testing_conn()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/db-connections.md)
+  : Create a connection to the Mexer database
+
+- [`decode_fk_keys()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/decode_fk_keys.md)
+  : Decode a vector of foreign keys according to foreign key parent
+  table
+
+- [`decode_fks()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/decode_fks.md)
+  : Decode keys in a database table
+
+- [`dm_fk_colnames`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/dm_fk_colnames.md)
+  :
+
+  Column names in foreign key tables from `dm`
+
+- [`dm_pk_colnames`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/dm_pk_colnames.md)
+  :
+
+  Column names in primary key tables from `dm`
+
+- [`do_upsert_and_compress()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/do_upsert_and_compress.md)
+  : A helper function that performs the upsert and compress action
+
+- [`double_counted_countries`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/double_counted_countries.md)
+  : Double-counted countries
+
+- [`decode_matsindf()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/encode_decode_matsindf.md)
+  [`encode_matsindf()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/encode_decode_matsindf.md)
+  :
+
+  Encode and decode `matsindf` data frames for storage in a database
+
+- [`encode_fk_values()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/encode_fk_values.md)
+  : Encode a vector of foreign key values according to a foreign key
+  parent table
+
+- [`encode_fks()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/encode_fks.md)
+  : Encode foreign keys in a data frame to be uploaded
+
+- [`encode_version_string()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/encode_version_string.md)
+  : Encode a version string
+
+- [`exemplar_names`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/exemplar_names.md)
+  : Exemplar table names
+
+- [`filter_countries_years()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/filter_countries_years.md)
+  : Extract specific country and year data
+
+- [`filter_on_version_string()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/filter_on_version_string.md)
+  : Filter a database table based on a version string.
+
+- [`get_all_fk_tables()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/get_all_fk_tables.md)
+  : Get a named list of foreign key tables
+
+- [`hashed_table_colnames`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/hashed_table_colnames.md)
+  : Column names in hashed tables
+
+- [`inboard_filter_copy()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/inboard_filter_copy.md)
+  : Copy a country, year subset from one table to another
+
+- [`install_compress_function()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/install_compress_function.md)
+  **\[deprecated\]** :
+
+  Install the `compress` function to a database
+
+- [`key_col_info`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/key_col_info.md)
+  : Metadata about table keys
+
+- [`load_fk_tables()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/load_fk_tables.md)
+  : Load foreign key tables for the CL-PFU database from a spreadsheet
+
+- [`load_schema_table()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/load_schema_table.md)
+  : Read a CL-PFU database schema file
+
+- [`machine_constants`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/machine_constants.md)
+  : Information about the machine efficiency files
+
+- [`mat_colnames`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/mat_colnames.md)
+  : Unwrapped matrix column names
+
+- [`mat_meta_cols`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/mat_meta_cols.md)
+  : PSUT matrix formation meta information column names
+
+- [`phi_sources`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/phi_sources.md)
+  : Sources for phi values
+
+- [`pl_collect_from_hash()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/pl_collect_from_hash.md)
+  :
+
+  Download a data frame based on its
+  [`pl_hash()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/pl_hash.md)
+
+- [`pl_destroy()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/pl_destroy.md)
+  : Reset the CL-PFU database pipeline to original condition
+
+- [`pl_filter_collect()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/pl_filter_collect.md)
+  : Filter a table from the database using natural expressions
+
+- [`pl_hash()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/pl_hash.md)
+  : Calculate hash of pipeline data
+
+- [`pl_upload_schema_and_simple_tables()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/pl_upload_schema_and_simple_tables.md)
+  : Upload a schema and simple tables for the CL-PFU database
+
+- [`pl_upsert()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/pl_upsert.md)
+  **\[superseded\]** : Upsert a data frame with optional encoding of
+  foreign keys
+
+- [`pl_upsert_and_compress()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/pl_upsert_and_compress.md)
+  : Upsert and compress rows from a data frame
+
+- [`prep_out()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/prep_out.md)
+  : Prepare an outgoing data frame for deciding what to do with new data
+
+- [`rationalize_version_value_cols()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/rationalize_version_value_cols.md)
+  : Adjust column titles while deciding next steps
+
+- [`read_pin_version()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/read_pin_version.md)
+  : Read a version of a pinned CL-PFU database product
+
+- [`release_target()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/release_target.md)
+  : Save a single target to a pinboard.
+
+- [`remove_compress_function()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/remove_compress_function.md)
+  **\[deprecated\]** : Remove the compress function from a database
+
+- [`round_double_cols()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/round_double_cols.md)
+  : Round double-precision columns
+
+- [`schema_dm()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/schema_dm.md)
+  : Create a data model from an Excel schema table
+
+- [`schema_from_conn()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/schema_from_conn.md)
+  :
+
+  Get the database schema (a `dm` object) from a connection
+
+- [`schema_table_colnames`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/schema_table_colnames.md)
+  : Column names in schema tables
+
+- [`self_name()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/self_name.md)
+  : Self-name a list
+
+- [`set_not_null_constraints_on_fk_cols()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/set_not_null_constraints_on_fk_cols.md)
+  : Set NOT NULL constraints on foreign key columns
+
+- [`tar_ungroup()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/tar_ungroup.md)
+  : Ungroups and removes tar_group column from a data frame
+
+- [`update_schema_table()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/update_schema_table.md)
+  : Update a schema table in a database.
+
+- [`upload_beatles()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/upload_beatles.md)
+  : Upload a small database of Beatles information
+
+- [`usual_hash_group_cols`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/usual_hash_group_cols.md)
+  : Usual columns to be preserved when hashing target uploads
+
+- [`validate_for_upsert_and_compress()`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/validate_for_upsert_and_compress.md)
+  :
+
+  Validate and prepare the incoming data frame for
+  `upsert_and_compress()`.
+
+- [`version_info`](https://energyeconomydecoupling.github.io/PFUPipelineTools/reference/version_info.md)
+  : Information for database versions
