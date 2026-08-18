@@ -22,9 +22,9 @@ schema_dm(
 \item{pk_suffix}{The suffix for primary keys.
 Default is "_ID".}
 
-\item{.pk_cols}{Column names used internally.}
+\item{.tablename, .colname, .is_pk, .coldatatype, .fk_table, .fk_colname}{See \code{PFUPipelineTools::schema_table_colnames}.}
 
-\item{.table, .colname, .is_pk, .coldatatype, .fk_table, .fk_colname}{See \code{PFUPipelineTools::schema_table_colnames}.}
+\item{.pk_cols}{Column names used internally.}
 }
 \value{
 A \code{dm} object created from \code{schema_table}.
@@ -47,7 +47,7 @@ one of "int", "boolean", "text", or "double precision".
 }
 }
 \examples{
-st <- tibble::tribble(~Table, ~Colname, ~IsPK, ~ColDataType, ~FKTable, ~FKColname,
+st <- tibble::tribble(~TableName, ~Colname, ~IsPK, ~ColDataType, ~FKTable, ~FKColname,
                       "Country", "CountryID", TRUE, "text", "NA", "NA",
                       "Country", "Country", FALSE, "text", "NA", "NA",
                       "Country", "Description", FALSE, "text", "NA", "NA")

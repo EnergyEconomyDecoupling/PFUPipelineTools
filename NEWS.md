@@ -9,6 +9,15 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+* Fixed a bug in the examples for `schema_dm()`.
+* Fixed a bug where `pl_collect_from_hash()` did not replace
+  values in the `ValidFromVersion` and `ValidToVersion` columns
+  with the requested version.
+  The solution was implemented at a low level
+  in `filter_on_version_string()` and applies to both
+  `pl_collect_from_hash()` and `pl_filter_collect()`,
+  meaning that similar code could be removed from
+  `pl_filter_collect()`.
 * Fixed a bug where updating the `ValidToVersion` column 
   for an updated row failed because the `by` argument 
   had too few column names.
@@ -38,7 +47,7 @@ which always resolves to the latest release.
   provides convenience during unit testing.
 * New tests for new features. 
     - Now up to 373 tests, all passing
-    - Test coverage now reported to be 45.83%, but 
+    - Test coverage now reported to be 45.78%, but 
       that's likely an undercount. 
       Many functions are not tested 
       on continuous integration platforms and CRAN. 

@@ -32,6 +32,7 @@ SandboxDB
 SchemaAndSimpleTables
 ScratchEDB
 ScratchMDB
+TableName
 Ungrouped
 Ungroups
 Upsert
@@ -47,6 +48,7 @@ csv
 datapoint
 dbcreator
 despecified
+df
 doi
 ef
 eu

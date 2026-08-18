@@ -733,11 +733,23 @@ encode_matsindf <- function(.matsindf,
 #' The desired version is supplied in the `version_string` argument,
 #' which can be a vector of any length.
 #'
+#' In the outgoing data frame, both
+#' `valid_from_version_colname` and
+#' `valid_to_version_colname` in the outgoing data frame will contain
+#' identical values, namely `version_string`.
+#' This behavior avoids ambiguity regarding the version to which
+#' each row belongs and abstracts the complexity
+#' of the compression algorithm in the remote database.
+#' This behavior means that asking for two or more versions
+#' (in `version_string`) may return identical rows
+#' except for the version columns.
+#'
 #' If both `tbl` and `db_table_name` are provided, `db_table_name` is
 #' ignored.
 #'
 #' @param tbl The `tbl` object that should be filtered.
 #' @param version_string A vector of version strings to indicate the desired version(s).
+
 #' @param collect A boolean that tells whether to collect `tbl` from `conn`
 #'                before returning.
 #'                Default is `FALSE`.
@@ -822,7 +834,17 @@ filter_on_version_string <- function(tbl,
   # Filter the outgoing data frame according to the version_index
   out <- tbl |>
     dplyr::filter(.data[[valid_from_version_colname]] <= version_index &
-                    version_index <= .data[[valid_to_version_colname]])
+                    version_index <= .data[[valid_to_version_colname]]) |>
+    dplyr::mutate(
+      # Set the ValidFromVersion and ValidToVersion
+      # columns to the actual version requested.
+      # This step removes ambiguity regarding
+      # which version is returned and
+      # hides the complexity of the compression algorithm
+      # in the remote database.
+      "{valid_from_version_colname}" := version_index,
+      "{valid_to_version_colname}" := version_index
+    )
 
   if (collect) {
     out <- out |>
