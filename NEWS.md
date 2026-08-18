@@ -9,6 +9,9 @@ Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zeno
 which always resolves to the latest release.
 
 
+
+## PFUPipelineTools 0.1.15 (2026-08-18)
+
 * Fixed a bug in the examples for `schema_dm()`.
 * Fixed a bug where `pl_collect_from_hash()` did not replace
   values in the `ValidFromVersion` and `ValidToVersion` columns
