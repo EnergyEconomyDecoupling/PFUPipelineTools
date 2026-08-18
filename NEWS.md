@@ -3,12 +3,60 @@ title: "Release notes for `PFUPipelineTools`"
 output: html_document
 ---
 
+## All releases
 
 Cite all releases with doi [10.5281/zenodo.8226419](https://doi.org/10.5281/zenodo.8226419), 
 which always resolves to the latest release.
 
 
-# PFUPipelineTools 0.1.14 (2025-07-22) 
+
+## PFUPipelineTools 0.1.15 (2026-08-18)
+
+* Fixed a bug in the examples for `schema_dm()`.
+* Fixed a bug where `pl_collect_from_hash()` did not replace
+  values in the `ValidFromVersion` and `ValidToVersion` columns
+  with the requested version.
+  The solution was implemented at a low level
+  in `filter_on_version_string()` and applies to both
+  `pl_collect_from_hash()` and `pl_filter_collect()`,
+  meaning that similar code could be removed from
+  `pl_filter_collect()`.
+* Fixed a bug where updating the `ValidToVersion` column 
+  for an updated row failed because the `by` argument 
+  had too few column names.
+* No longer removing the `SchemaTable` table from the list of tables to be uploaded
+  in `load_fk_tables()`.
+  This means that the database will contain its own schema
+  in the `SchemaTable` table.
+* Improvements to `pl_filter_download()`, including 
+  new options to control whether encoded or decoded 
+  data are downloaded.
+* New functions `pl_upsert_and_compress()` and 
+  `compress_helper()` 
+  allow multiple value columns in a data frame
+  and remote table.
+* New function `pl_upsert_and_compress()` takes over duties from
+  `pl_upsert()`. 
+  `pl_upsert_and_compress()` performs local compression,
+  deciding how and when to compress database tables
+  using the `ValidFromVersion` and `ValidToVersion` columns.
+  `pl_upsert_and_compress()` compresses by default and
+  allows more options.
+  `pl_upsert()` is deprecated.
+* New function `compress_helper()` encapsulates the logic
+  for deciding which rows to change when uploading to 
+  the database.
+* New function `get_unit_testing_conn()` 
+  provides convenience during unit testing.
+* New tests for new features. 
+    - Now up to 373 tests, all passing
+    - Test coverage now reported to be 45.78%, but 
+      that's likely an undercount. 
+      Many functions are not tested 
+      on continuous integration platforms and CRAN. 
+
+
+## PFUPipelineTools 0.1.14 (2025-07-22) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.16323795.svg)](https://doi.org/10.5281/zenodo.16323795)
 
 * New `get_*db_conn()` functions assist creating
   database connections to https://mexer.site.
@@ -21,7 +69,7 @@ which always resolves to the latest release.
       on continuous integration platforms and CRAN. 
 
 
-# PFUPipelineTools 0.1.13 (2025-05-15) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15427749.svg)](https://doi.org/10.5281/zenodo.15427749)
+## PFUPipelineTools 0.1.13 (2025-05-15) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15427749.svg)](https://doi.org/10.5281/zenodo.15427749)
 
 * `pl_upsert()` gains new arguments `round_double_columns` and `digits` 
   and calls `round_double_cols()` if requested.
@@ -71,7 +119,7 @@ which always resolves to the latest release.
       on continuous integration platforms and CRAN. 
 
 
-# PFUPipelineTools 0.1.12 (2024-12-09) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14589472.svg)](https://doi.org/10.5281/zenodo.14589472)
+## PFUPipelineTools 0.1.12 (2024-12-09) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14589472.svg)](https://doi.org/10.5281/zenodo.14589472)
 
 * Improved defaults for arguments to `pl_filter_collect()`.
 * No new tests. 
@@ -79,7 +127,7 @@ which always resolves to the latest release.
     - Test coverage now reported to be 27.37%
 
 
-# PFUPipelineTools 0.1.11 (2024-12-09)
+## PFUPipelineTools 0.1.11 (2024-12-09)
 
 * Updates to many accessing functions for the database.
 * Added several new tests for new accessing functions.
@@ -87,13 +135,13 @@ which always resolves to the latest release.
     - Test coverage now at 92.73%
 
 
-# PFUPipelineTools 0.1.10 (2024-08-01)
+## PFUPipelineTools 0.1.10 (2024-08-01)
 
 * Eliminated the `IEAMW` column everywhere.
   The `Dataset` column is now doing the work of the `IEAMW` column.
 
 
-# PFUPipelineTools 0.1.9 (2024-07-30)
+## PFUPipelineTools 0.1.9 (2024-07-30)
 
 * Added new "date" option for foreign key columns.
 * Now using "value" column instead of "x".
@@ -124,7 +172,7 @@ which always resolves to the latest release.
 * Several new functions to assist with database schema, etc.
 
 
-# PFUPipelineTools 0.1.8 (2023-12-21) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10420449.svg)](https://doi.org/10.5281/zenodo.10420449)
+## PFUPipelineTools 0.1.8 (2023-12-21) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10420449.svg)](https://doi.org/10.5281/zenodo.10420449)
 
 * Added a statement of need to `README.Rmd`.
 * No new tests
@@ -132,7 +180,7 @@ which always resolves to the latest release.
     - Test coverage remains at 100%.
 
 
-# PFUPipelineTools 0.1.7 (2023-12-08) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10308793.svg)](https://doi.org/10.5281/zenodo.10308793)
+## PFUPipelineTools 0.1.7 (2023-12-08) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10308793.svg)](https://doi.org/10.5281/zenodo.10308793)
 
 * Added package dependencies for test coverage workflow.
 * No new tests
@@ -140,7 +188,7 @@ which always resolves to the latest release.
     - Test coverage remains at 100%.
 
 
-# PFUPipelineTools 0.1.6 (2023-12-04) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10256768.svg)](https://doi.org/10.5281/zenodo.10256768)
+## PFUPipelineTools 0.1.6 (2023-12-04) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10256768.svg)](https://doi.org/10.5281/zenodo.10256768)
 
 * Add the package dependencies to the code coverage GitHub action.
 * No new tests
@@ -148,7 +196,7 @@ which always resolves to the latest release.
     - Test coverage remains at 100%.
 
 
-# PFUPipelineTools 0.1.5 (2023-12-04) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10256712.svg)](https://doi.org/10.5281/zenodo.10256712)
+## PFUPipelineTools 0.1.5 (2023-12-04) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10256712.svg)](https://doi.org/10.5281/zenodo.10256712)
 
 * Add the develop and release-* branches to GitHub actions
   for R-CMD-CHECK.
@@ -157,7 +205,7 @@ which always resolves to the latest release.
     - Test coverage remains at 100%.
 
 
-# PFUPipelineTools 0.1.4 (2023-12-03)
+## PFUPipelineTools 0.1.4 (2023-12-03)
 
 * Attempting to fix a bug in the continuous integration process.
   Builds are failing due to missing external dependencies.
@@ -166,7 +214,7 @@ which always resolves to the latest release.
     - Test coverage remains at 100%.
 
 
-# PFUPipelineTools 0.1.3 (2023-12-03) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10253202.svg)](https://doi.org/10.5281/zenodo.10253202)
+## PFUPipelineTools 0.1.3 (2023-12-03) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10253202.svg)](https://doi.org/10.5281/zenodo.10253202)
 
 * New function `read_pin_version()`
 * Added GitHub actions for generating website.
@@ -176,14 +224,14 @@ which always resolves to the latest release.
     - Test coverage remains at 100%.
 
 
-# PFUPipelineTools 0.1.2 (2023-08-08) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8226420.svg)](https://doi.org/10.5281/zenodo.8226420)
+## PFUPipelineTools 0.1.2 (2023-08-08) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8226420.svg)](https://doi.org/10.5281/zenodo.8226420)
 
 * First release to be assigned a Zenodo DOI.
 * Added several new tests
   to get to 100% coverage.
 
 
-# PFUPipelineTools 0.1.1 (2023-06-06)
+## PFUPipelineTools 0.1.1 (2023-06-06)
 
 * Initial release
 * Added a `NEWS.md` file to track changes to the package.

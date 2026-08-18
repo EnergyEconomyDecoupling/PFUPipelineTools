@@ -85,7 +85,7 @@ mappings from inboard row and column indices in the database
 to outboard row and column names in the memory
 of the local computer.
 See documentation for \code{\link[=encode_matsindf]{encode_matsindf()}} and
-\code{\link[matsbyname:to_named_triplet]{matsbyname::to_triplet()}}.
+\code{\link[matsbyname:to_triplet]{matsbyname::to_triplet()}}.
 Default is a \code{list} that contains the \code{industry}, \code{product}, and \code{other}
 members of \code{fk_parent_tables}.}
 
@@ -114,13 +114,16 @@ Default is "md5".}
 A hash of \code{.df} according to \code{.algo}.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#superseded}{\figure{lifecycle-superseded.svg}{options: alt='[Superseded]'}}}{\strong{[Superseded]}}
+Use \link{pl_upsert_and_compress}\code{(compress = FALSE)} instead.
+}
+\details{
 Upserts
 (inserts or updates,
 depending on whether the private keys in \code{.df}
 already exist in \code{db_table_name})
 \code{.df} into \code{db_table_name} at \code{conn}.
-}
-\details{
+
 This function decodes foreign keys (fks), when possible,
 assuming that all fks are integers.
 If non-integers (typically, character strings)

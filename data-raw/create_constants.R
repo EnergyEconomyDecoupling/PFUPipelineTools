@@ -227,7 +227,7 @@ usethis::use_data(key_col_info, overwrite = TRUE)
 #
 
 schema_table_colnames <- list(
-  table = "Table",
+  tablename = "TableName",
   colname = "Colname",
   is_pk = "IsPK",
   coldatatype = "ColDataType",
@@ -286,13 +286,13 @@ usethis::use_data(hashed_table_colnames, overwrite = TRUE)
 
 beatles_file_path <- file.path("data-raw", "BeatlesSchema.xlsx")
 beatles_schema_table <- load_schema_table(schema_path = beatles_file_path,
-                                          schema_sheet = "Schema")
+                                          schema_sheet = "SchemaTable")
 
 usethis::use_data(beatles_schema_table, overwrite = TRUE)
 
 beatles_fk_tables <- load_fk_tables(simple_tables_path = beatles_file_path,
-                                        readme_sheet = "README",
-                                        schema_sheet = "Schema")
+                                    readme_sheet = "README",
+                                    schema_sheet = "SchemaTable")
 
 usethis::use_data(beatles_fk_tables, overwrite = TRUE)
 
@@ -355,7 +355,15 @@ dataset_info <- list(dataset_colname = "Dataset",
                      wlrpfu = "WLR-PFU",
                      wlrpfu_elect = "WLR-PFU Electricity",
                      wlrpfu_trans = "WLR-PFU Transport",
-                     wlrpfu_mw = "WLR-PFU Muscle work")
+                     wlrpfu_mw = "WLR-PFU Muscle work",
+                     changed_cols_colname = "ChangedCols",
+                     what_to_do = "WhatToDo",
+                     delete_or_change_valid_to_in_remote = "Delete or change ValidToVersion in remote",
+                     replace_valid_to_version_in_remote = "Replace ValidToVersion in remote",
+                     replace_value_in_remote = "Replace value in remote",
+                     delete_row_in_remote = "Delete row in remote",
+                     upload_new_row = "Upload new row",
+                     no_action = "No action")
 usethis::use_data(dataset_info, overwrite = TRUE)
 
 
@@ -448,4 +456,13 @@ mat_meta_cols <- list(matname = "matname",
                       coltype = "coltype")
 usethis::use_data(mat_meta_cols, overwrite = TRUE)
 
+
+#
+# The integer of length 1 that represents the current version
+# of the database in ValidFromVersion and ValidToVersion columns.
+#
+
+version_info <- list(current_version_string = "current",
+                     current_version_int = 2147483647L)
+usethis::use_data(version_info, overwrite = TRUE)
 

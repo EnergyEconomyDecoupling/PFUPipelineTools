@@ -136,16 +136,24 @@ upload_beatles <- function(conn) {
 #' @return A list of tables deleted
 clean_up_beatles <- function(conn) {
 
+
   beatles_tables <- c("MemberRole", "Member", "Role")
   # Only drop tables that exist
   db_tables <- DBI::dbListTables(conn)
   db_tables_in_beatles_tables <- which(db_tables %in% beatles_tables)
   to_drop <- db_tables[db_tables_in_beatles_tables]
 
+  # Avoid unwanted messages
+  DBI::dbExecute(conn, "SET client_min_messages TO WARNING;")
+
   to_drop |>
     purrr::map(function(this_table_name) {
       DBI::dbExecute(conn, paste0('DROP TABLE "', this_table_name, '" CASCADE;'))
     })
+
+  # Set back to original message level
+  DBI::dbExecute(conn, "SET client_min_messages TO NOTICE;")
+
   return(to_drop)
 }
 
@@ -206,7 +214,7 @@ clean_up_beatles <- function(conn) {
 #'                              Default is `PFUPipelineTools::usual_hash_group_cols`.
 #' @param conn A database connection.
 #' @param schema The data model (`dm` object) for the database in `conn`.
-#'               Default is `dm_from_con(conn, learn_keys = TRUE)`.
+#'               Default is `dm_from_conn(conn)`.
 #'               See details.
 #' @param fk_parent_tables A named list of all parent tables
 #'                         for the foreign keys in `db_table_name`.
@@ -475,7 +483,9 @@ decode_fk_keys <- function(v_key,
     # Set the colname to be the name of the fk key column.
     magrittr::set_names(fk_key_col_in_fk_table_name) |>
     # Join with the fk parent table
-    dplyr::left_join(this_fk_parent_table, by = fk_key_col_in_fk_table_name) |>
+    dplyr::left_join(this_fk_parent_table,
+                     by = fk_key_col_in_fk_table_name,
+                     copy = TRUE) |>
     # Extract the column that we want to return
     magrittr::extract2(fk_value_col_in_fk_table_name)
   # Check for errors
@@ -658,6 +668,23 @@ encode_matsindf <- function(.matsindf,
                             col_index_colname = PFUPipelineTools::mat_colnames$j,
                             value_colname = PFUPipelineTools::mat_colnames$value) {
 
+  # If we have no rows in .matsindf but we
+  # have matnames and matvals columns,
+  # we can return a zero-row data frame
+  # with the expected shape
+  # to give later code a chance to run.
+  if (nrow(.matsindf) == 0 & matname %in% names(.matsindf) & matval %in% names(.matsindf)) {
+    out <- .matsindf |>
+      dplyr::mutate(
+        # Eliminate the matvals column, add i, j, val columns
+        "{matval}" := NULL,
+        "{row_index_colname}" := character(0),
+        "{col_index_colname}" := character(0),
+        "{value_colname}" := character(0)
+      )
+    return(out)
+  }
+
   # Find matrix column names
   matcols <- matsindf::matrix_cols(.matsindf, .any = TRUE) |>
     names()
@@ -706,11 +733,23 @@ encode_matsindf <- function(.matsindf,
 #' The desired version is supplied in the `version_string` argument,
 #' which can be a vector of any length.
 #'
+#' In the outgoing data frame, both
+#' `valid_from_version_colname` and
+#' `valid_to_version_colname` in the outgoing data frame will contain
+#' identical values, namely `version_string`.
+#' This behavior avoids ambiguity regarding the version to which
+#' each row belongs and abstracts the complexity
+#' of the compression algorithm in the remote database.
+#' This behavior means that asking for two or more versions
+#' (in `version_string`) may return identical rows
+#' except for the version columns.
+#'
 #' If both `tbl` and `db_table_name` are provided, `db_table_name` is
 #' ignored.
 #'
 #' @param tbl The `tbl` object that should be filtered.
 #' @param version_string A vector of version strings to indicate the desired version(s).
+
 #' @param collect A boolean that tells whether to collect `tbl` from `conn`
 #'                before returning.
 #'                Default is `FALSE`.
@@ -747,11 +786,11 @@ filter_on_version_string <- function(tbl,
                                      valid_from_version_colname = PFUPipelineTools::dataset_info$valid_from_version_colname,
                                      valid_to_version_colname = PFUPipelineTools::dataset_info$valid_to_version_colname) {
 
+  # Eliminate duplicates
   version_string <- unique(version_string)
 
   if (length(version_string) > 1) {
-    # Eliminate duplicates
-    out_list <- lapply(unique(version_string), function(this_version_string) {
+    out_list <- lapply(version_string, function(this_version_string) {
       # If we have more than one version_string,
       # call ourselves recursively and stack the results.
       filter_on_version_string(tbl = tbl,
@@ -794,8 +833,18 @@ filter_on_version_string <- function(tbl,
 
   # Filter the outgoing data frame according to the version_index
   out <- tbl |>
-    dplyr::filter(.data[[valid_from_version_colname]] <= version_index) |>
-    dplyr::filter(.data[[valid_to_version_colname]] >= version_index)
+    dplyr::filter(.data[[valid_from_version_colname]] <= version_index &
+                    version_index <= .data[[valid_to_version_colname]]) |>
+    dplyr::mutate(
+      # Set the ValidFromVersion and ValidToVersion
+      # columns to the actual version requested.
+      # This step removes ambiguity regarding
+      # which version is returned and
+      # hides the complexity of the compression algorithm
+      # in the remote database.
+      "{valid_from_version_colname}" := version_index,
+      "{valid_to_version_colname}" := version_index
+    )
 
   if (collect) {
     out <- out |>
@@ -893,6 +942,176 @@ round_double_cols <- function(.df, digits = 15) {
 }
 
 
+#' Create a database for testing table compression
+#'
+#' This function is used for testing.
+#'
+#' @param conn The connection to the database.
+#'
+#' @returns The `index_map` for the database.
+#'
+#' @export
+create_compression_testing_db <- function(conn) {
+  # Code to avoid build notes
+  testlocalcompression <- NULL
+  ValidFromVersion <- NULL
+  ValidToVersion <- NULL
+  matname <- NULL
+  i <- NULL
+  j <- NULL
+  Dataset <- NULL
+  DatasetID <- NULL
+  PhiConstants <- NULL
+  Version <- NULL
+  VersionID <- NULL
+  Country <- NULL
+  CountryID <- NULL
+  EnergyType <- NULL
+  EnergyTypeID <- NULL
+  Year <- NULL
+  YearID <- NULL
+  matnameID <- NULL
+  RCType <- NULL
+  RCTypeID <- NULL
+  matnameRCType <- NULL
+  Index <- NULL
+  IndexID <- NULL
+  rowtype <- NULL
+  coltype <- NULL
+  version_info <- NULL
+  Product <- NULL
+  IsUseful <- NULL
+
+  # Start with a clean slate
+  clean_compression_testing_db(conn)
+
+  # Create data model
+  dm <- list(testlocalcompression = data.frame(Dataset = 5L,
+                                               ValidFromVersion = 1L,
+                                               ValidToVersion = 2L,
+                                               Country = 49L,
+                                               EnergyType = 1L,
+                                               Year = 1971L,
+                                               matname = 2L,
+                                               i = 1L,
+                                               j = 1L,
+                                               value = 3.1415926) |>
+               # Delete all rows, but keep names and column types
+               dplyr::filter(FALSE),
+             PhiConstants = data.frame(Dataset = 5L,
+                                       ValidFromVersion = 1L,
+                                       ValidToVersion = 1L,
+                                       Product = 1L,
+                                       phi = 1.06,
+                                       IsUseful = TRUE) |>
+               # Delete all rows, but keep names and column types
+               dplyr::filter(FALSE),
+             Dataset = data.frame(DatasetID = 5L,
+                                  Dataset = "CL-PFU IEA"),
+             Version = data.frame(VersionID = c(1L, 2L, 3L,
+                                                as.integer(PFUPipelineTools::version_info$current_version_int)),
+                                  Version = c("v1.0", "v2.0", "v3.0", "current")),
+             Country = data.frame(CountryID = c(49L, 146L),
+                                  Country = c("GHA", "USA")),
+             EnergyType = data.frame(EnergyTypeID = c(1L, 2L),
+                                     EnergyType = c("E", "X")),
+             Year = data.frame(YearID = c(1971L, 1972L),
+                               Year = c(1971L, 1972L)),
+             matname = data.frame(matnameID = c(2L, 3L, 7L, 8L),
+                                  matname = c("R", "U", "V", "Y")),
+             RCType = data.frame(RCTypeID	= c(1L, 2L),
+                                 RCType	= c("Industry", "Product"),
+                                 FullName = c("Industry", "Product"),
+                                 Description = c("Resource reservoirs, indistries, and final demand",
+                                                 "Energy carriers")),
+             matnameRCType = data.frame(matname = c(2L, 3L, 7L, 8L),
+                                        rowtype = c(1L, 2L, 1L, 2L),
+                                        coltype = c(2L, 1L, 2L, 1L)),
+             Index = data.frame(IndexID = c(1L, 2L, 3L, 4L, 5L, 6L, 7L),
+                                Index = c("r1", "r2", "r3", "r4", "c1", "c2", "c3"))
+  ) |>
+    dm::new_dm() |>
+    dm::dm_add_pk(testlocalcompression, columns = c(ValidFromVersion, ValidToVersion,
+                                                    matname, i, j)) |>
+    dm::dm_add_pk(PhiConstants, columns = c(Dataset,
+                                            ValidFromVersion,
+                                            ValidToVersion,
+                                            Product,
+                                            IsUseful)) |>
+    dm::dm_add_pk(Dataset, columns = c(DatasetID)) |>
+    dm::dm_add_pk(Version, columns = c(VersionID)) |>
+    dm::dm_add_pk(Country, columns = c(CountryID)) |>
+    dm::dm_add_pk(EnergyType, columns = c(EnergyTypeID)) |>
+    dm::dm_add_pk(Year, columns = c(YearID)) |>
+    dm::dm_add_pk(matname, columns = c(matnameID)) |>
+    dm::dm_add_pk(RCType, columns = c(RCTypeID)) |>
+    dm::dm_add_pk(matnameRCType, columns = c(matname)) |>
+    dm::dm_add_pk(Index, columns = c(IndexID)) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = Dataset,
+                  ref_table = Dataset, ref_columns = DatasetID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = ValidFromVersion,
+                  ref_table = Version, ref_columns = VersionID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = ValidToVersion,
+                  ref_table = Version, ref_columns = VersionID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = Country,
+                  ref_table = Country, ref_columns = CountryID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = EnergyType,
+                  ref_table = EnergyType, ref_columns = EnergyTypeID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = Year,
+                  ref_table = Year, ref_columns = YearID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = matname,
+                  ref_table = matname, ref_columns = matnameID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = i,
+                  ref_table = Index, ref_columns = IndexID) |>
+    dm::dm_add_fk(table = testlocalcompression, columns = j,
+                  ref_table = Index, ref_columns = IndexID) |>
+    dm::dm_add_fk(table = PhiConstants, columns = Dataset,
+                  ref_table = Dataset, ref_columns = DatasetID) |>
+    dm::dm_add_fk(table = PhiConstants, columns = ValidFromVersion,
+                  ref_table = Version, ref_columns = VersionID) |>
+    dm::dm_add_fk(table = PhiConstants, columns = ValidToVersion,
+                  ref_table = Version, ref_columns = VersionID) |>
+    dm::dm_add_fk(table = PhiConstants, columns = Product,
+                  ref_table = Index, ref_columns = IndexID) |>
+    dm::dm_add_fk(table = matnameRCType, columns = matname,
+                  ref_table = matname, ref_columns = matnameID) |>
+    dm::dm_add_fk(table = matnameRCType, columns = rowtype,
+                  ref_table = RCType, ref_columns = RCTypeID) |>
+    dm::dm_add_fk(table = matnameRCType, columns = coltype,
+                  ref_table = RCType, ref_columns = RCTypeID)
+  dm::copy_dm_to(conn, dm = dm, temporary = FALSE)
+
+  # Return the index map
+  return(dm$Index)
+}
 
 
+
+#' Cleans up after a table compression test
+#'
+#' @param conn The connection to the database.
+#'
+#' @returns `TRUE` invisibly.
+#'
+#' @export
+clean_compression_testing_db <- function(conn) {
+  # Get the name of the database.
+  db_name <- DBI::dbGetQuery(conn, "SELECT current_database();")
+  # It should be "unit_testing".  If not, throw an error.
+  assertthat::assert_that(db_name == "unit_testing",
+                          msg = paste0("You can only clean tables from the 'unit_testing' database. ",
+                                       "You attempted to clean tables from ",
+                                       db_name,
+                                       ", which is illegal."))
+
+  # Avoid unwanted messages
+  DBI::dbExecute(conn, "SET client_min_messages TO WARNING;")
+
+  for (tname in  DBI::dbListTables(conn)) {
+    DBI::dbExecute(conn, paste0('DROP TABLE IF EXISTS "', tname, '" CASCADE;'))
+  }
+
+  # Set back to original message level
+  DBI::dbExecute(conn, "SET client_min_messages TO NOTICE;")
+}
 

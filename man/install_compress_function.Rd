@@ -24,14 +24,16 @@ database at \code{conn},
 which should always be \code{0}.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+}
+\details{
 When running the pipeline,
 we compress identical rows of the table using the version columns.
 This plpgsql function in \code{compress_func_string}
 does that work for us.
 This function adds the \code{compress} function
 to the database at \code{conn}.
-}
-\details{
+
 If \code{compress} is already installed into the the database at \code{conn},
 only the user who previously installed \code{compress} can update it.
 

@@ -7,7 +7,7 @@
 schema_dm(
   schema_table,
   pk_suffix = PFUPipelineTools::key_col_info$pk_suffix,
-  .table = PFUPipelineTools::schema_table_colnames$table,
+  .tablename = PFUPipelineTools::schema_table_colnames$tablename,
   .colname = PFUPipelineTools::schema_table_colnames$colname,
   .is_pk = PFUPipelineTools::schema_table_colnames$is_pk,
   .coldatatype = PFUPipelineTools::schema_table_colnames$coldatatype,
@@ -22,7 +22,7 @@ schema_dm(
 \item{pk_suffix}{The suffix for primary keys.
 Default is "_ID".}
 
-\item{.table, .colname, .is_pk, .coldatatype, .fk_table, .fk_colname}{See \code{PFUPipelineTools::schema_table_colnames}.}
+\item{.tablename, .colname, .is_pk, .coldatatype, .fk_table, .fk_colname}{See \code{PFUPipelineTools::schema_table_colnames}.}
 
 \item{.pk_cols}{Column names used internally.}
 }
@@ -36,7 +36,7 @@ future uploading to a database.
 \details{
 \code{schema_table} is assumed to be a data frame with the following columns:
 \itemize{
-\item \code{.table}: gives table names in the database.
+\item \code{.tablename}: gives table names in the database.
 \item \code{.colname}: gives column names in each table; if suffixed with \code{pk_suffix},
 interpreted as a primary key column.
 \item \code{.is_pk}: tells if \code{.colname} is a primary key for \code{.table}.
@@ -47,7 +47,7 @@ one of "int", "boolean", "text", or "double precision".
 }
 }
 \examples{
-st <- tibble::tribble(~Table, ~Colname, ~IsPK, ~ColDataType, ~FKTable, ~FKColname,
+st <- tibble::tribble(~TableName, ~Colname, ~IsPK, ~ColDataType, ~FKTable, ~FKColname,
                       "Country", "CountryID", TRUE, "text", "NA", "NA",
                       "Country", "Country", FALSE, "text", "NA", "NA",
                       "Country", "Description", FALSE, "text", "NA", "NA")

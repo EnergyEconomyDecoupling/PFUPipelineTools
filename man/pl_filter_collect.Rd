@@ -7,12 +7,13 @@
 pl_filter_collect(
   db_table_name,
   ...,
-  version_string = NULL,
+  version_string = PFUPipelineTools::version_info$current_version_string,
   collect = FALSE,
+  decode_foreign_keys = TRUE,
   create_matsindf = collect,
   conn,
   schema = schema_from_conn(conn = conn),
-  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema),
+  fk_parent_tables = get_all_fk_tables(conn = conn, schema = schema, collect = TRUE),
   index_map_name = "Index",
   index_map = fk_parent_tables[[index_map_name]],
   rctype_table_name = "matnameRCType",
@@ -39,7 +40,10 @@ a data frame with no rows is returned.}
 
 \item{version_string}{A string of length \code{1} or more
 that indicates the desired version(s).
-\code{NULL}, the default, means to download all versions available in
+Default is \code{PFUPipelineTools::version_info$current_version_string}
+or
+"current".
+\code{NULL} means to download all versions available in
 \code{db_table_name}.
 \code{c()} (an empty string) returns a zero-row table.
 If \code{version_string} is invalid, an error will be emitted.}
@@ -47,6 +51,12 @@ If \code{version_string} is invalid, an error will be emitted.}
 \item{collect}{A boolean that tells whether to download the result.
 Default is \code{FALSE}.
 See details.}
+
+\item{decode_foreign_keys}{A boolean that tells whether to decode foreign keys in the result.
+Must be \code{TRUE} if \code{...} contains filtering expressions
+with decoded, human-readable values
+(instead of encoded database integers).
+Default is \code{TRUE}.}
 
 \item{create_matsindf}{A boolean that tells whether to create a matsindf data frame
 from the collected data frame.
@@ -102,14 +112,17 @@ and
 respectively.}
 }
 \value{
-A filtered version of \code{db_table_name} downloaded from \code{conn}.
+When \code{collect == TRUE}, a filtered version of \code{db_table_name} downloaded from \code{conn}.
+When \code{collect == FALSE}, a list of \code{tbl} objects.
 }
 \description{
 Often when collecting data from the database,
 filtering is desired.
 But filtering based on foreign keys
 (fks, as stored in the database)
-is effectively impossible, because of foreign key encoding.
+is effectively impossible,
+because of foreign key encoding
+to integers.
 This function filters based on
 fk values (typically strings),
 not fk keys (typically integers),
@@ -118,12 +131,32 @@ with optional downloading thereafter.
 By default (\code{collect = FALSE}),
 a \code{tbl} is returned
 (and data are not downloaded from the database).
-Use \code{\link[dplyr:compute]{dplyr::collect()}} to execute the resulting SQL query
+Use \code{\link[dplyr:collect]{dplyr::collect()}} later
+to execute the resulting SQL query
 and obtain an in-memory data frame.
 Or, set \code{collect = TRUE} to execute the SQL and
 return an in-memory data frame.
 }
 \details{
+Most filter conditions are provide in the \code{...} argument.
+By default (\code{decode_foreign_keys = TRUE}),
+decoded values need to be supplied,
+e.g., \code{Country == "AUS"}.
+However, when \code{decode_foreign_keys = FALSE},
+you need to supply the encoded integers:
+\code{Country == 6}.
+
+Filtering on database versions is a special case
+because of the way data are compressed in the database.
+Specify one or more version values
+(such as \code{c("v1.0", "v1.1", "v2.0")})
+in the \code{version_string} argument
+returns all requested versions.
+The default ("current") returns the current version
+matching all filtering criteria in \code{...}.
+Set \code{version_string = NULL} to disable filtering based
+on versions, but the results may be nonsensical.
+
 \code{schema} is a data model (\code{dm} object) for the CL-PFU database.
 It can be obtained from calling \code{\link[=schema_from_conn]{schema_from_conn()}}.
 If minimal interaction with the database is desired,

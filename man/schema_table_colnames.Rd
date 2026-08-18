@@ -7,7 +7,7 @@
 \format{
 A string list with 6 entries.
 \describe{
-\item{table}{The name of a string column that tells the database table name.}
+\item{tablename}{The name of a string column that tells the database table name.}
 \item{colname}{The name of a string column that identifies a column in \code{table}.}
 \item{is_pk}{The name of a boolean column that tells whether \code{column} is a primary key.}
 \item{coldatatype}{The name of a string column that tells the data type of \code{column}, such as "int", "text", "boolean", or "double precision".}

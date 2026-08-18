@@ -16,11 +16,13 @@ database at \code{conn},
 which should always be \code{0}.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+}
+\details{
 The database at \code{conn} may have the \code{compress} function installed
 by \code{unpload_compress_function()}.
 This \code{R} function removes the \code{compress} function from the database at \code{conn}.
-}
-\details{
+
 The function can be removed only by the owner of the function,
 i.e., the user who installed the function in the first instance.
 }

@@ -7,6 +7,7 @@
 \alias{get_sandboxdb_conn}
 \alias{get_scratchmdb_conn}
 \alias{get_scratchedb_conn}
+\alias{get_unit_testing_conn}
 \title{Create a connection to the Mexer database}
 \usage{
 get_db_conn(dbname = "MexerDB", user, host = "mexer.site", port = 6432)
@@ -18,6 +19,8 @@ get_sandboxdb_conn()
 get_scratchmdb_conn()
 
 get_scratchedb_conn()
+
+get_unit_testing_conn()
 }
 \arguments{
 \item{dbname}{The string name of a database at \code{host}.
@@ -30,15 +33,22 @@ Default is "MexerDB" for \code{\link[=get_mexerdb_conn]{get_mexerdb_conn()}},
 Default is "dbcreator" for
 \code{\link[=get_sandboxdb_conn]{get_sandboxdb_conn()}},
 \code{\link[=get_scratchmdb_conn]{get_scratchmdb_conn()}}, and
-\code{\link[=get_scratchedb_conn]{get_scratchedb_conn()}},
-appropriate for development.}
+\code{\link[=get_scratchedb_conn]{get_scratchedb_conn()}}
+appropriate for development.
+The default user for \code{\link[=get_unit_testing_conn]{get_unit_testing_conn()}} is "mkh2".}
 
 \item{host}{The string site of the database.
 Default is "mexer.site".}
 
 \item{port}{The integer port for the connection.
-Default is \code{6432},
-the port of the connection pooler.}
+Default is \code{6432} ,
+the port of the connection pooler, for
+\code{\link[=get_mexerdb_conn]{get_mexerdb_conn()}},
+\code{\link[=get_sandboxdb_conn]{get_sandboxdb_conn()}},
+\code{\link[=get_scratchmdb_conn]{get_scratchmdb_conn()}}, and
+\code{\link[=get_scratchedb_conn]{get_scratchedb_conn()}}.
+Default is \code{5432}, the standard port for
+\code{\link[=get_unit_testing_conn]{get_unit_testing_conn()}}.}
 }
 \value{
 A database connection.

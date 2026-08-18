@@ -57,7 +57,7 @@
 #'
 #' @format A string list with `r length(schema_table_colnames)` entries.
 #' \describe{
-#' \item{table}{The name of a string column that tells the database table name.}
+#' \item{tablename}{The name of a string column that tells the database table name.}
 #' \item{colname}{The name of a string column that identifies a column in `table`.}
 #' \item{is_pk}{The name of a boolean column that tells whether `column` is a primary key.}
 #' \item{coldatatype}{The name of a string column that tells the data type of `column`, such as "int", "text", "boolean", or "double precision".}
@@ -233,9 +233,25 @@
 #' \item{dataset_colname}{The string name of the dataset column, "Dataset".}
 #' \item{valid_from_version_colname}{The string name of the column that gives the initial version for which this datapoint is valid, "ValidFromVersion".}
 #' \item{valid_to_version_colname}{The string name of the column that gives the last version for which this datapoint is valid, "ValidToVersion".}
-#' \item{iea}{A string identifying that ECC data are from the IEA exclusively.}
-#' \item{mw}{A string identifying that ECC data are for muscle work (MW) exclusively.}
-#' \item{both}{A string identifying that ECC data include both IEA and muscle work.}
+#' \item{clpfu_iea}{A string identifying that ECC data are from the IEA exclusively.}
+#' \item{clpfu_mw}{A string identifying that ECC data are for muscle work (MW) exclusively.}
+#' \item{clpfu_iea_mw}{A string identifying that ECC data include both IEA and muscle work.}
+#' \item{clpfu}{A string identifying the CL-PFU dataset.}
+#' \item{ieaeweb}{A string identifying the IEA's Extended World Energy Balance dataset.}
+#' \item{faostat}{A string identifying the UN's Food and Agriculture Organization dataset.}
+#' \item{ilostat}{A string identifying the UN's International Labour Organization dataset.}
+#' \item{wlrpfu}{A string identifying the World Long Run Primary Final Useful dataset.}
+#' \item{wlrpfu_elect}{A string identifying the electricity portion of the World Long Run Primary Final Useful dataset.}
+#' \item{wlrpfu_trans}{A string identifying the transport portion of the World Long Run Primary Final Useful dataset.}
+#' \item{wlrpfu_mw}{A string identifying the muscle work portion of the World Long Run Primary Final Useful dataset.}
+#' \item{changed_cols_colname}{A string that identifies which value columns have changed.}
+#' \item{what_to_do}{The string name of a column that tells what to do  with updated data for the remote database. Options are `change_remote` and `upload_new`.}
+#' \item{delete_or_change_valid_to_in_remote}{A string that indicates we need to either delete a row in the remote or change the ValidToVersion column in the remote.}
+#' \item{replace_valid_to_version_in_remote}{A string indicating that valid to version column should be changed in the remote database when updating values.}
+#' \item{replace_value_in_remote}{A string that indicates the value should be replaced in the remote database.}
+#' \item{delete_row_in_remote}{A string that indicates a row to be deleted from the remote database.}
+#' \item{upload_new_row}{A string indicating rows of a local dataframe that have new metadata and should be uploaded to the remote database. They do not yet exist in the remote database.}
+#' \item{no_action}{A string indicating that rows of a dataframe need no action taken upon them, because they are unchanged.}
 #' }
 #'
 #' @examples
@@ -388,3 +404,21 @@
 #' @examples
 #' mat_meta_cols
 "mat_meta_cols"
+
+
+#' Information for database versions
+#'
+#' When storing updated data in the database,
+#' we need to identify the current version.
+#' To make this easier,
+#' we use a big integer and the string "current".
+#'
+#' @format An integer vector with `r length(version_info)` entry.
+#' \describe{
+#' \item{current_version_string}{The string that represents the current version.}
+#' \item{current_version_int}{The integer that represents the current version.}
+#' }
+#'
+#' @examples
+#' version_info
+"version_info"

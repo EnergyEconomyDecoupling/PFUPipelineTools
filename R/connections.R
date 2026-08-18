@@ -20,13 +20,20 @@
 #'             Default is "dbcreator" for
 #'             [get_sandboxdb_conn()],
 #'             [get_scratchmdb_conn()], and
-#'             [get_scratchedb_conn()],
+#'             [get_scratchedb_conn()]
 #'             appropriate for development.
+#'             The default user for [get_unit_testing_conn()] is "mkh2".
 #' @param host The string site of the database.
 #'             Default is "mexer.site".
 #' @param port The integer port for the connection.
-#'             Default is `6432`,
-#'             the port of the connection pooler.
+#'             Default is `6432` ,
+#'             the port of the connection pooler, for
+#'             [get_mexerdb_conn()],
+#'             [get_sandboxdb_conn()],
+#'             [get_scratchmdb_conn()], and
+#'             [get_scratchedb_conn()].
+#'             Default is `5432`, the standard port for
+#'             [get_unit_testing_conn()].
 #'
 #' @return A database connection.
 #'
@@ -83,4 +90,14 @@ get_scratchedb_conn <- function() {
               user = "dbcreator",
               host = "mexer.site",
               port = 6432)
+}
+
+
+#' @export
+#' @rdname db-connections
+get_unit_testing_conn <- function() {
+  get_db_conn(dbname = "unit_testing",
+              user = "mkh2",
+              host = "mexer.site",
+              port = 5432)
 }
